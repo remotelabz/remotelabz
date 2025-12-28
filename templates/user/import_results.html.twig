@@ -1,8 +1,3 @@
-{# 
-   NOUVEAU TEMPLATE POUR AFFICHER LES RÉSULTATS D'IMPORTATION
-   Créer ce fichier: templates/user/import_results.html.twig
-#}
-
 {% extends 'dashboard.base.html.twig' %}
 
 {% block breadcrumbs %}
@@ -53,7 +48,7 @@
 
                         <div class="row mb-4">
                             <div class="col-md-6">
-                                <div class="card border-success">
+                                <div class="card border-success import-stats-card success">
                                     <div class="card-body">
                                         <h5 class="text-success">
                                             <i class="fa fa-check-circle"></i> Successfully Imported
@@ -64,7 +59,7 @@
                             </div>
                             {% if failureCount > 0 %}
                             <div class="col-md-6">
-                                <div class="card border-danger">
+                                <div class="card border-danger import-stats-card failure">
                                     <div class="card-body">
                                         <h5 class="text-danger">
                                             <i class="fa fa-times-circle"></i> Failed
@@ -106,7 +101,7 @@
                                                 <td>{{ result.user.firstName }}</td>
                                                 <td>{{ result.user.email }}</td>
                                                 <td>
-                                                    <div class="input-group">
+                                                    <div class="input-group password-actions">
                                                         <input type="password" 
                                                                class="form-control password-field" 
                                                                value="{{ result.password }}" 
@@ -115,12 +110,14 @@
                                                         <div class="input-group-append">
                                                             <button class="btn btn-outline-secondary toggle-password" 
                                                                     type="button"
-                                                                    data-target="password-{{ index }}">
+                                                                    data-target="password-{{ index }}"
+                                                                    title="Show/Hide password">
                                                                 <i class="fa fa-eye"></i>
                                                             </button>
                                                             <button class="btn btn-outline-primary copy-password" 
                                                                     type="button"
-                                                                    data-target="password-{{ index }}">
+                                                                    data-target="password-{{ index }}"
+                                                                    title="Copy password">
                                                                 <i class="fa fa-copy"></i>
                                                             </button>
                                                         </div>
@@ -128,28 +125,28 @@
                                                 </td>
                                                 <td>
                                                     {% if result.passwordGenerated %}
-                                                        <span class="badge badge-info">
+                                                        <span class="badge badge-info password-source-badge generated">
                                                             <i class="fa fa-robot"></i> Generated
                                                         </span>
                                                         {% if result.passwordError %}
                                                             <br>
-                                                            <small class="text-warning">
+                                                            <small class="password-error">
                                                                 <i class="fa fa-exclamation-triangle"></i> {{ result.passwordError }}
                                                             </small>
                                                         {% endif %}
                                                     {% else %}
-                                                        <span class="badge badge-success">
+                                                        <span class="badge badge-success password-source-badge from-csv">
                                                             <i class="fa fa-file-csv"></i> From CSV
                                                         </span>
                                                     {% endif %}
                                                 </td>
                                                 <td class="text-center">
                                                     {% if result.emailSent %}
-                                                        <span class="badge badge-success">
+                                                        <span class="badge badge-success email-status sent">
                                                             <i class="fa fa-check"></i> Yes
                                                         </span>
                                                     {% else %}
-                                                        <span class="badge badge-secondary">
+                                                        <span class="badge badge-secondary email-status not-sent">
                                                             <i class="fa fa-times"></i> No
                                                         </span>
                                                     {% endif %}
@@ -175,7 +172,7 @@
                             <i class="fa fa-exclamation-triangle"></i> Failed Imports
                         </h4>
                         <div class="table-responsive">
-                            <table class="table table-striped table-bordered">
+                            <table class="table table-striped table-bordered failed-imports-table">
                                 <thead class="thead-danger">
                                     <tr>
                                         <th>#</th>
@@ -196,7 +193,7 @@
                                                 <td>{{ result.firstName }}</td>
                                                 <td>{{ result.email }}</td>
                                                 <td>
-                                                    <span class="badge badge-danger">
+                                                    <span class="badge badge-danger failure-reason">
                                                         {{ result.error }}
                                                     </span>
                                                 </td>
@@ -214,9 +211,6 @@
                                 <i class="fa fa-arrow-left"></i> Back to Users
                             </a>
                             <div>
-                                <button onclick="window.print()" class="btn btn-info">
-                                    <i class="fa fa-print"></i> Print
-                                </button>
                                 <button id="exportCSV" class="btn btn-success">
                                     <i class="fa fa-file-csv"></i> Export to CSV
                                 </button>
@@ -229,118 +223,11 @@
     </div>
 {% endblock %}
 
+{% block stylesheets %}
+    {{ parent() }}
+{% endblock %}
+
 {% block javascripts %}
     {{ parent() }}
-    
-    <script>
-        // Toggle password visibility
-        document.querySelectorAll('.toggle-password').forEach(button => {
-            button.addEventListener('click', function() {
-                const targetId = this.getAttribute('data-target');
-                const input = document.getElementById(targetId);
-                const icon = this.querySelector('i');
-                
-                if (input.type === 'password') {
-                    input.type = 'text';
-                    icon.classList.remove('fa-eye');
-                    icon.classList.add('fa-eye-slash');
-                } else {
-                    input.type = 'password';
-                    icon.classList.remove('fa-eye-slash');
-                    icon.classList.add('fa-eye');
-                }
-            });
-        });
-
-        // Copy password to clipboard
-        document.querySelectorAll('.copy-password').forEach(button => {
-            button.addEventListener('click', function() {
-                const targetId = this.getAttribute('data-target');
-                const input = document.getElementById(targetId);
-                
-                // Create a temporary input to copy the value
-                const tempInput = document.createElement('input');
-                tempInput.value = input.value;
-                document.body.appendChild(tempInput);
-                tempInput.select();
-                document.execCommand('copy');
-                document.body.removeChild(tempInput);
-                
-                // Visual feedback
-                const originalHTML = this.innerHTML;
-                this.innerHTML = '<i class="fa fa-check"></i>';
-                this.classList.remove('btn-outline-primary');
-                this.classList.add('btn-success');
-                
-                setTimeout(() => {
-                    this.innerHTML = originalHTML;
-                    this.classList.remove('btn-success');
-                    this.classList.add('btn-outline-primary');
-                }, 2000);
-            });
-        });
-
-        // Export to CSV
-        document.getElementById('exportCSV').addEventListener('click', function() {
-            const table = document.getElementById('importedUsersTable');
-            let csv = [];
-            
-            // Headers
-            const headers = [];
-            table.querySelectorAll('thead th').forEach(th => {
-                headers.push('"' + th.textContent.trim() + '"');
-            });
-            csv.push(headers.join(','));
-            
-            // Rows
-            table.querySelectorAll('tbody tr').forEach(tr => {
-                const row = [];
-                tr.querySelectorAll('td').forEach((td, index) => {
-                    if (index === 4) { // Password column
-                        const input = td.querySelector('input');
-                        row.push('"' + (input ? input.value : '') + '"');
-                    } else if (index === 7) { // Skip actions column
-                        return;
-                    } else {
-                        row.push('"' + td.textContent.trim().replace(/"/g, '""') + '"');
-                    }
-                });
-                csv.push(row.join(','));
-            });
-            
-            // Download
-            const csvContent = csv.join('\n');
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            const url = URL.createObjectURL(blob);
-            link.setAttribute('href', url);
-            link.setAttribute('download', 'imported_users_' + new Date().toISOString().slice(0,10) + '.csv');
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        });
-    </script>
-
-    <style>
-        @media print {
-            .btn, .breadcrumb, .sidebar, .top-panel, .search-panel {
-                display: none !important;
-            }
-            
-            .password-field {
-                border: none !important;
-                background: transparent !important;
-            }
-            
-            table {
-                font-size: 10px;
-            }
-        }
-        
-        .password-field {
-            font-family: monospace;
-            font-size: 14px;
-        }
-    </style>
+    {{ encore_entry_script_tags('user-import-results') }}
 {% endblock %}

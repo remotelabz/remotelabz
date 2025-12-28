@@ -25,6 +25,7 @@ Encore
      */
     .addEntry('app', './assets/js/app.js')
     .addEntry('user', './assets/js/user.js')
+    .addEntry('user-import-results', './assets/js/components/user-import-results.js')
     .addEntry('profile', './assets/js/profile.jsx')
     .addEntry('flavor', './assets/js/flavor.js')
     .addEntry('network-settings', './assets/js/network-settings.js')
@@ -41,6 +42,7 @@ Encore
     .addEntry('iso-form-handler', './assets/js/components/Iso/form-handler.js')
     .addEntry('os-form-handler', './assets/js/components/OperatingSystem/form-handler.js')
     .addEntry('device-form-handler', './assets/js/components/device/device-form.js')
+    
 
     // SOLUTION 1: Commentez ces deux lignes si vous utilisez libraryTarget: "umd"
     // When enabled, Webpack "splits" your files into smaller pieces for greater optimization.

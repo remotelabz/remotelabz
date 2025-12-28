@@ -275,23 +275,7 @@ class UserController extends Controller
         }
 
     }
-
-    /*    /*public function fetchUserTypeByGroupOwner(Request $request, string $userType, int $id)
-    {
-        $owner = $this->userRepository->find($id);
-        $users = $this->userRepository->findUserTypesByGroups($userType, $owner);
-
-        if (!$users) {
-            throw new NotFoundHttpException();
-        }
-
-        if ('json' === $request->getRequestFormat()) {
-            return $this->json($users, 200, [], ["api_users"]);
-        }
-
-    }*/
-
-    
+   
 	#[Get('/api/users/{id<\d+>}', name: 'api_get_user')]
 	#[IsGranted("ROLE_USER", message: "Access denied.")]
     public function showAction(Request $request, int $id)
@@ -1063,7 +1047,7 @@ class UserController extends Controller
         if(strpos($available_sets, 'd') !== false)
             $sets[] = '23456789';
         if(strpos($available_sets, 's') !== false)
-            $sets[] = '!@#$%&*?';
+            $sets[] = '!@#$%&*';
 
         $all = '';
         $password = '';
