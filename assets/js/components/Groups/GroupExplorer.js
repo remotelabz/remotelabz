@@ -15,6 +15,10 @@ class GroupNode extends Component {
         super(props);
 
         this.state = {expanded: false};
+        // Create refs for the overlay triggers
+        this.lockIconRef = React.createRef();
+        this.shieldIconRef = React.createRef();
+        this.earthIconRef = React.createRef();
     }
 
     expand = (e) => {
@@ -51,42 +55,42 @@ class GroupNode extends Component {
                                         <OverlayTrigger
                                             placement="bottom"
                                             overlay={
-                                                <Tooltip id={group.name}>
+                                                <Tooltip id={`tooltip-${group.id || group.name}-lock`}>
                                                     Private - The group and its activities can only be viewed by its owner and administrators.
                                                 </Tooltip>
                                             }
                                         >
-                                            <div>
+                                            <span ref={this.lockIconRef}>
                                                 <SVG name="lock"></SVG>
-                                            </div>
+                                            </span>
                                         </OverlayTrigger>
                                     }
                                     {group.visibility === 1 &&
                                         <OverlayTrigger
                                             placement="bottom"
                                             overlay={
-                                                <Tooltip id={group.name}>
+                                                <Tooltip id={`tooltip-${group.id || group.name}-shield`}>
                                                     Internal - The group and any internal activities can be viewed by members.
                                                 </Tooltip>
                                             }
                                         >
-                                            <div>
+                                            <span ref={this.shieldIconRef}>
                                                 <SVG name="shield"></SVG>
-                                            </div>
+                                            </span>
                                         </OverlayTrigger>
                                     }
                                     {group.visibility === 2 &&
                                         <OverlayTrigger
                                             placement="bottom"
                                             overlay={
-                                                <Tooltip id={group.name}>
+                                                <Tooltip id={`tooltip-${group.id || group.name}-earth`}>
                                                     Public - The group and any internal projects can be viewed by any logged in user.
                                                 </Tooltip>
                                             }
                                         >
-                                            <div>
+                                            <span ref={this.earthIconRef}>
                                                 <SVG name="earth"></SVG>
-                                            </div>
+                                            </span>
                                         </OverlayTrigger>
                                     }
                                 </div>
