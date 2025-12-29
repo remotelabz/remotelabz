@@ -200,7 +200,7 @@ class ConfigWorkerController extends Controller
                                 $os_name=$operatingSystem->getName();
                                 $os_filename=$operatingSystem->getImageFilename();
                                 $os_hypervisor=$operatingSystem->getHypervisor()->getName();
-                                $this->logger->debug("[ConfigWorkerController:updateAction]::Test to sync ".$os_name." ".$os_filename.". which is a ".$os_hypervisor." image");
+                                $this->logger->debug("[ConfigWorkerController:updateAction]::Test to sync ".$os_name." ".$os_filename." which is a ".$os_hypervisor." image");
 
                                 if (strtolower($os_hypervisor) === "lxc") {
                                     if (!in_array($operatingSystem->getImageFilename(),$OS_already_exist_on_worker["lxc"]) && in_array($operatingSystem->getImageFilename(),$OS_already_exist_on_first_worker["lxc"])) {
@@ -224,41 +224,35 @@ class ConfigWorkerController extends Controller
                                 }
                                 else {
                                     if (strtolower($os_hypervisor) === "qemu") {
-                                        if  ( !in_array($os_filename,$OS_already_exist_on_worker["qemu"]) 
+                                        if ( !is_null($os_filename) && !in_array($os_filename,$OS_already_exist_on_worker["qemu"]) 
                                                 && in_array($os_filename,$OS_already_exist_on_first_worker["qemu"])
                                             ) {
+                                            // A filename exist for this OS (not an URL)
                                             $tmp=array();
                                             $tmp['Worker_Dest_IP'] = $workerIP;
                                             $tmp['hypervisor'] = strtolower($os_hypervisor);
                                             $tmp['os_imagename'] = $os_filename;
-                                            $deviceJsonToCopy = json_encode($tmp, 0, 4096);
-                                            if (!is_null($os_filename)) { // the case of qemu image with link.
+
+                                            $localFilePath = $this->getParameter('image_directory') . '/' . $os_filename;
+                                            if (file_exist($localFilePath)) {
+                                                $this->logger->debug("[ConfigWorkerController:updateAction]::Send to all worker a message to copy from front the file ".$localFilePath);
+                                                $this->Files2WorkerManager->CopyFileToAllWorkers("image",$os_filename);
+                                            }
+                                            else {
+                                                // Copy from worker
+                                                $deviceJsonToCopy = json_encode($tmp, 0, 4096);
                                                 $this->logger->debug("[ConfigWorkerController:updateAction]::OS to sync from ".$first_available_workerIP." -> ".$tmp['Worker_Dest_IP'],$tmp);
                                                 $this->logger->info("Send request to copy ".$tmp['os_imagename']." ".$tmp['hypervisor']." from ".$first_available_workerIP." to ".$tmp['Worker_Dest_IP'],$tmp);
                                                 $this->bus->dispatch(
                                                     new InstanceActionMessage($deviceJsonToCopy, "", InstanceActionMessage::ACTION_COPY2WORKER_DEV), [
-                                                        new AmqpStamp($first_available_workerIP, AMQP_NOPARAM, []),
-                                                        ]
+                                                    new AmqpStamp($first_available_workerIP, AMQP_NOPARAM, []),
+                                                    ]
                                                 );
-                                            }
-                                            else {
-                                                $this->logger->debug("[ConfigWorkerController:updateAction]::It's a link. No image to sync for ".$os_name);
                                             }
                                         }
                                         else {
-                                            
-                                            $this->logger->debug("[ConfigWorkerController:updateAction]::ELSE Test if ".$os_filename." exists on worker ".$workerIP);
-                                            // $localFilename is null when it's an URL
-                                            if ( !in_array($os_filename,$OS_already_exist_on_worker["qemu"]) && !is_null($os_filename)) {
-                                                $localFilePath = $this->getParameter('image_directory') . '/' . $os_filename;
-                                                if (file_exists($localFilePath)) {
-                                                    $remoteFilePath = '/images/'.$os_filename;
-                                                    $this->Files2WorkerManager->CopyFileToAllWorkers($localFilePath, $remoteFilePath);
-                                                    $this->logger->debug("[ConfigWorkerController:updateAction]::".$localFilePath." is deleted");
-                                                    unlink($localFilePath);
-                                                }
-                                            }
-                                            $this->logger->debug("[ConfigWorkerController:updateAction]::".$os_name." already exist on ".$workerIP);
+                                            //It's an URL
+                                            $this->logger->debug("[ConfigWorkerController:updateAction]::This OS ".$os_name." is defined by an URL. No sync needed.");
                                         }
                                     }
                                     else {
