@@ -13,12 +13,7 @@ class GroupNode extends Component {
 
     constructor(props) {
         super(props);
-
         this.state = {expanded: false};
-        // Create refs for the overlay triggers
-        this.lockIconRef = React.createRef();
-        this.shieldIconRef = React.createRef();
-        this.earthIconRef = React.createRef();
     }
 
     expand = (e) => {
@@ -32,8 +27,8 @@ class GroupNode extends Component {
         return (
             <li onClick={this.expand}>
                 <div className="d-flex align-items-center group-row-contents">
-                    <div className="text-muted mr-3">
-                        <span className="mr-3">
+                    <div className="text-muted me-3">
+                        <span className="me-3">
                             {group.children.length > 0 ?
                                 <SVG name={this.state.expanded ? "angle-down" : "angle-right"} className="s10"></SVG>
                                 :
@@ -44,13 +39,17 @@ class GroupNode extends Component {
                         <SVG name={this.state.expanded ? "folder-open" : "folder-o"}></SVG>
                     </div>
 
-                    <GroupPicture size={40} group={group} rounded className="mr-3"></GroupPicture>
+                    <GroupPicture size={40} group={group} rounded className="me-3"></GroupPicture>
 
                     <div className="d-flex flex-grow-1 flex-basis-0">
                         <div className="fw600 flex-grow-1 flex-basis-0 d-flex flex-column">
                             <div className="d-inline-flex">
-                                <a href={Routing.generate('dashboard_show_group', {slug: group.path})} className="fw600 title mr-2" onClick={(e) => e.stopPropagation()}>{ group.name }</a>
-                                <div className="text-muted mr-2">
+                                <a href={Routing.generate('dashboard_show_group', {slug: group.path})} 
+                                   className="fw600 title me-2" 
+                                   onClick={(e) => e.stopPropagation()}>
+                                    { group.name }
+                                </a>
+                                <div className="text-muted me-2">
                                     {group.visibility === 0 &&
                                         <OverlayTrigger
                                             placement="bottom"
@@ -60,7 +59,7 @@ class GroupNode extends Component {
                                                 </Tooltip>
                                             }
                                         >
-                                            <span ref={this.lockIconRef}>
+                                            <span>
                                                 <SVG name="lock"></SVG>
                                             </span>
                                         </OverlayTrigger>
@@ -74,7 +73,7 @@ class GroupNode extends Component {
                                                 </Tooltip>
                                             }
                                         >
-                                            <span ref={this.shieldIconRef}>
+                                            <span>
                                                 <SVG name="shield"></SVG>
                                             </span>
                                         </OverlayTrigger>
@@ -88,7 +87,7 @@ class GroupNode extends Component {
                                                 </Tooltip>
                                             }
                                         >
-                                            <span ref={this.earthIconRef}>
+                                            <span>
                                                 <SVG name="earth"></SVG>
                                             </span>
                                         </OverlayTrigger>
@@ -157,7 +156,7 @@ export default class GroupExplorer extends Component {
                 <ul className="labs-panel content-list p-0 list-unstyled group-list-tree">
                     {this.state.loading ?
                         <div className="d-flex align-items-center justify-content-center py-4">
-                            <div className="mr-2">
+                            <div className="me-2">
                                 <i className="fas fa-circle-notch fa-spin"></i>
                             </div>
                             Loading...
