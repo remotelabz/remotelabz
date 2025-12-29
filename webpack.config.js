@@ -25,6 +25,7 @@ Encore
      */
     .addEntry('app', './assets/js/app.js')
     .addEntry('user', './assets/js/user.js')
+    .addEntry('user-import-results', './assets/js/components/user-import-results.js')
     .addEntry('profile', './assets/js/profile.jsx')
     .addEntry('flavor', './assets/js/flavor.js')
     .addEntry('network-settings', './assets/js/network-settings.js')
