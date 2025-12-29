@@ -21,7 +21,7 @@ import {DEBUG, TIMEOUT, LAB, NAME, ROLE, AUTHOR, UPDATEID, LOCK, EDITION, TEMPLA
        STATUSINTERVAL, ATTACHMENTS, isIE, setEditon, setAuthor,
       setVirtuality} from './javascript';
 import {MESSAGES} from './messages_en';
-import '../bootstrap/js/jquery-3.2.1.min';
+import 'jquery';
 import '../bootstrap/js/tinytools.toggleswitch.min';
 import '../bootstrap/js/jquery-ui-1.12.1.min';
 import '../bootstrap/js/jquery-cookie-1.4.1';
@@ -1425,7 +1425,7 @@ export function printFormNode(action, values, fromNodeList) {
             return getTemplates(null);
         })
         .catch(error => {
-            logger(1, 'WARNING: Impossible de régénérer les templates, continuation quand même');
+            logger(1, 'WARNING: Could not regenerate templates, using existing ones');
             console.warn(error);
             addMessage('warning', 'Could not regenerate templates, using existing ones');
             // En cas d'erreur, charger quand même les templates existants
@@ -1455,15 +1455,14 @@ export function printFormNode(action, values, fromNodeList) {
             //addModal(title, html, '', 'second-win');
             $('.modal.second-win .modal-body').html(html);
             $('.modal.second-win .modal-title').text(title); // Optionnel: mettre à jour le titre si nécessaire
-    
+        
             $('.selectpicker').selectpicker();
             
             if (!fromNodeList) {
-                $('.selectpicker-button').trigger('click');
-                $('.selectpicker').selectpicker();
                 setTimeout(function () {
-                    $('.bs-searchbox input').focus()
-                }, 500);
+                    $('.selectpicker-button').trigger('click');
+                    $('.bs-searchbox input').focus();
+                }, 100);
             }
 
             $('#form-node-template').change(function (e2) {
@@ -1622,7 +1621,7 @@ export function printFormNode(action, values, fromNodeList) {
 
                         // Show the form
                         $('#form-node-data').html(html_data);
-                        $('.selectpicker').selectpicker();
+                        $('.selectpicker').selectpicker('refresh');
                         
                         $(document).off('click', '.reset-to-template').on('click', '.reset-to-template', function(e) {
                             e.preventDefault();
@@ -1642,8 +1641,11 @@ export function printFormNode(action, values, fromNodeList) {
 
                         if (!fromNodeList) {
                             setTimeout(function () {
-                                $('.selectpicker').selectpicker().data("selectpicker").$button.focus();
-                            }, 500);
+                                var $selectpicker = $('.selectpicker').data("selectpicker");
+                                if ($selectpicker) {
+                                    $selectpicker.$button.focus();
+                                }
+                            }, 300);
                         }
                         validateNode();
                     }).fail(function (message1, message2) {

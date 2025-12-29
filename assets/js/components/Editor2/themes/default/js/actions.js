@@ -14,7 +14,8 @@
 
 import {TIMEOUT, FOLDER, ROLE, TENANT, LOCK, AUTHOR, EDITION, setFolder, setLab, setLang, setLock, setName, setRole, setTenant, setUpdateId, LONGTIMEOUT, ATTACHMENTS, ISGROUPOWNER, HASGROUPACCESS, setAttachements, VIRTUALITY} from './javascript';
 import {MESSAGES} from './messages_en';
-import '../bootstrap/js/jquery-3.2.1.min';
+import 'jquery';
+window.$ = window.jQuery = $;
 import '../bootstrap/js/tinytools.toggleswitch.min';
 import '../bootstrap/js/jquery-ui-1.12.1.min';
 import '../bootstrap/js/jquery-cookie-1.4.1';

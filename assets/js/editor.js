@@ -13,7 +13,7 @@ import './components/Editor2/themes/default/css/ebs.css';
 import './components/Editor2/themes/default/css/unetlab.css';
 import './components/Editor2/themes/default/css/colorpicker.min.css';
 
-import './components/Editor2/themes/default/bootstrap/js/jquery-3.2.1.min';
+import 'jquery';
 import './components/Editor2/themes/default/bootstrap/js/tinytools.toggleswitch.min';
 import './components/Editor2/themes/default/bootstrap/js/jquery-ui-1.12.1.min';
 import './components/Editor2/themes/default/bootstrap/js/jquery-cookie-1.4.1';

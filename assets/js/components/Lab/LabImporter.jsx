@@ -14,18 +14,26 @@ export default function LabImporter()
         redirect: ''
     });
     const [fileContent, setFileContent] = useState('');
-    const[labTemplateList, setLabTemplateList] = useState();
-    var labTemplatesOptions = [];
+    const[labTemplateList, setLabTemplateList] = useState([]);
+    //var labTemplatesOptions = [];
 
     useEffect(() => {
         Remotelabz.labs.getTemplates().then((response)=> {
-            labTemplatesOptions = response.data;
-            setLabTemplateList(labTemplatesOptions.map((template) => {
-                return <option id={template.id}  key={template.id} value={template.id}>{template.name}</option>
-            }))
-        })
-    }, []);
 
+            const templates = Array.isArray(response.data) ? response.data : [];
+            
+            const templateOptions = templates.map((template) => {
+                return <option id={template.id} key={template.id} value={template.id}>
+                    {template.name}
+                </option>
+            });
+        
+            setLabTemplateList(templateOptions);
+        }).catch(err => {
+            console.error('Error fetching templates:', err);
+            setLabTemplateList([]);
+        });
+    }, []);
     
     const onDrop = useCallback(acceptedFiles => {
         acceptedFiles.forEach((file) => {
