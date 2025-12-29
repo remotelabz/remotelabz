@@ -481,6 +481,7 @@ class DeviceController extends Controller
             "console" => $controlProtocolTypesName,
             "networkInterfaceTemplate"=>$device->getNetworkInterfaceTemplate(),
             "other_options"=>$device->getOtherOptions(),
+            "isos" => $isos,
             "cdrom_bus_type" => $device->getCdromBusType(),
             "bios_type" => $device->getBiosType()
         ];
@@ -578,7 +579,7 @@ class DeviceController extends Controller
 
                 foreach($device->getIsos() as $iso) {
                     $id=$iso->getId();
-                    $this->logger->debug("[DeviceController:update_yaml]::Add iso id ".$id);
+                    $this->logger->debug("[DeviceController:newAction]::Add iso id ".$id);
                     array_push($isos, $id);
                 }
                 if ($isos == []) {
@@ -606,7 +607,9 @@ class DeviceController extends Controller
                     "ethernet" => 1,
                     "virtuality" => $virtuality,              
                     "other_options"=>$device->getOtherOptions(),
-                    "isos" => $isos
+                    "isos" => $isos,
+                    "cdrom_bus_type" => $device->getCdromBusType(),
+                    "bios_type" => $device->getBiosType()
                 ];
                 
                 if (!is_null($device->getOperatingSystem()->getArch())){
@@ -857,6 +860,14 @@ class DeviceController extends Controller
         $device->setTemplate($data['template']);
         $device->setModel($data['model']);
         
+        if(isset($data['bios_type'])) {
+            $device->setBiosType($data['bios_type']);
+        }
+
+        if(isset($data['cdrom_bus_type'])) {
+            $device->setCdromBusType($data['cdrom_bus_type']);
+        }
+
         
         if($data['top'] != '') {
             $editorData->setX($data['top']);
