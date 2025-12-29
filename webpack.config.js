@@ -1,4 +1,3 @@
-const webpack = require('webpack');  // Ajouter en haut
 const Encore = require('@symfony/webpack-encore');
 const path = require('path');
 
@@ -26,7 +25,6 @@ Encore
      */
     .addEntry('app', './assets/js/app.js')
     .addEntry('user', './assets/js/user.js')
-    .addEntry('user-import-results', './assets/js/components/user-import-results.js')
     .addEntry('profile', './assets/js/profile.jsx')
     .addEntry('flavor', './assets/js/flavor.js')
     .addEntry('network-settings', './assets/js/network-settings.js')
@@ -43,18 +41,14 @@ Encore
     .addEntry('iso-form-handler', './assets/js/components/Iso/form-handler.js')
     .addEntry('os-form-handler', './assets/js/components/OperatingSystem/form-handler.js')
     .addEntry('device-form-handler', './assets/js/components/device/device-form.js')
-    
 
-    // SOLUTION 1: Commentez ces deux lignes si vous utilisez libraryTarget: "umd"
+
     // When enabled, Webpack "splits" your files into smaller pieces for greater optimization.
-    // .splitEntryChunks()
+    .splitEntryChunks()
 
     // will require an extra script tag for runtime.js
     // but, you probably want this, unless you're building a single-page app
-    // .enableSingleRuntimeChunk()
-
-    // SOLUTION 1b: OU désactivez explicitement le runtime chunk
-    .disableSingleRuntimeChunk()
+    .enableSingleRuntimeChunk()
 
     /*
      * FEATURE CONFIG
@@ -96,11 +90,7 @@ Encore
     })
 
     .enableReactPreset()
-    .addPlugin(new webpack.ProvidePlugin({
-        $: 'jquery',
-        jQuery: 'jquery',
-        'window.jQuery': 'jquery'
-    }))
+
     .copyFiles({
         from: './assets/images',
         // optional target path, relative to the output dir
@@ -153,14 +143,7 @@ Encore
 ;
 
 const defaultConfig = Encore.getWebpackConfig();
-
-// SOLUTION 2: Si vous n'avez pas besoin du mode UMD, supprimez cette ligne
-// defaultConfig.output.libraryTarget = "umd";
-
-// SOLUTION 2b: Si vous avez besoin du mode UMD, assurez-vous qu'il est compatible
 defaultConfig.output.libraryTarget = "umd";
-defaultConfig.output.globalObject = 'this'; // Important pour UMD
-
 defaultConfig.externals = [
     "add",
     {
@@ -236,17 +219,47 @@ defaultConfig.externals = [
             commonjs: ["ace/tooltip", "subtract"],
             amd: "ace/tooltip"
         },
-        "ace/mode/text": {
-            root: "ace/mode/text",
-            commonjs2: "ace/mode/text",
-            commonjs: ["ace/mode/text", "subtract"],
-            amd: "ace/mode/text"
+        "ace/mouse/default_gutter_handler": {
+            root: "ace/mouse/default_gutter_handler",
+            commonjs2: "ace/mouse/default_gutter_handler",
+            commonjs: ["ace/mouse/default_gutter_handler", "subtract"],
+            amd: "ace/mouse/default_gutter_handler"
         },
-        "ace/clipboard": {
-            root: "ace/clipboard",
-            commonjs2: "ace/clipboard",
-            commonjs: ["ace/clipboard", "subtract"],
-            amd: "ace/clipboard"
+        "ace/mouse/mouse_event": {
+            root: "ace/mouse/mouse_event",
+            commonjs2: "ace/mouse/mouse_event",
+            commonjs: ["ace/mouse/mouse_event", "subtract"],
+            amd: "ace/mouse/mouse_event"
+        },
+        "ace/mouse/dragdrop_handler": {
+            root: "ace/mouse/dragdrop_handler",
+            commonjs2: "ace/mouse/dragdrop_handler",
+            commonjs: ["ace/mouse/dragdrop_handler", "subtract"],
+            amd: "ace/mouse/dragdrop_handler"
+        },
+        "ace/lib/net": {
+            root: "ace/lib/net",
+            commonjs2: "ace/lib/net",
+            commonjs: ["ace/lib/net", "subtract"],
+            amd: "ace/lib/net"
+        },
+        "ace/lib/event_emitter": {
+            root: "ace/lib/event_emitter",
+            commonjs2: "ace/lib/event_emitter",
+            commonjs: ["ace/lib/event_emitter", "subtract"],
+            amd: "ace/lib/event_emitter"
+        },
+        "ace/lib/app_config": {
+            root: "ace/lib/app_config",
+            commonjs2: "ace/lib/app_config",
+            commonjs: ["ace/lib/app_config", "subtract"],
+            amd: "ace/lib/app_config"
+        },
+        "ace/config": {
+            root: "ace/config",
+            commonjs2: "ace/config",
+            commonjs: ["ace/config", "subtract"],
+            amd: "ace/config"
         },
         "ace/mouse/mouse_handler": {
             root: "ace/mouse/mouse_handler",
@@ -272,17 +285,17 @@ defaultConfig.externals = [
             commonjs: ["ace/range", "subtract"],
             amd: "ace/range"
         },
-        "ace/anchor": {
-            root: "ace/anchor",
-            commonjs2: "ace/anchor",
-            commonjs: ["ace/anchor", "subtract"],
-            amd: "ace/anchor"
+        "ace/selection": {
+            root: "ace/selection",
+            commonjs2: "ace/selection",
+            commonjs: ["ace/selection", "subtract"],
+            amd: "ace/selection"
         },
-        "ace/lib/net": {
-            root: "ace/lib/net",
-            commonjs2: "ace/lib/net",
-            commonjs: ["ace/lib/net", "subtract"],
-            amd: "ace/lib/net"
+        "ace/tokenizer": {
+            root: "ace/tokenizer",
+            commonjs2: "ace/tokenizer",
+            commonjs: ["ace/tokenizer", "subtract"],
+            amd: "ace/tokenizer"
         },
         "ace/mode/text_highlight_rules": {
             root: "ace/mode/text_highlight_rules",
@@ -308,29 +321,29 @@ defaultConfig.externals = [
             commonjs: ["ace/mode/behaviour/cstyle", "subtract"],
             amd: "ace/mode/behaviour/cstyle"
         },
-        "ace/mode/folding/cstyle": {
-            root: "ace/mode/folding/cstyle",
-            commonjs2: "ace/mode/folding/cstyle",
-            commonjs: ["ace/mode/folding/cstyle", "subtract"],
-            amd: "ace/mode/folding/cstyle"
-        },
         "ace/unicode": {
             root: "ace/unicode",
             commonjs2: "ace/unicode",
             commonjs: ["ace/unicode", "subtract"],
             amd: "ace/unicode"
         },
-        "ace/tokenizer": {
-            root: "ace/tokenizer",
-            commonjs2: "ace/tokenizer",
-            commonjs: ["ace/tokenizer", "subtract"],
-            amd: "ace/tokenizer"
+        "ace/mode/text": {
+            root: "ace/mode/text",
+            commonjs2: "ace/mode/text",
+            commonjs: ["ace/mode/text", "subtract"],
+            amd: "ace/mode/text"
         },
         "ace/apply_delta": {
             root: "ace/apply_delta",
             commonjs2: "ace/apply_delta",
             commonjs: ["ace/apply_delta", "subtract"],
             amd: "ace/apply_delta"
+        },
+        "ace/anchor": {
+            root: "ace/anchor",
+            commonjs2: "ace/anchor",
+            commonjs: ["ace/anchor", "subtract"],
+            amd: "ace/anchor"
         },
         "ace/document": {
             root: "ace/document",
@@ -547,3 +560,4 @@ if (defaultConfig.optimization && defaultConfig.optimization.minimizer) {
         terser.options.exclude = /\.min\.js$/;
     }
 }
+
