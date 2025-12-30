@@ -204,7 +204,7 @@ class IsoController extends AbstractController
                     if (file_exists($oldFile)) {
                         $this->logger->debug('[IsoController:edit]::Deleting old file when switching to URL: ' . $oldFile);
                         unlink($oldFile);
-                        $this->Files2WorkerManager->deleteFileFromAllWorkers('/images/' . $oldFilename);
+                        $this->Files2WorkerManager->deleteFileFromAllWorkers('iso',$oldFilename);
                     }
                 }
                 

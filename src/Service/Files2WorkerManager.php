@@ -99,6 +99,8 @@ class Files2WorkerManager
      * Supprime un fichier ISO ou Image de tous les workers disponibles
      */
     public function deleteFileFromAllWorkers(string $type,string $localFilename,string $hypervisor=null){
+        $this->logger->debug('[Files2WorkerManager:deleteFileFromAllWorkers]::Receive order to delete '.$type." file with name ".$localFilename);
+
         $workers = $this->configWorkerRepository->findAll();
         foreach ($workers as $worker) {
             $content=[
@@ -108,7 +110,7 @@ class Files2WorkerManager
                 'user_id' => $this->getCurrentUserId(),
             ];
             
-            if ($type="image") {
+            if ($type==="image") {
                 if (is_null($hypervisor))
                     $content['hypervisor']="qemu";
                 else
