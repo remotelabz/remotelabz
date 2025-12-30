@@ -50,6 +50,8 @@ class WorkerHandshakeMessageHandler
         $deviceInstances = $this->deviceInstanceRepository->findAllStartingOrStarted();
 
         foreach ($deviceInstances as $deviceInstance) {
+            $this->logger->debug('Device instance '.$uuid.' is in state Starting or Started');
+
             $workerIp = $deviceInstance->getLabInstance()->getWorkerIp();         
             $deviceInstance->setState(InstanceState::STARTING);
             $this->entityManager->flush();
@@ -82,7 +84,7 @@ class WorkerHandshakeMessageHandler
                 $deviceJson = json_encode($tmp, 0, 4096);
             }
 
-            $this->logger->info('Sending device instance '.$uuid.' start message.');
+            $this->logger->info('Sending start message to '.$workerIp.' for device instance '.$uuid);
             //$this->logger->debug('Sending device instance '.$uuid.' start message.', json_decode($deviceJson, true));
             $this->bus->dispatch(
                 new InstanceActionMessage($deviceJson, $uuid, InstanceActionMessage::ACTION_START), [

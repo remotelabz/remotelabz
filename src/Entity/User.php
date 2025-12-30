@@ -118,6 +118,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Instanc
     #[Serializer\Groups(['api_users', 'api_get_user'])]
     private $lastActivity;
 
+    #[ORM\Column(type: 'datetime', nullable: true)]
+    #[Serializer\Groups(['api_users', 'api_get_user'])]
+    private $registrationEndDate;
+
     #[ORM\OneToMany(targetEntity: 'App\Entity\GroupUser', mappedBy: 'user', cascade: ['persist'])]
     #[Serializer\Exclude]
     private $_groups;
@@ -146,6 +150,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Instanc
         $this->_groups = new ArrayCollection();
         $this->uuid = (string) new Uuid();
         $this->roles = ["ROLE_USER"];
+        
+        // Initialiser la date de fin d'inscription au 31 août de l'année suivante
+        $nextYear = (int) $this->createdAt->format('Y') + 1;
+        $this->registrationEndDate = new \DateTime($nextYear . '-08-31 23:59:59');
     }
 
     public function getId(): ?int
@@ -487,6 +495,30 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Instanc
         $this->lastActivity = $lastActivity;
 
         return $this;
+    }
+
+    public function getRegistrationEndDate(): ?\DateTimeInterface
+    {
+        return $this->registrationEndDate;
+    }
+
+    public function setRegistrationEndDate(?\DateTimeInterface $registrationEndDate): self
+    {
+        $this->registrationEndDate = $registrationEndDate;
+
+        return $this;
+    }
+
+    /**
+     * Vérifie si l'inscription de l'utilisateur est expirée
+     */
+    public function isRegistrationExpired(): bool
+    {
+        if (null === $this->registrationEndDate) {
+            return false;
+        }
+
+        return new \DateTime() > $this->registrationEndDate;
     }
 
     /**

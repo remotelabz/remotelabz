@@ -80,10 +80,6 @@ class IsoController extends AbstractController
                     $localFilePath = $this->getParameter('iso_directory') . '/' . $uploadedFilename;
                     $this->Files2WorkerManager->CopyFileToAllWorkers("iso",$uploadedFilename);
 
-                    
-                    if (file_exists($localFilePath))
-                        unlink($localFilePath);
-
                     $this->addFlash('success', 'ISO created and send order to all workers');
                     
                 } else {
@@ -208,7 +204,7 @@ class IsoController extends AbstractController
                     if (file_exists($oldFile)) {
                         $this->logger->debug('[IsoController:edit]::Deleting old file when switching to URL: ' . $oldFile);
                         unlink($oldFile);
-                        $this->Files2WorkerManager->deleteFileFromAllWorkers('/images/' . $oldFilename);
+                        $this->Files2WorkerManager->deleteFileFromAllWorkers('iso',$oldFilename);
                     }
                 }
                 

@@ -527,7 +527,6 @@ class OperatingSystemController extends Controller
                     $localFilePath = $this->getParameter('image_directory') . '/' . $uploadedFilename;
                     $remoteFilePath = '/images/'.$uploadedFilename;
                     
-                    //$this->Files2WorkerManager->deleteFileFromAllWorkers('image',$uploadedFilename);
                     $this->Files2WorkerManager->CopyFileToAllWorkers('image',$uploadedFilename);
                     
                     unlink($this->getParameter('image_directory') . '/' . $old_filename);
@@ -635,7 +634,7 @@ class OperatingSystemController extends Controller
                             $file = $this->getParameter('image_directory') . '/' . $operatingSystemFilename;
                             if (file_exists($file)) {
                                 unlink($file);
-                                $this->Files2WorkerManager->deleteFileFromAllWorkers('image',$operatingSystemFilename);
+                                $this->Files2WorkerManager->deleteFileFromAllWorkers('image',$operatingSystemFilename,$operatingSystemHypervisor);
                             }
                         }
                     } elseif ($operatingSystemHypervisor === "lxc") {
