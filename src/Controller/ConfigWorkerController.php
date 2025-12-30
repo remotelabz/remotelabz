@@ -200,6 +200,7 @@ class ConfigWorkerController extends Controller
                                 $os_name=$operatingSystem->getName();
                                 $os_filename=$operatingSystem->getImageFilename();
                                 $os_hypervisor=$operatingSystem->getHypervisor()->getName();
+                                $os_url=$operatingSystem->getImageUrl();
                                 $this->logger->debug("[ConfigWorkerController:updateAction]::Test to sync ".$os_name." ".$os_filename." which is a ".$os_hypervisor." image");
 
                                 if (strtolower($os_hypervisor) === "lxc") {
@@ -234,7 +235,7 @@ class ConfigWorkerController extends Controller
                                             $tmp['os_imagename'] = $os_filename;
 
                                             $localFilePath = $this->getParameter('image_directory') . '/' . $os_filename;
-                                            if (file_exist($localFilePath)) {
+                                            if (file_exists($localFilePath)) {
                                                 $this->logger->debug("[ConfigWorkerController:updateAction]::Send to all worker a message to copy from front the file ".$localFilePath);
                                                 $this->Files2WorkerManager->CopyFileToAllWorkers("image",$os_filename);
                                             }
@@ -251,12 +252,12 @@ class ConfigWorkerController extends Controller
                                             }
                                         }
                                         else {
-                                            if (!is_null($os_filename)) {
+                                            if (is_null($os_filename) && !is_null($os_url)) {
                                                 //It's an URL
                                                 $this->logger->debug("[ConfigWorkerController:updateAction]::This OS ".$os_name." is defined by an URL. No sync needed.");
                                             }
                                             else {
-                                                $this->logger->error("[ConfigWorkerController:updateAction]::This OS ".$os_name." is missing on the worker ".$first_available_workerIP);
+                                                $this->logger->error("[ConfigWorkerController:updateAction]::This OS ".$os_name." with file ".$os_filename." is missing on the worker ".$first_available_workerIP);
                                             }
                                         }
                                     }
