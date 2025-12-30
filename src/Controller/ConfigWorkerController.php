@@ -251,8 +251,13 @@ class ConfigWorkerController extends Controller
                                             }
                                         }
                                         else {
-                                            //It's an URL
-                                            $this->logger->debug("[ConfigWorkerController:updateAction]::This OS ".$os_name." is defined by an URL. No sync needed.");
+                                            if (!is_null($os_filename)) {
+                                                //It's an URL
+                                                $this->logger->debug("[ConfigWorkerController:updateAction]::This OS ".$os_name." is defined by an URL. No sync needed.");
+                                            }
+                                            else {
+                                                $this->logger->error("[ConfigWorkerController:updateAction]::This OS ".$os_name." is missing on the worker ".$first_available_workerIP);
+                                            }
                                         }
                                     }
                                     else {

@@ -80,10 +80,6 @@ class IsoController extends AbstractController
                     $localFilePath = $this->getParameter('iso_directory') . '/' . $uploadedFilename;
                     $this->Files2WorkerManager->CopyFileToAllWorkers("iso",$uploadedFilename);
 
-                    
-                    if (file_exists($localFilePath))
-                        unlink($localFilePath);
-
                     $this->addFlash('success', 'ISO created and send order to all workers');
                     
                 } else {
