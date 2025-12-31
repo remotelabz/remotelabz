@@ -1,0 +1,21 @@
+[Unit]
+Description=RemoteLabz Lab Routes Monitor Service
+After=network.target
+
+[Service]
+Type=simple
+User=root
+Group=root
+WorkingDirectory=/opt/remotelabz
+ExecStart=/usr/bin/php /opt/remotelabz/bin/console app:route:monitor --no-interaction
+Restart=always
+RestartSec=300
+StandardOutput=journal
+StandardError=journal
+
+# Security hardening (optionnel)
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

@@ -11,6 +11,7 @@ use App\Service\Monitor\WorkerServiceMonitor;
 use App\Service\Monitor\RouterServiceMonitor;
 use App\Service\Monitor\SshConnectionMonitor;
 use App\Service\Monitor\CertificateMonitor;
+use App\Service\Network\RouteManagerService;
 use App\Service\Worker\WorkerManager;
 use App\Service\Proxy\ProxyManager;
 
@@ -58,6 +59,7 @@ class ServiceController extends Controller
     // New monitoring services
     private $sshMonitor;
     private $certMonitor;
+    private $routeManager;
     private $sslCaKey;
     private $sslCaCert;
     private $sslTlsKey;
@@ -85,7 +87,8 @@ class ServiceController extends Controller
         ConfigWorkerRepository $configWorkerRepository,
         LabInstanceRepository $labInstanceRepository,
         DeviceInstanceRepository $deviceInstanceRepository,
-        EntityManagerInterface $entityManager
+        EntityManagerInterface $entityManager,
+        RouteManagerService $routeManager
     ) {
         $this->workerPort = $workerPort;
         $this->workerServer = $workerServer;
@@ -103,6 +106,7 @@ class ServiceController extends Controller
         $this->proxyManager = $proxyManager;
         $this->logger = $logger ?: new NullLogger();       
         $this->entityManager = $entityManager;
+        $this->routeManager = $routeManager;
 
         // SSL/Certificate paths
         $this->sslCaKey = $sslCaKey;
@@ -176,8 +180,7 @@ class ServiceController extends Controller
 
                 if ($registeredService::getServiceName() == "router") {
                    $service = new $registeredService(
-                                    $this->LabInstanceRepository,
-                                    $this->workerPort,
+                                    $this->routeManager,
                                     $this->logger
                                 );
                 }
@@ -278,8 +281,7 @@ class ServiceController extends Controller
                             );
                         } elseif ($registeredService::getServiceName() == "router") {
                                $service = new $registeredService(
-                                    $this->LabInstanceRepository,
-                                    $this->workerPort,
+                                    $this->routeManager,
                                     $this->logger
                                 );
                         }
@@ -348,8 +350,7 @@ class ServiceController extends Controller
                             );
                         } elseif ($registeredService::getServiceName() == "router") {
                             $service = new $registeredService(
-                                $this->LabInstanceRepository,
-                                $this->workerPort,
+                                $this->routeManager,
                                 $this->logger
                             );
                         }

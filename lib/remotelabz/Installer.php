@@ -221,6 +221,10 @@ class Installer
         try {
             $this->configureMessengerService();
             $this->configureProxyService();
+            $this->configureRouteMonitorService();
+            $this->configureRouteMonitorTimerService();
+            $this->configureGitVersionService();
+            $this->configureGitVersionTimerService();
             echo "OK ✔️\n";
         } catch (Exception $e) {
             throw new Exception("Error while configuring Remotelabz services.", 0, $e);
@@ -358,6 +362,7 @@ class Installer
         if (!is_link("/usr/bin/remotelabz-ctl")) {
             symlink($this->installPath . "/bin/remotelabz-ctl", "/usr/bin/remotelabz-ctl");
         }
+        
         chmod("/usr/bin/remotelabz-ctl", 0777);
 
         copy($this->installPath . "/.env", $this->installPath . "/.env.local");
@@ -557,6 +562,38 @@ class Installer
         $returnCode = symlink($this->installPath . '/bin/git-version-update.timer', '/etc/systemd/system/git-version-update.timer');
         if (!$returnCode) {
             throw new Exception("Could not symlink git version timer service correctly.");
+        }
+    }
+
+    private function configureRouteMonitorService()
+    {
+        chdir($this->installPath);
+        $returnCode = false;
+        if (file_exists('/etc/systemd/system/remotelabz-route-monitor.service')) {
+            $this->logger->debug('Remove old remotelabz route monitor service file');
+            unlink('/etc/systemd/system/remotelabz-route-monitor.service');
+        }
+    
+        $returnCode = symlink($this->installPath . '/bin/remotelabz-route-monitor.service', '/etc/systemd/system/remotelabz-route-monitor.service');
+    
+        if (!$returnCode) {
+            throw new Exception("Could not symlink route monitor service correctly.");
+        }
+    }
+
+    private function configureRouteMonitorTimerService()
+    {
+        chdir($this->installPath);
+        $returnCode = false;
+        if (file_exists('/etc/systemd/system/remotelabz-route-monitor.timer')) {
+            $this->logger->debug('Remove old remotelabz route monitor timer service file');
+            unlink('/etc/systemd/system/remotelabz-route-monitor.timer');
+        }
+    
+        $returnCode = symlink($this->installPath . '/bin/remotelabz-route-monitor.timer', '/etc/systemd/system/remotelabz-route-monitor.timer');
+    
+        if (!$returnCode) {
+            throw new Exception("Could not symlink route monitor timer service correctly.");
         }
     }
 
