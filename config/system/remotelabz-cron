@@ -1,1 +1,0 @@
-0 2 * * * root cd /opt/remotelabz && php bin/console app:notifications:clean

@@ -1,0 +1,15 @@
+[Unit]
+Description=Clean old read notifications from RemoteLabz database
+After=network.target mysql.service
+
+[Service]
+Type=oneshot
+User=root
+WorkingDirectory=/opt/remotelabz
+ExecStart=/usr/bin/php bin/console app:notifications:clean
+StandardOutput=journal
+StandardError=journal
+
+# Security hardening
+PrivateTmp=yes
+NoNewPrivileges=yes

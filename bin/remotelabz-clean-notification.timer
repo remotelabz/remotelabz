@@ -1,0 +1,14 @@
+[Unit]
+Description=Daily cleanup of old notifications at 2 AM
+Requires=remotelabz-clean-notification.service
+
+[Timer]
+# Exécution quotidienne à 2h00 du matin
+OnCalendar=*-*-* 02:00:00
+# Déclencher immédiatement si une exécution a été manquée (ex: système éteint)
+Persistent=true
+# Ajouter un délai aléatoire de 0-10 minutes pour éviter la charge simultanée
+RandomizedDelaySec=10min
+
+[Install]
+WantedBy=timers.target
