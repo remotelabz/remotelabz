@@ -223,6 +223,8 @@ class Installer
             $this->configureProxyService();
             $this->configureRouteMonitorService();
             $this->configureRouteMonitorTimerService();
+            $this->configureCleanNotificationService();
+            $this->configureCleanNotificationTimerService();
             $this->configureGitVersionService();
             $this->configureGitVersionTimerService();
             echo "OK ✔️\n";
@@ -245,6 +247,30 @@ class Installer
             $this->logger->debug($output);
             if ($returnCode) {
                 throw new Exception("Could not enable RemoteLabz Proxy Service.");
+            }
+
+            $returnCode = 0;
+            $output = [];
+            exec("systemctl enable remotelabz-clean-notification.timer",$output,$returnCode);
+            $this->logger->debug($output);
+            if ($returnCode) {
+                throw new Exception("Could not enable RemoteLabz Clean Notification Timer Service.");
+            }
+
+            $returnCode = 0;
+            $output = [];
+            exec("systemctl enable remotelabz-route-monitor.timer",$output,$returnCode);
+            $this->logger->debug($output);
+            if ($returnCode) {
+                throw new Exception("Could not enable RemoteLabz Route monitor timer service.");
+            }
+
+            $returnCode = 0;
+            $output = [];
+            exec("systemctl enable remotelabz-route-monitor.service",$output,$returnCode);
+            $this->logger->debug($output);
+            if ($returnCode) {
+                throw new Exception("Could not enable RemoteLabz Route monitor service.");
             }
             
             echo "OK ✔️\n";
@@ -596,6 +622,39 @@ class Installer
             throw new Exception("Could not symlink route monitor timer service correctly.");
         }
     }
+
+    private function configureCleanNotificationService()
+    {
+        chdir($this->installPath);
+        $returnCode = false;
+        if (file_exists('/etc/systemd/system/remotelabz-clean-notification.service')) {
+            $this->logger->debug('Remove old remotelabz clean notification service file');
+            unlink('/etc/systemd/system/remotelabz-clean-notification.service');
+        }
+    
+        $returnCode = symlink($this->installPath . '/bin/remotelabz-clean-notification.service', '/etc/systemd/system/remotelabz-clean-notification.service');
+    
+        if (!$returnCode) {
+            throw new Exception("Could not symlink clean notification service correctly.");
+        }
+    }
+
+    private function configureCleanNotificationTimerService()
+    {
+        chdir($this->installPath);
+        $returnCode = false;
+        if (file_exists('/etc/systemd/system/remotelabz-clean-notification.timer')) {
+            $this->logger->debug('Remove old remotelabz clean notification timer service file');
+            unlink('/etc/systemd/system/remotelabz-clean-notification.timer');
+        }
+    
+        $returnCode = symlink($this->installPath . '/bin/remotelabz-clean-notification.timer', '/etc/systemd/system/remotelabz-clean-notification.timer');
+    
+        if (!$returnCode) {
+            throw new Exception("Could not symlink clean notification timer service correctly.");
+        }
+    }
+
 
     /**
      * Recursively copy a folder.
