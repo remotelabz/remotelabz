@@ -83,15 +83,21 @@ class DeviceInstanceRepository extends ServiceEntityRepository
 
     public function findAllStartingOrStarted()
     {
-        return $this->createQueryBuilder('l')
-            ->where('l.state = :a')
-            ->orWhere('l.state = :b')
-            ->setParameter('a', 'starting')
-            ->setParameter('b', 'started')
-            ->getQuery()
-            ->getResult()
-        ;
+        $entityManager = $this->getEntityManager();
+
+        $query = $entityManager->createQuery(
+            'SELECT di
+            FROM App\Entity\DeviceInstance di
+            WHERE di.state = :a OR di.state = :b'
+        )
+        ->setParameter('a', 'starting')
+        ->setParameter('b', 'started');
+
+        $deviceInstances = $query->getResult();
+
+        return $deviceInstances;
     }
+
     public function findByLabInstance($lab)
     {
 

@@ -278,7 +278,7 @@ class ShibbolethAuthenticator extends AbstractAuthenticator
      */
     public function onAuthenticationFailure(Request $request, AuthenticationException $exception): ?Response
     {
-        $this->logger->debug("authentification shibboleth failure");
+        $this->logger->debug("[ShibbolethAuthenticator:onAuthenticationFailure]::Authentification shibboleth failure");
 
         $redirectTo = $this->getRedirectUrl();
         if (in_array('application/json', $request->getAcceptableContentTypes())) {
@@ -296,7 +296,7 @@ class ShibbolethAuthenticator extends AbstractAuthenticator
             if ($exception instanceof CustomUserMessageAuthenticationException) {
                 /** @var FlashBagInterface $flashbag */
                 $flashbag = $request->getSession()->getBag('flashes');
-                $flashbag->add('danger', 'Your affiliation is not allowed to use this application.');
+                $flashbag->add('danger', 'Your organization is not allowed to use this application.');
             }
 
             return null;
@@ -335,7 +335,7 @@ class ShibbolethAuthenticator extends AbstractAuthenticator
 
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): ?Response
     {
-        $this->logger->debug("authentification shibboleth success");
+        $this->logger->debug("[ShibbolethAuthenticator:onAuthenticationSuccess]::Authentification shibboleth success");
         if (!$request->cookies->has('bearer')) {
             $response = new RedirectResponse($this->urlGenerator->generate('index'));
             /** @var User $user */
@@ -403,7 +403,7 @@ class ShibbolethAuthenticator extends AbstractAuthenticator
      */
     public function onLogoutSuccess(Request $request)
     {
-        $this->logger->debug("logout shibboleth success");
+        $this->logger->debug("[ShibbolethAuthenticator:onLogoutSuccess]::Logout shibboleth success");
 
         $redirectTo = $this->urlGenerator->generate('shib_logout', array(
             'return'  => $this->idpUrl . '/profile/Logout'
