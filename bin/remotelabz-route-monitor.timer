@@ -1,0 +1,12 @@
+[Unit]
+Description=RemoteLabz Routes Monitor Timer
+Requires=remotelabz-route-monitor.service
+
+[Timer]
+# Execute every 5 minutes
+OnBootSec=1min
+OnUnitActiveSec=5min
+Unit=remotelabz-route-monitor.service
+
+[Install]
+WantedBy=timers.target

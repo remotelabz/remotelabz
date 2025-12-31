@@ -48,7 +48,7 @@ class IPTools extends Bridge
      * @throws ProcessFailedException If the process didn't terminate successfully.
      * @return Process The executed process.
      */
-    public static function addrShow(string $name = null) : Process {
+    public static function addrShow(?string $name = null) : Process {
         $command = [ 'ip', 'addr', 'show' ];
 
         if (!empty($name)) {
@@ -83,7 +83,7 @@ class IPTools extends Bridge
      * @throws ProcessFailedException If the process didn't terminate successfully.
      * @return Process The executed process.
      */
-    public static function linkShow(string $name = null) : Process {
+    public static function linkShow(?string $name = null) : Process {
         $command = [ 'ip', 'link', 'show' ];
 
         if (!empty($name)) {
@@ -161,7 +161,7 @@ class IPTools extends Bridge
      * @throws ProcessFailedException If the process didn't terminate successfully.
      * @return Process The executed process.
      */
-    public static function routeDelete(string $route, string $gateway=null){
+    public static function routeDelete(string $route, ?string $gateway=null){
         if (empty($route)) {
             throw new Exception("Route cannot be empty.");
         }     

@@ -1,4 +1,6 @@
-Cmnd_Alias REMOTELABZ_CMDS = /bin/systemctl start git-version-update.service, /bin/systemctl status git-version-update.service, /bin/systemctl start remotelabz*, /bin/systemctl stop remotelabz*, /bin/systemctl status remotelabz*, /usr/sbin/ip, /sbin/iptables, /usr/sbin/service remotelabz-proxy start, /usr/sbin/service remotelabz-proxy stop
+Cmnd_Alias REMOTELABZ_CMDS = /bin/systemctl start git-version-update.service, /bin/systemctl status git-version-update.service
+Cmnd_Alias REMOTELABZ_SERVICE = /bin/systemctl start remotelabz*, /bin/systemctl stop remotelabz*, /bin/systemctl status remotelabz*
+Cmnd_Alias REMOTELABZ_CMDS_NETWORK = /usr/sbin/ip, /sbin/iptables
 
-%www-data ALL=(ALL) NOPASSWD: REMOTELABZ_CMDS
-www-data ALL=(ALL) NOPASSWD: REMOTELABZ_CMDS
+%www-data ALL=(ALL) NOPASSWD: REMOTELABZ_CMDS, REMOTELABZ_SERVICE, REMOTELABZ_CMDS_NETWORK
+www-data ALL=(ALL) NOPASSWD: REMOTELABZ_CMDS, REMOTELABZ_SERVICE, REMOTELABZ_CMDS_NETWORK
