@@ -17,7 +17,7 @@ use JMS\Serializer\Annotation as Serializer;
 #[ORM\Entity(repositoryClass: 'App\Repository\DirectoryRepository')]
 #[ORM\Table(name: 'directory')]
 #[ORM\Index(name: 'idx_directory_parent', columns: ['parent_id'])]
-#[ORM\Index(name: 'idx_directory_path', columns: ['path'])]
+#[ORM\Index(name: 'idx_directory_path', columns: ['path'], options: ['lengths' => [191]])]
 #[ORM\HasLifecycleCallbacks]
 class Directory
 {
