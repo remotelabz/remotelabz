@@ -7,9 +7,11 @@ use App\Entity\Arch;
 use App\Entity\User;
 use App\Entity\ConfigWorker;
 use App\Entity\OperatingSystem;
+use App\Entity\Directory;
 
 use App\Form\IsoType;
 use App\Repository\IsoRepository;
+use App\Repository\DirectoryRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
@@ -520,5 +522,67 @@ class IsoController extends AbstractController
         }
 
         return $bytes;
+    }
+
+        /**
+     * Get ISOs in a directory
+     * 
+     * @Route("/api/directories/{id}/isos", name="api_directory_isos", methods={"GET"})
+     */
+    public function getIsosInDirectory(
+        int $id,
+        DirectoryRepository $directoryRepo
+    ): JsonResponse {
+        $directory = $directoryRepo->find($id);
+        
+        if (!$directory) {
+            return $this->json(['error' => 'Directory not found'], Response::HTTP_NOT_FOUND);
+        }
+        
+        $isos = $directory->getIsos()->toArray();
+        
+        return $this->json($isos, Response::HTTP_OK, [], ['groups' => ['worker', 'sandbox']]);
+    }
+
+    /**
+     * Move ISO to directory
+     * 
+     * @Route("/api/isos/{id}/move", name="api_iso_move", methods={"PUT"})
+     */
+    public function moveIsoToDirectory(
+        int $id,
+        Request $request,
+        EntityManagerInterface $em,
+        IsoRepository $isoRepo,
+        DirectoryRepository $directoryRepo
+    ): JsonResponse {
+        $iso = $isoRepo->find($id);
+        
+        if (!$iso) {
+            return $this->json(['error' => 'ISO not found'], Response::HTTP_NOT_FOUND);
+        }
+        
+        $data = json_decode($request->getContent(), true);
+        $directoryId = $data['directory_id'] ?? null;
+        
+        if ($directoryId) {
+            $directory = $directoryRepo->find($directoryId);
+            
+            if (!$directory) {
+                return $this->json(['error' => 'Directory not found'], Response::HTTP_NOT_FOUND);
+            }
+            
+            $iso->setDirectory($directory);
+        } else {
+            $iso->setDirectory(null);
+        }
+        
+        $em->flush();
+        
+        return $this->json([
+            'message' => 'ISO moved successfully',
+            'iso' => $iso,
+            'fullPath' => $iso->getFullPath()
+        ], Response::HTTP_OK, [], ['groups' => ['worker', 'sandbox']]);
     }
 }

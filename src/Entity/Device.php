@@ -13,10 +13,15 @@ use Doctrine\Common\Collections\Collection;
 use JMS\Serializer\Annotation as Serializer;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Validator\Constraints as Assert;
+use App\Entity\Interface\DirectoryAwareInterface;
+use App\Entity\Trait\DirectoryAwareTrait;
 
 #[ORM\Entity(repositoryClass: 'App\Repository\DeviceRepository')]
-class Device implements InstanciableInterface
+class Device implements InstanciableInterface, DirectoryAwareInterface
 {
+
+    use DirectoryAwareTrait;
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
