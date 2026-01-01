@@ -48,7 +48,6 @@ class WorkerHandshakeMessageHandler
         ]);
 
         $deviceInstances = $this->deviceInstanceRepository->findAllStartingOrStarted();
-        $this->logger->debug('Devices find');
 
         foreach ($deviceInstances as $deviceInstance) {
             $this->logger->debug('Device in started find');
