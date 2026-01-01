@@ -5,6 +5,8 @@ namespace App\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
+use App\Entity\Interface\DirectoryAwareInterface;
+use App\Entity\Trait\DirectoryAwareTrait;
 
 /**
  * Represents a disk image with metadata
@@ -15,8 +17,10 @@ use Symfony\Component\Validator\Constraints as Assert;
  */
 #[ORM\Entity(repositoryClass: 'App\Repository\OperatingSystemRepository')]
 #[Serializer\XmlRoot('operating_system')]
-class OperatingSystem
+class OperatingSystem implements DirectoryAwareInterface
 {
+    use DirectoryAwareTrait;
+
     /**
      * @var int
      */

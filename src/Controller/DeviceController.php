@@ -12,11 +12,13 @@ use App\Entity\ControlProtocolType;
 use App\Entity\OperatingSystem;
 use App\Entity\InvitationCode;
 use App\Entity\Iso;
+use App\Entity\Directory;
 use App\Form\DeviceType;
 use App\Form\EditorDataType;
 use App\Form\ControlProtocolTypeType;
 use App\Form\IsoType;
 use App\Repository\DeviceRepository;
+use App\Repository\DirectoryRepository;
 use App\Repository\DeviceInstanceRepository;
 use App\Repository\LabRepository;
 use App\Repository\LabInstanceRepository;
@@ -1952,5 +1954,94 @@ class DeviceController extends Controller
                     //return 'http://'.$_SERVER['SERVER_NAME'].':8080/guacamole/#/client/'.$b64id ;
                     return '/html5/#/client/'.$b64id.'?token='.$token ;
                 }*/
+    }
+
+    /**
+     * Get devices in a directory
+     * 
+     * @Route("/api/directories/{id}/devices", name="api_directory_devices", methods={"GET"})
+     */
+    public function getDevicesInDirectory(
+        int $id,
+        DirectoryRepository $directoryRepo
+    ): JsonResponse {
+        $directory = $directoryRepo->find($id);
+        
+        if (!$directory) {
+            return $this->json(['error' => 'Directory not found'], Response::HTTP_NOT_FOUND);
+        }
+        
+        $devices = $directory->getDevices()->toArray();
+        
+        return $this->json($devices, Response::HTTP_OK, [], [
+            'groups' => ['api_get_device', 'api_get_lab_template']
+        ]);
+    }
+
+    /**
+     * Move device to directory
+     * 
+     * @Route("/api/devices/{id}/move", name="api_device_move", methods={"PUT"})
+     */
+    public function moveDeviceToDirectory(
+        int $id,
+        Request $request,
+        EntityManagerInterface $em,
+        DeviceRepository $deviceRepo,
+        DirectoryRepository $directoryRepo
+    ): JsonResponse {
+        $device = $deviceRepo->find($id);
+        
+        if (!$device) {
+            return $this->json(['error' => 'Device not found'], Response::HTTP_NOT_FOUND);
+        }
+        
+        $data = json_decode($request->getContent(), true);
+        $directoryId = $data['directory_id'] ?? null;
+        
+        if ($directoryId) {
+            $directory = $directoryRepo->find($directoryId);
+            
+            if (!$directory) {
+                return $this->json(['error' => 'Directory not found'], Response::HTTP_NOT_FOUND);
             }
+            
+            $device->setDirectory($directory);
+        } else {
+            // Move to root (no directory)
+            $device->setDirectory(null);
+        }
+        
+        $em->flush();
+        
+        return $this->json([
+            'message' => 'Device moved successfully',
+            'device' => $device,
+            'fullPath' => $device->getFullPath()
+        ], Response::HTTP_OK, [], ['groups' => ['api_get_device']]);
+    }
+
+    /**
+     * Get device with breadcrumb
+     * 
+     * @Route("/api/devices/{id}/breadcrumb", name="api_device_breadcrumb", methods={"GET"})
+     */
+    public function getDeviceBreadcrumb(
+        int $id,
+        DeviceRepository $deviceRepo
+        ): JsonResponse {
+            $device = $deviceRepo->find($id);
+            
+            if (!$device) {
+                return $this->json(['error' => 'Device not found'], Response::HTTP_NOT_FOUND);
+            }
+            
+            $breadcrumb = $device->getBreadcrumb();
+            
+            return $this->json([
+                'device' => $device,
+                'breadcrumb' => $breadcrumb,
+                'fullPath' => $device->getFullPath()
+            ], Response::HTTP_OK, [], ['groups' => ['api_get_device', 'api_directory']]);
+    }
 }

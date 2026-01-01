@@ -8,7 +8,8 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 use JMS\Serializer\Annotation as Serializer;
-
+use App\Entity\Interface\DirectoryAwareInterface;
+use App\Entity\Trait\DirectoryAwareTrait;
 /**
  * Represents an iso image disk 
  *
@@ -16,8 +17,10 @@ use JMS\Serializer\Annotation as Serializer;
  */
 
 #[ORM\Entity(repositoryClass: IsoRepository::class)]
-class Iso
+class Iso implements DirectoryAwareInterface
 {
+    use DirectoryAwareTrait;
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]

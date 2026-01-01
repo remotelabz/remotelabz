@@ -4,10 +4,12 @@ namespace App\Controller;
 
 use App\Entity\OperatingSystem;
 use App\Entity\Device;
+use App\Entity\Directory;
 use App\Repository\HypervisorRepository;
 use App\Repository\OperatingSystemRepository;
 use App\Repository\ArchRepository;
 use App\Repository\ConfigWorkerRepository;
+use App\Repository\DirectoryRepository;
 use Psr\Log\LoggerInterface;
 use App\Form\OperatingSystemType;
 use App\Form\BlankOperatingSystemType;
@@ -1126,6 +1128,70 @@ class OperatingSystemController extends Controller
                 $operatingSystem->setArch($defaultArch);
             }
         }
+    }
+
+        /**
+     * Get Operating Systems in a directory
+     * 
+     * @Route("/api/directories/{id}/operating-systems", name="api_directory_os", methods={"GET"})
+     */
+    public function getOperatingSystemsInDirectory(
+        int $id,
+        DirectoryRepository $directoryRepo
+    ): JsonResponse {
+        $directory = $directoryRepo->find($id);
+        
+        if (!$directory) {
+            return $this->json(['error' => 'Directory not found'], Response::HTTP_NOT_FOUND);
+        }
+        
+        $operatingSystems = $directory->getOperatingSystems()->toArray();
+        
+        return $this->json($operatingSystems, Response::HTTP_OK, [], [
+            'groups' => ['api_get_operating_system', 'api_get_lab_template']
+        ]);
+    }
+
+    /**
+     * Move Operating System to directory
+     * 
+     * @Route("/api/operating-systems/{id}/move", name="api_os_move", methods={"PUT"})
+     */
+    public function moveOperatingSystemToDirectory(
+        int $id,
+        Request $request,
+        EntityManagerInterface $em,
+        OperatingSystemRepository $osRepo,
+        DirectoryRepository $directoryRepo
+    ): JsonResponse {
+        $os = $osRepo->find($id);
+        
+        if (!$os) {
+            return $this->json(['error' => 'Operating System not found'], Response::HTTP_NOT_FOUND);
+        }
+        
+        $data = json_decode($request->getContent(), true);
+        $directoryId = $data['directory_id'] ?? null;
+        
+        if ($directoryId) {
+            $directory = $directoryRepo->find($directoryId);
+            
+            if (!$directory) {
+                return $this->json(['error' => 'Directory not found'], Response::HTTP_NOT_FOUND);
+            }
+            
+            $os->setDirectory($directory);
+        } else {
+            $os->setDirectory(null);
+        }
+        
+        $em->flush();
+        
+        return $this->json([
+            'message' => 'Operating System moved successfully',
+            'operatingSystem' => $os,
+            'fullPath' => $os->getFullPath()
+        ], Response::HTTP_OK, [], ['groups' => ['api_get_operating_system']]);
     }
 
 
