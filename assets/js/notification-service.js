@@ -3,7 +3,7 @@
  * Handles displaying notifications using react-toastify library
  */
 
-import { toast,Bounce  } from 'react-toastify';
+import { toast, Bounce } from 'react-toastify';
 
 class NotificationService {
     constructor() {
@@ -16,8 +16,18 @@ class NotificationService {
             pauseOnHover: true,
             draggable: true,
             progress: undefined,
-            pauseOnFocusLoss:false
+            pauseOnFocusLoss: false,
+            transition: Bounce // Explicitly set transition
         };
+    }
+
+    /**
+     * Generate a unique toast ID to prevent conflicts
+     * @param {string} type - Type of notification
+     * @returns {string} Unique ID
+     */
+    _generateToastId(type) {
+        return `${type}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     }
 
     /**
@@ -28,6 +38,7 @@ class NotificationService {
     success(message, timeout = null) {
         const options = { 
             ...this.defaultOptions,
+            toastId: this._generateToastId('success')
         };
         if (timeout === 0 || timeout === false) {
             options.autoClose = false;
@@ -44,7 +55,10 @@ class NotificationService {
      * @param {number} timeout - Duration in ms (0 or false = no auto close)
      */
     error(message, timeout = 0) {
-        const options = { ...this.defaultOptions };
+        const options = { 
+            ...this.defaultOptions,
+            toastId: this._generateToastId('error')
+        };
         if (timeout === 0 || timeout === false) {
             options.autoClose = false;
         } else {
@@ -60,7 +74,10 @@ class NotificationService {
      * @param {number} timeout - Duration in ms
      */
     warning(message, timeout = 5000) {
-        const options = { ...this.defaultOptions };
+        const options = { 
+            ...this.defaultOptions,
+            toastId: this._generateToastId('warning')
+        };
         if (timeout === 0 || timeout === false) {
             options.autoClose = false;
         } else {
@@ -76,7 +93,10 @@ class NotificationService {
      * @param {number} timeout - Duration in ms
      */
     info(message, timeout = 5000) {
-        const options = { ...this.defaultOptions };
+        const options = { 
+            ...this.defaultOptions,
+            toastId: this._generateToastId('info')
+        };
         if (timeout === 0 || timeout === false) {
             options.autoClose = false;
         } else {
@@ -93,7 +113,11 @@ class NotificationService {
      * @param {Object} options - Custom toast options
      */
     custom(type, message, options = {}) {
-        const mergedOptions = { ...this.defaultOptions, ...options };
+        const mergedOptions = { 
+            ...this.defaultOptions, 
+            ...options,
+            toastId: options.toastId || this._generateToastId(type)
+        };
         
         switch(type) {
             case 'success':
@@ -118,6 +142,14 @@ class NotificationService {
      */
     dismissAll() {
         toast.dismiss();
+    }
+
+    /**
+     * Dismiss a specific toast by ID
+     * @param {string} toastId - The ID of the toast to dismiss
+     */
+    dismiss(toastId) {
+        toast.dismiss(toastId);
     }
 }
 
