@@ -30,7 +30,7 @@ cp /home/${SUDO_USER}/remotelabz/config/apache/cert.cnf .
 
 sed -i "s/commonName = 192.168.11.131/commonName = ${PUBLIC_ADDRESS}/g" cert.cnf
 sed -i "s/IP.1 = 192.168.11.131/IP.1 = ${PUBLIC_ADDRESS}/g" cert.cnf
-sed -i "s/ServerName remotelabz.com/ServerName ${PUBLIC_ADDRESS}/g" /etc/apache2/sites-available/100-remotelabz.conf
+sed -i "s/ServerName localhost/ServerName ${PUBLIC_ADDRESS}/g" /etc/apache2/sites-available/100-remotelabz.conf
 
 echo "🔥 Configuration of your certificate with IP or hostname ${PUBLIC_ADDRESS} .."
 openssl req -x509 -nodes -days 365 -sha512 -newkey rsa:2048 -keyout RemoteLabz-WebServer.key -out RemoteLabz-WebServer.crt -config /home/${SUDO_USER}/EasyRSA/cert.cnf

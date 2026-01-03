@@ -1,6 +1,6 @@
 [Unit]
 Description=RemoteLabz Git Version Update Timer
-Requires=git-version-update.service
+Requires=remotelabz-git-version-update.service
 
 [Timer]
 # Exécuter au démarrage

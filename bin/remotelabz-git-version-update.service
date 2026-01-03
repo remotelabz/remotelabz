@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 Type=oneshot
-ExecStart=/bin/bash /opt/remotelabz/bin/git-version-update.sh
+ExecStart=/bin/bash /opt/remotelabz/bin/remotelabz-git-version-update.sh
 User=www-data
 Group=www-data
 StandardOutput=journal
