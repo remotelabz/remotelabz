@@ -10,6 +10,7 @@ apt update
 apt install php8.4 -y
 apt install php8.4-common php8.4-gd php8.4-amqp php8.4-cli php8.4-opcache php8.4-mysql php8.4-xml php8.4-curl php8.4-zip php8.4-mbstring php8.4-gd php8.4-intl php8.4-bcmath php8.4-ssh2 -y
 apt install haproxy
+cp config/haproxy/haproxy.cfg /etc/haproxy/
 apt install -y  libapache2-mod-shib libapache2-mod-php8.4
 apt autoremove -y
 a2dismod php7.4 php8.1 php8.2 php8.3
@@ -104,7 +105,7 @@ cp pki/ca.crt /etc/openvpn/server
 cp pki/private/ca.key /etc/openvpn/server
 
 
-openvpn --genkey --secret ta.key
+openvpn --genkey --peer-fingerprint ta.key
 cp ta.key /etc/openvpn/server
 openssl dhparam -out dh2048.pem 2048
 mv dh2048.pem /etc/openvpn/server
