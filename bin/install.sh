@@ -54,57 +54,196 @@ check_root() {
 
 # ============================================================================
 # Load or create environment file
+# This function REQUIRES a base .env file to exist
 # ============================================================================
 setup_env_file() {
     local ENV_FILE="/opt/remotelabz/.env.local"
+    local BASE_ENV_FILE="${SCRIPT_DIR}/.env"
     
     # Create directory if it doesn't exist
     mkdir -p /opt/remotelabz
     
-    if [ ! -f "$ENV_FILE" ]; then
-        print_warning "Environment file not found. Creating template..."
+    # Check if .env.local already exists
+    if [ -f "$ENV_FILE" ]; then
+        print_info "Environment file .env.local already exists at $ENV_FILE"
         
-        # Get public IP or use localhost
-        PUBLIC_IP=$(curl -s ifconfig.me 2>/dev/null || echo "localhost")
+        # Load the existing file
+        source "$ENV_FILE"
+        print_info "Existing environment file loaded successfully"
         
-        cat > "$ENV_FILE" << EOF
-# RemoteLabz Configuration File
-# Created by installation script
-
-# Public address for SSL certificate
-PUBLIC_ADDRESS=${PUBLIC_IP}
-
-# Worker server configuration
-WORKER_SERVER=localhost
-
-# Proxy configuration
-REMOTELABZ_PROXY_USE_WSS=0
-REMOTELABZ_PROXY_SSL_CERT_SELFSIGNED=0
-
-# Database configuration
-MYSQL_SERVER=localhost
-MYSQL_USER=user
-MYSQL_PASSWORD=Mysql-Pa33wrd\$
-MYSQL_DATABASE=remotelabz
-
-# Application environment
-APP_ENV=prod
-APP_MAINTENANCE=1
-EOF
-        
-        print_info "Environment file created at $ENV_FILE"
-        print_warning "Please review and modify $ENV_FILE if needed"
-        
-        # Ask if user wants to edit now
-        read -p "Do you want to edit the configuration now? (y/N): " edit_config
-        if [[ "$edit_config" =~ ^[Yy]$ ]]; then
+        # Ask if user wants to review/edit it
+        read -p "Do you want to review/edit the existing configuration? (y/N): " edit_existing
+        if [[ "$edit_existing" =~ ^[Yy]$ ]]; then
             ${EDITOR:-nano} "$ENV_FILE"
+            source "$ENV_FILE"
+        fi
+        
+        return 0
+    fi
+    
+    # .env.local doesn't exist, we need to create it from a base .env file
+    print_info "Environment file .env.local not found, looking for base .env file..."
+    
+    # Priority 1: Check if .env exists in the script directory (source directory)
+    if [ -f "$BASE_ENV_FILE" ]; then
+        print_info "✅ Found base .env file: $BASE_ENV_FILE"
+        print_info "Creating .env.local from base .env file..."
+        cp "$BASE_ENV_FILE" "$ENV_FILE"
+        print_info "✅ Configuration copied to $ENV_FILE"
+        
+    # Priority 2: Check if .env exists in /opt/remotelabz (if RemoteLabz is already there)
+    elif [ -f "/opt/remotelabz/.env" ]; then
+        print_info "✅ Found base .env file: /opt/remotelabz/.env"
+        print_info "Creating .env.local from /opt/remotelabz/.env..."
+        cp "/opt/remotelabz/.env" "$ENV_FILE"
+        print_info "✅ Configuration copied to $ENV_FILE"
+        
+    # No .env file found - this is a critical error
+    else
+        echo ""
+        print_error "❌ CRITICAL: No base .env file found!"
+        echo ""
+        print_error "The .env file is required for RemoteLabz to work properly."
+        print_error "Searched in:"
+        print_error "  - $BASE_ENV_FILE"
+        print_error "  - /opt/remotelabz/.env"
+        echo ""
+        print_warning "Please ensure you have the .env file in your RemoteLabz source directory"
+        print_warning "or provide the path to the .env file."
+        echo ""
+        
+        # Offer to specify a custom path
+        read -p "Do you want to specify a custom path to the .env file? (y/N): " custom_path
+        if [[ "$custom_path" =~ ^[Yy]$ ]]; then
+            read -p "Enter the full path to your .env file: " user_env_path
+            
+            if [ -f "$user_env_path" ]; then
+                print_info "✅ Found .env file at: $user_env_path"
+                cp "$user_env_path" "$ENV_FILE"
+                print_info "✅ Configuration copied to $ENV_FILE"
+            else
+                print_error "File not found: $user_env_path"
+                print_error "Installation cannot continue without a valid .env file"
+                exit 1
+            fi
+        else
+            print_error "Installation cannot continue without a .env file"
+            print_warning "Please place your .env file in the RemoteLabz source directory and run this script again"
+            exit 1
         fi
     fi
     
-    # Load environment
+    # At this point, .env.local exists (copied from .env)
+    print_info "Configuring .env.local with installation-specific values..."
+    
+    # Get public IP
+    print_info "Detecting public IP address..."
+    PUBLIC_IP=$(curl -s ifconfig.me 2>/dev/null)
+    
+    if [ -z "$PUBLIC_IP" ] || [ "$PUBLIC_IP" == "" ]; then
+        print_warning "Could not detect public IP address automatically"
+        read -p "Enter your server's public IP or FQDN: " PUBLIC_IP
+    else
+        print_info "Detected public IP: $PUBLIC_IP"
+        read -p "Use this IP address? (Y/n): " use_detected
+        use_detected=${use_detected:-Y}
+        
+        if [[ ! "$use_detected" =~ ^[Yy]$ ]]; then
+            read -p "Enter your server's public IP or FQDN: " PUBLIC_IP
+        fi
+    fi
+    
+    # Update PUBLIC_ADDRESS
+    if grep -q "^PUBLIC_ADDRESS=" "$ENV_FILE"; then
+        sed -i "s|^PUBLIC_ADDRESS=.*|PUBLIC_ADDRESS=\"${PUBLIC_IP}\"|g" "$ENV_FILE"
+        print_info "✅ Updated PUBLIC_ADDRESS to ${PUBLIC_IP}"
+    else
+        echo "PUBLIC_ADDRESS=\"${PUBLIC_IP}\"" >> "$ENV_FILE"
+        print_info "✅ Added PUBLIC_ADDRESS=${PUBLIC_IP}"
+    fi
+    
+    # Update IP_ADDRESS (for single server setups)
+    if grep -q "^#IP_ADDRESS=" "$ENV_FILE" || grep -q "^IP_ADDRESS=" "$ENV_FILE"; then
+        # Ask if single server deployment
+        read -p "Is this a single server deployment (front + worker on same machine)? (Y/n): " single_server
+        single_server=${single_server:-Y}
+        
+        if [[ "$single_server" =~ ^[Yy]$ ]]; then
+            sed -i "s|^IP_ADDRESS=.*|IP_ADDRESS=\"127.0.0.1\"|g" "$ENV_FILE"
+            sed -i "s|^#IP_ADDRESS=.*|IP_ADDRESS=\"127.0.0.1\"|g" "$ENV_FILE"
+            sed -i "s|^DEPLOY_SINGLE_SERVER=.*|DEPLOY_SINGLE_SERVER=1|g" "$ENV_FILE"
+            print_info "✅ Configured for single server deployment"
+        else
+            sed -i "s|^IP_ADDRESS=.*|IP_ADDRESS=\"${PUBLIC_IP}\"|g" "$ENV_FILE"
+            sed -i "s|^#IP_ADDRESS=\"127.0.0.1\"|IP_ADDRESS=\"${PUBLIC_IP}\"|g" "$ENV_FILE"
+            sed -i "s|^DEPLOY_SINGLE_SERVER=.*|DEPLOY_SINGLE_SERVER=0|g" "$ENV_FILE"
+            print_info "✅ Configured for multi-server deployment"
+        fi
+    fi
+    
+    # Update VPN_ADDRESS to use PUBLIC_ADDRESS
+    if grep -q "^VPN_ADDRESS=" "$ENV_FILE"; then
+        sed -i "s|^VPN_ADDRESS=.*|VPN_ADDRESS=\$PUBLIC_ADDRESS|g" "$ENV_FILE"
+        print_info "✅ Updated VPN_ADDRESS"
+    fi
+    
+    # Update REMOTELABZ_PROXY_SERVER
+    if grep -q "^REMOTELABZ_PROXY_SERVER=" "$ENV_FILE"; then
+        sed -i "s|^REMOTELABZ_PROXY_SERVER=.*|REMOTELABZ_PROXY_SERVER=\$PUBLIC_ADDRESS|g" "$ENV_FILE"
+        print_info "✅ Updated REMOTELABZ_PROXY_SERVER"
+    fi
+    
+    # Ensure APP_MAINTENANCE is set to 1 initially
+    if grep -q "^APP_MAINTENANCE=" "$ENV_FILE"; then
+        sed -i "s|^APP_MAINTENANCE=.*|APP_MAINTENANCE=1|g" "$ENV_FILE"
+        print_info "✅ Set APP_MAINTENANCE=1 (will need to be changed to 0 after installation)"
+    fi
+    
+    echo ""
+    print_info "=================================="
+    print_info "Configuration file ready!"
+    print_info "=================================="
+    print_warning "IMPORTANT: Please review the configuration before continuing"
+    print_warning "Pay special attention to:"
+    echo "  • PUBLIC_ADDRESS"
+    echo "  • IP_ADDRESS"
+    echo "  • MYSQL credentials"
+    echo "  • SSL_CA_KEY_PASSPHRASE"
+    echo "  • CONTACT_MAIL"
+    echo ""
+    
+    read -p "Do you want to review/edit the configuration now? (Y/n): " edit_config
+    edit_config=${edit_config:-Y}
+    
+    if [[ "$edit_config" =~ ^[Yy]$ ]]; then
+        ${EDITOR:-nano} "$ENV_FILE"
+        print_info "Configuration saved"
+    fi
+    
+    # Load the environment file
     source "$ENV_FILE"
-    print_info "Environment file loaded successfully"
+    print_info "✅ Environment file loaded successfully"
+    
+    # Display key configuration values
+    echo ""
+    print_info "Current configuration summary:"
+    echo "  • PUBLIC_ADDRESS: ${PUBLIC_ADDRESS:-not set}"
+    echo "  • IP_ADDRESS: ${IP_ADDRESS:-not set}"
+    echo "  • WORKER_SERVER: ${WORKER_SERVER:-not set}"
+    echo "  • MYSQL_DATABASE: ${MYSQL_DATABASE:-not set}"
+    echo "  • APP_ENV: ${APP_ENV:-not set}"
+    echo "  • APP_MAINTENANCE: ${APP_MAINTENANCE:-not set}"
+    echo "  • DEPLOY_SINGLE_SERVER: ${DEPLOY_SINGLE_SERVER:-not set}"
+    echo ""
+    
+    read -p "Configuration looks correct? Continue with installation? (Y/n): " continue_install
+    continue_install=${continue_install:-Y}
+    
+    if [[ ! "$continue_install" =~ ^[Yy]$ ]]; then
+        print_warning "Installation cancelled by user"
+        print_info "You can edit $ENV_FILE and run the installation again"
+        exit 0
+    fi
 }
 
 # ============================================================================
