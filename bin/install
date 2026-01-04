@@ -1,0 +1,187 @@
+#!/usr/bin/env php
+<?php
+/**
+ * RemoteLabz Application Installer
+ * 
+ * This script handles the application-specific installation tasks.
+ * System requirements (Apache, PHP, MySQL, etc.) should be installed first
+ * using the install_remotelabz_complete.sh script.
+ * 
+ * Usage:
+ *   ./install [options]
+ * 
+ * Options:
+ *   -h, --help              Show this help
+ *   -e, --environment       Set environment (prod|dev) [default: prod]
+ *   -s, --max-filesize      Set PHP max upload filesize [default: 3000M]
+ *   -p, --port              Set Apache port [default: 80]
+ *   --server-name           Set server name [default: from .env.local]
+ *   --symlink               Symlink instead of copy
+ *   --skip-requirements     Skip system requirements check (use if already installed)
+ */
+
+use GetOpt\GetOpt;
+use GetOpt\Option;
+use GetOpt\Argument;
+use RemoteLabz\Logger;
+use RemoteLabz\Installer;
+use GetOpt\ArgumentException;
+use GetOpt\ArgumentException\Invalid;
+use GetOpt\ArgumentException\Missing;
+use GetOpt\ArgumentException\Unexpected;
+
+require dirname(__DIR__) . '/lib/autoload.php';
+
+// Default values
+const REMOTELABZ_PATH               = "/opt/remotelabz";
+const REMOTELABZ_SERVER_NAME        = "remotelabz.com";
+const INSTALL_LOG_PATH              = "/var/log/remotelabz/install.log";
+const REMOTELABZ_ENV                = "prod";
+const REMOTELABZ_MAX_FILESIZE       = "3000M";
+const REMOTELABZ_PORT               = 80;
+
+// Parse command line options
+$getopt = new GetOpt([
+    Option::create('h', 'help', GetOpt::NO_ARGUMENT)
+        ->setDescription("Show this help text."),
+
+    Option::create('e', 'environment', GetOpt::REQUIRED_ARGUMENT)
+        ->setDescription("Set the environment of the application. Must be \"prod\" or \"dev\". Default : " . REMOTELABZ_ENV)
+        ->setArgument(new Argument(REMOTELABZ_ENV, null, 'environment'))
+        ->setValidation(function ($value) {
+            return in_array($value, ["dev", "prod"]);
+        }),
+
+    Option::create('s', 'max-filesize', GetOpt::REQUIRED_ARGUMENT)
+        ->setDescription("Set PHP max_upload_filesize environment variable while configuring Apache. Must be followed by K, M or G prefix (case-insensitive). Default : " . REMOTELABZ_MAX_FILESIZE)
+        ->setArgument(new Argument(REMOTELABZ_MAX_FILESIZE, null, 'size'))
+        ->setValidation(function ($value) {
+            $number = substr($value, 0, -1);
+            $multiplier = strtoupper(substr($value, -1));
+            return is_numeric($number) && in_array($multiplier, ['K', 'M', 'G']);
+        }),
+
+    Option::create('p', 'port', GetOpt::REQUIRED_ARGUMENT)
+        ->setDescription("Set the port used by RemoteLabz. Default : " . REMOTELABZ_PORT)
+        ->setArgument(new Argument(REMOTELABZ_PORT, 'is_numeric', 'port')),
+
+    Option::create(null, 'server-name', GetOpt::REQUIRED_ARGUMENT)
+        ->setDescription("Set the server name of RemoteLabz VirtualHost. Default : from .env.local PUBLIC_ADDRESS or " . REMOTELABZ_SERVER_NAME)
+        ->setArgument(new Argument(REMOTELABZ_SERVER_NAME, 'is_string', 'name')),
+
+    Option::create(null, 'symlink', GetOpt::NO_ARGUMENT)
+        ->setDescription("Symlink remotelabz to this folder instead of copying files."),
+    
+    Option::create(null, 'skip-requirements', GetOpt::NO_ARGUMENT)
+        ->setDescription("Skip system requirements check (use if requirements already installed by bash script)."),
+]);
+
+try {
+    $getopt->process();
+} catch (ArgumentException $e) {
+    Logger::print("Error: ", Logger::COLOR_RED);
+    if ($e instanceof Invalid) {
+        Logger::print("Invalid argument: ", Logger::COLOR_RED);
+    } elseif ($e instanceof Missing) {
+        Logger::print("Missing value: ", Logger::COLOR_RED);
+    } elseif ($e instanceof Unexpected) {
+        Logger::print("Unexpected value: ", Logger::COLOR_RED);
+    }
+    Logger::print($e->getMessage() . "\n", Logger::COLOR_RED);
+    exit(1);
+}
+
+// Help
+if ($getopt->getOption('help')) {
+    echo $getopt->getHelpText();
+    echo "\n";
+    echo "Note: This script assumes system requirements (Apache, PHP, MySQL, etc.)\n";
+    echo "      are already installed. If not, run install_remotelabz_complete.sh first.\n";
+    echo "\n";
+    exit(0);
+}
+
+// Try to load .env.local to get PUBLIC_ADDRESS for server-name if not provided
+$options = $getopt->getOptions();
+if (!isset($options['server-name']) || $options['server-name'] === REMOTELABZ_SERVER_NAME) {
+    $envFile = REMOTELABZ_PATH . '/.env.local';
+    if (file_exists($envFile)) {
+        $envContent = file_get_contents($envFile);
+        if (preg_match('/PUBLIC_ADDRESS="?([^"\n]+)"?/', $envContent, $matches)) {
+            $options['server-name'] = trim($matches[1]);
+            Logger::print("Using PUBLIC_ADDRESS from .env.local: " . $options['server-name'] . "\n", Logger::COLOR_GREEN);
+        }
+    }
+}
+
+$installer = Installer::create(REMOTELABZ_PATH, $options);
+
+// Check if running as root
+try {
+    $installer->checkRoot();
+} catch (Exception $e) {
+    Logger::print($e->getMessage() . "\n", Logger::COLOR_RED);
+    exit(1);
+}
+
+// Initialize logger
+$logger = new Logger(INSTALL_LOG_PATH);
+$installer->setLogger($logger);
+
+// Check requirements (unless skipped)
+if (!isset($options['skip-requirements']) || !$options['skip-requirements']) {
+    try {
+        $installer->checkRequirements();
+    } catch (Exception $e) {
+        Logger::print($e->getMessage() . "\n", Logger::COLOR_RED);
+        Logger::print("\nIf you've already installed requirements using the bash script,\n", Logger::COLOR_YELLOW);
+        Logger::print("you can skip this check with: --skip-requirements\n", Logger::COLOR_YELLOW);
+        $logger->error($e->getMessage());
+        exit(1);
+    }
+} else {
+    Logger::print("Skipping system requirements check (--skip-requirements flag used)\n", Logger::COLOR_YELLOW);
+}
+
+// Run installation
+try {
+    $installer->install();
+} catch (Exception $e) {
+    echo "Error ❌\n";
+    $count = 0;
+    while ($e !== null) {
+        $logger->error($e->getMessage());
+        Logger::print("#$count " . $e->getFile() . "(" . $e->getLine() . "): " . $e->getMessage() . "\n", Logger::COLOR_RED);
+        $e = $e->getPrevious();
+        $count++;
+    }
+    Logger::print("Please check the install logs in " . INSTALL_LOG_PATH . " to get more information.\n", Logger::COLOR_RED);
+    exit(1);
+}
+
+// Success message
+echo "\n";
+Logger::print("==========================================================\n", Logger::COLOR_GREEN);
+Logger::print("  RemoteLabz Application Installation Complete!\n", Logger::COLOR_GREEN);
+Logger::print("==========================================================\n", Logger::COLOR_GREEN);
+echo "\n";
+Logger::print("Next steps:\n", Logger::COLOR_CYAN);
+echo "  1. Initialize database:\n";
+echo "     cd " . REMOTELABZ_PATH . "\n";
+echo "     php bin/console doctrine:schema:update --force\n";
+echo "\n";
+echo "  2. Create admin user:\n";
+echo "     php bin/console app:create-admin-user\n";
+echo "\n";
+echo "  3. Enable application (set APP_MAINTENANCE=0 in .env.local):\n";
+echo "     sed -i 's/APP_MAINTENANCE=1/APP_MAINTENANCE=0/g' " . REMOTELABZ_PATH . "/.env.local\n";
+echo "\n";
+echo "  4. Restart services:\n";
+echo "     systemctl restart apache2\n";
+echo "     systemctl restart remotelabz\n";
+echo "     systemctl restart remotelabz-proxy\n";
+echo "\n";
+Logger::print("==========================================================\n", Logger::COLOR_GREEN);
+echo "\n";
+
+exit(0);
