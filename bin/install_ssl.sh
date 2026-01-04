@@ -36,12 +36,14 @@ echo "🔥 Configuration of your certificate with IP or hostname ${PUBLIC_ADDRES
 openssl req -x509 -nodes -days 365 -sha512 -newkey rsa:2048 -keyout RemoteLabz-WebServer.key -out RemoteLabz-WebServer.crt -config /home/${SUDO_USER}/EasyRSA/cert.cnf
 cp /home/${SUDO_USER}/EasyRSA/RemoteLabz-WebServer.crt /etc/apache2/
 cp /home/${SUDO_USER}/EasyRSA/RemoteLabz-WebServer.key /etc/apache2/
+cat /etc/apache2/RemoteLabz-WebServer.crt /etc/apache2/RemoteLabz-WebServer.key > /etc/apache2/RemoteLabz-WebServer.pem
 echo "OK"
 
 echo "Activation of SSL module in Apache 2"
 
 a2enmod ssl
 a2ensite 200-remotelabz-ssl.conf
+a2enmod rewrite
 
 echo "🔥 Enable WSS and self-sign in .env.local of RemoteLabz .."
 sed -i "s/REMOTELABZ_PROXY_USE_WSS=0/REMOTELABZ_PROXY_USE_WSS=1/g" /opt/remotelabz/.env.local
@@ -61,8 +63,9 @@ echo "🔥 Secure Apache configuration .."
 sed -i "s/ServerTokens OS/ServerTokens Prod/g" /etc/apache2/conf-enabled/security.conf
 sed -i "s/ServerSignature On/ServerSignature Off/g" /etc/apache2/conf-enabled/security.conf
 
-service apache2 restart
-service remotelabz-proxy restart
+systemctl restart apache2
+systemctl restart remotelabz-proxy
+systemctl restart haproxy
 
 echo "🔥 On the worker, you have to copy the certificate to the directory /opt/remotelabz-worker/config/certs/"
 echo "-----------------------------------------------------"

@@ -564,12 +564,12 @@ class Installer
     {
         chdir($this->installPath);
         $returnCode = false;
-        if (file_exists('/etc/systemd/system/git-version-update.service')) {
+        if (file_exists('/etc/systemd/system/remotelabz-git-version-update.service')) {
             $this->logger->debug('Remove old git version update service file');
-            unlink('/etc/systemd/system/git-version-update.service');
+            unlink('/etc/systemd/system/remotelabz-git-version-update.service');
         }
     
-        $returnCode = symlink($this->installPath . '/bin/git-version-update.service', '/etc/systemd/system/git-version-update.service');
+        $returnCode = symlink($this->installPath . '/bin/remotelabz-git-version-update.service', '/etc/systemd/system/remotelabz-git-version-update.service');
     
         if (!$returnCode) {
             throw new Exception("Could not symlink git version service correctly.");
@@ -580,12 +580,12 @@ class Installer
     {
         chdir($this->installPath);
         $returnCode = false;
-        if (file_exists('/etc/systemd/system/git-version-update.timer')) {
+        if (file_exists('/etc/systemd/system/remotelabz-git-version-update.timer')) {
             $this->logger->debug('Remove old git version update timer service file');
-            unlink('/etc/systemd/system/git-version-update.timer');
+            unlink('/etc/systemd/system/remotelabz-git-version-update.timer');
         }
 
-        $returnCode = symlink($this->installPath . '/bin/git-version-update.timer', '/etc/systemd/system/git-version-update.timer');
+        $returnCode = symlink($this->installPath . '/bin/remotelabz-git-version-update.timer', '/etc/systemd/system/remotelabz-git-version-update.timer');
         if (!$returnCode) {
             throw new Exception("Could not symlink git version timer service correctly.");
         }
