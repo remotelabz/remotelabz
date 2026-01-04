@@ -104,7 +104,6 @@ cp pki/private/RemoteLabz-VPNServer.key /etc/openvpn/server
 cp pki/ca.crt /etc/openvpn/server
 cp pki/private/ca.key /etc/openvpn/server
 
-
 openvpn --genkey --peer-fingerprint ta.key
 cp ta.key /etc/openvpn/server
 openssl dhparam -out dh2048.pem 2048
@@ -147,25 +146,38 @@ sysctl -w net.ipv4.ip_forward=1
 sed -i 's/net.ipv4.ip_forward = 0/net.ipv4.ip_forward = 1/g' /etc/sysctl.conf
 sed -i 's/#net.ipv4.ip_forward =/net.ipv4.ip_forward =/g' /etc/sysctl.conf
 
-# To avoid error message "Too many opened files" and containers don't stop
-echo "fs.inotify.max_user_watches=800000" >> /etc/sysctl.conf
-echo "fs.inotify.max_user_instances=500000" >> /etc/sysctl.conf
-echo "fs.file-max=15793398" >> /etc/sysctl.conf
-echo "kernel.pty.max=10000" >> /etc/sysctl.conf
-echo "net.ipv6.route.max_size=20000" >> /etc/sysctl.conf
-echo "net.ipv6.conf.all.disable_ipv6=1" >> /etc/sysctl.conf
-echo "net.ipv6.conf.lo.disable_ipv6=1" >> /etc/sysctl.conf
-echo "net.ipv6.conf.default.disable_ipv6=1" >> /etc/sysctl.conf
+set_sysctl_param() {
+    local param="$1"
+    local value="$2"
+    local file="/etc/sysctl.conf"
+    
+    if grep -q "^${param}=" "$file"; then
+        # La ligne existe, on la remplace
+        sed -i "s|^${param}=.*|${param}=${value}|" "$file"
+    else
+        # La ligne n'existe pas, on l'ajoute
+        echo "${param}=${value}" >> "$file"
+    fi
+}
+
+set_sysctl_param "fs.inotify.max_user_watches" "800000"
+set_sysctl_param "fs.inotify.max_user_instances" "500000"
+set_sysctl_param "fs.file-max" "15793398"
+set_sysctl_param "kernel.pty.max" "10000"
+set_sysctl_param "net.ipv6.route.max_size" "20000"
+set_sysctl_param "net.ipv6.conf.all.disable_ipv6" "1"
+set_sysctl_param "net.ipv6.conf.lo.disable_ipv6" "1"
+set_sysctl_param "net.ipv6.conf.default.disable_ipv6" "1"
+
 sysctl -p
 
 # To HAProxy configuration
 rm /etc/haproxy/haproxy.cfg
 ln -s /opt/remotelabz/config/haproxy/haproxy.cfg /etc/haproxy/
-systemctl restart haproxy
+
 
 rm /etc/apache2/ports.conf
 ln -s /opt/remotelabz/config/apache/ports.conf /etc/apache2/
-systemctl restart apache2
 
 echo "🔥 The root password for your MySQL database is set to RemoteLabz-2022$"
 echo "🔥 The user password for the remotelabz MySQL database is set to Mysql-Pa33wrd$"

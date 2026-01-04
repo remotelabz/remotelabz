@@ -28,8 +28,8 @@ cd /home/${SUDO_USER}/EasyRSA
 echo "🔥 Copy /home/${SUDO_USER}/remotelabz/config/apache/cert.cnf"
 cp /home/${SUDO_USER}/remotelabz/config/apache/cert.cnf .
 
-sed -i "s/commonName = 192.168.11.131/commonName = ${PUBLIC_ADDRESS}/g" cert.cnf
-sed -i "s/IP.1 = 192.168.11.131/IP.1 = ${PUBLIC_ADDRESS}/g" cert.cnf
+sed -i "s/commonName = 127.0.0.1/commonName = ${PUBLIC_ADDRESS}/g" cert.cnf
+sed -i "s/IP.1 = 127.0.0.1/IP.1 = ${PUBLIC_ADDRESS}/g" cert.cnf
 sed -i "s/ServerName localhost/ServerName ${PUBLIC_ADDRESS}/g" /etc/apache2/sites-available/100-remotelabz.conf
 
 echo "🔥 Configuration of your certificate with IP or hostname ${PUBLIC_ADDRESS} .."
