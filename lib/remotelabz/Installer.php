@@ -427,7 +427,7 @@ class Installer
         chdir($this->installPath);
         $returnCode = 0;
         $output = [];
-        exec("COMPOSER_ALLOW_SUPERUSER=1 composer install --no-progress --no-suggest", $output, $returnCode);
+        exec("COMPOSER_ALLOW_SUPERUSER=1 composer install --no-progress", $output, $returnCode);
         $this->logger->debug($output);
         if ($returnCode) {
             return false;
@@ -499,13 +499,16 @@ class Installer
         exec("a2dissite 000-default 2>&1", $output);
         $this->logger->debug($output);
 
-        $this->logger->debug("Restarting Apache");
+        //$this->logger->debug("Restarting Apache");
         unset($output);
-        exec("apache2ctl restart 2>&1", $output, $returnCode);
-        $this->logger->debug($output);
-        if ($returnCode) {
-            throw new Exception("Could not restart Apache correctly.");
-        }
+        /*
+        // Need certificates and this process is in install_ssl
+        // exec("apache2ctl restart 2>&1", $output, $returnCode);
+        // $this->logger->debug($output);
+        // if ($returnCode) {
+        //     throw new Exception("Could not restart Apache correctly.");
+        // }
+        */
     }
 
     private function configureYarn()

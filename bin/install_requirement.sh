@@ -170,4 +170,4 @@ systemctl restart apache2
 echo "🔥 The root password for your MySQL database is set to RemoteLabz-2022$"
 echo "🔥 The user password for the remotelabz MySQL database is set to Mysql-Pa33wrd$"
 echo "Your .env.local will be configured with this default password. If you choose to change it, don't forget to modify your .env.local file"
-echo "To change it, you can read the documentation online httsp://docs.remotelabz.com"
+echo "To change it, you can read the documentation online https://docs.remotelabz.com"
