@@ -21,7 +21,7 @@ REMOTELABZ_ENV="prod"
 REMOTELABZ_PORT=80
 REMOTELABZ_MAX_FILESIZE="3000M"
 INSTALL_LOG_PATH="/var/log/remotelabz"
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/.."
 
 # Functions for colored output
 print_info() {
@@ -77,7 +77,6 @@ setup_env_file() {
             ${EDITOR:-nano} "$ENV_FILE"
             source "$ENV_FILE"
         fi
-        
         return 0
     fi
     
@@ -146,12 +145,10 @@ setup_env_file() {
         
         if [[ "$single_server" =~ ^[Yy]$ ]]; then
             sed -i "s|^IP_ADDRESS=.*|IP_ADDRESS=\"127.0.0.1\"|g" "$ENV_FILE"
-            sed -i "s|^#IP_ADDRESS=.*|IP_ADDRESS=\"127.0.0.1\"|g" "$ENV_FILE"
             sed -i "s|^DEPLOY_SINGLE_SERVER=.*|DEPLOY_SINGLE_SERVER=1|g" "$ENV_FILE"
             print_info "✅ Configured for single server deployment"
         else
             sed -i "s|^IP_ADDRESS=.*|IP_ADDRESS=\"${PUBLIC_IP}\"|g" "$ENV_FILE"
-            sed -i "s|^#IP_ADDRESS=\"127.0.0.1\"|IP_ADDRESS=\"${PUBLIC_IP}\"|g" "$ENV_FILE"
             sed -i "s|^DEPLOY_SINGLE_SERVER=.*|DEPLOY_SINGLE_SERVER=0|g" "$ENV_FILE"
             print_info "✅ Configured for multi-server deployment"
         fi
@@ -250,7 +247,7 @@ install_requirements() {
 
     # Install base packages
     print_info "Installing base packages..."
-    apt install -y fail2ban exim4 apache2 curl gnupg zip unzip ntp openvpn qemu-utils openssl git
+    apt install -y fail2ban exim4 apache2 curl gnupg zip unzip ntp openvpn qemu-utils openssl git nano
     
     # Install PHP 8.4
     print_info "Installing PHP 8.4..."

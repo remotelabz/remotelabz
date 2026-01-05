@@ -21,6 +21,7 @@ class Logger
     public const COLOR_RED      = "\e[31m";
     public const COLOR_GREEN    = "\e[32m";
     public const COLOR_WHITE    = "\e[37m";
+    public const COLOR_CYAN     = "\e[36m";
 
 
     function __construct($file = null, $dateFormat = DATE_RFC2822, $verbosity = 0) {
