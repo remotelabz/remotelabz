@@ -10,6 +10,7 @@ use Doctrine\Persistence\ManagerRegistry;
 use App\Repository\LabInstanceRepository;
 use App\Repository\DeviceInstanceRepository;
 use App\Repository\DeviceRepository;
+use App\Repository\UserRepository;
 use App\Repository\OperatingSystemRepository;
 use App\Service\Instance\InstanceManager;
 use App\Controller\OperatingSystemController;
@@ -34,6 +35,7 @@ class InstanceStateMessageHandler
     private string $rootDirectory;
     private NotificationService $notificationService;
     private ManagerRegistry $managerRegistry;
+    private UserRepository $userRepository;
 
     public function __construct(
         DeviceInstanceRepository $deviceInstanceRepository,
@@ -45,7 +47,8 @@ class InstanceStateMessageHandler
         DeviceRepository $deviceRepository,    
         string $rootDirectory,
         NotificationService $notificationService,
-        ManagerRegistry $managerRegistry
+        ManagerRegistry $managerRegistry,
+        UserRepository $userRepository
     ) {
         $this->deviceInstanceRepository = $deviceInstanceRepository;
         $this->labInstanceRepository = $labInstanceRepository;
@@ -57,8 +60,8 @@ class InstanceStateMessageHandler
         $this->deviceRepository = $deviceRepository;
         $this->notificationService = $notificationService;
         $this->managerRegistry = $managerRegistry;
+        $this->userRepository = $userRepository;
     }
-
 
     /**
      * Get user IDs from instance (returns array for group instances, single element array for user instances)
@@ -153,8 +156,15 @@ class InstanceStateMessageHandler
         if ($connection->isConnected()) {
             $connection->close();
         } 
-        //////
-
+        //////       
+            $connected_user_id=$this->userRepository->findByRole("%ROLE_SUPER_ADMINISTRATOR%");
+            /*if (!empty($connected_user_id)) {
+                foreach($connected_user_id as $user)
+                    $this->logger->debug("[InstanceStateMessageHandler:__invoke]::SuperAdmin ".$user->getId());
+            }
+            else {
+                $this->logger->debug("[InstanceStateMessageHandler:__invoke]::Aucun SuperAdmin");
+            }*/
         try {      
             $this->logger->info("Received InstanceState message :", [
                 'uuid' => $message->getUuid(),
@@ -432,8 +442,10 @@ class InstanceStateMessageHandler
                             $this->notificationService->success($userIds, 'Lab instance '.$uuid.' deleted successfully.', $uuid);
                         }
                         break;
-                        default :
-                            $this->notificationService->success($userIds, 'Instance '.$uuid." ".$message->getState().' successfully.',$uuid);
+                        default:
+                            // Look for the admin of the system
+                            foreach ($connected_user_id as $user_id)
+                                $this->notificationService->success($user_id, 'Instance '.$uuid." ".$message->getState().' successfully.',$uuid);
                 }
             }
         
