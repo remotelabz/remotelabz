@@ -62,15 +62,17 @@ class DeviceController extends Controller
     private DeviceRepository $deviceRepository;
     private DeviceInstanceRepository $deviceInstanceRepository;
     private LabRepository $labRepository;
+    private SerializerInterface $serializer;
     private LabInstanceRepository $labInstanceRepository;
     private ControlProtocolTypeRepository $controlProtocolTypeRepository;
     private HypervisorRepository $hypervisorRepository;
     private FlavorRepository $flavorRepository;
     private OperatingSystemRepository $operatingSystemRepository;
     private NetworkInterfaceRepository $networkInterfaceRepository;
+    private ManagerRegistry $managerRegistry;
     private EntityManagerInterface $entityManager;
     private IsoRepository $isoRepository;
-    private FlavorDiskRepository $flavorDiskRepository;
+    private FlavorDiskRepository $flavorDiskRepository;   
 
     /** @var LoggerInterface $logger */
     private $logger;
@@ -483,7 +485,7 @@ class DeviceController extends Controller
             "console" => $controlProtocolTypesName,
             "networkInterfaceTemplate"=>$device->getNetworkInterfaceTemplate(),
             "other_options"=>$device->getOtherOptions(),
-            "isos" => $isos,
+            "isos" => $device->getIsos(),
             "cdrom_bus_type" => $device->getCdromBusType(),
             "bios_type" => $device->getBiosType()
         ];
