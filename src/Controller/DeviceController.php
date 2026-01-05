@@ -686,6 +686,7 @@ class DeviceController extends Controller
             
             // Vérifier que l'OS a bien un FlavorDisk et qu'on ne l'a pas déjà ajouté
             if ($flavorDisk !== null && !isset($addedFlavorDisks[$flavorDisk->getId()])) {
+                $this->logger->debug("[DeviceController:getAllFlavors]::flavorDisk",$flavor_global);
                 $flavor_global['disk'][] = [
                     'id' => $flavorDisk->getId(),
                     'name' => $flavorDisk->getName(),
@@ -701,7 +702,7 @@ class DeviceController extends Controller
 
         // Trier les flavor disks par taille croissante
         usort($flavor_global['disk'], function($a, $b) {
-            return $a['disk'] <=> $b['disk'];
+            return $a['disk_gb'] <=> $b['disk_gb'];
         });
 
         return $flavor_global;
