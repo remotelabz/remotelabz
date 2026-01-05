@@ -392,6 +392,7 @@ class Installer
         }
         
         // Copy site configuration files
+        copy($this->installPath . "/config/apache/ports.conf", "/etc/apache2/ports.conf");
         copy($this->installPath . "/config/apache/100-remotelabz.conf", "/etc/apache2/sites-available/100-remotelabz.conf");
         copy($this->installPath . "/config/apache/200-remotelabz-ssl.conf", "/etc/apache2/sites-available/200-remotelabz-ssl.conf");
         copy($this->installPath . "/config/apache/remotelabz-git.conf", "/etc/apache2/conf-enabled/remotelabz-git.conf");
