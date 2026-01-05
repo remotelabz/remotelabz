@@ -312,12 +312,8 @@ class Installer
         // Check if directory is already in the right place
         if (dirname(__FILE__, 3) != $this->installPath) {
             // Check if there is already a directory
-            if (is_dir($this->installPath)) {
-                $isCopied = false;
-            } else {
-                // Copy files
-                $this->rcopy(dirname(__FILE__, 3), $this->installPath);
-            }
+            $this->rcopy(dirname(__FILE__, 3), $this->installPath);
+            $isCopied = true;            
         } else {
             $isCopied = false;
         }
