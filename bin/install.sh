@@ -59,7 +59,7 @@ check_root() {
 setup_env_file() {
     local ENV_FILE="/opt/remotelabz/.env.local"
     local BASE_ENV_FILE="${SCRIPT_DIR}/.env"
-    
+	echo $BASE_ENV_FILE    
     # Create directory if it doesn't exist
     mkdir -p /opt/remotelabz
     
@@ -77,6 +77,7 @@ setup_env_file() {
             ${EDITOR:-nano} "$ENV_FILE"
             source "$ENV_FILE"
         fi
+        
         return 0
     fi
     
@@ -247,7 +248,7 @@ install_requirements() {
 
     # Install base packages
     print_info "Installing base packages..."
-    apt install -y fail2ban exim4 apache2 curl gnupg zip unzip ntp openvpn qemu-utils openssl git nano
+    apt install -y fail2ban exim4 apache2 curl gnupg zip unzip ntp openvpn qemu-utils openssl git
     
     # Install PHP 8.4
     print_info "Installing PHP 8.4..."
@@ -600,10 +601,13 @@ EOF
 # STEP 5: Install RemoteLabz Application
 # ============================================================================
 install_remotelabz_app() {
+
     print_step "STEP 5: Installing RemoteLabz Application"
     
     # Check if we're in a RemoteLabz source directory
-    if [ ! -f "$SCRIPT_DIR/install" ] || [ ! -f "$SCRIPT_DIR/lib/autoload.php" ]; then
+    if [ ! -f "$SCRIPT_DIR/bin/install" ] || [ ! -f "$SCRIPT_DIR/lib/autoload.php" ]; then
+	echo "$SCRIPT_DIR/bin/install"
+	echo "$SCRIPT_DIR/lib/remotelabz/autoload.php"
         print_error "RemoteLabz installation files not found!"
         print_error "This script must be run from the RemoteLabz source directory"
         print_error "Expected files: install, lib/autoload.php"
@@ -617,7 +621,7 @@ install_remotelabz_app() {
     print_warning "This will install RemoteLabz to $REMOTELABZ_PATH"
     
     # Build install command
-    INSTALL_CMD="$SCRIPT_DIR/install"
+    INSTALL_CMD="$SCRIPT_DIR/bin/install"
     INSTALL_CMD="$INSTALL_CMD -e $REMOTELABZ_ENV"
     INSTALL_CMD="$INSTALL_CMD -p $REMOTELABZ_PORT"
     INSTALL_CMD="$INSTALL_CMD -s $REMOTELABZ_MAX_FILESIZE"

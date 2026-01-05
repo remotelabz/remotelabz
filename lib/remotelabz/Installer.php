@@ -322,17 +322,6 @@ class Installer
             $isCopied = false;
         }
 
-        // Create remotelabz-ctl symlink
-        if (!is_file("/usr/bin/remotelabz-ctl")) {
-            symlink($this->installPath . "/bin/remotelabz-ctl", "/usr/bin/remotelabz-ctl");
-        }
-        chmod("/usr/bin/remotelabz-ctl", 0777);
-
-        // Copy .env to .env.local if .env.local doesn't exist
-        if (!file_exists($this->installPath . "/.env.local")) {
-            copy($this->installPath . "/.env", $this->installPath . "/.env.local");
-        }
-
         if (!$isCopied) {
             throw new AlreadyExistException("Folder already exists.");
         }
