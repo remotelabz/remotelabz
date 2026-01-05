@@ -84,20 +84,12 @@ setup_env_file() {
     # .env.local doesn't exist, we need to create it from a base .env file
     print_info "Environment file .env.local not found, looking for base .env file..."
     
-    # Priority 1: Check if .env exists in the script directory (source directory)
     if [ -f "$BASE_ENV_FILE" ]; then
         print_info "✅ Found base .env file: $BASE_ENV_FILE"
         print_info "Creating .env.local from base .env file..."
         cp "$BASE_ENV_FILE" "$ENV_FILE"
         print_info "✅ Configuration copied to $ENV_FILE"
-        
-    # Priority 2: Check if .env exists in /opt/remotelabz (if RemoteLabz is already there)
-    elif [ -f "/opt/remotelabz/.env" ]; then
-        print_info "✅ Found base .env file: /opt/remotelabz/.env"
-        print_info "Creating .env.local from /opt/remotelabz/.env..."
-        cp "/opt/remotelabz/.env" "$ENV_FILE"
-        print_info "✅ Configuration copied to $ENV_FILE"
-        
+
     # No .env file found - this is a critical error
     else
         echo ""
@@ -112,25 +104,9 @@ setup_env_file() {
         print_warning "or provide the path to the .env file."
         echo ""
         
-        # Offer to specify a custom path
-        read -p "Do you want to specify a custom path to the .env file? (y/N): " custom_path
-        if [[ "$custom_path" =~ ^[Yy]$ ]]; then
-            read -p "Enter the full path to your .env file: " user_env_path
-            
-            if [ -f "$user_env_path" ]; then
-                print_info "✅ Found .env file at: $user_env_path"
-                cp "$user_env_path" "$ENV_FILE"
-                print_info "✅ Configuration copied to $ENV_FILE"
-            else
-                print_error "File not found: $user_env_path"
-                print_error "Installation cannot continue without a valid .env file"
-                exit 1
-            fi
-        else
-            print_error "Installation cannot continue without a .env file"
-            print_warning "Please place your .env file in the RemoteLabz source directory and run this script again"
-            exit 1
-        fi
+        print_error "Installation cannot continue without a .env file"
+        print_warning "Please place your .env file in the RemoteLabz source directory and run this script again"
+        exit 1
     fi
     
     # At this point, .env.local exists (copied from .env)
