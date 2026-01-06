@@ -187,7 +187,8 @@ class GroupController extends Controller
         ]);
     }
 
-    
+    // Function depreciate. Group instance is in global instance list
+    #[IsGranted("ROLE_SUPER_ADMINSTRATOR", message: "Access denied.")]
 	#[Get('/api/groups/{slug}/instances', name: 'api_group_instances', requirements: ["slug"=>"[\w\-\/]+"])]
     #[Route(path: '/group/{slug}/instances', name: 'dashboard_group_instances', requirements: ['slug' => '[\w\-\/]+'])]
     public function dashboardGroupInstancesAction(Request $request , string $slug, LabInstanceRepository $labInstanceRepository, SerializerInterface $serializer)
@@ -198,8 +199,11 @@ class GroupController extends Controller
 
         $this->denyAccessUnlessGranted(GroupVoter::EDIT, $group);
         $labs = [];
-        $groupInstance = $request->query->get('group_instance');
-        $filter = $groupInstance ? $groupInstance['filter'] : "allLabs";
+        
+        $queryParams = $request->query->all();
+        $groupInstance = $queryParams['group_instance'] ?? null;
+        $filter = isset($groupInstance['filter']) ? $groupInstance['filter'] : "allLabs";
+
         $page = (int)$request->query->get('page', 1);
         $limit = 10;
         
@@ -212,23 +216,14 @@ class GroupController extends Controller
         else {
             $instances = $this->fetchGroupInstancesByLabUuid($slug, $filter);
         }
-        /*foreach ($instances as $instance) {
-            $exists = false;
-            foreach($labs as $lab) {
-                if ($instance->getLab() == $lab) {
-                    $exists = true;
-                }
-            }
-            if ($exists == false) {
-                array_push($labs, $instance->getLab());
-            }
-        }*/
+        
         $AllLabInstances = [];
         foreach ($instances as $instance) {
-            
+            $this->logger->debug("[GroupController:dashboardGroupInstancesAction]::Add lab id ".$instance->getId()." to Alllabs");
             array_push($AllLabInstances, $instance);
         }
-
+        
+        
         $count = count($instances);
         try {
             $AllLabInstances = array_slice($AllLabInstances, $page * $limit - $limit, $limit);

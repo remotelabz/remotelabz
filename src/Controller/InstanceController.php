@@ -788,8 +788,6 @@ class InstanceController extends Controller
         return $this->json(['success' => true]);
     }
 
-
-
     #[Get('/api/instances/by-uuid/{uuid}', name: 'api_get_instance_by_uuid', requirements: ["uuid" => "[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"])]
     public function fetchByUuidAction(Request $request, string $uuid)
     {
