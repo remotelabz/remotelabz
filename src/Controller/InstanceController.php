@@ -1531,93 +1531,103 @@ class InstanceController extends Controller
     }
 
     private function searchInstancesByUuid(string $searchUuid): array
-    {
-        $results = [];
-
-        // Valider le format UUID
-        $uuidPattern = '/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i';
-        if (!preg_match($uuidPattern, $searchUuid)) {
-            $this->logger->warning("[InstanceController:searchInstancesByUuid]::Invalid UUID format: $searchUuid");
-            return [];
-        }
-
-        // 1. Chercher une LabInstance par UUID
-        if ($labInstance = $this->labInstanceRepository->findOneBy(['uuid' => $searchUuid])) {
-            try {
-                $this->denyAccessUnlessGranted(InstanceVoter::VIEW, $labInstance);
-                $this->logger->info("[InstanceController:searchInstancesByUuid]::Found LabInstance: " . $labInstance->getUuid());
-                $results[] = $labInstance;
-                return $results;
-            } catch (AccessDeniedException $e) {
-                $this->logger->warning("[InstanceController:searchInstancesByUuid]::Access denied to LabInstance: $searchUuid");
-                return [];
-            }
-        }
-
-        // 2. Chercher une DeviceInstance par UUID et retourner son LabInstance
-        if ($deviceInstance = $this->deviceInstanceRepository->findOneBy(['uuid' => $searchUuid])) {
-            try {
-                $this->denyAccessUnlessGranted(InstanceVoter::VIEW, $deviceInstance);
-                
-                $labInstance = $deviceInstance->getLabInstance();
-                if ($labInstance && !in_array($labInstance, $results, true)) {
-                    $this->logger->info("[InstanceController:searchInstancesByUuid]::Found DeviceInstance, returning LabInstance: " . $labInstance->getUuid());
-                    $results[] = $labInstance;
-                }
-                return $results;
-            } catch (AccessDeniedException $e) {
-                $this->logger->warning("[InstanceController:searchInstancesByUuid]::Access denied to DeviceInstance: $searchUuid");
-                return [];
-            }
-        }
-
-        // 3. Chercher un Lab par UUID et retourner ses instances
-        if ($lab = $this->labRepository->findOneBy(['uuid' => $searchUuid])) {
-            $user = $this->getUser();
-            
-            try {
-                if ($user->isAdministrator() || $user == $lab->getAuthor()) {
-                    $labInstances = $this->labInstanceRepository->findBy(['lab' => $lab]);
-                } else {
-                    $labInstances = $this->labInstanceRepository->findByLabAndUserGroup($lab, $user);
-                }
-                
-                $this->logger->info("[InstanceController:searchInstancesByUuid]::Found Lab, returning " . count($labInstances) . " instance(s)");
-                return $labInstances ?? [];
-            } catch (\Exception $e) {
-                $this->logger->warning("[InstanceController:searchInstancesByUuid]::Error accessing Lab instances: " . $e->getMessage());
-                return [];
-            }
-        }
-
-        // 4. Chercher un Device par UUID et retourner les instances de ce device
-        if ($device = $this->entityManager->getRepository(\App\Entity\Device::class)->findOneBy(['uuid' => $searchUuid])) {
-            $user = $this->getUser();
-            
-            // Récupérer toutes les DeviceInstances de ce device
-            $deviceInstances = $this->deviceInstanceRepository->findBy(['device' => $device]);
-            
-            $labInstancesMap = [];
-            foreach ($deviceInstances as $deviceInstance) {
-                try {
-                    $this->denyAccessUnlessGranted(InstanceVoter::VIEW, $deviceInstance);
-                    
-                    $labInstance = $deviceInstance->getLabInstance();
-                    if ($labInstance && !isset($labInstancesMap[$labInstance->getId()])) {
-                        $labInstancesMap[$labInstance->getId()] = $labInstance;
-                    }
-                } catch (AccessDeniedException $e) {
-                    // Skip this instance if access is denied
-                    continue;
-                }
-            }
-            
-            $results = array_values($labInstancesMap);
-            $this->logger->info("[InstanceController:searchInstancesByUuid]::Found Device, returning " . count($results) . " lab instance(s)");
-            return $results;
-        }
-
-        $this->logger->info("[InstanceController:searchInstancesByUuid]::No instances found for UUID: $searchUuid");
+{
+    $results = [];
+    
+    // Nettoyer et normaliser l'entrée
+    $searchUuid = trim(strtolower($searchUuid));
+    
+    // Valider le format de l'UUID partiel
+    // Accepte : segments partiels avec tirets optionnels
+    // Exemple : "a1b2", "a1b2-c3d4", "a1b2c3d4", etc.
+    if (!$this->isValidPartialUuid($searchUuid)) {
+        $this->logger->warning("[InstanceController:searchInstancesByUuid]::Invalid UUID format: $searchUuid");
         return [];
     }
+    
+    // Normaliser : retirer les tirets pour la recherche
+    $normalizedSearch = str_replace('-', '', $searchUuid);
+    
+    // Chercher dans les LabInstances
+    $labInstances = $this->labInstanceRepository->findByPartialUuid($normalizedSearch);
+    foreach ($labInstances as $labInstance) {
+        try {
+            $this->denyAccessUnlessGranted(InstanceVoter::VIEW, $labInstance);
+            $results[] = $labInstance;
+        } catch (AccessDeniedException $e) {
+            continue;
+        }
+    }
+    
+    // Chercher dans les DeviceInstances
+    $deviceInstances = $this->deviceInstanceRepository->findByPartialUuid($normalizedSearch);
+    $labInstancesMap = [];
+    foreach ($deviceInstances as $deviceInstance) {
+        try {
+            $this->denyAccessUnlessGranted(InstanceVoter::VIEW, $deviceInstance);
+            $labInstance = $deviceInstance->getLabInstance();
+            if ($labInstance && !isset($labInstancesMap[$labInstance->getId()])) {
+                $labInstancesMap[$labInstance->getId()] = $labInstance;
+            }
+        } catch (AccessDeniedException $e) {
+            continue;
+        }
+    }
+    
+    // Fusionner les résultats sans doublons
+    foreach ($labInstancesMap as $labInstance) {
+        if (!in_array($labInstance, $results, true)) {
+            $results[] = $labInstance;
+        }
+    }
+    
+    $this->logger->info("[InstanceController:searchInstancesByUuid]::Found " . count($results) . " instance(s) for search: $searchUuid");
+    return $results;
+}
+
+/**
+ * Valide un UUID partiel pour éviter les injections SQL
+ * Accepte uniquement des caractères hexadécimaux et des tirets
+ */
+private function isValidPartialUuid(string $uuid): bool
+{
+    // Doit contenir au moins 4 caractères hexadécimaux
+    // Ne peut contenir que [0-9a-f] et des tirets
+    // Les tirets doivent être à des positions valides (après chaque groupe de 8, 4, 4, 4 caractères)
+    
+    if (strlen($uuid) < 4 || strlen($uuid) > 36) {
+        return false;
+    }
+    
+    // Vérifier que tous les caractères sont valides (hexa ou tiret)
+    if (!preg_match('/^[0-9a-f\-]+$/i', $uuid)) {
+        return false;
+    }
+    
+    // Retirer les tirets pour vérifier le nombre de caractères hex
+    $hexOnly = str_replace('-', '', $uuid);
+    
+    // Doit avoir au moins 4 caractères hex et maximum 32
+    if (strlen($hexOnly) < 4 || strlen($hexOnly) > 32) {
+        return false;
+    }
+    
+    // Si des tirets sont présents, vérifier qu'ils sont à des positions valides
+    if (strpos($uuid, '-') !== false) {
+        // Format UUID : 8-4-4-4-12
+        $segments = explode('-', $uuid);
+        $validLengths = [8, 4, 4, 4, 12];
+        
+        foreach ($segments as $i => $segment) {
+            if (empty($segment) || strlen($segment) > $validLengths[$i % 5]) {
+                return false;
+            }
+            if (!ctype_xdigit($segment)) {
+                return false;
+            }
+        }
+    }
+    
+    return true;
+}
 }

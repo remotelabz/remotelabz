@@ -112,32 +112,31 @@ class DeviceInstanceRepository extends ServiceEntityRepository
         return $query->getResult();
     }
 
-    // /**
-    //  * @return DeviceInstance[] Returns an array of DeviceInstance objects
-    //  */
-    /*
-    public function findByExampleField($value)
+   /**
+     * Recherche des DeviceInstances par UUID partiel
+     * 
+     * @param string $partialUuid UUID partiel sans tirets
+     * @return DeviceInstance[]
+     */
+    public function findByPartialUuid(string $partialUuid): array
     {
-        return $this->createQueryBuilder('d')
-            ->andWhere('d.exampleField = :val')
-            ->setParameter('val', $value)
-            ->orderBy('d.id', 'ASC')
-            ->setMaxResults(10)
-            ->getQuery()
-            ->getResult()
-        ;
+        $conn = $this->getEntityManager()->getConnection();
+        
+        $sql = '
+            SELECT d.*
+            FROM device_instance d
+            WHERE REPLACE(d.uuid, "-", "") LIKE :search
+        ';
+        
+        $stmt = $conn->prepare($sql);
+        $stmt->bindValue('search', '%' . $partialUuid . '%');
+        $resultSet = $stmt->executeQuery();
+        
+        $results = [];
+        foreach ($resultSet->fetchAllAssociative() as $row) {
+            $results[] = $this->find($row['id']);
+        }
+        
+        return $results;
     }
-    */
-
-    /*
-    public function findOneBySomeField($value): ?DeviceInstance
-    {
-        return $this->createQueryBuilder('d')
-            ->andWhere('d.exampleField = :val')
-            ->setParameter('val', $value)
-            ->getQuery()
-            ->getOneOrNullResult()
-        ;
-    }
-    */
 }
