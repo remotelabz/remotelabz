@@ -239,6 +239,24 @@ class Installer
             throw new Exception("Error configuring directory permissions: " . $e->getMessage());
         }
 
+        echo "🔨 Configure JWT... \n";
+        try{
+            @mkdir('config/jwt');
+            echo "You have to use the token JWTok3n because it will be use in the local configuration file\n";
+            $this->genkey_jwt();
+            $file=$this->installPath."/.env.local";
+            $current_file=file_get_contents($file);
+            $current_file .= "JWT_PASSPHRASE=\"JWTTok3n\"";
+            file_put_contents($file,$current_file);
+
+            // Add at the end of the .env.local the JWT token
+            $this->rchown($this->installPath."/config/jwt","www-data","www-data");
+            echo "JWT configured ✔️\n";
+            echo "🔥 The password for JWT used during the installation is 'JWTok3n' 🔥\n";
+        } catch (Exception $e) {
+            throw new Exception("Error while configuring JWT.", 0, $e);
+        }
+        
         echo "Configure database\n";
         try{
             $this->oonfigure_db();
