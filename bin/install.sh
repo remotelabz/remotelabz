@@ -722,8 +722,7 @@ show_completion_message() {
     echo -e "      ${BLUE}Set: APP_MAINTENANCE=0${NC}"
     echo ""
     echo -e "   ${CYAN}4.${NC} Access RemoteLabz:"
-    echo -e "      ${BLUE}http://${PUBLIC_ADDRESS}${NC}"
-    echo -e "      ${BLUE}https://${PUBLIC_ADDRESS}${NC} (if SSL is configured)"
+    echo -e "      ${BLUE}https://${PUBLIC_ADDRESS}${NC}"
     echo ""
     
     if [ -n "$WORKER_SERVER" ] && [ "$WORKER_SERVER" != "localhost" ]; then
