@@ -251,15 +251,16 @@ class Installer
 
             // Add at the end of the .env.local the JWT token
             $this->rchown($this->installPath."/config/jwt","www-data","www-data");
+
             echo "JWT configured ✔️\n";
             echo "🔥 The password for JWT used during the installation is 'JWTok3n' 🔥\n";
         } catch (Exception $e) {
             throw new Exception("Error while configuring JWT.", 0, $e);
         }
-        
+
         echo "Configure database\n";
         try{
-            $this->oonfigure_db();
+            $this->configure_db();
         } catch (Exception $e) {
             throw new Exception("Error while configuring database.", 0, $e);
         }
@@ -330,6 +331,9 @@ class Installer
         // Create backups directory
         @mkdir($this->installPath . "/backups");
         chmod($this->installPath . "/backups", 0775);
+
+        chmod($this->installPath . "/bin/remotelabz-update.sh", 0775);
+
     }
 
     /**
@@ -653,13 +657,14 @@ class Installer
         $output = [];
         exec("openssl genpkey -out config/jwt/private.pem -aes256 -algorithm rsa -pkeyopt rsa_keygen_bits:4096", $output, $returnCode);
         exec("openssl pkey -in config/jwt/private.pem -out config/jwt/public.pem -pubout", $output, $returnCode);
+        chmod($this->installPath . "/config/jwt/private.pem", 0755);
         if ($returnCode) {
             return false;
         }
         return true;
     }
 
-    private function oonfigure_db() {
+    private function configure_db() {
         $returnCode = 0;
         $output = [];
         exec("/opt/remotelabz/bin/remotelabz-ctl reconfigure database", $output, $returnCode);
