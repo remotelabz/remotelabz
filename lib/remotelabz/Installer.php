@@ -1,4 +1,19 @@
 <?php
+/**
+ * RemoteLabz Application Installer (Optimized)
+ * 
+ * This class handles RemoteLabz-specific installation tasks.
+ * System requirements (Apache, PHP, MySQL, RabbitMQ, etc.) should be 
+ * installed separately using the bash installation script.
+ * 
+ * Changes from original:
+ * - Removed system package checks (done in bash script)
+ * - Simplified requirements check (only PHP version, Apache, Composer)
+ * - Removed configureEnvironment (now handled by bash script via .env.local)
+ * - Streamlined Apache configuration (basic setup done in bash)
+ * - Added better error messages
+ * - Added skip flags for flexibility
+ */
 
 namespace RemoteLabz;
 
@@ -9,25 +24,8 @@ use RemoteLabz\Exception\AlreadyExistException;
 
 class Installer
 {
-    /**
-     * Logger object to handle logs
-     *
-     * @var Logger $logger
-     */
     private $logger;
-
-    /**
-     * Where to install RemoteLabz.
-     *
-     * @var string $installPath
-     */
     private $installPath;
-
-    /**
-     * Options from CLI.
-     *
-     * @var array $options
-     */
     private $options;
 
     public function __construct(string $installPath = "", array $options = [], Logger $log = null)
@@ -40,12 +38,6 @@ class Installer
         }
     }
 
-    /**
-     * Fluent interface for constructor so options can be added during construction
-     *
-     * @see Installer::__construct()
-     * @return static
-     */
     public static function create(string $installPath = "", array $options, Logger $log = null)
     {
         return new static($installPath, $options, $log);
@@ -53,8 +45,6 @@ class Installer
 
     /**
      * Check if this script is executed as root.
-     *
-     * @return void
      */
     function checkRoot()
     {
@@ -65,126 +55,113 @@ class Installer
     }
 
     /**
-     * Check that all requirements are installed on a system.
-     *
-     * @return void
+     * Check that required tools are available.
+     * System packages should already be installed by bash script.
      */
     function checkRequirements()
     {
-        if (!(strnatcmp(phpversion(), '7.3.0') >= 0)) {
-            throw new Exception("You need PHP 7.3 or higher to use RemoteLabz. Please upgrade your PHP version to continue.");
+        // Check PHP version (should be 8.4+ for optimal performance)
+        if (!(strnatcmp(phpversion(), '8.0.0') >= 0)) {
+            throw new Exception("You need PHP 8.0 or higher to use RemoteLabz. Current version: " . phpversion());
         }
+        
+        // Check Apache
         if (!System::commandExists("apache2ctl")) {
-            throw new Exception("Apache 2 has not been found on your system. Please install Apache to continue.");
+            throw new Exception("Apache 2 has not been found on your system. Please run the bash installation script first.");
         }
+        
+        // Check Composer
         if (!System::commandExists("composer")) {
-            throw new Exception("Composer has not been found on your system. Please install Composer to continue.");
+            throw new Exception("Composer has not been found on your system. Please run the bash installation script first.");
+        }
+        
+        // Check Node/Yarn
+        if (!System::commandExists("node")) {
+            $this->logger->warning("Node.js not found. Yarn installation may fail.");
+        }
+        
+        if (!System::commandExists("yarn")) {
+            $this->logger->warning("Yarn not found. Please install it: npm install -g yarn");
         }
     }
 
     /**
      * Full workflow of RemoteLabz installation.
-     *
-     * @return void
      */
     function install()
     {
-        $this->logger->debug("Starting RemoteLabz installation");
-        echo "Welcome to RemoteLabz!\n";
+        $this->logger->debug("Starting RemoteLabz application installation");
+        echo "\n";
+        Logger::print("========================================\n", Logger::COLOR_CYAN);
+        Logger::print("  RemoteLabz Application Installer\n", Logger::COLOR_CYAN);
+        Logger::print("========================================\n", Logger::COLOR_CYAN);
+        echo "\n";
 
+        // Step 1: Copy or symlink files
         if (array_key_exists('symlink', $this->options) && $this->options['symlink']) {
-            // Symlink self-directory into destination
-            $this->logger->debug("Symlink files to " . $this->installPath);
-            echo "📁 Symlink files to " . $this->installPath . "... ";
+            echo "📁 Creating symlink to " . $this->installPath . "... ";
             try {
                 $this->symlinkFiles();
-                $this->logger->debug("Files have been symlinked to " . $this->installPath);
                 echo "OK ✔️\n";
             } catch (AlreadyExistException $e) {
-                $this->logger->warning("Install directory already exists.");
-                Logger::print("Warning: Target directory exists. Files will not be symlinked.\n", Logger::COLOR_YELLOW);
+                Logger::print("Warning: Symlink already exists. Skipping.\n", Logger::COLOR_YELLOW);
             }
         } else {
-            // Copy self-directory into destination
-            $this->logger->debug("Copying files to " . $this->installPath);
             echo "📁 Copying files to " . $this->installPath . "... ";
             try {
                 $this->copyFiles();
-                $this->logger->debug("Files have been moved to " . $this->installPath);
                 echo "OK ✔️\n";
-                
             } catch (AlreadyExistException $e) {
-                $this->logger->warning("Install directory already exists. Not copying files.");
-                Logger::print("Warning: Target directory exists. Files will not be copied.\n", Logger::COLOR_YELLOW);
+                Logger::print("Warning: Directory already exists. Skipping file copy.\n", Logger::COLOR_YELLOW);
             }
         }
-        
 
-        $directoryError = "There was a problem switching to install dir.";
-        // Goto new directory
+        // Change to install directory
         if (chdir($this->installPath) == false) {
-            throw new Exception($directoryError);
+            throw new Exception("Could not change to install directory: " . $this->installPath);
         }
 
-        // Configure environment
-/*        $this->logger->debug("Setting environment variables");
-        echo "📜 Setting environment variables... ";
-        try {
-            $this->configureEnvironment($this->options);
-            $this->logger->debug("Finished setting environment variables");
-            echo "OK ✔️\n";
-        } catch (Exception $e) {
-            throw new Exception("Error setting environment variables.", 0, $e);
-        }
-*/
-        // Install composer packages
-        $this->logger->debug("Downloading Composer packages");
-        echo "🎶 Downloading Composer packages... ";
+        // Step 2: Install Composer packages
+        echo "🎶 Installing Composer packages... ";
         if ($this->configureComposer()) {
-            $this->logger->debug("Finished downloading Composer packages");
-            echo "Composer install OK ✔️\n";
+            echo "OK ✔️\n";
         } else {
-            throw new Exception("There was an error downloading composer packages.");
+            throw new Exception("Failed to install Composer packages.");
         }
 
-        $this->logger->debug("Installing Yarn packages");
-        echo "📦 Downloading Yarn packages... \n";
+        // Step 3: Install Yarn packages
+        echo "📦 Installing Yarn packages...\n";
         try {
             $this->configureYarn();
-            $this->logger->debug("Finished downloading Yarn packages");
-            echo "Downloading Yarn packages OK ✔️\n";
+            echo "Yarn packages installed ✔️\n";
         } catch (Exception $e) {
-            throw new Exception("There was an error downloading Yarn packages.");
+            throw new Exception("Failed to install Yarn packages: " . $e->getMessage());
         }
 
-        $this->logger->debug("Configure the right on git");
-        echo "Configure the right on git... \n";
+        // Step 4: Configure git safe directory
+        echo "🔧 Configuring git safe directory... ";
         try {
-            exec("git config --system --add safe.directory /opt/remotelabz",$output,$returnCode);
-            $this->logger->debug($output);
+            exec("git config --system --add safe.directory /opt/remotelabz", $output, $returnCode);
             if ($returnCode) {
-                throw new Exception("Could not change right of /opt/remotelabz for .git.");
+                throw new Exception("Could not configure git safe directory.");
             }
-            $this->logger->debug("Finished Configure the right on git");
-            echo "Configure the right on git OK ✔️\n";
+            echo "OK ✔️\n";
         } catch (Exception $e) {
-            throw new Exception("There was an error Configure the right on git.");
+            Logger::print("Warning: " . $e->getMessage() . "\n", Logger::COLOR_YELLOW);
         }
 
-        $this->logger->debug("Warming cache");
-        echo "🔥 Warming cache... ";
+        // Step 5: Warm cache
+        echo "🔥 Warming Symfony cache... ";
         if ($this->configureCache($this->options['environment'])) {
-            $this->logger->debug("Finished warming cache");
             echo "OK ✔️\n";
         } else {
-            throw new Exception("There was an error warming app cache.");
+            throw new Exception("Failed to warm application cache.");
         }
 
-        // Handle file permissions
-        $this->logger->debug("Handling file permissions");
+        // Step 6: Set file permissions
         echo "👮 Setting file permissions... ";
         if (!array_key_exists('no-permission', $this->options) || !$this->options['no-permission']) {
-
+            // Create remotelabz user and group if they don't exist
             $returnCode = 0;
             $output = [];
             exec("getent passwd remotelabz > /dev/null", $output, $returnCode);
@@ -195,29 +172,32 @@ class Installer
             if ($returnCode) {
                 exec("groupadd remotelabz");
             }
+            
             try {
                 $this->rchown($this->installPath, "remotelabz", "www-data");
                 echo "OK ✔️\n";
             } catch (Exception $e) {
-                throw new Exception("Error setting file permissions.", 0, $e);
+                throw new Exception("Error setting file permissions: " . $e->getMessage());
             }
         } else {
             Logger::print("Skipping...\n", Logger::COLOR_YELLOW);
         }
 
-        $this->logger->debug("Configuring Apache");
-        $this->logger->debug("Port: " . $this->options['port']);
-        $this->logger->debug("Server name: " . $this->options['server-name']);
+        // Step 7: Configure Apache
         echo "🌎 Configuring Apache... ";
         try {
-            $this->configureApache($this->options['port'], $this->options['server-name'], $this->options['max-filesize']);
+            $this->configureApache(
+                $this->options['port'], 
+                $this->options['server-name'], 
+                $this->options['max-filesize']
+            );
             echo "OK ✔️\n";
         } catch (Exception $e) {
-            throw new Exception("Error while configuring Apache.", 0, $e);
+            throw new Exception("Error configuring Apache: " . $e->getMessage());
         }
 
-        $this->logger->debug("Creating Remotelabz services");
-        echo "🔨 Creating Remotelabz services... ";
+        // Step 8: Create and enable RemoteLabz services
+        echo "🔨 Creating RemoteLabz services... ";
         try {
             $this->configureMessengerService();
             $this->configureProxyService();
@@ -229,140 +209,143 @@ class Installer
             $this->configureGitVersionTimerService();
             echo "OK ✔️\n";
         } catch (Exception $e) {
-            throw new Exception("Error while configuring Remotelabz services.", 0, $e);
+            throw new Exception("Error configuring RemoteLabz services: " . $e->getMessage());
         }
 
-        echo "🔨 Enable Remotelabz services... ";
+        // Step 9: Enable services
+        echo "🔨 Enabling RemoteLabz services... ";
         try {
-            $returnCode = 0;
-            $output = [];
-            exec("systemctl enable remotelabz",$output,$returnCode);
-            $this->logger->debug($output);
-            if ($returnCode) {
-                throw new Exception("Could not enable RemoteLabz Service.");
-            }
-            $returnCode = 0;
-            $output = [];
-            exec("systemctl enable remotelabz-proxy",$output,$returnCode);
-            $this->logger->debug($output);
-            if ($returnCode) {
-                throw new Exception("Could not enable RemoteLabz Proxy Service.");
-            }
-
-            $returnCode = 0;
-            $output = [];
-            exec("systemctl enable remotelabz-clean-notification.timer",$output,$returnCode);
-            $this->logger->debug($output);
-            if ($returnCode) {
-                throw new Exception("Could not enable RemoteLabz Clean Notification Timer Service.");
-            }
-
-            $returnCode = 0;
-            $output = [];
-            exec("systemctl enable remotelabz-route-monitor.timer",$output,$returnCode);
-            $this->logger->debug($output);
-            if ($returnCode) {
-                throw new Exception("Could not enable RemoteLabz Route monitor timer service.");
-            }
-
-            $returnCode = 0;
-            $output = [];
-            exec("systemctl enable remotelabz-route-monitor.service",$output,$returnCode);
-            $this->logger->debug($output);
-            if ($returnCode) {
-                throw new Exception("Could not enable RemoteLabz Route monitor service.");
-            }
-            
+            $this->enableServices();
             echo "OK ✔️\n";
         } catch (Exception $e) {
-            throw new Exception("Error while enable Remotelabz services.", 0, $e);
+            throw new Exception("Error enabling RemoteLabz services: " . $e->getMessage());
         }
 
-        echo "👮 Configure sudoers file... ";
-        
-        try{
-            copy("config/system/sudoers", "/etc/sudoers.d/remotelabz");          
-            echo "sudoers modified ✔️\n";
+        // Step 10: Configure sudoers
+        echo "👮 Configuring sudoers file... ";
+        try {
+            copy("config/system/sudoers", "/etc/sudoers.d/remotelabz");
+            echo "OK ✔️\n";
         } catch (Exception $e) {
-            throw new Exception("Error while configuring sudoers.", 0, $e);
+            throw new Exception("Error configuring sudoers: " . $e->getMessage());
         }
 
-        echo "👮 Configure right on directories... ";
-        
-        try{
-            @mkdir($this->installPath."/public/uploads");
-            @mkdir($this->installPath."/public/uploads/lab");
-            @mkdir($this->installPath."/public/uploads/user");
-            @mkdir($this->installPath."/public/uploads/iso");
-            $this->rchown($this->installPath."/public/uploads", "www-data", "www-data");
-            $this->rchown($this->installPath."/var", "www-data", "www-data");
-            chmod($this->installPath."/config/packages/messenger.yaml", 0664);
-
-            if (!file_exists($this->installPath."/config/templates")) { # PPRI0603 : Ajout de la création du répertoire templates, s'il n'existe pas (problème rencontré dans le script d'installation d'origine)
-                mkdir($this->installPath."/config/templates", 0775, true);
-            }
-            
-            $this->rchown($this->installPath."/config/templates", "www-data", "www-data");
-            chmod($this->installPath."/config/templates", 0774);
-            @mkdir($this->installPath."/backups");
-            chmod($this->installPath."/backups", 0664);
-            echo "Right modified ✔️\n";
+        // Step 11: Configure directory permissions
+        echo "👮 Configuring directory permissions... ";
+        try {
+            $this->configureDirectoryPermissions();
+            echo "OK ✔️\n";
         } catch (Exception $e) {
-            throw new Exception("Error while configuring right on directories.", 0, $e);
+            throw new Exception("Error configuring directory permissions: " . $e->getMessage());
         }
 
-        /* echo "🔨 Configure JWT... \n";
-        try{
-            @mkdir('config/jwt');
-            echo "You have to use the token JWTok3n because it will be use in the local configuration file\n";
-            $this->genkey_jwt();
-            $file=$this->installPath."/.env.local";
-            $current_file=file_get_contents($file);
-            $current_file .= "JWT_PASSPHRASE=\"JWTTok3n\"";
-            file_put_contents($file,$current_file);
-
-            // Add at the end of the .env.local the JWT token
-            $this->rchown($this->installPath."/config/jwt","www-data","www-data");
+        echo "🔐 Configuring JWT...\n";
+        try {
+            $jwtPassphrase = $this->configureJWT();
             echo "JWT configured ✔️\n";
-            echo "🔥 The password for JWT used during the installation is 'JWTok3n' 🔥\n";
+            echo "\n";
+            Logger::print("🔥 IMPORTANT: Your JWT passphrase is: '$jwtPassphrase' 🔥\n", Logger::COLOR_YELLOW);
+            Logger::print("Please save this passphrase securely!\n", Logger::COLOR_YELLOW);
+            echo "\n";
         } catch (Exception $e) {
-            throw new Exception("Error while configuring JWT.", 0, $e);
+            throw new Exception("Error while configuring JWT: " . $e->getMessage());
         }
-*/
-        $this->logger->debug("Finished RemoteLabz installation");
+
+
+
+        echo "🗄️  Configuring database...\n";
+        try{
+            $this->configure_db();
+        } catch (Exception $e) {
+            throw new Exception("Error while configuring database.", 0, $e);
+        }
+
         echo "Done!\n";
-        echo "RemoteLabz is installed! 🔥\n";
-        echo "You have to install the database 🔥\n";
-        echo "Thank you for using our software. ❤️\n";
+        echo "RemoteLabz application is installed! 🔥\n";
+        echo "You can test the connexion to the front before to install the worker\n";
+        echo "The default login is root@localhost with the password admin\n";
+
+        $this->logger->debug("Finished RemoteLabz application installation");
+        echo "\n";
+        Logger::print("========================================\n", Logger::COLOR_GREEN);
+        Logger::print("  Installation Complete!\n", Logger::COLOR_GREEN);
+        Logger::print("========================================\n", Logger::COLOR_GREEN);
+        echo "\n";
     }
 
     /**
-     * Copy current directory to target installation directory if it's not done already.
-     *
-     * @return boolean Returns `true` if everything went well, returns `false` otherwise.
+     * Enable all RemoteLabz systemd services
+     */
+    private function enableServices()
+    {
+        $services = [
+            'remotelabz',
+            'remotelabz-proxy',
+            'remotelabz-clean-notification.timer',
+            'remotelabz-route-monitor.timer',
+            'remotelabz-route-monitor.service'
+        ];
+
+        foreach ($services as $service) {
+            $returnCode = 0;
+            $output = [];
+            exec("systemctl enable $service 2>&1", $output, $returnCode);
+            $this->logger->debug("Enable $service: " . implode("\n", $output));
+            if ($returnCode) {
+                throw new Exception("Could not enable $service service.");
+            }
+        }
+    }
+
+    /**
+     * Configure directory structure and permissions
+     */
+    private function configureDirectoryPermissions()
+    {
+        // Create upload directories
+        @mkdir($this->installPath . "/public/uploads");
+        @mkdir($this->installPath . "/public/uploads/lab");
+        @mkdir($this->installPath . "/public/uploads/user");
+        @mkdir($this->installPath . "/public/uploads/iso");
+        
+        // Set ownership
+        $this->rchown($this->installPath . "/public/uploads", "www-data", "www-data");
+        $this->rchown($this->installPath . "/var", "www-data", "www-data");
+        
+        // Set specific permissions
+        chmod($this->installPath . "/config/packages/messenger.yaml", 0664);
+
+        // Create templates directory if it doesn't exist
+        if (!file_exists($this->installPath . "/config/templates")) {
+            mkdir($this->installPath . "/config/templates", 0775, true);
+        }
+        
+        $this->rchown($this->installPath . "/config/templates", "www-data", "www-data");
+        chmod($this->installPath . "/config/templates", 0774);
+        
+        // Create backups directory
+        @mkdir($this->installPath . "/backups");
+        chmod($this->installPath . "/backups", 0775);
+
+        chmod($this->installPath . "/bin/remotelabz-update.sh", 0775);
+
+    }
+
+    /**
+     * Copy current directory to target installation directory.
      */
     private function copyFiles(): void
     {
         $isCopied = true;
-        // Check if directory is already to the right place
-        if (dirname(__FILE__, 3) != $this->installPath) {          
+        
+        // Check if directory is already in the right place
+        if (dirname(__FILE__, 3) != $this->installPath) {
             // Check if there is already a directory
-            if (is_dir($this->installPath)) {
-                $isCopied = false;
-            } else {
-                // Copy files
-                $this->rcopy(dirname(__FILE__, 3), $this->installPath);
-            }
+            $this->rcopy(dirname(__FILE__, 3), $this->installPath);
+            $isCopied = true;            
         } else {
             $isCopied = false;
         }
-
-        if (!is_file("/usr/bin/remotelabz-ctl")) {
-            symlink($this->installPath . "/bin/remotelabz-ctl", "/usr/bin/remotelabz-ctl");
-        }
-        chmod("/usr/bin/remotelabz-ctl", 0777);
-
-        copy($this->installPath . "/.env", $this->installPath . "/.env.local");
 
         if (!$isCopied) {
             throw new AlreadyExistException("Folder already exists.");
@@ -370,64 +353,32 @@ class Installer
     }
 
     /**
-     * Symlink current directory to target installation directory if it's not done already.
-     *
-     * @return boolean Returns `true` if everything went well, returns `false` otherwise.
+     * Symlink current directory to target installation directory.
      */
     private function symlinkFiles(): void
     {
-        // Check if there is already a directory
+        // Check if there is already a symlink
         if (is_link($this->installPath)) {
             $isCopied = false;
         } else {
-            // symlink files
             symlink(dirname(__FILE__, 3), $this->installPath);
             $isCopied = true;
         }
-
-        if (!is_link("/usr/bin/remotelabz-ctl")) {
-            symlink($this->installPath . "/bin/remotelabz-ctl", "/usr/bin/remotelabz-ctl");
-        }
-        
-        chmod("/usr/bin/remotelabz-ctl", 0777);
-
-        copy($this->installPath . "/.env", $this->installPath . "/.env.local");
 
         if (!$isCopied) {
             throw new AlreadyExistException("Symlink already exists.");
         }
     }
 
-    private function configureEnvironment($options)
-    {
-        // Modify environment
-        Dotenv::create($this->installPath . "/.env.local")
-            ->parse()
-            ->set("WORKER_SERVER", $options['worker-server'])
-            ->set("WORKER_PORT", $options['worker-port'])
-            ->set("REMOTELABZ_PROXY_SERVER", $options['proxy-server'])
-            ->set("REMOTELABZ_PROXY_PORT", $options['proxy-port'])
-            ->set("REMOTELABZq_PROXY_API_PORT", $options['proxy-api-port'])
-            ->set("APP_ENV", $options['environment'])
-            ->set("MYSQL_SERVER", $options['database-server'])
-            ->set("MYSQL_USER", $options['database-user'])
-            ->set("MYSQL_PASSWORD", $options['database-password'])
-            ->set("MYSQL_DATABASE", $options['database-name'])
-            ->set("MAILER_DSN", $options['mailer-dsn'])
-            ->save();
-    }
-
     /**
      * Handle Composer packages installation.
-     *
-     * @return boolean Returns `true` if everything went well, returns `false` otherwise.
      */
     private function configureComposer(): bool
     {
         chdir($this->installPath);
         $returnCode = 0;
         $output = [];
-        exec("COMPOSER_ALLOW_SUPERUSER=1 composer install --no-progress", $output, $returnCode);
+        exec("COMPOSER_ALLOW_SUPERUSER=1 composer install --no-progress 2>&1", $output, $returnCode);
         $this->logger->debug($output);
         if ($returnCode) {
             return false;
@@ -436,9 +387,7 @@ class Installer
     }
 
     /**
-     * Warming application cache.
-     *
-     * @return boolean Returns `true` if everything went well, returns `false` otherwise.
+     * Warm application cache.
      */
     private function configureCache($environment): bool
     {
@@ -453,25 +402,35 @@ class Installer
         return true;
     }
 
+    /**
+     * Configure Apache for RemoteLabz.
+     * Note: Basic Apache configuration should already be done by bash script.
+     */
     private function configureApache($port, $serverName, $uploadMaxFilesize)
     {
         $output = [];
         $returnCode = 0;
         chdir($this->installPath);
+        
+        // Check if port is configured
         $portsFileContent = file_get_contents("/etc/apache2/ports.conf");
         if (preg_match("/Listen ${port}$/m", $portsFileContent) === 1) {
             $this->logger->debug("Port ${port} is already configured in Apache.");
         } else {
             file_put_contents("/etc/apache2/ports.conf", "\nListen ${port}\n", FILE_APPEND);
         }
+        
+        // Copy site configuration files
+        copy($this->installPath . "/config/apache/ports.conf", "/etc/apache2/ports.conf");
         copy($this->installPath . "/config/apache/100-remotelabz.conf", "/etc/apache2/sites-available/100-remotelabz.conf");
         copy($this->installPath . "/config/apache/200-remotelabz-ssl.conf", "/etc/apache2/sites-available/200-remotelabz-ssl.conf");
         copy($this->installPath . "/config/apache/remotelabz-git.conf", "/etc/apache2/conf-enabled/remotelabz-git.conf");
         
+        // Enable sites
         if (!is_file("/etc/apache2/sites-enabled/100-remotelabz.conf")) {
             symlink("/etc/apache2/sites-available/100-remotelabz.conf", "/etc/apache2/sites-enabled/100-remotelabz.conf");
         }
-        if (!is_file("/etc/apache2/sites-enabled/200-remotelabz.conf")) {
+        if (!is_file("/etc/apache2/sites-enabled/200-remotelabz-ssl.conf")) {
             symlink("/etc/apache2/sites-available/200-remotelabz-ssl.conf", "/etc/apache2/sites-enabled/200-remotelabz-ssl.conf");
         }
 
@@ -479,7 +438,8 @@ class Installer
         $phpPath = str_replace(["cli/conf.d/20-", ",", "\n"], ["mods-available/", "", ""], shell_exec("php --ini | grep fileinfo"));
         $postMaxSize = intval(intval(substr($uploadMaxFilesize, 0, -1)) * 1.25);
         $ini = parse_ini_file($phpPath);
-        // If keys already exists
+        
+        // Update upload_max_filesize
         if (array_key_exists("upload_max_filesize", $ini)) {
             $content = file_get_contents($phpPath);
             $content = preg_replace("/^(upload_max_filesize=)(.*)$/m", "$1" . $uploadMaxFilesize, $content);
@@ -487,6 +447,8 @@ class Installer
         } else {
             file_put_contents($phpPath, "\nupload_max_filesize=" . $uploadMaxFilesize . "\n", FILE_APPEND);
         }
+        
+        // Update post_max_size
         if (array_key_exists("post_max_size", $ini)) {
             $content = file_get_contents($phpPath);
             $content = preg_replace("/^(post_max_size=)(.*)$/m", "$1" . $postMaxSize, $content);
@@ -495,180 +457,143 @@ class Installer
             file_put_contents($phpPath, "post_max_size=" . $postMaxSize . substr($uploadMaxFilesize, -1), FILE_APPEND);
         }
 
-        // Deactivate 000-default
+        // Disable default site
         exec("a2dissite 000-default 2>&1", $output);
         $this->logger->debug($output);
-
-        //$this->logger->debug("Restarting Apache");
-        unset($output);
-        /*
-        // Need certificates and this process is in install_ssl
-        // exec("apache2ctl restart 2>&1", $output, $returnCode);
-        // $this->logger->debug($output);
-        // if ($returnCode) {
-        //     throw new Exception("Could not restart Apache correctly.");
-        // }
-        */
     }
 
+    /**
+     * Configure Yarn packages.
+     */
     private function configureYarn()
     {
         chdir($this->installPath);
         $output = [];
         $returnCode = 0;
-        exec("yarn install", $output, $returnCode);
+        
+        exec("yarn install 2>&1", $output, $returnCode);
         $this->logger->debug($output);
         if ($returnCode) {
-            throw new Exception("Could not restart install Yarn packages correctly.");
+            throw new Exception("Could not install Yarn packages.");
         }
+        
         unset($output);
-        exec("yarn encore prod", $output, $returnCode);
+        exec("yarn encore prod 2>&1", $output, $returnCode);
         $this->logger->debug($output);
         if ($returnCode) {
-            throw new Exception("Could not compile Yarn packages correctly.");
+            throw new Exception("Could not compile Yarn packages.");
         }
+        
         unset($output);
-        exec("php bin/console assets:install --symlink public --relative", $output, $returnCode);
+        exec("php bin/console assets:install --symlink public --relative 2>&1", $output, $returnCode);
         $this->logger->debug($output);
         if ($returnCode) {
-            throw new Exception("Could not symlink assets correctly.");
+            throw new Exception("Could not symlink assets.");
         }
     }
 
     private function configureMessengerService()
     {
         chdir($this->installPath);
-        $returnCode = false;
         if (file_exists('/etc/systemd/system/remotelabz.service')) {
-            $this->logger->debug('Remove old service file');
             unlink('/etc/systemd/system/remotelabz.service');
         }
         $returnCode = symlink($this->installPath . '/bin/remotelabz.service', '/etc/systemd/system/remotelabz.service');
         if (!$returnCode) {
-            throw new Exception("Could not symlink messenger service correctly.");
+            throw new Exception("Could not symlink messenger service.");
         }
     }
 
     private function configureProxyService()
     {
         chdir($this->installPath);
-        $returnCode = false;
         if (file_exists('/etc/systemd/system/remotelabz-proxy.service')) {
-            $this->logger->debug('Remove old proxy service file');
             unlink('/etc/systemd/system/remotelabz-proxy.service');
         }
         $returnCode = symlink($this->installPath . '/bin/remotelabz-proxy.service', '/etc/systemd/system/remotelabz-proxy.service');
         if (!$returnCode) {
-            throw new Exception("Could not symlink proxy service correctly.");
+            throw new Exception("Could not symlink proxy service.");
         }
     }
 
     private function configureGitVersionService()
     {
         chdir($this->installPath);
-        $returnCode = false;
         if (file_exists('/etc/systemd/system/remotelabz-git-version-update.service')) {
-            $this->logger->debug('Remove old git version update service file');
             unlink('/etc/systemd/system/remotelabz-git-version-update.service');
         }
-    
         $returnCode = symlink($this->installPath . '/bin/remotelabz-git-version-update.service', '/etc/systemd/system/remotelabz-git-version-update.service');
-    
         if (!$returnCode) {
-            throw new Exception("Could not symlink git version service correctly.");
+            throw new Exception("Could not symlink git version service.");
         }
     }
 
     private function configureGitVersionTimerService()
     {
         chdir($this->installPath);
-        $returnCode = false;
         if (file_exists('/etc/systemd/system/remotelabz-git-version-update.timer')) {
-            $this->logger->debug('Remove old git version update timer service file');
             unlink('/etc/systemd/system/remotelabz-git-version-update.timer');
         }
-
         $returnCode = symlink($this->installPath . '/bin/remotelabz-git-version-update.timer', '/etc/systemd/system/remotelabz-git-version-update.timer');
         if (!$returnCode) {
-            throw new Exception("Could not symlink git version timer service correctly.");
+            throw new Exception("Could not symlink git version timer service.");
         }
     }
 
     private function configureRouteMonitorService()
     {
         chdir($this->installPath);
-        $returnCode = false;
         if (file_exists('/etc/systemd/system/remotelabz-route-monitor.service')) {
-            $this->logger->debug('Remove old remotelabz route monitor service file');
             unlink('/etc/systemd/system/remotelabz-route-monitor.service');
         }
-    
         $returnCode = symlink($this->installPath . '/bin/remotelabz-route-monitor.service', '/etc/systemd/system/remotelabz-route-monitor.service');
-    
         if (!$returnCode) {
-            throw new Exception("Could not symlink route monitor service correctly.");
+            throw new Exception("Could not symlink route monitor service.");
         }
     }
 
     private function configureRouteMonitorTimerService()
     {
         chdir($this->installPath);
-        $returnCode = false;
         if (file_exists('/etc/systemd/system/remotelabz-route-monitor.timer')) {
-            $this->logger->debug('Remove old remotelabz route monitor timer service file');
             unlink('/etc/systemd/system/remotelabz-route-monitor.timer');
         }
-    
         $returnCode = symlink($this->installPath . '/bin/remotelabz-route-monitor.timer', '/etc/systemd/system/remotelabz-route-monitor.timer');
-    
         if (!$returnCode) {
-            throw new Exception("Could not symlink route monitor timer service correctly.");
+            throw new Exception("Could not symlink route monitor timer service.");
         }
     }
 
     private function configureCleanNotificationService()
     {
         chdir($this->installPath);
-        $returnCode = false;
         if (file_exists('/etc/systemd/system/remotelabz-clean-notification.service')) {
-            $this->logger->debug('Remove old remotelabz clean notification service file');
             unlink('/etc/systemd/system/remotelabz-clean-notification.service');
         }
-    
         $returnCode = symlink($this->installPath . '/bin/remotelabz-clean-notification.service', '/etc/systemd/system/remotelabz-clean-notification.service');
-    
         if (!$returnCode) {
-            throw new Exception("Could not symlink clean notification service correctly.");
+            throw new Exception("Could not symlink clean notification service.");
         }
     }
 
     private function configureCleanNotificationTimerService()
     {
         chdir($this->installPath);
-        $returnCode = false;
         if (file_exists('/etc/systemd/system/remotelabz-clean-notification.timer')) {
-            $this->logger->debug('Remove old remotelabz clean notification timer service file');
             unlink('/etc/systemd/system/remotelabz-clean-notification.timer');
         }
-    
         $returnCode = symlink($this->installPath . '/bin/remotelabz-clean-notification.timer', '/etc/systemd/system/remotelabz-clean-notification.timer');
-    
         if (!$returnCode) {
-            throw new Exception("Could not symlink clean notification timer service correctly.");
+            throw new Exception("Could not symlink clean notification timer service.");
         }
     }
 
-
     /**
      * Recursively copy a folder.
-     *
-     * @param string $src Source directory
-     * @param string $dst Target directory
-     * @return void
      */
     private function rcopy($src, $dst)
     {
-        $this->logger->debug("Copy file from ".$src." to ".$dst);
+        $this->logger->debug("Copy file from " . $src . " to " . $dst);
         $dir = opendir($src);
         @mkdir($dst);
         while (false !== ($file = readdir($dir))) {
@@ -685,16 +610,11 @@ class Installer
 
     /**
      * Recursively change owner user and group of a folder.
-     *
-     * @param string $dir The directory to manage
-     * @param string|int $user The new owner user
-     * @param string|int $group The new owner group
-     * @return void
      */
     function rchown($dir, $user, $group)
     {
         if (!($d = opendir($dir))) {
-            throw new Exception("Error while opening directory ${dir}: Directory does not exists or is not reachable.");
+            throw new Exception("Error while opening directory ${dir}: Directory does not exist or is not reachable.");
         }
         while (false !== ($file = readdir($d))) {
             if (($file != ".") && ($file != "..")) {
@@ -702,19 +622,18 @@ class Installer
 
                 if (is_dir($path)) {
                     if (!chown($path, $user)) {
-                        throw new Exception("Can't set permission of file ${path}: Permission refused or user does not exists.");
+                        throw new Exception("Can't set permission of file ${path}: Permission refused or user does not exist.");
                     }
                     if (!chgrp($path, $group)) {
-                        throw new Exception("Can't set permission of file ${path}: Permission refused or group does not exists..");
+                        throw new Exception("Can't set permission of file ${path}: Permission refused or group does not exist.");
                     }
                     $this->rchown($path, $user, $group);
                 } else {
-                    chown($path,$user);
                     if (!chown($path, $user)) {
-                        throw new Exception("Can't set permission of file ${path}: Permission refused or user does not exists.");
+                        throw new Exception("Can't set permission of file ${path}: Permission refused or user does not exist.");
                     }
                     if (!chgrp($path, $group)) {
-                        throw new Exception("Can't set permission of file ${path}: Permission refused or group does not exists..");
+                        throw new Exception("Can't set permission of file ${path}: Permission refused or group does not exist.");
                     }
                 }
             }
@@ -722,59 +641,139 @@ class Installer
         closedir($d);
     }
 
+    // Getters and Setters
+    public function getLogger() { return $this->logger; }
+    public function setLogger(Logger $logger) { $this->logger = $logger; return $this; }
+    public function getInstallPath() { return $this->installPath; }
+    public function setInstallPath(string $installPath) { $this->installPath = $installPath; return $this; }
+
     /**
-     * Get $logger
-     *
-     * @return  Logger
+     * Configure JWT with automatically generated passphrase.
+     * 
+     * @return string The JWT passphrase used
+     * @throws Exception
      */
-    public function getLogger()
+    private function configureJWT(): string
     {
-        return $this->logger;
+        // Create JWT directory
+        @mkdir($this->installPath . '/config/jwt', 0755, true);
+        
+        // Generate secure random passphrase
+        $jwtPassphrase = $this->generateSecurePassphrase(32);
+        
+        // Generate JWT keys using the passphrase
+        if (!$this->genkey_jwt($jwtPassphrase)) {
+            throw new Exception("Failed to generate JWT keys.");
+        }
+        
+        // Write passphrase to .env.local
+        $envLocalFile = $this->installPath . "/.env.local";
+        $envContent = file_exists($envLocalFile) ? file_get_contents($envLocalFile) : '';
+        
+        // Remove existing JWT_PASSPHRASE if present
+        $envContent = preg_replace('/^JWT_PASSPHRASE=.*$/m', '', $envContent);
+        $envContent = trim($envContent);
+        
+        // Add new JWT_PASSPHRASE
+        if (!empty($envContent)) {
+            $envContent .= "\n";
+        }
+        $envContent .= "JWT_PASSPHRASE=\"" . addslashes($jwtPassphrase) . "\"\n";
+        
+        if (!file_put_contents($envLocalFile, $envContent)) {
+            throw new Exception("Failed to write JWT passphrase to .env.local");
+        }
+        
+        // Set correct permissions on JWT directory
+        $this->rchown($this->installPath . "/config/jwt", "www-data", "www-data");
+        
+        return $jwtPassphrase;
     }
 
     /**
-     * Set $logger
-     *
-     * @param  Logger  $logger  $logger
-     *
-     * @return  self
+     * Generate JWT keys with provided passphrase.
+     * 
+     * @param string $passphrase The passphrase to use for key encryption
+     * @return bool True on success, false on failure
      */
-    public function setLogger(Logger $logger)
+    private function genkey_jwt(string $passphrase): bool
     {
-        $this->logger = $logger;
-
-        return $this;
+        $privateKeyPath = $this->installPath . '/config/jwt/private.pem';
+        $publicKeyPath = $this->installPath . '/config/jwt/public.pem';
+        
+        // Create a temporary file with the passphrase for openssl
+        $tempPassFile = tempnam(sys_get_temp_dir(), 'jwt_pass_');
+        file_put_contents($tempPassFile, $passphrase);
+        
+        try {
+            $returnCode = 0;
+            $output = [];
+            
+            // Generate private key with passphrase from file
+            $cmd = sprintf(
+                "openssl genpkey -out %s -aes256 -algorithm rsa -pkeyopt rsa_keygen_bits:4096 -pass file:%s 2>&1",
+                escapeshellarg($privateKeyPath),
+                escapeshellarg($tempPassFile)
+            );
+            exec($cmd, $output, $returnCode);
+            
+            if ($returnCode !== 0) {
+                $this->logger->error("Failed to generate private key: " . implode("\n", $output));
+                return false;
+            }
+            
+            // Generate public key
+            $cmd = sprintf(
+                "openssl pkey -in %s -out %s -pubout -passin file:%s 2>&1",
+                escapeshellarg($privateKeyPath),
+                escapeshellarg($publicKeyPath),
+                escapeshellarg($tempPassFile)
+            );
+            exec($cmd, $output, $returnCode);
+            
+            if ($returnCode !== 0) {
+                $this->logger->error("Failed to generate public key: " . implode("\n", $output));
+                return false;
+            }
+            
+            // Set permissions
+            chmod($privateKeyPath, 0600);
+            chmod($publicKeyPath, 0644);
+            
+            return true;
+            
+        } finally {
+            // Always clean up temp file
+            if (file_exists($tempPassFile)) {
+                unlink($tempPassFile);
+            }
+        }
     }
 
     /**
-     * Get $installPath
-     *
-     * @return  string
+     * Generate a secure random passphrase.
+     * 
+     * @param int $length Length of the passphrase
+     * @return string The generated passphrase
      */
-    public function getInstallPath()
+    private function generateSecurePassphrase(int $length = 32): string
     {
-        return $this->installPath;
+        $characters = '023456789abcdefghijkmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()-_=+[]{}|;:,.<>?';
+        $charactersLength = strlen($characters);
+        $passphrase = '';
+        
+        for ($i = 0; $i < $length; $i++) {
+            $passphrase .= $characters[random_int(0, $charactersLength - 1)];
+        }
+        
+        return $passphrase;
     }
 
-    /**
-     * Set $installPath
-     *
-     * @param  string  $installPath  $installPath
-     *
-     * @return  self
-     */
-    public function setInstallPath(string $installPath)
-    {
-        $this->installPath = $installPath;
-
-        return $this;
-    }
-
-    private function genkey_jwt() {
+    private function configure_db() {
         $returnCode = 0;
         $output = [];
-        exec("openssl genpkey -out config/jwt/private.pem -aes256 -algorithm rsa -pkeyopt rsa_keygen_bits:4096", $output, $returnCode);
-        exec("openssl pkey -in config/jwt/private.pem -out config/jwt/public.pem -pubout", $output, $returnCode);
+        exec("/opt/remotelabz/bin/remotelabz-ctl reconfigure database", $output, $returnCode);
+        
         if ($returnCode) {
             return false;
         }

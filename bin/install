@@ -1,5 +1,24 @@
 #!/usr/bin/env php
 <?php
+/**
+ * RemoteLabz Application Installer
+ * 
+ * This script handles the application-specific installation tasks.
+ * System requirements (Apache, PHP, MySQL, etc.) should be installed first
+ * using the install_remotelabz_complete.sh script.
+ * 
+ * Usage:
+ *   ./install [options]
+ * 
+ * Options:
+ *   -h, --help              Show this help
+ *   -e, --environment       Set environment (prod|dev) [default: prod]
+ *   -s, --max-filesize      Set PHP max upload filesize [default: 3000M]
+ *   -p, --port              Set Apache port [default: 80]
+ *   --server-name           Set server name [default: from .env.local]
+ *   --symlink               Symlink instead of copy
+ *   --skip-requirements     Skip system requirements check (use if already installed)
+ */
 
 use GetOpt\GetOpt;
 use GetOpt\Option;
@@ -15,25 +34,13 @@ require dirname(__DIR__) . '/lib/autoload.php';
 
 // Default values
 const REMOTELABZ_PATH               = "/opt/remotelabz";
-/*
-
-const REMOTELABZ_DATABASE_SERVER    = "localhost";
-const REMOTELABZ_DATABASE_USER      = "symfony";
-const REMOTELABZ_DATABASE_PASSWORD  = "symfony";
-const REMOTELABZ_DATABASE_NAME      = "symfony";
-const REMOTELABZ_WORKER_SERVER      = "localhost";
-const REMOTELABZ_WORKER_PORT        = 8080;
-const WEBSOCKET_PROXY_SERVER        = "localhost";
-const WEBSOCKET_PROXY_PORT          = 8888;
-const WEBSOCKET_PROXY_API_PORT      = 8889;
-*/
 const REMOTELABZ_SERVER_NAME        = "remotelabz.com";
 const INSTALL_LOG_PATH              = "/var/log/remotelabz/install.log";
 const REMOTELABZ_ENV                = "prod";
 const REMOTELABZ_MAX_FILESIZE       = "3000M";
 const REMOTELABZ_PORT               = 80;
-const MAILER_DSN                    = "smtp://localhost:25?encryption=&auth_mode=";
 
+// Parse command line options
 $getopt = new GetOpt([
     Option::create('h', 'help', GetOpt::NO_ARGUMENT)
         ->setDescription("Show this help text."),
@@ -57,58 +64,18 @@ $getopt = new GetOpt([
     Option::create('p', 'port', GetOpt::REQUIRED_ARGUMENT)
         ->setDescription("Set the port used by RemoteLabz. Default : " . REMOTELABZ_PORT)
         ->setArgument(new Argument(REMOTELABZ_PORT, 'is_numeric', 'port')),
-/*
-    Option::create(null, 'worker-server', GetOpt::REQUIRED_ARGUMENT)
-        ->setDescription("Set the address used by RemoteLabz to connect to remotelabz-worker. Default : " . REMOTELABZ_WORKER_SERVER)
-        ->setArgument(new Argument(REMOTELABZ_WORKER_SERVER, 'is_string', 'address')),
 
-    Option::create(null, 'worker-port', GetOpt::REQUIRED_ARGUMENT)
-        ->setDescription("Set the port used by RemoteLabz to connect to remotelabz-worker. Default : " . REMOTELABZ_WORKER_PORT)
-        ->setArgument(new Argument(REMOTELABZ_WORKER_PORT, 'is_numeric', 'port')),
-
-    Option::create(null, 'proxy-server', GetOpt::REQUIRED_ARGUMENT)
-        ->setDescription("Set the address used by RemoteLabz to connect to configurable-http-proxy. Default : " . WEBSOCKET_PROXY_SERVER)
-        ->setArgument(new Argument(WEBSOCKET_PROXY_SERVER, 'is_string', 'address')),
-
-    Option::create(null, 'proxy-port', GetOpt::REQUIRED_ARGUMENT)
-        ->setDescription("Set the port used by RemoteLabz to connect to configurable-http-proxy. Default : " . WEBSOCKET_PROXY_PORT)
-        ->setArgument(new Argument(WEBSOCKET_PROXY_PORT, 'is_numeric', 'port')),
-
-    Option::create(null, 'proxy-api-port', GetOpt::REQUIRED_ARGUMENT)
-        ->setDescription("Set the port used by RemoteLabz to connect to configurable-http-proxy internal API. Default : " . WEBSOCKET_PROXY_API_PORT)
-        ->setArgument(new Argument(WEBSOCKET_PROXY_API_PORT, 'is_numeric', 'port')),
-
-    Option::create(null, 'database-server', GetOpt::REQUIRED_ARGUMENT)
-        ->setDescription("Set the address of the SQL server. Default : " . REMOTELABZ_DATABASE_SERVER)
-        ->setArgument(new Argument(REMOTELABZ_DATABASE_SERVER, 'is_string', 'address')),
-
-    Option::create(null, 'database-user', GetOpt::REQUIRED_ARGUMENT)
-        ->setDescription("Set the user of the SQL server. Default : " . REMOTELABZ_DATABASE_USER)
-        ->setArgument(new Argument(REMOTELABZ_DATABASE_USER, 'is_string', 'user')),
-
-    Option::create(null, 'database-password', GetOpt::REQUIRED_ARGUMENT)
-        ->setDescription("Set the password of the SQL server. Default : " . REMOTELABZ_DATABASE_PASSWORD)
-        ->setArgument(new Argument(REMOTELABZ_DATABASE_PASSWORD, 'is_string', 'password')),
-
-    Option::create(null, 'database-name', GetOpt::REQUIRED_ARGUMENT)
-        ->setDescription("Set the databases name of the SQL server. Default : " . REMOTELABZ_DATABASE_NAME)
-        ->setArgument(new Argument(REMOTELABZ_DATABASE_NAME, 'is_string', 'name')),
-
-    Option::create(null, 'mailer-url', GetOpt::REQUIRED_ARGUMENT)
-        ->setDescription("Set the URL used to contact mail server. Default : " . MAILER_URL)
-        ->setArgument(new Argument(MAILER_URL, 'is_string', 'url')),
-*/
     Option::create(null, 'server-name', GetOpt::REQUIRED_ARGUMENT)
-        ->setDescription("Set the server name of RemoteLabz VirtualHost. Default : " . REMOTELABZ_SERVER_NAME)
+        ->setDescription("Set the server name of RemoteLabz VirtualHost. Default : from .env.local PUBLIC_ADDRESS or " . REMOTELABZ_SERVER_NAME)
         ->setArgument(new Argument(REMOTELABZ_SERVER_NAME, 'is_string', 'name')),
-/*
-    Option::create(null, 'no-permission', GetOpt::NO_ARGUMENT)
-        ->setDescription("Skip file permissions step."),
-*/
+
     Option::create(null, 'symlink', GetOpt::NO_ARGUMENT)
         ->setDescription("Symlink remotelabz to this folder instead of copying files."),
-
+    
+    Option::create(null, 'skip-requirements', GetOpt::NO_ARGUMENT)
+        ->setDescription("Skip system requirements check (use if requirements already installed by bash script)."),
 ]);
+
 try {
     $getopt->process();
 } catch (ArgumentException $e) {
@@ -127,11 +94,29 @@ try {
 // Help
 if ($getopt->getOption('help')) {
     echo $getopt->getHelpText();
+    echo "\n";
+    echo "Note: This script assumes system requirements (Apache, PHP, MySQL, etc.)\n";
+    echo "      are already installed. If not, run install_remotelabz_complete.sh first.\n";
+    echo "\n";
     exit(0);
 }
 
-$installer = Installer::create(REMOTELABZ_PATH, $getopt->getOptions());
+// Try to load .env.local to get PUBLIC_ADDRESS for server-name if not provided
+$options = $getopt->getOptions();
+if (!isset($options['server-name']) || $options['server-name'] === REMOTELABZ_SERVER_NAME) {
+    $envFile = REMOTELABZ_PATH . '/.env.local';
+    if (file_exists($envFile)) {
+        $envContent = file_get_contents($envFile);
+        if (preg_match('/PUBLIC_ADDRESS="?([^"\n]+)"?/', $envContent, $matches)) {
+            $options['server-name'] = trim($matches[1]);
+            Logger::print("Using PUBLIC_ADDRESS from .env.local: " . $options['server-name'] . "\n", Logger::COLOR_GREEN);
+        }
+    }
+}
 
+$installer = Installer::create(REMOTELABZ_PATH, $options);
+
+// Check if running as root
 try {
     $installer->checkRoot();
 } catch (Exception $e) {
@@ -139,17 +124,26 @@ try {
     exit(1);
 }
 
+// Initialize logger
 $logger = new Logger(INSTALL_LOG_PATH);
 $installer->setLogger($logger);
 
-try {
-    $installer->checkRequirements();
-} catch (Exception $e) {
-    Logger::print($e->getMessage() . "\n", Logger::COLOR_RED);
-    $logger->error($e->getMessage());
-    exit(1);
+// Check requirements (unless skipped)
+if (!isset($options['skip-requirements']) || !$options['skip-requirements']) {
+    try {
+        $installer->checkRequirements();
+    } catch (Exception $e) {
+        Logger::print($e->getMessage() . "\n", Logger::COLOR_RED);
+        Logger::print("\nIf you've already installed requirements using the bash script,\n", Logger::COLOR_YELLOW);
+        Logger::print("you can skip this check with: --skip-requirements\n", Logger::COLOR_YELLOW);
+        $logger->error($e->getMessage());
+        exit(1);
+    }
+} else {
+    Logger::print("Skipping system requirements check (--skip-requirements flag used)\n", Logger::COLOR_YELLOW);
 }
 
+// Run installation
 try {
     $installer->install();
 } catch (Exception $e) {
@@ -164,7 +158,20 @@ try {
     Logger::print("Please check the install logs in " . INSTALL_LOG_PATH . " to get more information.\n", Logger::COLOR_RED);
     exit(1);
 }
-echo "🔥 Change in your .env.local the value of parameter APP_MAINTENANCE to 0 to give access to the RemoteLabz Application 🔥\n";
 
+// Success message
+echo "\n";
+Logger::print("==========================================================\n", Logger::COLOR_GREEN);
+Logger::print("  RemoteLabz Application Installation Complete!\n", Logger::COLOR_GREEN);
+Logger::print("==========================================================\n", Logger::COLOR_GREEN);
+echo "\n";
+Logger::print("Next steps:\n", Logger::COLOR_CYAN);
+echo "  1. Install your worker\n";
+echo "\n";
+echo "  2. Enable application (set APP_MAINTENANCE=0 in .env.local):\n";
+echo "     sed -i 's/APP_MAINTENANCE=1/APP_MAINTENANCE=0/g' " . REMOTELABZ_PATH . "/.env.local\n";
+echo "\n";
+Logger::print("==========================================================\n", Logger::COLOR_GREEN);
+echo "\n";
 
 exit(0);
