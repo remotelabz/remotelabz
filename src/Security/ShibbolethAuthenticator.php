@@ -175,72 +175,45 @@ class ShibbolethAuthenticator extends AbstractAuthenticator
             'statut' => $request->server->get('eduPersonPrimaryAffiliation')
         ];
 
-        $this->logger->info("User information from getCredentials of shibboleth :", $credentials);
+        $this->logger->info("User information from getCredentials of shibboleth:", $credentials);
 
-	    $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $credentials['email']]);
-        if (! (is_null($credentials['email']) or $credentials['email']==="")) {
-            $this->logger->debug("Shibboleth email not null: ".$credentials['email']);
-            if (!$user) {
-                $this->logger->debug("Shibboleth user doesn't exist in local user base: ".$credentials['email']);
-                $user = new User();
-                $email=$credentials['email'];
-                $firstName=$credentials['firstName'];
-                $lastName=$credentials['lastName'];
-                $role = array("ROLE_USER");
-                $user
-                    ->setEmail($email)
-                    ->setPassword($this->passwordHasher->hashPassword(
-                        $user,
-                        random_bytes(32)
-                    ))
-                    ->setFirstName(ucfirst(strtolower($firstName)))
-                    ->setLastName($lastName)
-                    ->setIsShibbolethUser(true)
-                    ->setRoles($role);
-            
-                $this->entityManager->persist($user);
-                $this->entityManager->flush();
-            
-            }
-
-            if (!$user->isShibbolethUser()) {
-                // backward compatibility to already created shib users
-                $user->setIsShibbolethUser(true);
-            }
-
-            if (!$user->isEnabled()) {
-                throw new DisabledException();
-            }
-            return new Passport(
-                new UserBadge($credentials['email']),
-                new CustomCredentials(
-                    function ($credentials, UserInterface $user)
-                    {
-                        $this->logger->debug("Check credentials",$credentials);
-                        $authorized=explode(",",$this->authorized_affiliation);
-                        //Looking for affiliation in the string and before, delete all spaces and tab
-    
-                        $affiliation=explode("@",$credentials['email']);//Looking for the domain of the mail
-                        $this->logger->debug("Your affiliation: ".$affiliation[1]);
-                        if (in_array($affiliation[1],preg_replace('/\s+/', '', $authorized))) {
-                            $this->logger->info("This user is from an authorized shibboleth affiliation : ",$credentials);
-                            return true;
-                        }
-                        else {
-                            $this->logger->warning("This user is not in an authorized shibboleth affiliation : ",$credentials);
-                            
-                return false;
-                        }
-                    },
-                    $credentials
-                )
-            );
+        // Vérification que l'email est présent
+        if (is_null($credentials['email']) || $credentials['email'] === "") {
+            $this->logger->warning("Shibboleth email is null or empty");
+            return new SelfValidatingPassport(new UserBadge(""));
         }
-        return new SelfValidatingPassport(
-            new UserBadge("")
-        );
-        
-        
+
+        $this->logger->debug("Shibboleth email not null: " . $credentials['email']);
+
+        // Vérification de l'affiliation AVANT toute création d'utilisateur
+        if (!$this->isAffiliationAuthorized($credentials['email'])) {
+            $this->logger->warning("This user is not from an authorized shibboleth affiliation:", $credentials);
+            throw new CustomUserMessageAuthenticationException('Your organization is not allowed to use this application.');
+        }
+
+        $this->logger->info("This user is from an authorized shibboleth affiliation:", $credentials);
+
+        // Recherche de l'utilisateur existant
+        $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $credentials['email']]);
+
+        // Création de l'utilisateur s'il n'existe pas
+        if (!$user) {
+            $this->logger->debug("Shibboleth user doesn't exist in local user base: " . $credentials['email']);
+            $user = $this->createShibbolethUser($credentials);
+        }
+
+        // Mise à jour du flag Shibboleth pour la rétrocompatibilité
+        if (!$user->isShibbolethUser()) {
+            $user->setIsShibbolethUser(true);
+            $this->entityManager->flush();
+        }
+
+        // Vérification que le compte est actif
+        if (!$user->isEnabled()) {
+            throw new DisabledException();
+        }
+
+        return new SelfValidatingPassport(new UserBadge($credentials['email']));
     }
 
     /**
@@ -409,5 +382,57 @@ class ShibbolethAuthenticator extends AbstractAuthenticator
             'return'  => $this->idpUrl . '/profile/Logout'
         ));
         return new RedirectResponse($redirectTo);
+    }
+
+
+    /**
+     * Vérifie si l'affiliation de l'utilisateur est autorisée
+     *
+     * @param string $email
+     * @return bool
+     */
+    private function isAffiliationAuthorized(string $email): bool
+    {
+        // Extraction du domaine de l'email
+        $emailParts = explode("@", $email);
+        
+        if (count($emailParts) < 2) {
+            $this->logger->warning("Invalid email format: " . $email);
+            return false;
+        }
+
+        $userDomain = $emailParts[1];
+        $this->logger->debug("User affiliation domain: " . $userDomain);
+
+        // Parsing des affiliations autorisées (suppression des espaces)
+        $authorizedDomains = array_map('trim', explode(",", $this->authorized_affiliation));
+
+        return in_array($userDomain, $authorizedDomains);
+    }
+
+    /**
+     * Crée un nouvel utilisateur Shibboleth dans la base de données
+     *
+     * @param array $credentials
+     * @return User
+     */
+    private function createShibbolethUser(array $credentials): User
+    {
+        $user = new User();
+        
+        $user
+            ->setEmail($credentials['email'])
+            ->setPassword($this->passwordHasher->hashPassword($user, random_bytes(32)))
+            ->setFirstName(ucfirst(strtolower($credentials['firstName'])))
+            ->setLastName($credentials['lastName'])
+            ->setIsShibbolethUser(true)
+            ->setRoles(["ROLE_USER"]);
+
+        $this->entityManager->persist($user);
+        $this->entityManager->flush();
+
+        $this->logger->info("New Shibboleth user created: " . $credentials['email']);
+
+        return $user;
     }
 }
