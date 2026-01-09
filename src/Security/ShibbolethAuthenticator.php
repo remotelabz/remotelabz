@@ -179,7 +179,7 @@ class ShibbolethAuthenticator extends AbstractAuthenticator
 
         // Vérification que l'email est présent
         if (is_null($credentials['email']) || $credentials['email'] === "") {
-            $this->logger->warning("Shibboleth email is null or empty");
+            //$this->logger->warning("Shibboleth email is null or empty");
             return new SelfValidatingPassport(new UserBadge(""));
         }
 
