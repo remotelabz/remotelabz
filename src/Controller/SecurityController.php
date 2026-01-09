@@ -228,7 +228,10 @@ class SecurityController extends AbstractController
         $invalidToken = (null === $passwordResetRequest);
 
         if (!$invalidToken) {
-            $expiredToken = ($passwordResetRequest->getCreatedAt()->diff(new DateTime())->d >= 1);
+            $now = new DateTime();
+            $createdAt = $passwordResetRequest->getCreatedAt();
+            $diffInMinutes = ($now->getTimestamp() - $createdAt->getTimestamp()) / 60;
+            $expiredToken = ($diffInMinutes > 30);
 
             if (!$expiredToken) {
                 $newPasswordForm->handleRequest($request);
@@ -238,23 +241,28 @@ class SecurityController extends AbstractController
                     $newPassword = $newPasswordForm->get('newPassword')->getData();
                     $confirmPassword = $newPasswordForm->get('confirmPassword')->getData();
 
-                    if ($newPassword == $confirmPassword) {
-                        $user->setPassword($this->passwordHasher->hashPassword($user, $newPassword));
-
-                        $entityManager = $this->entityManager;
-                        $entityManager->persist($user);
-
-                        foreach ($this->passwordResetRequestRepository->findBy(['user' => $user]) as $request) {
-                            $entityManager->remove($request);
-                        }
-
-                        $entityManager->flush();
-
-                        $this->addFlash('success', 'Your password has been changed.');
-
-                        return $this->redirectToRoute('login');
+                    if ($newPassword !== $confirmPassword) {
+                        $this->addFlash('danger', "Passwords don't match.");
                     } else {
-                        $this->addFlash('danger', "Passwords doesn't match.");
+                        // Validation supplémentaire côté serveur (au cas où)
+                        if (!$this->isPasswordComplex($newPassword)) {
+                            $this->addFlash('danger', 'Password does not meet complexity requirements.');
+                        } else {
+                            $user->setPassword($this->passwordHasher->hashPassword($user, $newPassword));
+                            
+                            $entityManager = $this->entityManager;
+                            $entityManager->persist($user);
+                            
+                            foreach ($this->passwordResetRequestRepository->findBy(['user' => $user]) as $request) {
+                                $entityManager->remove($request);
+                            }
+                            
+                            $entityManager->flush();
+                            
+                            $this->addFlash('success', 'Your password has been changed.');
+                            
+                            return $this->redirectToRoute('login');
+                        }
                     }
                 }
             }
@@ -271,5 +279,20 @@ class SecurityController extends AbstractController
     public function Codelogin(AuthenticationUtils $authenticationUtils, KernelInterface $kernel): Response
     {
         return $this->render('security/code_login.html.twig');
+    }
+
+    private function isPasswordComplex(string $password): bool
+    {
+        $hasMinLength = strlen($password) >= 12;
+        $hasUpperCase = preg_match('/[A-Z]/', $password);
+        $hasLowerCase = preg_match('/[a-z]/', $password);
+        $hasNumber = preg_match('/[0-9]/', $password);
+        $hasSpecialChar = preg_match('/[!@#$%\'&*{}()_+=;:,.<>?]/', $password);
+        
+        return $hasMinLength 
+            && $hasUpperCase 
+            && $hasLowerCase 
+            && $hasNumber 
+            && $hasSpecialChar;
     }
 }
