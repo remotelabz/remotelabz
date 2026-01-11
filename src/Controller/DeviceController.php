@@ -180,11 +180,13 @@ class DeviceController extends Controller
         ]);
     }
 
-    
+    // Used in lab editor
 	#[Post('/api/labs/{id<\d+>}/nodes', name: 'api_get_devices')]
     #[Route(path: '/devices', name: 'get_devices')]
     public function indexActionTest(Request $request, int $id)
     {
+        //$this->logger->debug('[DeviceController:indexActionTest]::Lab id request '.$id);
+        $status="0";
         $lab = $this->labRepository->findById($id);
         $this->denyAccessUnlessGranted(LabVoter::SEE_DEVICE, $lab);
 
@@ -210,6 +212,7 @@ class DeviceController extends Controller
         foreach($devices as $device){
 
             if($nodeData['edition'] == 0) {
+                //$this->logger->debug('[DeviceController:indexActionTest]::nodeData edition 0');
                 $deviceInstance = $this->deviceInstanceRepository->findByDeviceAndLabInstance($device, $labInstance);
                 if ($device->getType() != "switch") {
                     if($deviceInstance->getState() == 'started') {

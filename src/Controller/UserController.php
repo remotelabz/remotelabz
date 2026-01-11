@@ -516,6 +516,7 @@ class UserController extends Controller
             
             $hasAllRequired = true;
             foreach ($requiredColumns as $col) {
+                //$this->logger->debug("[UserController:createUserFromCSV]::Required column ".$col." ",$dataLower);
                 if (!in_array($col, $dataLower)) {
                     $hasAllRequired = false;
                     break;
