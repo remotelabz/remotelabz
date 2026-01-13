@@ -575,6 +575,11 @@ class GroupController extends Controller
             throw new NotFoundHttpException('Group with URL '.$slug.' does not exist.');
         }
 
+        $users = $group->getUsers()->toArray();
+        usort($users, function($a, $b) {
+            return strcasecmp($a->getLastName(), $b->getLastName());
+        });
+
         $addGroupUserFromFileForm = $this->createFormBuilder([])
             ->add('file', FileType::class, [
                 "help" => "Accepted formats: csv",
@@ -627,6 +632,7 @@ class GroupController extends Controller
 
         return $this->render('group/dashboard_members.html.twig', [
             'group' => $group,
+            'sortedUsers' => $users,
             'props' => $serializer->serialize(
                 $group,
                 'json',
