@@ -104,16 +104,18 @@
                 </div>
                 {% endif %}
                 <div class="top-panel">
+                    {% if (is_granted('add_member', group) or is_granted('ROLE_ADMINISTRATOR')) %}
                     <div class="quick-actions">
                         <input type="checkbox" name="selectAll" id="selectAll" value="selectAll" onClick="checkAll()" class="mr-1"/>
                         <button class="btn btn-danger" data-toggle="modal" onClick="deleteUsers('{{group.path}}')" type="button">
                             {{ svg('remove') }}
                         </button>  
                     </div>
+                    {% endif %}
                     <ul class="nav-links nav nav-tabs">
                         <li class="active">
                             <a href="#currentMembers" id="currentMembers">
-                                <span>Current</span> <span class="badge badge-pill">{{ group.users|length }}</span>
+                                <span>Current</span> <span class="badge badge-pill">{{ sortedUsers|length }}</span>
                             </a>
                         </li>
                     </ul>
@@ -126,7 +128,7 @@
                     </form>
                 </div> #}
                 <div class="labs-panel">
-                    {% for user in group.users %}
+                    {% for user in sortedUsers %}
                         <div class="lab-item {% if not loop.last %}border-bottom{% endif %}">
                             <div class="d-flex align-items-center">
                                 <img src="/users/{{user.id}}/picture?size=32" alt="{{user.name}}" class="rounded-circle s40 mr-3" />
