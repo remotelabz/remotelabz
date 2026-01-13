@@ -75,7 +75,8 @@ class OpenVPNConfigurationGenerator extends AbstractVPNConfigurationGenerator im
 client
 dev tun
 dev-type tun
-tun-mtu 1500
+tun-mtu 1250
+mssfix 1150
 cipher AES-256-GCM
 remote $vpn_address
 resolv-retry infinite
