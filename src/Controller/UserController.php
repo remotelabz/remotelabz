@@ -970,11 +970,11 @@ class UserController extends Controller
     }
 
     private function IsCertValid($certificate_file) {
-        $this->logger->debug("certificate file :".$certificate_file);
+        $this->logger->debug("[UserController:IsCertValid]::Certificate file :".$certificate_file);
 
         $cert=openssl_x509_parse("file://".$certificate_file);
-        $this->logger->debug("certificate information :",$cert);
-        $this->logger->debug("certificate information valid from : ".date(DATE_RFC2822,$cert['validFrom_time_t'])." to ".date(DATE_RFC2822,$cert['validTo_time_t']));
+        $this->logger->debug("[UserController:IsCertValid]::Certificate information :",$cert);
+        $this->logger->debug("[UserController:IsCertValid]::Certificate information valid from : ".date(DATE_RFC2822,$cert['validFrom_time_t'])." to ".date(DATE_RFC2822,$cert['validTo_time_t']));
 
         if ($cert['validFrom_time_t'] > time() || $cert['validTo_time_t']< time())
             return false;
