@@ -22,6 +22,9 @@ REMOTELABZ_PORT=80
 REMOTELABZ_MAX_FILESIZE="3000M"
 INSTALL_LOG_PATH="/var/log/remotelabz"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/.."
+DEFAULT_CA_PASS="R3mot3!abz-0penVPN-CA2020"
+DEFAULT_PEM_PASS="R3mot3!abz-0penVPN-CA2020"
+
 
 # Functions for colored output
 print_info() {
@@ -248,7 +251,7 @@ install_requirements() {
 
     # Install base packages
     print_info "Installing base packages..."
-    apt install -y fail2ban exim4 apache2 curl gnupg zip unzip ntp openvpn qemu-utils openssl git
+    apt install -y fail2ban exim4 apache2 curl gnupg zip unzip ntp openvpn qemu-utils openssl git expect
     
     # Install PHP 8.4
     print_info "Installing PHP 8.4..."
@@ -279,6 +282,9 @@ install_requirements() {
         chmod a+x /usr/local/bin/composer
         rm composer.phar
     fi
+	#To generate autoload for database configuration
+	composer install
+
     
     # Install Node.js and packages
     print_info "Installing Node.js and npm packages..."
@@ -381,7 +387,9 @@ EOF
     if [ ! -d pki ]; then
         print_info "Initializing PKI..."
         ./easyrsa init-pki
-        
+    fi
+
+    if [ ! -f pki/ca.crt ]; then
         print_warning "===================================================="
         print_warning "CA Certificate Password Setup"
         print_warning "===================================================="
@@ -389,16 +397,54 @@ EOF
         print_info "This password will be needed to sign VPN certificates"
         print_warning "===================================================="
         
-        ./easyrsa build-ca
-        
         cp ./vars ./vars-ca
         sed -i "s/RemoteLabz-VPNServer-CA/RemoteLabz-VPNServer/g" vars
-        
+		while true; do
+			read -p "Enter CA passphrase [${DEFAULT_CA_PASS}]: " CA_PASS
+			CA_PASS="${PEM_PASS:-$DEFAULT_PEM_PASS}"
+			if [ "${#CA_PASS}" -lt 4 ]; then
+       			echo "⚠️ Passphrase is too short, must be at least 4 "
+        		continue
+    		fi
+			break
+		done
+
+		while true; do
+			read -p "Enter PEM passphrase [${DEFAULT_PEM_PASS}]: " PEM_PASS
+        	PEM_PASS="${PEM_PASS:-$DEFAULT_PEM_PASS}"
+			if [ "${#PEM_PASS}" -lt 4 ]; then
+               	echo "⚠️ Passphrase is too short, must be at least 4"
+               	continue
+       		fi
+       		break
+        done
+
+	expect << EOF
+spawn ./easyrsa build-ca
+expect "Enter New CA Key Passphrase:"
+send "$CA_PASS\r"
+expect "Re-Enter New CA Key Passphrase:"
+send "$CA_PASS\r"
+expect "Enter PEM pass phrase:"
+send "$PEM_PASS\r"
+expect "Verifying - Enter PEM pass phrase:"
+send "$PEM_PASS\r"
+expect eof
+EOF
+
+    fi
+
+    if [ ! -f pki/issued/RemoteLabz-VPNServer.crt ]; then
         print_info "Generating server certificate..."
         ./easyrsa gen-req RemoteLabz-VPNServer nopass
         
         print_info "Signing server certificate (enter CA password)..."
-        ./easyrsa sign-req server RemoteLabz-VPNServer
+        expect << EOF
+spawn ./easyrsa sign-req server RemoteLabz-VPNServer
+expect "Enter pass phrase for /root/EasyRSA/pki/private/ca.key:"
+send "$PEM_PASS\r"
+expect eof
+EOF
     fi
     
     print_info "Installing OpenVPN certificates..."
@@ -409,7 +455,7 @@ EOF
     cp pki/private/ca.key /etc/openvpn/server/
     
     if [ ! -f ta.key ]; then
-        openvpn --genkey --secret ta.key
+        openvpn --genkey secret ta.key
     fi
     cp ta.key /etc/openvpn/server/
     
@@ -620,6 +666,9 @@ install_remotelabz_app() {
     print_info "Running RemoteLabz installer..."
     print_warning "This will install RemoteLabz to $REMOTELABZ_PATH"
     
+	read -p "Enter your Github Token: " GITHUB_TOKEN
+    COMPOSER_ALLOW_SUPERUSER=1 composer config -g github-oauth.github.com "$GITHUB_TOKEN"
+
     # Build install command
     INSTALL_CMD="$SCRIPT_DIR/bin/install"
     INSTALL_CMD="$INSTALL_CMD -e $REMOTELABZ_ENV"
