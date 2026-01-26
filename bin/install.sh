@@ -23,8 +23,6 @@ REMOTELABZ_MAX_FILESIZE="3000M"
 INSTALL_LOG_PATH="/var/log/remotelabz"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/.."
 DEFAULT_CA_PASS="R3mot3!abz-0penVPN-CA2020"
-DEFAULT_PEM_PASS="R3mot3!abz-0penVPN-CA2020"
-
 
 # Functions for colored output
 print_info() {
@@ -283,7 +281,12 @@ install_requirements() {
         rm composer.phar
     fi
 	#To generate autoload for database configuration
-	composer install
+	if ! COMPOSER_ALLOW_SUPERUSER=1 composer config -g --auth github-oauth.github.com >/dev/null 2>&1; then
+    	read -s -p "Enter your GitHub Token: " GITHUB_TOKEN
+    	COMPOSER_ALLOW_SUPERUSER=1 composer config -g github-oauth.github.com "$GITHUB_TOKEN"
+	fi
+
+	COMPOSER_ALLOW_SUPERUSER=1 composer install
 
     
     # Install Node.js and packages
@@ -400,35 +403,52 @@ EOF
         cp ./vars ./vars-ca
         sed -i "s/RemoteLabz-VPNServer-CA/RemoteLabz-VPNServer/g" vars
 		while true; do
-			read -p "Enter CA passphrase [${DEFAULT_CA_PASS}]: " CA_PASS
-			CA_PASS="${PEM_PASS:-$DEFAULT_PEM_PASS}"
+			read -p "Enter New CA passphrase [${DEFAULT_CA_PASS}]: " CA_PASS
+			CA_PASS="${CA_PASS:-$DEFAULT_CA_PASS}"
+
 			if [ "${#CA_PASS}" -lt 4 ]; then
        			echo "⚠️ Passphrase is too short, must be at least 4 "
         		continue
-    		fi
+			fi
+
+			read -p "Re-Enter CA passphrase [${DEFAULT_CA_PASS}]: " CA_PASS_1
+			CA_PASS_1="${CA_PASS_1:-$DEFAULT_CA_PASS}"
+
+			if [ "${#CA_PASS_1}" != "${#CA_PASS}"  ]; then
+				echo "⚠️ Passphrase don't match..."
+				continue
+			fi
 			break
 		done
 
 		while true; do
-			read -p "Enter PEM passphrase [${DEFAULT_PEM_PASS}]: " PEM_PASS
-        	PEM_PASS="${PEM_PASS:-$DEFAULT_PEM_PASS}"
+			read -p "Enter PEM passphrase: " PEM_PASS
+
 			if [ "${#PEM_PASS}" -lt 4 ]; then
                	echo "⚠️ Passphrase is too short, must be at least 4"
                	continue
        		fi
-       		break
-        done
+
+			read -p "Verifying - Enter PEM passphrase: " PEM_PASS_1
+
+			if [ "${#PEM_PASS_1}" != "${#PEM_PASS}"  ]; then
+				echo "⚠️ Passphrase don't match..."
+				continue
+			fi
+			break
+		done
+
 
 	expect << EOF
 spawn ./easyrsa build-ca
 expect "Enter New CA Key Passphrase:"
 send "$CA_PASS\r"
 expect "Re-Enter New CA Key Passphrase:"
-send "$CA_PASS\r"
+send "$CA_PASS_1\r"
 expect "Enter PEM pass phrase:"
 send "$PEM_PASS\r"
 expect "Verifying - Enter PEM pass phrase:"
-send "$PEM_PASS\r"
+send "$PEM_PASS_1\r"
 expect eof
 EOF
 
@@ -666,8 +686,10 @@ install_remotelabz_app() {
     print_info "Running RemoteLabz installer..."
     print_warning "This will install RemoteLabz to $REMOTELABZ_PATH"
     
-	read -p "Enter your Github Token: " GITHUB_TOKEN
-    COMPOSER_ALLOW_SUPERUSER=1 composer config -g github-oauth.github.com "$GITHUB_TOKEN"
+	if ! COMPOSER_ALLOW_SUPERUSER=1 composer config -g --auth github-oauth.github.com >/dev/null 2>&1; then
+		read -s -p "Enter your GitHub Token: " GITHUB_TOKEN
+		COMPOSER_ALLOW_SUPERUSER=1 composer config -g github-oauth.github.com "$GITHUB_TOKEN"
+	fi
 
     # Build install command
     INSTALL_CMD="$SCRIPT_DIR/bin/install"
