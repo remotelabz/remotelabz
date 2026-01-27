@@ -634,6 +634,7 @@ EOF
     cp RemoteLabz-WebServer.crt /etc/apache2/
     cp RemoteLabz-WebServer.key /etc/apache2/
     cat /etc/apache2/RemoteLabz-WebServer.crt /etc/apache2/RemoteLabz-WebServer.key > /etc/apache2/RemoteLabz-WebServer.pem
+	chown www-data:www-data /etc/apache2/RemoteLabz-WebServer.key
     
     # Enable SSL module
     print_info "Enabling Apache SSL module..."
@@ -739,7 +740,15 @@ final_configuration() {
     if [ -f /etc/apache2/sites-available/200-remotelabz-ssl.conf ]; then
         a2ensite 200-remotelabz-ssl.conf 2>/dev/null || true
     fi
-    
+
+	#Configure SSH for the front
+	if [ ! -d /home/remotelabz/.ssh ]; then
+		mkdir -p /home/remotelabz/.ssh
+		chown remotelabz:remotelabz /home/remotelabz/.ssh
+		chmod 700 /home/remotelabz/.ssh
+		runuser -u remotelabz -- ssh-keygen -m PEM -t rsa -f /home/remotelabz/.ssh/myremotelabzfront -N ""
+	fi
+
     # Restart all services
     print_info "Restarting services..."
     systemctl restart apache2

@@ -166,7 +166,7 @@ class Installer
             $output = [];
             exec("getent passwd remotelabz > /dev/null", $output, $returnCode);
             if ($returnCode) {
-                exec("useradd remotelabz");
+                exec("useradd -m remotelabz");
             }
             exec("getent group remotelabz > /dev/null", $output, $returnCode);
             if ($returnCode) {
