@@ -32,7 +32,6 @@
 
 [theme="dark"] {
     .table {
-        color: theme-color("light");
 
         th, td {
             border-color: lighten(map-get($theme-colors, "dark-lighter"), 7.5%);
@@ -44,7 +43,7 @@
     
         tbody > tr:nth-of-type(odd) {
             background-color: map-get($colors, "dark-lighter");
-            color: black
+            color: #f0f0f0
         }
 
         tbody > tr:nth-of-type(even) {
@@ -52,9 +51,12 @@
               color: #f0f0f0
         }
         
-        
-        
-    }
+        tbody > tr:nth-of-type(odd):hover {
+            color: #000
+        }
 
-    
+        tbody > tr:nth-of-type(even):hover {
+            color: #000
+        }   
+    }    
 }

@@ -172,7 +172,6 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
                         padding: '24px',
                         textAlign: 'center',
                         color: '#666',
-                        backgroundColor: '#f5f5f5',
                         borderRadius: '4px',
                         margin: '16px'
                     }}>
