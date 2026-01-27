@@ -280,15 +280,7 @@ install_requirements() {
         chmod a+x /usr/local/bin/composer
         rm composer.phar
     fi
-	#To generate autoload for database configuration
-	if ! COMPOSER_ALLOW_SUPERUSER=1 composer config -g --auth github-oauth.github.com >/dev/null 2>&1; then
-    	read -s -p "Enter your GitHub Token: " GITHUB_TOKEN
-    	COMPOSER_ALLOW_SUPERUSER=1 composer config -g github-oauth.github.com "$GITHUB_TOKEN"
-	fi
-
-	COMPOSER_ALLOW_SUPERUSER=1 composer install
-
-    
+  
     # Install Node.js and packages
     print_info "Installing Node.js and npm packages..."
     if ! command -v node &> /dev/null; then

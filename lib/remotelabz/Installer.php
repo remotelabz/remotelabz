@@ -328,6 +328,7 @@ class Installer
         chmod($this->installPath . "/backups", 0775);
 
         chmod($this->installPath . "/bin/remotelabz-update.sh", 0775);
+        chmod($this->installPath . "/bin/remotelabz-ctl", 0775);
 
     }
 
@@ -378,7 +379,7 @@ class Installer
         chdir($this->installPath);
         $returnCode = 0;
         $output = [];
-        exec("COMPOSER_ALLOW_SUPERUSER=1 composer install --no-progress 2>&1", $output, $returnCode);
+        exec("COMPOSER_ALLOW_SUPERUSER=1 composer install --no-progress --prefer-dist 2>&1", $output, $returnCode);
         $this->logger->debug($output);
         if ($returnCode) {
             return false;
