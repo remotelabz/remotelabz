@@ -678,11 +678,22 @@ install_remotelabz_app() {
     
     print_info "Running RemoteLabz installer..."
     print_warning "This will install RemoteLabz to $REMOTELABZ_PATH"
-    
-	if ! COMPOSER_ALLOW_SUPERUSER=1 composer config -g --auth github-oauth.github.com >/dev/null 2>&1; then
-		read -s -p "Enter your GitHub Token: " GITHUB_TOKEN
-		COMPOSER_ALLOW_SUPERUSER=1 composer config -g github-oauth.github.com "$GITHUB_TOKEN"
-	fi
+
+    print_info "Installation des bundles..."
+
+    if [ ! -d "$SCRIPT_DIR/lib/network-bundle" ]; then
+        git clone https://github.com/remotelabz/network-bundle.git "$SCRIPT_DIR/lib/network-bundle"
+    else 
+        cd "$SCRIPT_DIR/lib/network-bundle" && git pull
+        cd "$SCRIPT_DIR"
+    fi
+
+    if [ ! -d "$SCRIPT_DIR/lib/remotelabz-message-bundle" ]; then
+        git clone https://github.com/remotelabz/remotelabz-message-bundle.git "$SCRIPT_DIR/lib/remotelabz-message-bundle"
+    else 
+        cd "$SCRIPT_DIR/lib/network-bundle" && git pull
+        cd "$SCRIPT_DIR"
+    fi
 
     # Build install command
     INSTALL_CMD="$SCRIPT_DIR/bin/install"
@@ -733,11 +744,12 @@ final_configuration() {
         a2ensite 200-remotelabz-ssl.conf 2>/dev/null || true
     fi
 
-	#Configure SSH for the front
+	# Configure SSH for the front
 	if [ ! -d /home/remotelabz/.ssh ]; then
+        print_info "Configuring SSH directory..."
 		mkdir -p /home/remotelabz/.ssh
 		chown remotelabz:remotelabz /home/remotelabz/.ssh
-		chmod 700 /home/remotelabz/.ssh
+		chmod 750 /home/remotelabz/.ssh
 		runuser -u remotelabz -- ssh-keygen -m PEM -t rsa -f /home/remotelabz/.ssh/myremotelabzfront -N ""
 	fi
 
