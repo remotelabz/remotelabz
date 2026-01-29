@@ -794,9 +794,6 @@ show_completion_message() {
     
     echo -e "${YELLOW}📝 Next Steps:${NC}"
     echo ""
-    echo -e "   ${CYAN}1.${NC} Configure the database:"
-    echo -e "      ${BLUE}sudo bin/remotelabz-ctl reconfigure database${NC}"
-    echo ""
     echo -e "   ${CYAN}2.${NC} Access RemoteLabz:"
     echo -e "      ${BLUE}https://${PUBLIC_ADDRESS}${NC}"
     echo ""

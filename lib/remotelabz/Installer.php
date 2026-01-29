@@ -230,15 +230,7 @@ class Installer
             throw new Exception("Error configuring sudoers: " . $e->getMessage());
         }
 
-        // Step 11: Configure directory permissions
-        echo "👮 Configuring directory permissions... ";
-        try {
-            $this->configureDirectoryPermissions();
-            echo "OK ✔️\n";
-        } catch (Exception $e) {
-            throw new Exception("Error configuring directory permissions: " . $e->getMessage());
-        }
-
+        // Step 11: Configure JWT
         echo "🔐 Configuring JWT...\n";
         try {
             $jwtPassphrase = $this->configureJWT();
@@ -251,13 +243,21 @@ class Installer
             throw new Exception("Error while configuring JWT: " . $e->getMessage());
         }
 
-
-
+        // Step 12: Configure database
         echo "🗄️  Configuring database...\n";
         try{
             $this->configure_db();
         } catch (Exception $e) {
             throw new Exception("Error while configuring database.", 0, $e);
+        }
+
+        // Step 13: Configure directory permissions
+        echo "👮 Configuring directory permissions... ";
+        try {
+            $this->configureDirectoryPermissions();
+            echo "OK ✔️\n";
+        } catch (Exception $e) {
+            throw new Exception("Error configuring directory permissions: " . $e->getMessage());
         }
 
         echo "Done!\n";
@@ -311,7 +311,8 @@ class Installer
         // Set ownership
         $this->rchown($this->installPath . "/public/uploads", "www-data", "www-data");
         $this->rchown($this->installPath . "/var", "www-data", "www-data");
-        
+        $this->rchown($this->installPath . "/var/cache/prod", "www-data", "www-data");
+
         // Set specific permissions
         chmod($this->installPath . "/config/packages/messenger.yaml", 0664);
 
@@ -328,7 +329,6 @@ class Installer
         chmod($this->installPath . "/backups", 0775);
 
         chmod($this->installPath . "/bin/remotelabz-update.sh", 0775);
-        chmod($this->installPath . "/bin/remotelabz-ctl", 0775);
 
     }
 
@@ -773,6 +773,7 @@ class Installer
     private function configure_db() {
         $returnCode = 0;
         $output = [];
+        chmod($this->installPath . "/bin/remotelabz-ctl", 0775);
         exec("/opt/remotelabz/bin/remotelabz-ctl reconfigure database", $output, $returnCode);
         
         if ($returnCode) {
