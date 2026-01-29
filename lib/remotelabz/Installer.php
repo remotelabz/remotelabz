@@ -167,6 +167,7 @@ class Installer
             exec("getent passwd remotelabz > /dev/null", $output, $returnCode);
             if ($returnCode) {
                 exec("useradd -m remotelabz");
+                exec("usermod --password $(echo remotelabz_pass | openssl passwd -1 -stdin) remotelabz");
             }
             exec("getent group remotelabz > /dev/null", $output, $returnCode);
             if ($returnCode) {
