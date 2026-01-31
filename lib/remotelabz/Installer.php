@@ -760,7 +760,7 @@ class Installer
      */
     private function generateSecurePassphrase(int $length = 32): string
     {
-        $characters = '023456789abcdefghijkmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()-_=+[]{}|;:,.<>?';
+        $characters = '023456789abcdefghijkmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!@#%^&*()-_=+[]{}|;:,.<>?';
         $charactersLength = strlen($characters);
         $passphrase = '';
         
