@@ -60,12 +60,12 @@ class ProxyServiceMonitor extends AbstractServiceMonitor
         }
     }*/
     public function injectRoutes() {
-        $this->logger->debug("getRoutes ");
+        $this->logger->debug("[ProxyServiceMonitor:injectRoutes]::getRoutes ");
 
         $deviceInstances = $this->deviceInstanceRepository->findBy(['state' => 'started']);
         foreach ($deviceInstances as $deviceInstance){
             foreach ($deviceInstance->getControlProtocolTypeInstances() as $controlProtocolTypeInstance) {
-                $this->logger->debug($deviceInstance->getUuid()." ".$deviceInstance->getDevice()->getName()." port :".$controlProtocolTypeInstance->getPort()." ".$deviceInstance->getLabInstance()->getWorkerIp());
+                $this->logger->debug("[ProxyServiceMonitor:injectRoutes]::".$deviceInstance->getUuid()." ".$deviceInstance->getDevice()->getName()." port :".$controlProtocolTypeInstance->getPort()." ".$deviceInstance->getLabInstance()->getWorkerIp());
                 $this->proxyManager->createContainerInstanceProxyRoute($deviceInstance->getUuid(),$controlProtocolTypeInstance->getPort(),$deviceInstance->getLabInstance()->getWorkerIp());
             }
         }
