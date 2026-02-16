@@ -749,8 +749,12 @@ final_configuration() {
         print_info "Configuring SSH directory..."
 		mkdir -p /home/remotelabz/.ssh
 		chown remotelabz:remotelabz /home/remotelabz/.ssh
-		chmod 750 /home/remotelabz/.ssh
+
+        chmod 755 /home/remotelabz/
+		chmod 711 /home/remotelabz/.ssh
+
 		runuser -u remotelabz -- ssh-keygen -m PEM -t rsa -f /home/remotelabz/.ssh/myremotelabzfront -N ""
+        chmod 644 /home/remotelabz/.ssh/myremotelabzfront
 	fi
 
     # Restart all services
