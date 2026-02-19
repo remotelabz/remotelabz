@@ -618,6 +618,8 @@ class Installer
         if (!($d = opendir($dir))) {
             throw new Exception("Error while opening directory ${dir}: Directory does not exist or is not reachable.");
         }
+        chown($dir, $user);
+        chgrp($dir, $group);
         while (false !== ($file = readdir($d))) {
             if (($file != ".") && ($file != "..")) {
                 $path = $dir . "/" . $file;
