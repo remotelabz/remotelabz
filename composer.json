@@ -128,12 +128,14 @@
     },
     "repositories": [
     {
-    "type": "vcs",
-    "url": "https://github.com/remotelabz/network-bundle"
+    "type": "path",
+    "url": "lib/network-bundle",
+    "options": { "symlink": true }
     },
     {
-    "type": "vcs",
-    "url": "https://github.com/remotelabz/remotelabz-message-bundle"
+    "type": "path",
+    "url": "lib/remotelabz-message-bundle",
+    "options": { "symlink": true }
     }
     ]
   }

@@ -280,15 +280,7 @@ install_requirements() {
         chmod a+x /usr/local/bin/composer
         rm composer.phar
     fi
-	#To generate autoload for database configuration
-	if ! COMPOSER_ALLOW_SUPERUSER=1 composer config -g --auth github-oauth.github.com >/dev/null 2>&1; then
-    	read -s -p "Enter your GitHub Token: " GITHUB_TOKEN
-    	COMPOSER_ALLOW_SUPERUSER=1 composer config -g github-oauth.github.com "$GITHUB_TOKEN"
-	fi
-
-	COMPOSER_ALLOW_SUPERUSER=1 composer install
-
-    
+  
     # Install Node.js and packages
     print_info "Installing Node.js and npm packages..."
     if ! command -v node &> /dev/null; then
@@ -634,6 +626,7 @@ EOF
     cp RemoteLabz-WebServer.crt /etc/apache2/
     cp RemoteLabz-WebServer.key /etc/apache2/
     cat /etc/apache2/RemoteLabz-WebServer.crt /etc/apache2/RemoteLabz-WebServer.key > /etc/apache2/RemoteLabz-WebServer.pem
+	chown www-data:www-data /etc/apache2/RemoteLabz-WebServer.key
     
     # Enable SSL module
     print_info "Enabling Apache SSL module..."
@@ -685,11 +678,22 @@ install_remotelabz_app() {
     
     print_info "Running RemoteLabz installer..."
     print_warning "This will install RemoteLabz to $REMOTELABZ_PATH"
-    
-	if ! COMPOSER_ALLOW_SUPERUSER=1 composer config -g --auth github-oauth.github.com >/dev/null 2>&1; then
-		read -s -p "Enter your GitHub Token: " GITHUB_TOKEN
-		COMPOSER_ALLOW_SUPERUSER=1 composer config -g github-oauth.github.com "$GITHUB_TOKEN"
-	fi
+
+    print_info "Installation des bundles..."
+
+    if [ ! -d "$SCRIPT_DIR/lib/network-bundle" ]; then
+        git clone https://github.com/remotelabz/network-bundle.git --branch Upgrade-2.5 "$SCRIPT_DIR/lib/network-bundle"
+    else 
+        cd "$SCRIPT_DIR/lib/network-bundle" && git pull
+        cd "$SCRIPT_DIR"
+    fi
+
+    if [ ! -d "$SCRIPT_DIR/lib/remotelabz-message-bundle" ]; then
+        git clone https://github.com/remotelabz/remotelabz-message-bundle.git --branch Upgrade-2.5  "$SCRIPT_DIR/lib/remotelabz-message-bundle"
+    else 
+        cd "$SCRIPT_DIR/lib/network-bundle" && git pull
+        cd "$SCRIPT_DIR"
+    fi
 
     # Build install command
     INSTALL_CMD="$SCRIPT_DIR/bin/install"
@@ -739,7 +743,20 @@ final_configuration() {
     if [ -f /etc/apache2/sites-available/200-remotelabz-ssl.conf ]; then
         a2ensite 200-remotelabz-ssl.conf 2>/dev/null || true
     fi
-    
+
+	# Configure SSH for the front
+	if [ ! -d /home/remotelabz/.ssh ]; then
+        print_info "Configuring SSH directory..."
+		mkdir -p /home/remotelabz/.ssh
+		chown remotelabz:remotelabz /home/remotelabz/.ssh
+
+        chmod 755 /home/remotelabz/
+		chmod 711 /home/remotelabz/.ssh
+
+		runuser -u remotelabz -- ssh-keygen -m PEM -t rsa -f /home/remotelabz/.ssh/myremotelabzfront -N ""
+        chmod 644 /home/remotelabz/.ssh/myremotelabzfront
+	fi
+
     # Restart all services
     print_info "Restarting services..."
     systemctl restart apache2
@@ -780,9 +797,6 @@ show_completion_message() {
     echo ""
     
     echo -e "${YELLOW}📝 Next Steps:${NC}"
-    echo ""
-    echo -e "   ${CYAN}1.${NC} Configure the database:"
-    echo -e "      ${BLUE}sudo bin/remotelabz-ctl reconfigure database${NC}"
     echo ""
     echo -e "   ${CYAN}2.${NC} Access RemoteLabz:"
     echo -e "      ${BLUE}https://${PUBLIC_ADDRESS}${NC}"

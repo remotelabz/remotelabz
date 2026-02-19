@@ -166,7 +166,8 @@ class Installer
             $output = [];
             exec("getent passwd remotelabz > /dev/null", $output, $returnCode);
             if ($returnCode) {
-                exec("useradd remotelabz");
+                exec("useradd -m remotelabz");
+                exec("usermod --password $(echo remotelabz_pass | openssl passwd -1 -stdin) remotelabz");
             }
             exec("getent group remotelabz > /dev/null", $output, $returnCode);
             if ($returnCode) {
@@ -230,15 +231,7 @@ class Installer
             throw new Exception("Error configuring sudoers: " . $e->getMessage());
         }
 
-        // Step 11: Configure directory permissions
-        echo "👮 Configuring directory permissions... ";
-        try {
-            $this->configureDirectoryPermissions();
-            echo "OK ✔️\n";
-        } catch (Exception $e) {
-            throw new Exception("Error configuring directory permissions: " . $e->getMessage());
-        }
-
+        // Step 11: Configure JWT
         echo "🔐 Configuring JWT...\n";
         try {
             $jwtPassphrase = $this->configureJWT();
@@ -251,13 +244,21 @@ class Installer
             throw new Exception("Error while configuring JWT: " . $e->getMessage());
         }
 
-
-
+        // Step 12: Configure database
         echo "🗄️  Configuring database...\n";
         try{
             $this->configure_db();
         } catch (Exception $e) {
             throw new Exception("Error while configuring database.", 0, $e);
+        }
+
+        // Step 13: Configure directory permissions
+        echo "👮 Configuring directory permissions... ";
+        try {
+            $this->configureDirectoryPermissions();
+            echo "OK ✔️\n";
+        } catch (Exception $e) {
+            throw new Exception("Error configuring directory permissions: " . $e->getMessage());
         }
 
         echo "Done!\n";
@@ -311,7 +312,8 @@ class Installer
         // Set ownership
         $this->rchown($this->installPath . "/public/uploads", "www-data", "www-data");
         $this->rchown($this->installPath . "/var", "www-data", "www-data");
-        
+        $this->rchown($this->installPath . "/var/cache/prod", "www-data", "www-data");
+
         // Set specific permissions
         chmod($this->installPath . "/config/packages/messenger.yaml", 0664);
 
@@ -378,7 +380,7 @@ class Installer
         chdir($this->installPath);
         $returnCode = 0;
         $output = [];
-        exec("COMPOSER_ALLOW_SUPERUSER=1 composer install --no-progress 2>&1", $output, $returnCode);
+        exec("COMPOSER_ALLOW_SUPERUSER=1 composer install --no-progress --prefer-dist 2>&1", $output, $returnCode);
         $this->logger->debug($output);
         if ($returnCode) {
             return false;
@@ -616,6 +618,8 @@ class Installer
         if (!($d = opendir($dir))) {
             throw new Exception("Error while opening directory ${dir}: Directory does not exist or is not reachable.");
         }
+        chown($dir, $user);
+        chgrp($dir, $group);
         while (false !== ($file = readdir($d))) {
             if (($file != ".") && ($file != "..")) {
                 $path = $dir . "/" . $file;
@@ -758,7 +762,7 @@ class Installer
      */
     private function generateSecurePassphrase(int $length = 32): string
     {
-        $characters = '023456789abcdefghijkmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()-_=+[]{}|;:,.<>?';
+        $characters = '023456789abcdefghijkmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!@#%^&*()-_=+[]{}|;:,.<>?';
         $charactersLength = strlen($characters);
         $passphrase = '';
         
@@ -772,6 +776,7 @@ class Installer
     private function configure_db() {
         $returnCode = 0;
         $output = [];
+        chmod($this->installPath . "/bin/remotelabz-ctl", 0775);
         exec("/opt/remotelabz/bin/remotelabz-ctl reconfigure database", $output, $returnCode);
         
         if ($returnCode) {

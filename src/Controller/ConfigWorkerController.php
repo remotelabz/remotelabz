@@ -327,6 +327,7 @@ class ConfigWorkerController extends Controller
     private function createQueue($ipAdress, $queueName) {        
         if ($this->queueExists($queueName)) {
             $this->logger->info("The creation of the queue ". $queueName. " succeed.");
+            $this->modifyMessengerConfig();
         } else
         {
             // $cmd = ['rabbitmqadmin', "declare", "queue", "name=".$queueName,"type=direct"];
