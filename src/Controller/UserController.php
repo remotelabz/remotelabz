@@ -544,6 +544,7 @@ class UserController extends Controller
                         $firstName = trim($line['firstname']);
                         $email = trim($line['email']);
                         $group = isset($line['group']) ? trim($line['group']) : '';
+                        $endDate = isset($line['enddate']) ? trim($line['enddate']) : null;
                         
                         // Nouveau: gestion du mot de passe depuis le CSV
                         $csvPassword = isset($line['password']) ? trim($line['password']) : '';
@@ -646,6 +647,11 @@ class UserController extends Controller
                                     }
                                     if (!$user->isMemberOf($group_wanted))
                                         $group_wanted->addUser($user);
+                                }
+                                if ($endDate != null){
+					                $endDate  = $endDate . "23:59:59";
+                                    $endDate = new \DateTime($endDate);
+					                $user->setRegistrationEndDate($endDate); 
                                 }
                             } else {
                                 // Email invalide ou déjà existant
