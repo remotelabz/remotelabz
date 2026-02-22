@@ -621,33 +621,7 @@ class UserController extends Controller
                                     'success' => true
                                 ];
 
-                                // Gestion des groupes (inchangée)
-                                if ($group != "") {
-                                    if (!$group_wanted = $this->groupRepository->findOneByName($group)) {
-                                        $this->logger->info("Creation of " . $group . " group by " . $this->getUser()->getName());
-                                        $group_wanted = new Group();
-                                        $group_wanted->setName($group);
-                                        $group_wanted->setVisibility(Group::VISIBILITY_PRIVATE);
-                                        $slug_wanted = str_replace(" ", "-", $group);
-
-                                        $slug_list = $this->groupRepository->findOneBySlug($slug_wanted);
-                                        $i = 1;
-                                        while ($slug_list) {
-                                            if ($slug_wanted == $slug_list->getSlug()) {
-                                                $this->logger->debug("The slug " . $slug_wanted . " exists");
-                                                $slug_wanted = $slug_wanted . $i;
-                                                $i++;
-                                            }
-                                            $slug_list = $this->groupRepository->findOneBySlug($slug_wanted);
-                                        }
-                                        $this->logger->debug("Creation of " . $group . " with slug " . $slug_wanted);
-                                        $group_wanted->setSlug($slug_wanted);
-                                        $entityManager->persist($group_wanted);
-                                        $group_wanted->addUser($this->getUser(), Group::ROLE_OWNER);
-                                    }
-                                    if (!$user->isMemberOf($group_wanted))
-                                        $group_wanted->addUser($user);
-                                }
+                                $this->manageUserGroup($user, $group);
                                 if ($endDate != null){
 					                $endDate  = $endDate . "23:59:59";
                                     $endDate = new \DateTime($endDate);
@@ -664,6 +638,8 @@ class UserController extends Controller
                                 ];
                             }
                         } else {
+                            $this->manageUserGroup($user, $group);
+
                             // Utilisateur déjà existant
                             $importResults[] = [
                                 'firstName' => $firstName,
@@ -688,6 +664,43 @@ class UserController extends Controller
             'users' => $addedUsers,
             'results' => $importResults
         ];
+    }
+
+    /**
+     * Set group for the user and create the group if doesn't exist
+     *
+     * @param User $user
+     * @return void
+     */
+    private function manageUserGroup($user, $group)
+    {
+        // Gestion des groupes (inchangée)
+        if ($group != "") {
+            if (!$group_wanted = $this->groupRepository->findOneByName($group)) {
+                $this->logger->info("Creation of " . $group . " group by " . $this->getUser()->getName());
+                $group_wanted = new Group();
+                $group_wanted->setName($group);
+                $group_wanted->setVisibility(Group::VISIBILITY_PRIVATE);
+                $slug_wanted = str_replace(" ", "-", $group);
+
+                $slug_list = $this->groupRepository->findOneBySlug($slug_wanted);
+                $i = 1;
+                while ($slug_list) {
+                    if ($slug_wanted == $slug_list->getSlug()) {
+                        $this->logger->debug("The slug " . $slug_wanted . " exists");
+                        $slug_wanted = $slug_wanted . $i;
+                        $i++;
+                    }
+                    $slug_list = $this->groupRepository->findOneBySlug($slug_wanted);
+                }
+                $this->logger->debug("Creation of " . $group . " with slug " . $slug_wanted);
+                $group_wanted->setSlug($slug_wanted);
+                $entityManager->persist($group_wanted);
+                $group_wanted->addUser($this->getUser(), Group::ROLE_OWNER);
+            }
+            if (!$user->isMemberOf($group_wanted))
+                $group_wanted->addUser($user);
+        }
     }
 
     /**
