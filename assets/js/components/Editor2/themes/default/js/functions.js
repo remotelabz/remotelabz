@@ -2921,7 +2921,7 @@ export function textObjectDragStop(event, ui) {
 }
 
 // Text Object Resize Event
-function textObjectResize(event, ui, shape_options) {
+export function textObjectResize(event, ui, shape_options) {
     var newWidth = ui.size.width
         , newHeight = ui.size.height
         ;
