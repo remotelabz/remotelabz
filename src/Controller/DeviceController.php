@@ -773,7 +773,7 @@ class DeviceController extends Controller
             'status'=> 'success',
             'message' => 'Lab has been saved (60023).',
             'data' => [
-                'id'=> $no_array? $ids : $id,
+                'id'=> $no_array? $id : $ids,
             ]]));
         $response->headers->set('Content-Type', 'application/json');
         return $response;
