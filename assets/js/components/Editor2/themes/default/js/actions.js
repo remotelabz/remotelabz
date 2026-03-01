@@ -32,7 +32,7 @@ import { logger, getJsonMessage, newUIreturn, printPageAuthentication, getUserIn
          printListNodes, setNodeData, printFormCustomShape, printFormText, printListTextobjects, printFormEditCustomShape,
          printFormEditText, printFormSubjectLab, getTextObjects, createTextObject, 
          editTextObject, editTextObjects, deleteTextObject, textObjectDragStop, addMessage, addModal, addModalError, addModalWide,
-         dirname, basename, hex2rgb, updateFreeSelect, getTopology, editConnection,initExtendedTimer  } from'./functions.js';
+         dirname, basename, hex2rgb, updateFreeSelect, getTopology, editConnection,initExtendedTimer,textObjectResize  } from'./functions.js';
 import {fromByteArray,TextEncoderLite} from './b64encoder';
 import { adjustZoom, resolveZoom, saveEditorLab } from './ebs/functions';
 import Showdown, { extension } from 'showdown';
