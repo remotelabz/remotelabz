@@ -11,6 +11,7 @@ export default class PictureEditor extends React.Component {
         super(props);
 
         this.state = {
+		    picture: null,
             isReady: false
         }
     }
@@ -19,41 +20,47 @@ export default class PictureEditor extends React.Component {
         this.props.setUpload(this.upload);
 
         var reader = new FileReader();
-        const parent = this;
 
-        reader.onload = function(event) {
-            parent.picture = event.target.result;
-            parent.setState({
-                isReady: true
-            })
-
-            parent.imageElement.addEventListener('ready', function () {
-                const containerData = this.cropper.getData();
-
-                this.cropper.zoomTo(0.000001, {
-                    x: containerData.width / 2,
-                    y: containerData.height / 2,
-                });
+        reader.onload = (event) => {
+            this.setState({
+		        picture: event.target.result
             });
-
-            parent.cropper = new Cropper(parent.imageElement, {
-                viewMode: 1,
-                dragMode: "move",
-                aspectRatio: 1,
-                guides: false,
-                center: false,
-                scalable: false,
-                cropBoxMovable: false,
-                cropBoxResizable: false
-            });
-        }
-
+	    }
         reader.readAsDataURL(this.props.file);
     }
 
-    upload = () => {
-        const parent = this;
+    componentWillUnmount() {
+        if (this.cropper) {
+            this.cropper.destroy();
+            this.cropper = null;
+        }
+    }
 
+    initCropper = () => {
+        if (!this.imageElement) return;
+        if (this.cropper) {
+            this.cropper.destroy();
+        }
+
+        this.setState({ isReady: false });
+
+        this.cropper = new Cropper(this.imageElement, {
+            viewMode: 1,
+            dragMode: "move",
+            aspectRatio: 1,
+            guides: false,
+            center: false,
+            scalable: false,
+            cropBoxMovable: false,
+            cropBoxResizable: false,
+		    modal: false,
+            ready: () => {
+                this.setState({ isReady: true });
+            },
+        });
+	}
+
+    upload = () => {
         this.cropper.getCroppedCanvas({
             minWidth: 256,
             minHeight: 256,
@@ -67,10 +74,10 @@ export default class PictureEditor extends React.Component {
             formData.append('picture', blob);
 
             // Use `jQuery.ajax` method
-            api.post(parent.props.endpoint, formData)
+            api.post(this.props.endpoint, formData)
             .then(() => {
                 console.log('Upload success');
-                parent.props.uploadCallback();
+                this.props.uploadCallback();
             })
             .catch(() => {
                 console.log('Upload failed');
@@ -98,7 +105,8 @@ export default class PictureEditor extends React.Component {
         }
 
         return (<>
-            <img ref={imageElement => this.imageElement = imageElement} src={this.picture} />
+	    <div className="cropper-div">
+	        {this.state.picture && (<img ref={imageElement => this.imageElement = imageElement} src={this.state.picture} onLoad={this.initCropper} />)}
 
             <ButtonToolbar className="mt-2 justify-content-center">
                 <ButtonGroup>
@@ -106,6 +114,7 @@ export default class PictureEditor extends React.Component {
                     <Button variant="info" onClick={this.zoomIn}><i className="fa fa-search-plus" aria-hidden="true"></i></Button>
                 </ButtonGroup>
             </ButtonToolbar>
-        </>);
+        </div>
+	</>);
     }
 }

@@ -41,6 +41,9 @@ export default class ProfilePictureUploader extends Component {
 
     onModalClose = () => {
         this.upload.value = null;
+	    this.setState({
+            showModal: false,
+        });
     }
 
     render() {
