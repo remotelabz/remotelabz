@@ -104,6 +104,7 @@ class UserController extends Controller
         $limit = $request->query->get('limit', 10);
         $page = $request->query->get('page', 1);
         $role = $request->query->get('role');
+        $group = $request->query->get('group');
         $orderBy = $request->query->get('orderBy', 'lastName');
         $orderDirection = $request->query->get('orderDirection', 'ASC');
 
@@ -121,6 +122,20 @@ class UserController extends Controller
             ]);
 
         $users = $this->userRepository->matching($criteria);
+        $groups = $this->groupRepository->findAll();
+
+        // Filter users by group
+        if ($group) {
+            $users = $users->filter(function($user) use ($group) {
+                foreach ($user->getGroupsInfo() as $g) {
+                    if ($g->getId() == (int) $group) {
+                        return true;
+                    }
+                }
+                return false;
+            });
+        }
+
         $count = $users->count();
         $adminCount = $users->filter(function ($user) {
             return $user->getHighestRole() === 'ROLE_ADMINISTRATOR' || $user->getHighestRole() === 'ROLE_SUPER_ADMINISTRATOR';
@@ -230,6 +245,7 @@ class UserController extends Controller
         );
         return $this->render('user/index.html.twig', [
             'users' => $users->slice($page * $limit - $limit, $limit),
+            'groups' => $groups,
             'currentUser' => $currentUser,
             'addUserFromFileForm' => $addUserFromFileForm->createView(),
             'search' => $search,
