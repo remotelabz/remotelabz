@@ -66,6 +66,17 @@
                 <input type="search" class="form-control input-sm" name="search" placeholder="Search by name or email" spellcheck="false" value="{{ search|default('') }}" type="search" />
             </div>
             <div class="mr-2">
+                {% set selectedGroup = app.request.query.get('group') %}
+                <select name="group" class="form-control">
+                    <option value="">All groups</option>
+                    {% for group in groups %}
+                        <option value="{{ group.id }}" {% if selectedGroup == group.id %}selected{% endif %}>
+                            {{ group.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mr-2">
                 {% set searchLimit = app.request.query.get("limit") %}
                 <select name="limit" class="form-control">
                     <option value="10" {% if searchLimit != 30 and searchLimit != 50 %}selected{% endif %}>10</option>
