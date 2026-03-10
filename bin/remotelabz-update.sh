@@ -11,6 +11,8 @@ git restore /opt/remotelabz/config/packages/dev/web_profiler.yaml
 git pull
 mv ~/messenger.yaml /opt/remotelabz/config/packages/messenger.yaml
 mv ~/web_profiler.yaml /opt/remotelabz/config/packages/dev/web_profiler.yaml
+git config --global --add safe.directory /opt/remotelabz/lib/network-bundle
+git config --global --add safe.directory /opt/remotelabz/lib/remotelabz-message-bundle
 composer update
 yarn
 yarn encore prod

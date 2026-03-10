@@ -57,3 +57,6 @@ vagrant/provision_prod.sh
 /backups/
 /composer.lock
 /config/packages/messenger.yaml
+
+/lib/remotelabz-message-bundle
+/lib/network-bundle
