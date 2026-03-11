@@ -25,6 +25,7 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
         setLoadingInstanceState(false);
         refreshInstance();
         const interval = setInterval(refreshInstance, 10000);
+	    isLabModified();
 
         return () => {
             clearInterval(interval);
@@ -39,6 +40,12 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
             countdown();
         }
     }, [labInstance]);
+
+    function isLabModified() {
+    	if (labInstance && props.lab && labInstance.createdAt < props.lab.lastUpdated) {
+        	toast.warning('The lab associated to your instance had been modified after you joined it.', { autoClose: false });
+    	}
+    }
 
     function countdown() {
         if (labInstance) {
@@ -243,16 +250,6 @@ useEffect(() => {
 
 
     return (<>
-    <ToastContainer
-        position="top-right"
-        autoClose={5000}
-        hideProgressBar={false}
-        closeOnClick
-        pauseOnHover
-        draggable
-        pauseOnFocusLoss={false}
-
-      />
         {!isSandbox && props.user.name && 
             <div className="d-flex align-items-center mb-2">
                 <div>View as : </div>
