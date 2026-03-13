@@ -1,4 +1,4 @@
-import { ToastContainer, toast } from 'react-toastify';
+import { toast } from 'react-toastify';
 import Remotelabz from '../API';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import OptimizedInstanceList from './OptimizedInstanceList';
@@ -143,15 +143,6 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
 
     return (
         <>
-            <ToastContainer
-                position="top-right"
-                autoClose={5000}
-                hideProgressBar={false}
-                closeOnClick
-                pauseOnHover
-                draggable
-                pauseOnFocusLoss={false}
-            />
             <div style={{ 
                 height: 'calc(100vh - 300px)', 
                 minHeight: '400px',

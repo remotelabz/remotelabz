@@ -5,27 +5,11 @@
 import API from './api';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import { ToastContainer, toast } from 'react-toastify';
+import { toast } from 'react-toastify';
 
 
 
 const api = new API('flavor')
-
-const toastDiv = document.createElement('div');
-toastDiv.id = 'toast-root';
-document.body.appendChild(toastDiv);
-const root = createRoot(toastDiv);
-root.render(
-    <ToastContainer
-        position="top-right"
-        autoClose={5000}
-        hideProgressBar={false}
-        closeOnClick
-        pauseOnHover
-        draggable
-        pauseOnFocusLoss={false}
-    />
-);
 
 $(function () {
     var flavorTable = $('#flavorTable').DataTable({

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Remotelabz from '../API';
 import moment from 'moment/moment';
 import { Button, Modal} from 'react-bootstrap';
-import { ToastContainer, toast } from 'react-toastify';
+import { toast } from 'react-toastify';
 
 
 export default function CodeManager(props = {lab}) {
@@ -111,15 +111,6 @@ export default function CodeManager(props = {lab}) {
 
     return(
         <div>
-            <ToastContainer
-                position="top-right"
-                autoClose={5000}
-                hideProgressBar={false}
-                closeOnClick
-                pauseOnHover
-                draggable
-                pauseOnFocusLoss={false}
-                />
             {
                 invitationCodes && codeList &&
                 <table className="table table-hover">

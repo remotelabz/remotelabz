@@ -1,4 +1,4 @@
-import { ToastContainer, toast } from 'react-toastify';
+import { toast } from 'react-toastify';
 import Remotelabz from '../API';
 import SVG from '../Display/SVG';
 import React, { useState, useEffect } from 'react';
@@ -177,15 +177,6 @@ function WorkerConfig(props = {workers, nbWorkers}) {
         <>
             
             <form onSubmit={handleSubmit}>
-                <ToastContainer
-                position="top-right"
-                autoClose={5000}
-                hideProgressBar={false}
-                closeOnClick
-                pauseOnHover
-                draggable
-                pauseOnFocusLoss={false}
-                />
                 {form}
                 <div id="newWorkers">{newWorkers}</div>
                 <button type="button" className='btn btn-info mt-2' onClick={addField}><SVG name="plus" /></button>

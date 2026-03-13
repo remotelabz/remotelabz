@@ -1,4 +1,3 @@
-import { ToastContainer } from 'react-toastify';
 import React, { Component } from 'react';
 import { Button} from 'react-bootstrap';
 import SandboxList from './SandboxList';
@@ -15,15 +14,6 @@ class SandboxManager extends Component {
         return (
 			<>
             <SandboxList devices={this.props.devices} user={this.props.user} labs={this.props.labs}></SandboxList>
-			<ToastContainer
-				position="top-right"
-				autoClose={5000}
-				hideProgressBar={false}
-				closeOnClick
-				pauseOnHover
-				draggable
-				pauseOnFocusLoss={false}
-			/>
 			</>
         )
     }

@@ -4,7 +4,7 @@ import { Button } from 'react-bootstrap';
 import SVG from '../Display/SVG';
 import InstanceExport from './InstanceExport';
 import Remotelabz from '../API';
-import { ToastContainer, toast } from 'react-toastify';
+import { toast } from 'react-toastify';
 
 const InstanceList = (props) => {
     const [showExport, setShowExport] = useState(false);

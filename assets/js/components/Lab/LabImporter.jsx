@@ -4,7 +4,7 @@ import Noty from 'noty';
 import { Formik, Form, Field, useFormikContext } from 'formik';
 import { useDropzone } from 'react-dropzone';
 import Remotelabz from '../API';
-import { ToastContainer, toast } from 'react-toastify';
+import { toast } from 'react-toastify';
 
 
 export default function LabImporter()

@@ -6,7 +6,6 @@ import SVG from '../Display/SVG';
 import Routing from 'fos-jsrouting';
 import {Tooltip, OverlayTrigger} from 'react-bootstrap';
 import Remotelabz from '../API';
-import { ToastContainer, toast } from 'react-toastify';
 
 const api = API.getInstance();
 
@@ -81,15 +80,6 @@ export default class GroupSelect extends Component {
     render() {
         return (
             <>
-                <ToastContainer
-                    position="top-right"
-                    autoClose={5000}
-                    hideProgressBar={false}
-                    closeOnClick
-                    pauseOnHover
-                    draggable
-                    pauseOnFocusLoss={false}
-                />
                 <AsyncSelect
                     loadOptions={this.props.loadOptions || this.loadOptions}
                     className={'react-select-container ' + (this.props.className || "")}

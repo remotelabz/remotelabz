@@ -1,4 +1,4 @@
-import { ToastContainer, toast } from 'react-toastify';
+import { toast } from 'react-toastify';
 import Remotelabz from '../API';
 import React, { useState, useEffect } from 'react';
 import AllInstancesManager from './AllInstancesManager';
