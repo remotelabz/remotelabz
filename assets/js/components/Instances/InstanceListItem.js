@@ -1,4 +1,4 @@
-import { ToastContainer, toast } from 'react-toastify';
+import { toast } from 'react-toastify';
 import API from '../../api';
 import Remotelabz from '../API';
 import SVG from '../Display/SVG';

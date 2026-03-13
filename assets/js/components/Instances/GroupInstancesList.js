@@ -1,5 +1,5 @@
 import React, { useState, useEffect} from 'react';
-import { ToastContainer, toast } from 'react-toastify';
+import { toast } from 'react-toastify';
 import Remotelabz from '../API';
 import FilterInstancesList from './FilterInstancesList';
 import {ListGroup, ListGroupItem, Button, Modal} from 'react-bootstrap';
@@ -292,15 +292,6 @@ export default function GroupInstancesList(props = {instances, group, user}) {
 
     return (
         <>
-        <ToastContainer
-            position="top-right"
-            autoClose={5000}
-            hideProgressBar={false}
-            closeOnClick
-            pauseOnHover
-            draggable
-            pauseOnFocusLoss={false}
-        />
         <div>
             <div className="d-flex justify-content-end mb-2">
                 {instances !== "" &&

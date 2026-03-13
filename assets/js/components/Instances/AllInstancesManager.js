@@ -1,4 +1,4 @@
-import { ToastContainer, toast } from 'react-toastify';
+import { toast } from 'react-toastify';
 import Remotelabz from '../API';
 import InstanceList from './InstanceList';
 import { GroupRoles } from '../Groups/Groups';
@@ -73,15 +73,6 @@ function AllInstancesManager(props) {
     }
 
     return (<>
-        <ToastContainer
-            position="top-right"
-            autoClose={5000}
-            hideProgressBar={false}
-            closeOnClick
-            pauseOnHover
-            draggable
-            pauseOnFocusLoss={false}
-        />
         {
             <ListGroup>
                 <ListGroupItem className="d-flex align-items-center justify-content-between">
