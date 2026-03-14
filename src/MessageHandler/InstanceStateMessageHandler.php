@@ -171,6 +171,7 @@ class InstanceStateMessageHandler
                 'type' => $message->getType(),
                 'state_message' => $message->getState()
                 ]);
+            $options=$message->getOptions();
 
             // Problem with instance because when it's an error during exporting, the uuid is a compose value and not only the uuid of the instance.
             // So if it's an error, in all case, we have to return, from the worker
@@ -193,7 +194,6 @@ class InstanceStateMessageHandler
                 $userIds = $this->getUserIdFromInstance($instance);
                 $this->logger->debug("[InstanceStateMessageHandler:__invoke]::User id of the instance is ",$userIds);
             }
-            $options=$message->getOptions();
             if (!is_null($options)) {
                 $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Options received :', $options);
                 if (key_exists('user_id',$options))
@@ -367,7 +367,12 @@ class InstanceStateMessageHandler
                     break;
                     
                     case InstanceStateMessage::STATE_STARTED:
-                        $this->notificationService->success($userIds, 'Instance '.$uuid.' started successfully.', $uuid);
+                        //$this->logger->debug("[InstanceStateMessageHandler:__invoke]::Options received ",$options);
+
+                        if (!array_key_exists("state",$options)) {
+                            //$this->logger->debug("[InstanceStateMessageHandler:__invoke]::Not already running");
+                            $this->notificationService->success($userIds, 'Instance '.$uuid.' started successfully.', $uuid);
+                        }
                     break;
 
                     case InstanceStateMessage::STATE_EXPORTED:
