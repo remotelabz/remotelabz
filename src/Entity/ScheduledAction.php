@@ -4,7 +4,7 @@ namespace App\Entity;
 
 use App\Repository\ScheduledActionRepository;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Uid\Uuid;
+use App\Utils\Uuid;
 
 /**
  * Représente une action planifiée (start / stop / reset / leave)
@@ -69,14 +69,14 @@ class ScheduledAction
     /**
      * Date et heure auxquelles l'action doit être déclenchée.
      */
-    #[ORM\Column(type: 'datetime')]
-    private \DateTimeInterface $scheduledAt;
+    #[ORM\Column(type: 'datetime_immutable')]
+    private \DateTimeImmutable $scheduledAt;
 
     /**
      * Date et heure auxquelles l'action a effectivement été exécutée.
      */
-    #[ORM\Column(type: 'datetime', nullable: true)]
-    private ?\DateTimeInterface $executedAt = null;
+    #[ORM\Column(type: 'datetime_immutable', nullable: true)]
+    private ?\DateTimeImmutable $executedAt = null;
 
     /**
      * Statut courant : pending | running | done | failed
@@ -100,8 +100,8 @@ class ScheduledAction
     /**
      * Date de création de l'entrée.
      */
-    #[ORM\Column(type: 'datetime')]
-    private \DateTimeInterface $createdAt;
+    #[ORM\Column(type: 'datetime_immutable')]
+    private \DateTimeImmutable $createdAt;
 
     /**
      * Résumé de l'exécution stocké en JSON :
@@ -112,7 +112,7 @@ class ScheduledAction
 
     public function __construct()
     {
-        $this->uuid      = Uuid::v4()->toRfc4122();
+        $this->uuid      = (string) new Uuid();
         $this->createdAt = new \DateTimeImmutable();
     }
 

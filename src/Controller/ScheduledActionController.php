@@ -10,6 +10,7 @@ use App\Service\Instance\ScheduledActionService;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -21,26 +22,22 @@ use FOS\RestBundle\Controller\Annotations\Post;
 use FOS\RestBundle\Controller\Annotations\Delete;
 
 /**
- * API REST pour la gestion des actions planifiées.
+ * Controller for scheduled actions — both the UI page and the REST API.
  *
- * Routes exposées :
- *   GET    /api/scheduled-actions              → liste (filtrée selon le rôle)
- *   POST   /api/scheduled-actions              → création
- *   GET    /api/scheduled-actions/{uuid}       → détail
- *   DELETE /api/scheduled-actions/{uuid}       → annulation
+ * UI routes:
+ *   GET  /scheduled-actions/new   → scheduling form page (Twig)
  *
- * Droits :
- *   - ROLE_ADMINISTRATOR : accès complet à toutes les planifications
- *   - ROLE_TEACHER       : accès à ses propres planifications uniquement
- *   - ROLE_USER          : accès refusé (403)
+ * API routes:
+ *   GET    /api/scheduled-actions                        → list (filtered by role)
+ *   POST   /api/scheduled-actions                        → create
+ *   GET    /api/scheduled-actions/{uuid}                 → detail
+ *   DELETE /api/scheduled-actions/{uuid}                 → cancel
+ *   GET    /api/scheduled-actions/labs-by-group/{uuid}   → labs accessible to a group (for dynamic select)
  *
- * Body JSON attendu pour la création :
- * {
- *   "labUuid":       "uuid-du-lab",           // obligatoire
- *   "groupUuid":     "uuid-du-groupe",        // optionnel — null = tous les utilisateurs du lab
- *   "action":        "start|stop|reset|leave",// obligatoire
- *   "scheduledAt":   "2026-04-01 08:00:00"    // obligatoire, format Y-m-d H:i:s ou ISO 8601
- * }
+ * Access:
+ *   - ROLE_ADMINISTRATOR : full access to all scheduled actions
+ *   - ROLE_TEACHER       : access to their own scheduled actions only
+ *   - ROLE_USER          : denied (403)
  */
 class ScheduledActionController extends Controller
 {
@@ -53,8 +50,85 @@ class ScheduledActionController extends Controller
     ) {}
 
     // =========================================================================
-    // LISTE
+    // UI PAGE
     // =========================================================================
+
+    /**
+     * Scheduling form page.
+     * Passes to Twig:
+     *   - the list of groups the user can manage (elevated user or admin)
+     *   - the list of existing pending/done scheduled actions for display
+     */
+    #[Route(path: '/scheduled-actions/new', name: 'scheduled_actions_new', methods: ['GET'])]
+    #[Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message: "Access denied.")]
+    public function newPageAction(): Response
+    {
+        $user = $this->getUser();
+
+        // Groups the user can manage
+        if ($user->isAdministrator()) {
+            $groups = $this->groupRepository->findAll();
+        } else {
+            $groups = [];
+            foreach ($user->getGroups() as $groupUser) {
+                $group = $groupUser->getGroup();
+                if ($group->isElevatedUser($user)) {
+                    $groups[] = $group;
+                }
+            }
+        }
+
+        // Sort groups alphabetically
+        usort($groups, fn($a, $b) => strcmp($a->getName(), $b->getName()));
+
+        // Existing scheduled actions visible to this user
+        $scheduledActions = $this->scheduledActionRepository->findForUser($user);
+
+        return $this->render('scheduled_action/new.html.twig', [
+            'groups'           => $groups,
+            'scheduledActions' => $scheduledActions,
+        ]);
+    }
+
+    // =========================================================================
+    // API — LABS BY GROUP (for dynamic select on the form)
+    // =========================================================================
+
+    /**
+     * Returns the labs accessible to a given group.
+     * Called via AJAX when the user selects a group in the form.
+     */
+    #[Get('/api/scheduled-actions/labs-by-group/{uuid}', name: 'api_scheduled_actions_labs_by_group')]
+    #[Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message: "Access denied.")]
+    public function labsByGroupAction(string $uuid): JsonResponse
+    {
+        $group = $this->groupRepository->findOneBy(['uuid' => $uuid]);
+        if (!$group) {
+            throw new NotFoundHttpException("Group not found: $uuid.");
+        }
+
+        $user = $this->getUser();
+
+        // Security: a teacher must be an elevated member of this group
+        if (!$user->isAdministrator() && !$group->isElevatedUser($user)) {
+            throw new AccessDeniedHttpException('You do not have elevated access to this group.');
+        }
+
+        $labs = $this->labRepository->findByGroup($group);
+
+        // Sort labs alphabetically
+        usort($labs, fn($a, $b) => strcmp($a->getName(), $b->getName()));
+
+        return $this->json(array_map(fn($lab) => [
+            'uuid' => $lab->getUuid(),
+            'name' => $lab->getName(),
+        ], $labs));
+    }
+
+    // =========================================================================
+    // LIST
+    // =========================================================================
+
 
     #[Get('/api/scheduled-actions', name: 'api_scheduled_actions_list')]
     #[Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message: "Access denied.")]

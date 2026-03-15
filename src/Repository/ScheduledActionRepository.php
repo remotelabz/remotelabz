@@ -31,7 +31,7 @@ class ScheduledActionRepository extends ServiceEntityRepository
             ->andWhere('sa.scheduledAt <= :now')
             ->setParameter('status', ScheduledAction::STATUS_PENDING)
             ->setParameter('now', $now)
-            ->orderBy('sa.scheduledAt', 'ASC')
+            ->orderBy('sa.scheduledAt', 'DESC')
             ->getQuery()
             ->getResult();
     }

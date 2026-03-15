@@ -45,6 +45,7 @@
             {{ sidebar.link("PDU (exp.)", 'pdus', null, 'power', 'pdus', _context) }}
             {{ sidebar.link("Sandbox", 'sandbox', null, 'documents', 'sandbox', _context) }}
             {{ sidebar.link("Instance", 'instances', null, 'monitor', 'instances', _context) }}
+            {{ sidebar.link("Schedule actions", 'scheduled_actions_new', null, 'clock', 'scheduled_actions_new', _context) }}
             {{ sidebar.link("Codes", 'codes', null, 'doc-text', 'codes', _context) }}
             <li class="nav-item">
                 <a class="nav-link dropdown-toggle {% if category in ['config', 'services', 'resources', 'database'] %}parent-active{% endif %}" href="#systemSubmenu" data-toggle="collapse" aria-expanded="{% if category in ['config', 'services', 'resources', 'database'] %}true{% else %}false{% endif %}">

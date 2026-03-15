@@ -66,7 +66,7 @@ class ScheduledActionsRunCommand extends Command
         $dryRun = $input->getOption('dry-run');
         $uuid   = $input->getOption('uuid');
 
-        $io->title('RemoteLABZ — Scheduled actions runner');
+        $io->title('RemoteLabz — Scheduled actions runner');
 
         // ── Select actions to process ─────────────────────────────────────────
         if ($uuid) {
