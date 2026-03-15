@@ -63,6 +63,50 @@
             </div>
 
             {{ form_end(addFilterForm) }}
+
+            {# ── Barre d'actions bulk ─────────────────────────────────────────
+               Ces boutons appellent les routes /api/instances/bulk/*
+               en transmettant le filtre actif (filter + subFilter).
+               L'action s'applique à TOUTES les instances du filtre,
+               indépendamment de la pagination affichée à l'écran.
+            ──────────────────────────────────────────────────────────────────── #}
+            <div id="bulk-actions-bar" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding:10px 12px; ">
+                <span style="font-weight:600; margin-right:4px;">
+                    {{ svg('bolt') }} Bulk actions :
+                </span>
+
+                <button id="bulk-start-btn"
+                        type="button"
+                        class="btn btn-sm btn-success"
+                        title="Start all devices of all instances matching the current filter"
+                        onclick="dispatchBulkAction('start')">
+                    ▶ Start all
+                </button>
+
+                <button id="bulk-stop-btn"
+                        type="button"
+                        class="btn btn-sm btn-warning"
+                        title="Stop all devices of all instances matching the current filter"
+                        onclick="dispatchBulkAction('stop')">
+                    ■ Stop all
+                </button>
+
+                <button id="bulk-reset-btn"
+                        type="button"
+                        class="btn btn-sm btn-secondary"
+                        title="Reset all devices of all instances matching the current filter"
+                        onclick="dispatchBulkAction('reset')">
+                    ↻ Reset all
+                </button>
+
+                <button id="bulk-leave-btn"
+                        type="button"
+                        class="btn btn-sm btn-danger"
+                        title="Delete all lab instances matching the current filter"
+                        onclick="confirmBulkLeave()">
+                    ✕ Leave all
+                </button>
+            </div>
         {% else %}
             <div>
                 <input type="hidden" id="instance_filter" value="none"/>
@@ -150,5 +194,43 @@
         }
     });
         
+    // ── Helpers pour les boutons d'action bulk ────────────────────────────────
+    //
+    // dispatchBulkAction() envoie un événement custom que AllInstancesList.js
+    // écoute via window.addEventListener('remotelabz:bulk-action', ...).
+    // Cela évite tout couplage direct entre le Twig et le composant React.
+
+    /**
+     * Déclenche une action bulk (start / stop / reset) sans confirmation.
+     * @param {'start'|'stop'|'reset'} action
+     */
+    function dispatchBulkAction(action) {
+        window.dispatchEvent(new CustomEvent('remotelabz:bulk-action', { detail: { action } }));
+    }
+
+    /**
+     * Demande confirmation avant de déclencher le "leave all" (action destructive).
+     */
+    function confirmBulkLeave() {
+        const filter    = document.getElementById('instance_filter')?.value    || 'none';
+        const subFilter = document.getElementById('instance_subFilter')?.value || 'allInstances';
+
+        const label = document.getElementById('instance_subFilter')?.options[
+            document.getElementById('instance_subFilter')?.selectedIndex
+        ]?.text || subFilter;
+
+        const confirmed = window.confirm(
+            `You are about to DELETE ALL lab instances matching the current filter:\n` +
+            `  Filter: ${filter} / ${label}\n\n` +
+            `All associated virtual machines will be destroyed.\n` +
+            `This action is IRREVERSIBLE. Continue?`
+        );
+
+        if (confirmed) {
+            dispatchBulkAction('leave');
+        }
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
     </script>
 {% endblock %}
