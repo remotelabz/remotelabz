@@ -348,4 +348,24 @@ class LabInstanceRepository extends ServiceEntityRepository
         
         return $results;
     }
+
+    /**
+     * Retourne les LabInstances d'un lab appartenant à un groupe donné.
+     * Le critère de rattachement au groupe est que le owner de l'instance
+     * soit membre du groupe.
+     *
+     * @return \App\Entity\LabInstance[]
+     */
+    public function findByLabAndGroup(\App\Entity\Lab $lab, \App\Entity\Group $group): array
+    {
+        return $this->createQueryBuilder('li')
+            ->join('li.owner', 'u')
+            ->join('u.groups', 'g')
+            ->where('li.lab = :lab')
+            ->andWhere('g = :group')
+            ->setParameter('lab', $lab)
+            ->setParameter('group', $group)
+            ->getQuery()
+            ->getResult();
+    }
 }
