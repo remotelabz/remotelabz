@@ -1,19 +1,12 @@
 {% extends 'dashboard.base.html.twig' %}
 
-{% block header %}
-    {% set category = 'dashboard_groups' %}
-    {{ parent() }}
-{% endblock %}
-
 {% block breadcrumbs %}
-    {% set breadcrumbs = breadcrumbs|merge({ 'Scheduled actions': path('scheduled_actions_new') }) -%}
-
+    {%- set breadcrumbs = breadcrumbs|merge({ 'Scheduled actions': path('scheduled_actions_new') }) -%}
     {{ parent() }}
 {% endblock %}
-
 
 {% block sidebar %}
-    {% set category = category|default('dashboard') %}
+    {% set category = 'scheduled_actions_new' %}
     {{ parent() }}
 {% endblock %}
 
@@ -166,9 +159,20 @@
             <div class="card">
                 <div class="card-header font-weight-bold d-flex justify-content-between align-items-center">
                     <span>{{ svg('list') }} My scheduled actions</span>
-                    <span class="badge badge-pill badge-secondary" id="scheduled-count">
-                        {{ scheduledActions|length }}
-                    </span>
+                    <div class="d-flex align-items-center" style="gap: 8px;">
+                        <span class="badge badge-pill badge-secondary" id="scheduled-count">
+                            {{ scheduledActions|length }}
+                        </span>
+                        {# Clear history: removes all done/failed entries #}
+                        {% if scheduledActions|filter(sa => sa.status in ['done', 'failed'])|length > 0 %}
+                            <button type="button"
+                                    id="btn-clear-history"
+                                    class="btn btn-sm btn-outline-secondary"
+                                    title="Delete all done and failed actions">
+                                {{ svg('trash') }} Clear history
+                            </button>
+                        {% endif %}
+                    </div>
                 </div>
                 <div class="card-body p-0">
                     {% if scheduledActions is empty %}
@@ -191,7 +195,7 @@
                                         {% endif %}
                                         <br />
                                         <small class="text-muted">
-                                            {{ sa.scheduledAt|date('M d, Y H:i','UTC') }} UTC
+                                            {{ sa.scheduledAt|date('M d, Y H:i', 'UTC') }} UTC
                                             &nbsp;—&nbsp;
                                             <strong>{{ sa.action|upper }}</strong>
                                         </small>
@@ -210,15 +214,14 @@
                                                   title="{{ sa.errorMessage }}">failed</span>
                                         {% endif %}
 
-                                        {# Cancel button — only for pending actions #}
-                                        {% if sa.status == 'pending' %}
-                                            <button type="button"
-                                                    class="btn btn-sm btn-outline-danger btn-cancel"
-                                                    data-uuid="{{ sa.uuid }}"
-                                                    title="Cancel this scheduled action">
-                                                {{ svg('x') }}
-                                            </button>
-                                        {% endif %}
+                                        {# Delete button — available for all statuses #}
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-danger btn-cancel"
+                                                data-uuid="{{ sa.uuid }}"
+                                                data-status="{{ sa.status }}"
+                                                title="{% if sa.status == 'pending' %}Cancel this scheduled action{% else %}Delete this entry{% endif %}">
+                                            {{ svg('x') }}
+                                        </button>
                                     </div>
                                 </div>
                                 {% if sa.errorMessage %}
@@ -437,15 +440,20 @@
             }
         });
 
-        // ── Cancel a pending action ───────────────────────────────────────────
+        // ── Delete a scheduled action (all statuses) ──────────────────────────
         document.addEventListener('click', function (e) {
             const btn = e.target.closest('.btn-cancel');
             if (!btn) return;
 
-            const uuid = btn.dataset.uuid;
+            const uuid   = btn.dataset.uuid;
+            const status = btn.dataset.status;
             if (!uuid) return;
 
-            if (!confirm('Cancel this scheduled action?')) return;
+            const msg = status === 'pending'
+                ? 'Cancel this scheduled action? It will not be executed.'
+                : 'Delete this entry from the history?';
+
+            if (!confirm(msg)) return;
 
             btn.disabled = true;
 
@@ -458,12 +466,56 @@
                     const row = document.getElementById(`sa-row-${uuid}`);
                     if (row) row.remove();
                     updateCount(-1);
+                    // Hide clear history button if no more done/failed rows
+                    refreshClearHistoryBtn();
                 })
                 .catch(err => {
                     btn.disabled = false;
-                    showAlert(err.message || 'Could not cancel the action. Please try again.');
+                    showAlert(err.message || 'Could not delete the action. Please try again.');
                 });
         });
+
+        // ── Clear history (done + failed) ─────────────────────────────────────
+        const btnClearHistory = document.getElementById('btn-clear-history');
+        if (btnClearHistory) {
+            btnClearHistory.addEventListener('click', function () {
+                if (!confirm('Delete all done and failed entries? This cannot be undone.')) return;
+
+                btnClearHistory.disabled = true;
+
+                fetch('/api/scheduled-actions/clear-history', { method: 'DELETE' })
+                    .then(res => {
+                        if (!res.ok) return res.json().then(d => { throw new Error(d.message || `HTTP ${res.status}`); });
+                        return res.json();
+                    })
+                    .then(data => {
+                        // Remove all done/failed rows from the DOM
+                        document.querySelectorAll('.list-group-item[id^="sa-row-"]').forEach(row => {
+                            const badge = row.querySelector('.badge-success, .badge-danger');
+                            if (badge) {
+                                updateCount(-1);
+                                row.remove();
+                            }
+                        });
+                        btnClearHistory.remove();
+                        showSuccess(`${data.deleted} entry/entries deleted from history.`);
+                    })
+                    .catch(err => {
+                        btnClearHistory.disabled = false;
+                        showAlert(err.message || 'Could not clear history. Please try again.');
+                    });
+            });
+        }
+
+        /** Hides the Clear history button if no done/failed rows remain */
+        function refreshClearHistoryBtn() {
+            const btn = document.getElementById('btn-clear-history');
+            if (!btn) return;
+            const hasDoneOrFailed = document.querySelector(
+                '.list-group-item .badge-success, .list-group-item .badge-danger'
+            );
+            if (!hasDoneOrFailed) btn.remove();
+        }
 
         // ── Helpers ───────────────────────────────────────────────────────────
 
@@ -472,12 +524,13 @@
             return new Date(value).toISOString();
         }
 
-        /** Formats a datetime-local value to a human-readable string */
+        /** Formats a datetime-local value to a human-readable UTC string */
         function formatDate(value) {
             return new Date(value).toLocaleString(undefined, {
                 dateStyle: 'medium',
                 timeStyle: 'short',
-            });
+                timeZone: 'UTC',
+            }) + ' UTC';
         }
 
         /** Appends a newly created ScheduledAction to the list */
@@ -485,8 +538,10 @@
             if (noActionsMsg) noActionsMsg.classList.add('d-none');
 
             const date = new Date(sa.scheduledAt).toLocaleString(undefined, {
-                dateStyle: 'medium', timeStyle: 'short',
-            });
+                dateStyle: 'medium',
+                timeStyle: 'short',
+                timeZone: 'UTC',
+            }) + ' UTC';
 
             const groupBadge = sa.group
                 ? `<span class="badge badge-pill badge-light border ml-1">${escHtml(sa.group.name)}</span>`

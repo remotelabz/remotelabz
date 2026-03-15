@@ -203,9 +203,12 @@ class ScheduledActionService
     // =========================================================================
 
     /**
-     * Résout les LabInstances à traiter pour une ScheduledAction donnée.
-     * - Si un groupe est spécifié : instances de ce lab appartenant au groupe
-     * - Sinon : toutes les instances du lab
+     * Resolves the LabInstances to process for a given ScheduledAction.
+     *
+     * Uses the same repository methods as InstanceController to stay consistent
+     * with the existing access logic:
+     *   - With a group  → findByGroup($group) : instances owned by members of the group
+     *   - Without group → findBy(['lab' => $lab]) : all instances of the lab
      *
      * @return \App\Entity\LabInstance[]
      */
@@ -215,11 +218,13 @@ class ScheduledActionService
         $group = $sa->getGroup();
 
         if ($group !== null) {
-            // Instances du lab dont le owner fait partie du groupe
-            return $this->labInstanceRepository->findByLabAndGroup($lab, $group);
+            // findByGroup($group, $user = null) already exists in LabInstanceRepository
+            // and correctly handles the ownedBy / user / _group ownership model.
+            // Passing null as $user returns all instances for the group regardless of requester.
+            return $this->labInstanceRepository->findByGroup($group, null) ?: [];
         }
 
-        return $this->labInstanceRepository->findBy(['lab' => $lab]);
+        return $this->labInstanceRepository->findBy(['lab' => $lab]) ?: [];
     }
 
     /**
