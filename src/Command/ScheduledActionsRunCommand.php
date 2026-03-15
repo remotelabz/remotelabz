@@ -15,23 +15,23 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
- * Runner générique des actions planifiées.
+ * Generic runner for scheduled actions.
  *
- * Ce binaire est le seul à configurer dans le crontab du serveur :
+ * This binary is the only one to configure in the server crontab:
  *
  *   * * * * * php /var/www/html/bin/console app:scheduled-actions:run >> /var/log/remotelabz/scheduled.log 2>&1
  *
- * Il interroge la table scheduled_action, sélectionne toutes les entrées
- * dont scheduledAt <= NOW et status = 'pending', et les exécute une par une
+ * It queries the scheduled_action table, selects all entries
+ * where scheduledAt <= NOW and status = 'pending', and executes them one by one
  * via ScheduledActionService::execute().
  *
- * Options :
- *   --dry-run   Affiche les actions qui seraient exécutées sans les lancer
- *   --uuid=...  Exécute une planification précise par UUID (utile pour les tests)
+ * Options:
+ *   --dry-run   Displays the actions that would be executed without running them
+ *   --uuid=...  Executes a specific scheduled action by UUID (useful for testing)
  */
 #[AsCommand(
     name: 'app:scheduled-actions:run',
-    description: 'Exécute les actions planifiées arrivées à échéance.',
+    description: 'Executes scheduled actions that are due.',
 )]
 class ScheduledActionsRunCommand extends Command
 {
@@ -50,13 +50,13 @@ class ScheduledActionsRunCommand extends Command
                 'dry-run',
                 null,
                 InputOption::VALUE_NONE,
-                'Affiche les actions dues sans les exécuter'
+                'Displays due actions without executing them'
             )
             ->addOption(
                 'uuid',
                 null,
                 InputOption::VALUE_REQUIRED,
-                'Exécute uniquement la planification avec cet UUID (ignoré si --dry-run)'
+                'Executes only the scheduled action with this UUID (ignored if --dry-run)'
             );
     }
 
@@ -66,13 +66,13 @@ class ScheduledActionsRunCommand extends Command
         $dryRun = $input->getOption('dry-run');
         $uuid   = $input->getOption('uuid');
 
-        $io->title('RemoteLABZ — Runner des actions planifiées');
+        $io->title('RemoteLABZ — Scheduled actions runner');
 
-        // ── Sélection des actions à traiter ───────────────────────────────────
+        // ── Select actions to process ─────────────────────────────────────────
         if ($uuid) {
             $action = $this->scheduledActionRepository->findOneBy(['uuid' => $uuid]);
             if (!$action) {
-                $io->error("Aucune planification trouvée avec l'UUID : $uuid");
+                $io->error("No scheduled action found with UUID: $uuid");
                 return Command::FAILURE;
             }
             $actions = [$action];
@@ -81,34 +81,34 @@ class ScheduledActionsRunCommand extends Command
         }
 
         if (empty($actions)) {
-            $io->success('Aucune action planifiée à exécuter pour le moment.');
+            $io->success('No scheduled actions to execute at this time.');
             return Command::SUCCESS;
         }
 
-        $io->writeln(sprintf('<info>%d action(s) à traiter</info>', count($actions)));
+        $io->writeln(sprintf('<info>%d action(s) to process</info>', count($actions)));
 
-        // ── Dry-run : affichage seul ───────────────────────────────────────────
+        // ── Dry-run: display only ─────────────────────────────────────────────
         if ($dryRun) {
-            $io->section('Mode dry-run — aucune action ne sera exécutée');
+            $io->section('Dry-run mode — no action will be executed');
             $rows = [];
             foreach ($actions as $sa) {
                 $rows[] = [
                     $sa->getUuid(),
                     $sa->getLab()->getName(),
-                    $sa->getGroup() ? $sa->getGroup()->getName() : '(tous)',
+                    $sa->getGroup() ? $sa->getGroup()->getName() : '(all)',
                     $sa->getAction(),
                     $sa->getScheduledAt()->format('Y-m-d H:i:s'),
                     $sa->getCreatedBy() ? $sa->getCreatedBy()->getName() : 'system',
                 ];
             }
             $io->table(
-                ['UUID', 'Lab', 'Groupe', 'Action', 'Planifiée le', 'Créée par'],
+                ['UUID', 'Lab', 'Group', 'Action', 'Scheduled at', 'Created by'],
                 $rows
             );
             return Command::SUCCESS;
         }
 
-        // ── Exécution ─────────────────────────────────────────────────────────
+        // ── Execution ─────────────────────────────────────────────────────────
         $totalSuccess = 0;
         $totalFailed  = 0;
 
@@ -129,14 +129,14 @@ class ScheduledActionsRunCommand extends Command
                 if ($result['success']) {
                     $io->writeln('<fg=green>OK</>');
                     $io->writeln(sprintf(
-                        '    → %d opération(s) réussie(s)',
+                        '    → %d operation(s) succeeded',
                         count($result['report'])
                     ));
                     $totalSuccess++;
                 } else {
-                    $io->writeln('<fg=yellow>PARTIEL</>');
+                    $io->writeln('<fg=yellow>PARTIAL</>');
                     $io->writeln(sprintf(
-                        '    → %d réussite(s), %d erreur(s)',
+                        '    → %d success(es), %d error(s)',
                         count($result['report']),
                         count($result['errors'])
                     ));
@@ -147,26 +147,26 @@ class ScheduledActionsRunCommand extends Command
                 }
 
             } catch (\Throwable $e) {
-                $io->writeln('<fg=red>ÉCHEC</>');
+                $io->writeln('<fg=red>FAILED</>');
                 $io->writeln('    ✗ ' . $e->getMessage());
-                $this->logger->error("[Runner] Exception non gérée pour {$sa->getUuid()}: {$e->getMessage()}");
+                $this->logger->error("[Runner] Unhandled exception for {$sa->getUuid()}: {$e->getMessage()}");
                 $totalFailed++;
             }
         }
 
-        // ── Bilan ─────────────────────────────────────────────────────────────
+        // ── Summary ───────────────────────────────────────────────────────────
         $io->newLine();
         $io->writeln(sprintf(
-            '<info>Bilan : %d/%d réussite(s)</info>',
+            '<info>Summary: %d/%d succeeded</info>',
             $totalSuccess, count($actions)
         ));
 
         if ($totalFailed > 0) {
-            $io->warning("$totalFailed action(s) en échec. Consultez les logs pour le détail.");
+            $io->warning("$totalFailed action(s) failed. Check the logs for details.");
             return Command::FAILURE;
         }
 
-        $io->success('Toutes les actions planifiées ont été exécutées.');
+        $io->success('All scheduled actions have been executed successfully.');
         return Command::SUCCESS;
     }
 }
