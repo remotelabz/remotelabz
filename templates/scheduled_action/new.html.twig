@@ -158,7 +158,7 @@
         <div class="col-lg-6 col-md-12">
             <div class="card">
                 <div class="card-header font-weight-bold d-flex justify-content-between align-items-center">
-                    <span>{{ svg('list') }} My scheduled actions</span>
+                    <span>{{ svg('list-bulleted') }} My scheduled actions</span>
                     <div class="d-flex align-items-center" style="gap: 8px;">
                         <span class="badge badge-pill badge-secondary" id="scheduled-count">
                             {{ scheduledActions|length }}
@@ -167,9 +167,9 @@
                         {% if scheduledActions|filter(sa => sa.status in ['done', 'failed'])|length > 0 %}
                             <button type="button"
                                     id="btn-clear-history"
-                                    class="btn btn-sm btn-outline-secondary"
+                                    class="btn btn-sm"
                                     title="Delete all done and failed actions">
-                                {{ svg('trash') }} Clear history
+                                {{ svg('clear-all') }} Clear history
                             </button>
                         {% endif %}
                     </div>
@@ -216,11 +216,11 @@
 
                                         {# Delete button — available for all statuses #}
                                         <button type="button"
-                                                class="btn btn-sm btn-outline-danger btn-cancel"
+                                                class="btn btn-sm"
                                                 data-uuid="{{ sa.uuid }}"
                                                 data-status="{{ sa.status }}"
                                                 title="{% if sa.status == 'pending' %}Cancel this scheduled action{% else %}Delete this entry{% endif %}">
-                                            {{ svg('x') }}
+                                            {{ svg('clear') }}
                                         </button>
                                     </div>
                                 </div>
