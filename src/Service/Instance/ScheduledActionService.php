@@ -309,10 +309,8 @@ class ScheduledActionService
     private function resolveTargetUsers(Lab $lab, ?Group $group): array
     {
         if ($group !== null) {
-            return array_map(
-                fn($groupUser) => $groupUser->getUser(),
-                $group->getUsers()->toArray()
-            );
+            // Group::getUsers() is a virtual property that already returns User objects
+            return $group->getUsers()->toArray();
         }
 
         $users = [];
@@ -330,8 +328,9 @@ class ScheduledActionService
         }
 
         foreach ($lab->getGroups() as $labGroup) {
-            foreach ($labGroup->getUsers() as $groupUser) {
-                $add($groupUser->getUser());
+            // Group::getUsers() is a virtual property that already returns User objects
+            foreach ($labGroup->getUsers() as $user) {
+                $add($user);
             }
         }
 

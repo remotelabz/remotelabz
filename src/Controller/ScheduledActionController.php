@@ -178,27 +178,27 @@ class ScheduledActionController extends Controller
             }
         }
 
-        // ── Résolution du Lab ─────────────────────────────────────────────────
+        // ── Lab resolution ────────────────────────────────────────────────────
         $lab = $this->labRepository->findOneBy(['uuid' => $body['labUuid']]);
         if (!$lab) {
             throw new NotFoundHttpException("Lab introuvable : {$body['labUuid']}.");
         }
 
-        // ── Vérification des droits sur le lab ────────────────────────────────
+        // ── Access check on the lab ───────────────────────────────────────────
         // Un enseignant ne peut planifier que sur ses propres labs
         $user = $this->getUser();
         if (!$user->isAdministrator() && $lab->getAuthor()->getUuid() !== $user->getUuid()) {
-            // Vérifier aussi s'il est dans un groupe qui a accès au lab
+            // Also check if the user belongs to a group that has access to the lab
             $userGroupUuids = array_map(fn($g) => $g->getUuid(), $user->getGroupsInfo());
             $labGroupUuids  = array_map(fn($g) => $g->getUuid(), $lab->getGroups()->toArray());
             $hasAccess      = !empty(array_intersect($userGroupUuids, $labGroupUuids));
 
             if (!$hasAccess) {
-                throw new AccessDeniedHttpException("Vous n'avez pas accès à ce lab.");
+                throw new AccessDeniedHttpException("You do not have access to this lab.");
             }
         }
 
-        // ── Résolution du Groupe (optionnel) ──────────────────────────────────
+        // ── Group resolution (optional) ───────────────────────────────────────
         $group = null;
         if (!empty($body['groupUuid'])) {
             $group = $this->groupRepository->findOneBy(['uuid' => $body['groupUuid']]);
@@ -217,7 +217,7 @@ class ScheduledActionController extends Controller
             );
         }
 
-        // ── Création via le service ───────────────────────────────────────────
+        // ── Create via service ────────────────────────────────────────────────
         try {
             $sa = $this->scheduledActionService->schedule(
                 lab:         $lab,
@@ -229,12 +229,12 @@ class ScheduledActionController extends Controller
         } catch (\InvalidArgumentException $e) {
             throw new BadRequestHttpException($e->getMessage());
         } catch (\LogicException $e) {
-            // Doublon détecté
+            // Duplicate detected
             return $this->json(['error' => $e->getMessage()], 409);
         }
 
         $this->logger->info(sprintf(
-            '[ScheduledActionController] Planification créée — uuid=%s par %s',
+            '[ScheduledActionController] Scheduled action created — uuid=%s by %s',
             $sa->getUuid(), $user->getName()
         ));
 
@@ -246,24 +246,11 @@ class ScheduledActionController extends Controller
     // =========================================================================
 
     /**
-     * Deletes a scheduled action regardless of its status.
-     * A teacher can only delete their own; an admin can delete any.
-     */
-    #[Delete('/api/scheduled-actions/{uuid}', name: 'api_scheduled_actions_delete')]
-    #[Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message: "Access denied.")]
-    public function deleteAction(string $uuid): JsonResponse
-    {
-        $sa = $this->findOrFail($uuid);
-        $this->denyIfNotOwner($sa);
-
-        $this->scheduledActionService->delete($sa);
-
-        return $this->json(['message' => "Scheduled action $uuid deleted."]);
-    }
-
-    /**
      * Deletes all done and failed scheduled actions for the current user.
      * Admins clear all done/failed entries across all users.
+     *
+     * IMPORTANT: this route must be declared BEFORE the /{uuid} route so that
+     * Symfony does not match "clear-history" as a UUID parameter.
      */
     #[Delete('/api/scheduled-actions/clear-history', name: 'api_scheduled_actions_clear_history')]
     #[Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message: "Access denied.")]
@@ -275,6 +262,24 @@ class ScheduledActionController extends Controller
             'message' => "$deleted scheduled action(s) deleted.",
             'deleted' => $deleted,
         ]);
+    }
+
+    /**
+     * Deletes a scheduled action regardless of its status.
+     * A teacher can only delete their own; an admin can delete any.
+     *
+     * The requirements constraint ensures "clear-history" is never matched here.
+     */
+    #[Delete('/api/scheduled-actions/{uuid}', name: 'api_scheduled_actions_delete', requirements: ['uuid' => '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'])]
+    #[Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message: "Access denied.")]
+    public function deleteAction(string $uuid): JsonResponse
+    {
+        $sa = $this->findOrFail($uuid);
+        $this->denyIfNotOwner($sa);
+
+        $this->scheduledActionService->delete($sa);
+
+        return $this->json(['message' => "Scheduled action $uuid deleted."]);
     }
 
     // =========================================================================
@@ -291,8 +296,8 @@ class ScheduledActionController extends Controller
     }
 
     /**
-     * Un enseignant ne peut accéder qu'à ses propres planifications.
-     * Un administrateur accède à toutes.
+     * A teacher can only access their own scheduled actions.
+     * An administrator can access all.
      */
     private function denyIfNotOwner(ScheduledAction $sa): void
     {
@@ -301,12 +306,12 @@ class ScheduledActionController extends Controller
             return;
         }
         if ($sa->getCreatedBy()?->getUuid() !== $user->getUuid()) {
-            throw new AccessDeniedHttpException('Accès refusé à cette planification.');
+            throw new AccessDeniedHttpException('Access denied to this scheduled action.');
         }
     }
 
     /**
-     * Sérialisation manuelle pour éviter une dépendance JMS sur cette entité simple.
+     * Manual serialization to avoid a JMS dependency on this simple entity.
      */
     private function serialize(ScheduledAction $sa): array
     {
