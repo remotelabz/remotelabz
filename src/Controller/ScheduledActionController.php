@@ -242,23 +242,39 @@ class ScheduledActionController extends Controller
     }
 
     // =========================================================================
-    // ANNULATION
+    // DELETION
     // =========================================================================
 
-    #[Delete('/api/scheduled-actions/{uuid}', name: 'api_scheduled_actions_cancel')]
+    /**
+     * Deletes a scheduled action regardless of its status.
+     * A teacher can only delete their own; an admin can delete any.
+     */
+    #[Delete('/api/scheduled-actions/{uuid}', name: 'api_scheduled_actions_delete')]
     #[Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message: "Access denied.")]
-    public function cancelAction(string $uuid): JsonResponse
+    public function deleteAction(string $uuid): JsonResponse
     {
         $sa = $this->findOrFail($uuid);
         $this->denyIfNotOwner($sa);
 
-        try {
-            $this->scheduledActionService->cancel($sa);
-        } catch (\LogicException $e) {
-            throw new BadRequestHttpException($e->getMessage());
-        }
+        $this->scheduledActionService->delete($sa);
 
-        return $this->json(['message' => "Planification {$uuid} annulée."]);
+        return $this->json(['message' => "Scheduled action $uuid deleted."]);
+    }
+
+    /**
+     * Deletes all done and failed scheduled actions for the current user.
+     * Admins clear all done/failed entries across all users.
+     */
+    #[Delete('/api/scheduled-actions/clear-history', name: 'api_scheduled_actions_clear_history')]
+    #[Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message: "Access denied.")]
+    public function clearHistoryAction(): JsonResponse
+    {
+        $deleted = $this->scheduledActionService->clearHistory($this->getUser());
+
+        return $this->json([
+            'message' => "$deleted scheduled action(s) deleted.",
+            'deleted' => $deleted,
+        ]);
     }
 
     // =========================================================================

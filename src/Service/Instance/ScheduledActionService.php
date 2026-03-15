@@ -176,26 +176,56 @@ class ScheduledActionService
     }
 
     // =========================================================================
-    // ANNULATION
+    // SUPPRESSION
     // =========================================================================
 
     /**
-     * Annule une planification en attente.
-     *
-     * @throws \LogicException si la planification n'est plus en état pending
+     * Deletes a ScheduledAction regardless of its status.
+     * - pending  : cancelled before execution
+     * - running  : force-deleted (use with caution)
+     * - done/failed : history cleanup
      */
-    public function cancel(ScheduledAction $sa): void
+    public function delete(ScheduledAction $sa): void
     {
-        if (!$sa->isPending()) {
-            throw new \LogicException(
-                "Impossible d'annuler la planification {$sa->getUuid()} : statut courant = '{$sa->getStatus()}'."
-            );
-        }
-
         $this->entityManager->remove($sa);
         $this->entityManager->flush();
 
-        $this->logger->info("[ScheduledActionService] Planification annulée — uuid={$sa->getUuid()}");
+        $this->logger->info(sprintf(
+            '[ScheduledActionService] Scheduled action deleted — uuid=%s status=%s',
+            $sa->getUuid(),
+            $sa->getStatus()
+        ));
+    }
+
+    /**
+     * Deletes all done and failed scheduled actions visible to the given user.
+     * Admins clear everything; teachers clear only their own.
+     *
+     * @return int Number of deleted entries
+     */
+    public function clearHistory(\App\Entity\User $user): int
+    {
+        $actions = $this->scheduledActionRepository->findForUser($user);
+
+        $deleted = 0;
+        foreach ($actions as $sa) {
+            if ($sa->isDone() || $sa->isFailed()) {
+                $this->entityManager->remove($sa);
+                $deleted++;
+            }
+        }
+
+        if ($deleted > 0) {
+            $this->entityManager->flush();
+        }
+
+        $this->logger->info(sprintf(
+            '[ScheduledActionService] History cleared — %d entry/entries deleted by %s',
+            $deleted,
+            $user->getName()
+        ));
+
+        return $deleted;
     }
 
     // =========================================================================
