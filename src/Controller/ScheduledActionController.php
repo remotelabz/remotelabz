@@ -1,0 +1,341 @@
+<?php
+
+namespace App\Controller;
+
+use App\Entity\ScheduledAction;
+use App\Repository\GroupRepository;
+use App\Repository\LabRepository;
+use App\Repository\ScheduledActionRepository;
+use App\Service\Instance\ScheduledActionService;
+use Psr\Log\LoggerInterface;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Http\Attribute\Security;
+
+use FOS\RestBundle\Controller\Annotations\Get;
+use FOS\RestBundle\Controller\Annotations\Post;
+use FOS\RestBundle\Controller\Annotations\Delete;
+
+/**
+ * Controller for scheduled actions — both the UI page and the REST API.
+ *
+ * UI routes:
+ *   GET  /scheduled-actions/new   → scheduling form page (Twig)
+ *
+ * API routes:
+ *   GET    /api/scheduled-actions                        → list (filtered by role)
+ *   POST   /api/scheduled-actions                        → create
+ *   GET    /api/scheduled-actions/{uuid}                 → detail
+ *   DELETE /api/scheduled-actions/{uuid}                 → cancel
+ *   GET    /api/scheduled-actions/labs-by-group/{uuid}   → labs accessible to a group (for dynamic select)
+ *
+ * Access:
+ *   - ROLE_ADMINISTRATOR : full access to all scheduled actions
+ *   - ROLE_TEACHER       : access to their own scheduled actions only
+ *   - ROLE_USER          : denied (403)
+ */
+class ScheduledActionController extends Controller
+{
+    public function __construct(
+        private readonly ScheduledActionRepository $scheduledActionRepository,
+        private readonly ScheduledActionService    $scheduledActionService,
+        private readonly LabRepository             $labRepository,
+        private readonly GroupRepository           $groupRepository,
+        private readonly LoggerInterface           $logger,
+    ) {}
+
+    // =========================================================================
+    // UI PAGE
+    // =========================================================================
+
+    /**
+     * Scheduling form page.
+     * Passes to Twig:
+     *   - the list of groups the user can manage (elevated user or admin)
+     *   - the list of existing pending/done scheduled actions for display
+     */
+    #[Route(path: '/scheduled-actions/new', name: 'scheduled_actions_new', methods: ['GET'])]
+    #[Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message: "Access denied.")]
+    public function newPageAction(): Response
+    {
+        $user = $this->getUser();
+
+        // Groups the user can manage
+        if ($user->isAdministrator()) {
+            $groups = $this->groupRepository->findAll();
+        } else {
+            $groups = [];
+            foreach ($user->getGroups() as $groupUser) {
+                $group = $groupUser->getGroup();
+                if ($group->isElevatedUser($user)) {
+                    $groups[] = $group;
+                }
+            }
+        }
+
+        // Sort groups alphabetically
+        usort($groups, fn($a, $b) => strcmp($a->getName(), $b->getName()));
+
+        // Existing scheduled actions visible to this user
+        $scheduledActions = $this->scheduledActionRepository->findForUser($user);
+
+        return $this->render('scheduled_action/new.html.twig', [
+            'groups'           => $groups,
+            'scheduledActions' => $scheduledActions,
+        ]);
+    }
+
+    // =========================================================================
+    // API — LABS BY GROUP (for dynamic select on the form)
+    // =========================================================================
+
+    /**
+     * Returns the labs accessible to a given group.
+     * Called via AJAX when the user selects a group in the form.
+     */
+    #[Get('/api/scheduled-actions/labs-by-group/{uuid}', name: 'api_scheduled_actions_labs_by_group')]
+    #[Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message: "Access denied.")]
+    public function labsByGroupAction(string $uuid): JsonResponse
+    {
+        $group = $this->groupRepository->findOneBy(['uuid' => $uuid]);
+        if (!$group) {
+            throw new NotFoundHttpException("Group not found: $uuid.");
+        }
+
+        $user = $this->getUser();
+
+        // Security: a teacher must be an elevated member of this group
+        if (!$user->isAdministrator() && !$group->isElevatedUser($user)) {
+            throw new AccessDeniedHttpException('You do not have elevated access to this group.');
+        }
+
+        $labs = $this->labRepository->findByGroup($group);
+
+        // Sort labs alphabetically
+        usort($labs, fn($a, $b) => strcmp($a->getName(), $b->getName()));
+
+        return $this->json(array_map(fn($lab) => [
+            'uuid' => $lab->getUuid(),
+            'name' => $lab->getName(),
+        ], $labs));
+    }
+
+    // =========================================================================
+    // LIST
+    // =========================================================================
+
+
+    #[Get('/api/scheduled-actions', name: 'api_scheduled_actions_list')]
+    #[Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message: "Access denied.")]
+    public function listAction(): JsonResponse
+    {
+        $user    = $this->getUser();
+        $actions = $this->scheduledActionRepository->findForUser($user);
+
+        return $this->json(array_map(
+            fn(ScheduledAction $sa) => $this->serialize($sa),
+            $actions
+        ));
+    }
+
+    // =========================================================================
+    // DÉTAIL
+    // =========================================================================
+
+    #[Get('/api/scheduled-actions/{uuid}', name: 'api_scheduled_actions_get')]
+    #[Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message: "Access denied.")]
+    public function getAction(string $uuid): JsonResponse
+    {
+        $sa = $this->findOrFail($uuid);
+        $this->denyIfNotOwner($sa);
+
+        return $this->json($this->serialize($sa));
+    }
+
+    // =========================================================================
+    // CRÉATION
+    // =========================================================================
+
+    #[Post('/api/scheduled-actions', name: 'api_scheduled_actions_create')]
+    #[Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message: "Access denied.")]
+    public function createAction(Request $request): JsonResponse
+    {
+        $body = json_decode($request->getContent(), true);
+
+        if (!$body) {
+            throw new BadRequestHttpException('Corps JSON invalide ou vide.');
+        }
+
+        // ── Validation des champs obligatoires ────────────────────────────────
+        foreach (['labUuid', 'action', 'scheduledAt'] as $field) {
+            if (empty($body[$field])) {
+                throw new BadRequestHttpException("Champ obligatoire manquant : '$field'.");
+            }
+        }
+
+        // ── Lab resolution ────────────────────────────────────────────────────
+        $lab = $this->labRepository->findOneBy(['uuid' => $body['labUuid']]);
+        if (!$lab) {
+            throw new NotFoundHttpException("Lab introuvable : {$body['labUuid']}.");
+        }
+
+        // ── Access check on the lab ───────────────────────────────────────────
+        // Un enseignant ne peut planifier que sur ses propres labs
+        $user = $this->getUser();
+        if (!$user->isAdministrator() && $lab->getAuthor()->getUuid() !== $user->getUuid()) {
+            // Also check if the user belongs to a group that has access to the lab
+            $userGroupUuids = array_map(fn($g) => $g->getUuid(), $user->getGroupsInfo());
+            $labGroupUuids  = array_map(fn($g) => $g->getUuid(), $lab->getGroups()->toArray());
+            $hasAccess      = !empty(array_intersect($userGroupUuids, $labGroupUuids));
+
+            if (!$hasAccess) {
+                throw new AccessDeniedHttpException("You do not have access to this lab.");
+            }
+        }
+
+        // ── Group resolution (optional) ───────────────────────────────────────
+        $group = null;
+        if (!empty($body['groupUuid'])) {
+            $group = $this->groupRepository->findOneBy(['uuid' => $body['groupUuid']]);
+            if (!$group) {
+                throw new NotFoundHttpException("Groupe introuvable : {$body['groupUuid']}.");
+            }
+        }
+
+        // ── Parsing de la date ────────────────────────────────────────────────
+        try {
+            $scheduledAt = new \DateTimeImmutable($body['scheduledAt']);
+        } catch (\Exception) {
+            throw new BadRequestHttpException(
+                "Format de date invalide pour 'scheduledAt' : '{$body['scheduledAt']}'. " .
+                "Utilisez le format ISO 8601 ou 'Y-m-d H:i:s'."
+            );
+        }
+
+        // ── Create via service ────────────────────────────────────────────────
+        try {
+            $sa = $this->scheduledActionService->schedule(
+                lab:         $lab,
+                group:       $group,
+                action:      $body['action'],
+                scheduledAt: $scheduledAt,
+                createdBy:   $user
+            );
+        } catch (\InvalidArgumentException $e) {
+            throw new BadRequestHttpException($e->getMessage());
+        } catch (\LogicException $e) {
+            // Duplicate detected
+            return $this->json(['error' => $e->getMessage()], 409);
+        }
+
+        $this->logger->info(sprintf(
+            '[ScheduledActionController] Scheduled action created — uuid=%s by %s',
+            $sa->getUuid(), $user->getName()
+        ));
+
+        return $this->json($this->serialize($sa), 201);
+    }
+
+    // =========================================================================
+    // DELETION
+    // =========================================================================
+
+    /**
+     * Deletes all done and failed scheduled actions for the current user.
+     * Admins clear all done/failed entries across all users.
+     *
+     * IMPORTANT: this route must be declared BEFORE the /{uuid} route so that
+     * Symfony does not match "clear-history" as a UUID parameter.
+     */
+    #[Delete('/api/scheduled-actions/clear-history', name: 'api_scheduled_actions_clear_history')]
+    #[Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message: "Access denied.")]
+    public function clearHistoryAction(): JsonResponse
+    {
+        $deleted = $this->scheduledActionService->clearHistory($this->getUser());
+
+        return $this->json([
+            'message' => "$deleted scheduled action(s) deleted.",
+            'deleted' => $deleted,
+        ]);
+    }
+
+    /**
+     * Deletes a scheduled action regardless of its status.
+     * A teacher can only delete their own; an admin can delete any.
+     *
+     * The requirements constraint ensures "clear-history" is never matched here.
+     */
+    #[Delete('/api/scheduled-actions/{uuid}', name: 'api_scheduled_actions_delete', requirements: ['uuid' => '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'])]
+    #[Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message: "Access denied.")]
+    public function deleteAction(string $uuid): JsonResponse
+    {
+        $sa = $this->findOrFail($uuid);
+        $this->denyIfNotOwner($sa);
+
+        $this->scheduledActionService->delete($sa);
+
+        return $this->json(['message' => "Scheduled action $uuid deleted."]);
+    }
+
+    // =========================================================================
+    // HELPERS PRIVÉS
+    // =========================================================================
+
+    private function findOrFail(string $uuid): ScheduledAction
+    {
+        $sa = $this->scheduledActionRepository->findOneBy(['uuid' => $uuid]);
+        if (!$sa) {
+            throw new NotFoundHttpException("Aucune planification avec l'UUID : $uuid.");
+        }
+        return $sa;
+    }
+
+    /**
+     * A teacher can only access their own scheduled actions.
+     * An administrator can access all.
+     */
+    private function denyIfNotOwner(ScheduledAction $sa): void
+    {
+        $user = $this->getUser();
+        if ($user->isAdministrator()) {
+            return;
+        }
+        if ($sa->getCreatedBy()?->getUuid() !== $user->getUuid()) {
+            throw new AccessDeniedHttpException('Access denied to this scheduled action.');
+        }
+    }
+
+    /**
+     * Manual serialization to avoid a JMS dependency on this simple entity.
+     */
+    private function serialize(ScheduledAction $sa): array
+    {
+        return [
+            'uuid'            => $sa->getUuid(),
+            'lab'             => [
+                'uuid' => $sa->getLab()->getUuid(),
+                'name' => $sa->getLab()->getName(),
+            ],
+            'group'           => $sa->getGroup() ? [
+                'uuid' => $sa->getGroup()->getUuid(),
+                'name' => $sa->getGroup()->getName(),
+            ] : null,
+            'action'          => $sa->getAction(),
+            'scheduledAt'     => $sa->getScheduledAt()->format(\DateTimeInterface::ATOM),
+            'executedAt'      => $sa->getExecutedAt()?->format(\DateTimeInterface::ATOM),
+            'status'          => $sa->getStatus(),
+            'errorMessage'    => $sa->getErrorMessage(),
+            'executionReport' => $sa->getExecutionReport(),
+            'createdBy'       => $sa->getCreatedBy() ? [
+                'uuid' => $sa->getCreatedBy()->getUuid(),
+                'name' => $sa->getCreatedBy()->getName(),
+            ] : null,
+            'createdAt'       => $sa->getCreatedAt()->format(\DateTimeInterface::ATOM),
+        ];
+    }
+}
