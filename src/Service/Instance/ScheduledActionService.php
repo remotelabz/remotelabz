@@ -9,16 +9,16 @@ use App\Entity\User;
 use App\Repository\LabInstanceRepository;
 use App\Repository\ScheduledActionRepository;
 use Doctrine\ORM\EntityManagerInterface;
-use Psr\Log\LoggerInterface;
 use Remotelabz\Message\Message\InstanceStateMessage;
+use Psr\Log\LoggerInterface;
 
 /**
- * Service métier pour les actions planifiées.
+ * Business service for scheduled actions.
  *
- * Responsabilités :
- *   1. Créer / valider / persister une ScheduledAction
- *   2. Exécuter une ScheduledAction (appelé par la commande runner)
- *   3. Annuler / supprimer une ScheduledAction pending
+ * Responsibilities:
+ *   1. Create / validate / persist a ScheduledAction
+ *   2. Execute a ScheduledAction (called by the runner command)
+ *   3. Cancel / delete a pending ScheduledAction
  */
 class ScheduledActionService
 {
@@ -35,10 +35,10 @@ class ScheduledActionService
     // =========================================================================
 
     /**
-     * Crée et persiste une nouvelle planification.
+     * Creates and persists a new scheduled action.
      *
-     * @throws \InvalidArgumentException si les paramètres sont invalides
-     * @throws \LogicException           si une planification identique est déjà en attente
+     * @throws \InvalidArgumentException if parameters are invalid
+     * @throws \LogicException           if an identical pending action already exists
      */
     public function schedule(
         Lab              $lab,
@@ -50,23 +50,23 @@ class ScheduledActionService
         // Validation de l'action
         if (!in_array($action, ScheduledAction::ACTIONS, true)) {
             throw new \InvalidArgumentException(
-                "Action '$action' invalide. Valeurs acceptées : " . implode(', ', ScheduledAction::ACTIONS)
+                "Invalid action '$action'. Accepted values: " . implode(', ', ScheduledAction::ACTIONS)
             );
         }
 
-        // La date doit être dans le futur
+        // The scheduled date must be in the future
         if ($scheduledAt <= new \DateTimeImmutable()) {
             throw new \InvalidArgumentException(
-                "La date planifiée doit être dans le futur (reçu : {$scheduledAt->format('Y-m-d H:i:s')})."
+                "The scheduled date must be in the future (received: {$scheduledAt->format('Y-m-d H:i:s')})."
             );
         }
 
-        // Détection de doublon : même lab + même groupe + même action + status pending
+        // Duplicate detection: same lab + same group + same action + status pending
         $existing = $this->scheduledActionRepository->findPendingForLabAndGroup($lab, $group, $action);
         if (!empty($existing)) {
             $first = $existing[0];
             throw new \LogicException(sprintf(
-                "Une planification '%s' est déjà en attente pour ce lab/groupe (UUID: %s, prévue le %s).",
+                "A pending '%s' action already exists for this lab/group (UUID: %s, scheduled at %s).",
                 $action,
                 $first->getUuid(),
                 $first->getScheduledAt()->format('Y-m-d H:i:s')
@@ -84,7 +84,7 @@ class ScheduledActionService
         $this->entityManager->flush();
 
         $this->logger->info(sprintf(
-            '[ScheduledActionService] Planification créée — uuid=%s action=%s lab=%s group=%s at=%s by=%s',
+            '[ScheduledActionService] Scheduled action created — uuid=%s action=%s lab=%s group=%s at=%s by=%s',
             $sa->getUuid(),
             $action,
             $lab->getName(),
@@ -101,10 +101,10 @@ class ScheduledActionService
     // =========================================================================
 
     /**
-     * Exécute une ScheduledAction :
-     *   - récupère toutes les LabInstances concernées (lab + groupe optionnel)
-     *   - applique l'action sur chaque instance / device
-     *   - met à jour le statut et stocke le rapport d'exécution
+     * Executes a ScheduledAction:
+     *   - resolves all relevant LabInstances (lab + optional group)
+     *   - applies the action on each instance / device
+     *   - updates the status and stores the execution report
      *
      * @return array{ success: bool, report: array, errors: array }
      */
@@ -112,11 +112,11 @@ class ScheduledActionService
     {
         if (!$sa->isPending()) {
             throw new \LogicException(
-                "Impossible d'exécuter la planification {$sa->getUuid()} : statut courant = '{$sa->getStatus()}' (attendu: pending)."
+                "Cannot execute scheduled action {$sa->getUuid()}: current status = '{$sa->getStatus()}' (expected: pending)."
             );
         }
 
-        // Marquer comme en cours pour éviter une double exécution (runner concurrent)
+        // Mark as running to prevent double execution (concurrent runner)
         $sa->setStatus(ScheduledAction::STATUS_RUNNING);
         $this->entityManager->flush();
 
@@ -124,21 +124,65 @@ class ScheduledActionService
         $errors = [];
 
         try {
-            $labInstances = $this->resolveLabInstances($sa);
+            if ($sa->getAction() === ScheduledAction::ACTION_START) {
+                // START: ensure a LabInstance exists for each target user, then start devices
+                $users = $this->resolveTargetUsers($sa->getLab(), $sa->getGroup());
 
-            $this->logger->info(sprintf(
-                '[ScheduledActionService] Exécution — uuid=%s action=%s lab=%s group=%s instances=%d',
-                $sa->getUuid(),
-                $sa->getAction(),
-                $sa->getLab()->getName(),
-                $sa->getGroup() ? $sa->getGroup()->getName() : 'all',
-                count($labInstances)
-            ));
+                $this->logger->info(sprintf(
+                    '[ScheduledActionService] START — uuid=%s lab=%s group=%s users=%d',
+                    $sa->getUuid(),
+                    $sa->getLab()->getName(),
+                    $sa->getGroup() ? $sa->getGroup()->getName() : 'all',
+                    count($users)
+                ));
 
-            foreach ($labInstances as $labInstance) {
-                $result = $this->applyAction($sa->getAction(), $labInstance);
-                $report = array_merge($report, $result['report']);
-                $errors = array_merge($errors, $result['errors']);
+                foreach ($users as $user) {
+                    try {
+                        // Create lab instance if it does not exist yet for this user
+                        $labInstance = $this->labInstanceRepository->findOneBy([
+                            'lab'  => $sa->getLab(),
+                            'user' => $user,
+                        ]);
+
+                        if (!$labInstance) {
+                            $labInstance = $this->instanceManager->create($sa->getLab(), $user);
+                            $this->logger->info(sprintf(
+                                '[ScheduledActionService] Created lab instance %s for user %s.',
+                                $labInstance->getUuid(), $user->getName()
+                            ));
+                        }
+
+                        $result  = $this->applyAction(ScheduledAction::ACTION_START, $labInstance);
+                        $report  = array_merge($report, $result['report']);
+                        $errors  = array_merge($errors, $result['errors']);
+
+                    } catch (\Throwable $e) {
+                        $this->logger->error(sprintf(
+                            '[ScheduledActionService] Error during START for user %s: %s',
+                            $user->getName(), $e->getMessage()
+                        ));
+                        $errors[] = ['user' => $user->getName(), 'error' => $e->getMessage()];
+                    }
+                }
+
+            } else {
+                // STOP / RESET / LEAVE: act on existing instances only
+                $labInstances = $this->resolveLabInstances($sa);
+
+                $this->logger->info(sprintf(
+                    '[ScheduledActionService] Executing — uuid=%s action=%s lab=%s group=%s instances=%d',
+                    $sa->getUuid(),
+                    $sa->getAction(),
+                    $sa->getLab()->getName(),
+                    $sa->getGroup() ? $sa->getGroup()->getName() : 'all',
+                    count($labInstances)
+                ));
+
+                foreach ($labInstances as $labInstance) {
+                    $result = $this->applyAction($sa->getAction(), $labInstance);
+                    $report = array_merge($report, $result['report']);
+                    $errors = array_merge($errors, $result['errors']);
+                }
             }
 
             $success = empty($errors);
@@ -149,13 +193,13 @@ class ScheduledActionService
 
             if (!$success) {
                 $sa->setErrorMessage(
-                    count($errors) . ' erreur(s) lors de l\'exécution. Voir executionReport pour le détail.'
+                    count($errors) . ' error(s) during execution. See executionReport for details.'
                 );
             }
 
         } catch (\Throwable $e) {
             $this->logger->error(sprintf(
-                '[ScheduledActionService] Erreur fatale pour uuid=%s : %s',
+                '[ScheduledActionService] Fatal error for uuid=%s: %s',
                 $sa->getUuid(), $e->getMessage()
             ));
 
@@ -233,12 +277,10 @@ class ScheduledActionService
     // =========================================================================
 
     /**
-     * Resolves the LabInstances to process for a given ScheduledAction.
+     * Resolves the LabInstances to process for STOP / RESET / LEAVE.
      *
-     * Uses the same repository methods as InstanceController to stay consistent
-     * with the existing access logic:
-     *   - With a group  → findByGroup($group) : instances owned by members of the group
-     *   - Without group → findBy(['lab' => $lab]) : all instances of the lab
+     * Uses LabInstanceRepository::findByGroupNoAuth() which applies no access
+     * control — safe to call from the cron runner where no User is authenticated.
      *
      * @return \App\Entity\LabInstance[]
      */
@@ -248,17 +290,59 @@ class ScheduledActionService
         $group = $sa->getGroup();
 
         if ($group !== null) {
-            // findByGroup($group, $user = null) already exists in LabInstanceRepository
-            // and correctly handles the ownedBy / user / _group ownership model.
-            // Passing null as $user returns all instances for the group regardless of requester.
-            return $this->labInstanceRepository->findByGroup($group, null) ?: [];
+            return $this->labInstanceRepository->findByGroupNoAuth($group) ?: [];
         }
 
         return $this->labInstanceRepository->findBy(['lab' => $lab]) ?: [];
     }
 
     /**
-     * Applique l'action sur une LabInstance et retourne un rapport partiel.
+     * Resolves the list of Users to create instances for during a START action.
+     *
+     * - With a group  : all members of the group
+     * - Without group : lab author + all members of every group linked to the lab
+     *
+     * No authenticated user is required; uses entity collections only.
+     *
+     * @return User[]
+     */
+    private function resolveTargetUsers(Lab $lab, ?Group $group): array
+    {
+        if ($group !== null) {
+            return array_map(
+                fn($groupUser) => $groupUser->getUser(),
+                $group->getUsers()->toArray()
+            );
+        }
+
+        $users = [];
+        $seen  = [];
+
+        $add = function (User $user) use (&$users, &$seen): void {
+            if (!isset($seen[$user->getId()])) {
+                $seen[$user->getId()] = true;
+                $users[]              = $user;
+            }
+        };
+
+        if ($lab->getAuthor()) {
+            $add($lab->getAuthor());
+        }
+
+        foreach ($lab->getGroups() as $labGroup) {
+            foreach ($labGroup->getUsers() as $groupUser) {
+                $add($groupUser->getUser());
+            }
+        }
+
+        return $users;
+    }
+
+    /**
+     * Applies the action on a LabInstance and returns a partial report.
+     *
+     * For START: if no LabInstance exists yet for the user, it is created
+     * via InstanceManager::create() before starting the devices.
      *
      * @return array{ report: array, errors: array }
      */
@@ -268,15 +352,15 @@ class ScheduledActionService
         $errors = [];
 
         if ($action === ScheduledAction::ACTION_LEAVE) {
-            // Leave = suppression de la lab instance entière
             try {
+                $uuid = $labInstance->getUuid();
                 $this->instanceManager->delete($labInstance);
                 $report[] = [
-                    'labInstanceUuid' => $labInstance->getUuid(),
+                    'labInstanceUuid' => $uuid,
                     'status'          => 'deleted',
                 ];
             } catch (\Throwable $e) {
-                $this->logger->error("[ScheduledActionService] Erreur leave sur {$labInstance->getUuid()}: {$e->getMessage()}");
+                $this->logger->error("[ScheduledActionService] Error during leave on {$labInstance->getUuid()}: {$e->getMessage()}");
                 $errors[] = [
                     'labInstanceUuid' => $labInstance->getUuid(),
                     'error'           => $e->getMessage(),
@@ -332,7 +416,7 @@ class ScheduledActionService
 
             } catch (\Throwable $e) {
                 $this->logger->error(sprintf(
-                    '[ScheduledActionService] Erreur %s sur device %s : %s',
+                    '[ScheduledActionService] Error during %s on device %s: %s',
                     $action, $deviceInstance->getUuid(), $e->getMessage()
                 ));
                 $errors[] = [

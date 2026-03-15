@@ -295,6 +295,29 @@ class LabInstanceRepository extends ServiceEntityRepository
         return $result;
     }
 
+    /**
+     * Returns all LabInstances whose lab belongs to the given group.
+     *
+     * Unlike findByGroup(), this method applies NO access control and is
+     * intended exclusively for backend/cron contexts where no authenticated
+     * user is available (e.g. ScheduledActionService).
+     *
+     * @return LabInstance[]
+     */
+    public function findByGroupNoAuth(Group $group): array
+    {
+        $instances = $this->findAll();
+        $result    = [];
+
+        foreach ($instances as $instance) {
+            if ($instance->getLab()->getGroups()->contains($group)) {
+                $result[] = $instance;
+            }
+        }
+
+        return $result;
+    }
+
     public function findByGroupAndLabUuid($group, $lab)
     {
         $instances = $this->findBy(['lab'=> $lab]);
