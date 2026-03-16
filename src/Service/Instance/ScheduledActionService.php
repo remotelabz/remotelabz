@@ -290,7 +290,7 @@ class ScheduledActionService
         $group = $sa->getGroup();
 
         if ($group !== null) {
-            return $this->labInstanceRepository->findByGroupNoAuth($group) ?: [];
+            return $this->labInstanceRepository->findByGroupAndLabNoAuth($group, $lab) ?: [];
         }
 
         return $this->labInstanceRepository->findBy(['lab' => $lab]) ?: [];
