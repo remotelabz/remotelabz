@@ -1,0 +1,631 @@
+{% extends 'dashboard.base.html.twig' %}
+
+{% block breadcrumbs %}
+    {%- set breadcrumbs = breadcrumbs|merge({ 'Scheduled actions': path('scheduled_actions_new') }) -%}
+    {{ parent() }}
+{% endblock %}
+
+{% block sidebar %}
+    {% set category = 'scheduled_actions_new' %}
+    {{ parent() }}
+{% endblock %}
+
+{% block wrapper %}
+<div class="content-body">
+
+    {# ── Page header ──────────────────────────────────────────────────────── #}
+    <div class="row mb-4">
+        <div class="col d-flex align-items-center">
+            <div>
+                <h4 class="font-weight-bold mb-1">Schedule a lab action</h4>
+                <p class="text-muted mb-0">
+                    Start or stop a lab for a group at a specific date and time.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+
+        {# ── Left column : form ───────────────────────────────────────────── #}
+        <div class="col-lg-6 col-md-12 mb-4">
+            <div class="card">
+                <div class="card-header font-weight-bold">
+                    {{ svg('clock') }} New scheduled action
+                </div>
+                <div class="card-body">
+
+                    {# Global form error (filled by JS on API error) #}
+                    <div id="form-alert" class="alert alert-danger d-none" role="alert"></div>
+                    <div id="form-success" class="alert alert-success d-none" role="alert"></div>
+
+                    {# ── Step 1 : Group ──────────────────────────────────── #}
+                    <div class="form-group">
+                        <label for="select-group" class="font-weight-bold">
+                            1. Group <span class="text-danger">*</span>
+                        </label>
+                        <select id="select-group" class="form-control" required>
+                            <option value="">— Select a group —</option>
+                            {% for group in groups %}
+                                <option value="{{ group.uuid }}">{{ group.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <small class="form-text text-muted">
+                            Only groups you manage are listed.
+                        </small>
+                    </div>
+
+                    {# ── Step 2 : Lab (populated dynamically) ────────────── #}
+                    <div class="form-group">
+                        <label for="select-lab" class="font-weight-bold">
+                            2. Lab <span class="text-danger">*</span>
+                        </label>
+                        <select id="select-lab" class="form-control" required disabled>
+                            <option value="">— Select a group first —</option>
+                        </select>
+                        <div id="labs-loading" class="d-none mt-1">
+                            <span class="spinner-border spinner-border-sm text-secondary" role="status"></span>
+                            <small class="text-muted ml-1">Loading labs...</small>
+                        </div>
+                        <div id="labs-empty" class="d-none mt-1">
+                            <small class="text-warning">No lab is associated with this group.</small>
+                        </div>
+                    </div>
+
+                    <hr />
+
+                    {# ── Step 3 : Start date ─────────────────────────────── #}
+                    <div class="form-group">
+                        <label for="input-start-date" class="font-weight-bold">
+                            3. Start date <span class="text-danger">*</span>
+                        </label>
+                        <input type="datetime-local"
+                               id="input-start-date"
+                               class="form-control"
+                               required />
+                        <small class="form-text text-muted">
+                            All devices in the lab will be started at this date and time.
+                        </small>
+                    </div>
+
+                    {# ── Step 4 : End date (optional) ────────────────────── #}
+                    <div class="form-group">
+                        <label for="input-end-date" class="font-weight-bold">
+                            4. End date
+                            <span class="text-muted font-weight-normal">(optional)</span>
+                        </label>
+                        <input type="datetime-local"
+                               id="input-end-date"
+                               class="form-control" />
+                        <small class="form-text text-muted">
+                            Leave empty if you do not want an automatic end action.
+                        </small>
+                    </div>
+
+                    {# ── Step 5 : End action ─────────────────────────────── #}
+                    <div class="form-group" id="end-action-group" style="display:none;">
+                        <label class="font-weight-bold">
+                            5. End action <span class="text-danger">*</span>
+                        </label>
+                        <div class="d-flex" style="gap: 12px;">
+                            <div class="card flex-fill end-action-card border"
+                                 data-value="stop"
+                                 style="cursor:pointer;">
+                                <div class="card-body text-center py-3">
+                                    <div style="font-size: 1.4rem;">■</div>
+                                    <div class="font-weight-bold mt-1">Stop</div>
+                                    <small class="text-muted">
+                                        Stops all devices. Instances are kept and can be restarted later.
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="card flex-fill end-action-card border"
+                                 data-value="leave"
+                                 style="cursor:pointer;">
+                                <div class="card-body text-center py-3">
+                                    <div style="font-size: 1.4rem;">✕</div>
+                                    <div class="font-weight-bold mt-1">Leave</div>
+                                    <small class="text-muted">
+                                        Deletes all instances. VMs are permanently destroyed.
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        <input type="hidden" id="selected-end-action" value="" />
+                        <small id="end-action-error" class="text-danger d-none">
+                            Please select an end action.
+                        </small>
+                    </div>
+
+                    {# ── Submit ──────────────────────────────────────────── #}
+                    <div class="d-flex justify-content-end mt-3">
+                        <button id="btn-submit"
+                                type="button"
+                                class="btn btn-success"
+                                disabled>
+                            <span id="btn-submit-spinner"
+                                  class="spinner-border spinner-border-sm d-none"
+                                  role="status"></span>
+                            Schedule
+                        </button>
+                    </div>
+
+                </div>{# /card-body #}
+            </div>{# /card #}
+        </div>{# /col #}
+
+        {# ── Right column : existing scheduled actions ────────────────────── #}
+        <div class="col-lg-6 col-md-12">
+            <div class="card">
+                <div class="card-header font-weight-bold d-flex justify-content-between align-items-center">
+                    <span>{{ svg('list-bulleted') }} My scheduled actions</span>
+                    <div class="d-flex align-items-center" style="gap: 8px;">
+                        <span class="badge badge-pill badge-secondary" id="scheduled-count">
+                            {{ scheduledActions|length }}
+                        </span>
+                        {# Clear history: removes all done/failed entries #}
+                        {% if scheduledActions|filter(sa => sa.status in ['done', 'failed'])|length > 0 %}
+                            <button type="button"
+                                    id="btn-clear-history"
+                                    class="btn btn-sm"
+                                    title="Delete all done and failed actions">
+                                {{ svg('clear-all') }} Clear history
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    {% if scheduledActions is empty %}
+                        <div class="text-center text-muted py-4" id="no-actions-msg">
+                            No scheduled action yet.
+                        </div>
+                    {% endif %}
+                    <ul class="list-group list-group-flush" id="scheduled-list">
+                        {% for sa in scheduledActions %}
+                            <li class="list-group-item" id="sa-row-{{ sa.uuid }}">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <span class="font-weight-bold">{{ sa.lab.name }}</span>
+                                        {% if sa.group is not null %}
+                                            <span class="badge badge-pill badge-light border ml-1">
+                                                {{ sa.group.name }}
+                                            </span>
+                                        {% else %}
+                                            <span class="badge badge-pill badge-light border ml-1">All users</span>
+                                        {% endif %}
+                                        <br />
+                                        <small class="text-muted">
+                                            {{ sa.scheduledAt|date('M d, Y H:i', 'UTC') }} UTC
+                                            &nbsp;—&nbsp;
+                                            <strong>{{ sa.action|upper }}</strong>
+                                        </small>
+                                    </div>
+                                    <div class="d-flex align-items-center" style="gap: 6px;">
+                                        {# Status badge #}
+                                        {% if sa.status == 'pending' %}
+                                            <span class="badge badge-warning">pending</span>
+                                        {% elseif sa.status == 'running' %}
+                                            <span class="badge badge-info">running</span>
+                                        {% elseif sa.status == 'done' %}
+                                            <span class="badge badge-success">done</span>
+                                        {% elseif sa.status == 'failed' %}
+                                            <span class="badge badge-danger"
+                                                  data-toggle="tooltip"
+                                                  title="{{ sa.errorMessage }}">failed</span>
+                                        {% endif %}
+
+                                        {# Delete button — available for all statuses #}
+                                        <button type="button"
+                                                class="btn btn-sm"
+                                                data-uuid="{{ sa.uuid }}"
+                                                data-status="{{ sa.status }}"
+                                                title="{% if sa.status == 'pending' %}Cancel this scheduled action{% else %}Delete this entry{% endif %}">
+                                            {{ svg('clear') }}
+                                        </button>
+                                    </div>
+                                </div>
+                                {% if sa.errorMessage %}
+                                    <small class="text-danger d-block mt-1">{{ sa.errorMessage }}</small>
+                                {% endif %}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>{# /col #}
+
+    </div>{# /row #}
+</div>{# /content-body #}
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+
+        // ── DOM references ────────────────────────────────────────────────────
+        const selectGroup      = document.getElementById('select-group');
+        const selectLab        = document.getElementById('select-lab');
+        const labsLoading      = document.getElementById('labs-loading');
+        const labsEmpty        = document.getElementById('labs-empty');
+        const inputStartDate   = document.getElementById('input-start-date');
+        const inputEndDate     = document.getElementById('input-end-date');
+        const endActionGroup   = document.getElementById('end-action-group');
+        const endActionCards   = document.querySelectorAll('.end-action-card');
+        const selectedEndAction = document.getElementById('selected-end-action');
+        const endActionError   = document.getElementById('end-action-error');
+        const btnSubmit        = document.getElementById('btn-submit');
+        const btnSpinner       = document.getElementById('btn-submit-spinner');
+        const formAlert        = document.getElementById('form-alert');
+        const formSuccess      = document.getElementById('form-success');
+        const scheduledList    = document.getElementById('scheduled-list');
+        const scheduledCount   = document.getElementById('scheduled-count');
+        const noActionsMsg     = document.getElementById('no-actions-msg');
+
+        // Set datetime-local min to "now" (no past dates)
+        const now = new Date();
+        now.setSeconds(0, 0);
+        const isoNow = now.toISOString().slice(0, 16);
+        inputStartDate.min = isoNow;
+        inputEndDate.min   = isoNow;
+
+        // ── Step 1 : Load labs when a group is selected ───────────────────────
+        selectGroup.addEventListener('change', function () {
+            const groupUuid = this.value;
+
+            // Reset lab select
+            selectLab.innerHTML = '<option value="">— Select a lab —</option>';
+            selectLab.disabled  = true;
+            labsEmpty.classList.add('d-none');
+            validateForm();
+
+            if (!groupUuid) return;
+
+            labsLoading.classList.remove('d-none');
+
+            fetch(`/api/scheduled-actions/labs-by-group/${groupUuid}`)
+                .then(res => {
+                    if (!res.ok) throw new Error('Failed to load labs.');
+                    return res.json();
+                })
+                .then(labs => {
+                    labsLoading.classList.add('d-none');
+
+                    if (labs.length === 0) {
+                        labsEmpty.classList.remove('d-none');
+                        return;
+                    }
+
+                    labs.forEach(lab => {
+                        const opt = document.createElement('option');
+                        opt.value       = lab.uuid;
+                        opt.textContent = lab.name;
+                        selectLab.appendChild(opt);
+                    });
+
+                    selectLab.disabled = false;
+                })
+                .catch(() => {
+                    labsLoading.classList.add('d-none');
+                    labsEmpty.classList.remove('d-none');
+                    labsEmpty.querySelector('small').textContent =
+                        'Error loading labs. Please try again.';
+                });
+        });
+
+        // ── Step 4 : Show end-action selector when end date is filled ─────────
+        inputEndDate.addEventListener('change', function () {
+            if (this.value) {
+                endActionGroup.style.display = '';
+
+                // End date must be after start date
+                if (inputStartDate.value && this.value <= inputStartDate.value) {
+                    showAlert('The end date must be after the start date.');
+                    this.value = '';
+                    endActionGroup.style.display = 'none';
+                    selectedEndAction.value = '';
+                } else {
+                    hideAlert();
+                }
+            } else {
+                endActionGroup.style.display = 'none';
+                selectedEndAction.value = '';
+                endActionCards.forEach(c => c.classList.remove('border-primary', 'shadow-sm'));
+            }
+            validateForm();
+        });
+
+        // Ensure start date min is respected
+        inputStartDate.addEventListener('change', function () {
+            if (inputEndDate.value && inputEndDate.value <= this.value) {
+                inputEndDate.value = '';
+                endActionGroup.style.display = 'none';
+                selectedEndAction.value = '';
+                endActionCards.forEach(c => c.classList.remove('border-primary', 'shadow-sm'));
+                showAlert('The end date has been cleared because it was before the start date.');
+            }
+            validateForm();
+        });
+
+        // ── Step 5 : End action selection (card toggle) ───────────────────────
+        endActionCards.forEach(card => {
+            card.addEventListener('click', function () {
+                endActionCards.forEach(c => c.classList.remove('border-primary', 'shadow-sm'));
+                this.classList.add('border-primary', 'shadow-sm');
+                selectedEndAction.value = this.dataset.value;
+                endActionError.classList.add('d-none');
+                validateForm();
+            });
+        });
+
+        selectLab.addEventListener('change', validateForm);
+
+        // ── Form validation ───────────────────────────────────────────────────
+        function validateForm() {
+            const groupOk     = selectGroup.value !== '';
+            const labOk       = selectLab.value !== '';
+            const startOk     = inputStartDate.value !== '';
+            const endOk       = !inputEndDate.value || selectedEndAction.value !== '';
+            btnSubmit.disabled = !(groupOk && labOk && startOk && endOk);
+        }
+
+        // ── Submit ────────────────────────────────────────────────────────────
+        btnSubmit.addEventListener('click', async function () {
+            hideAlert();
+            hideSuccess();
+
+            // Extra validation: end date needs an end action
+            if (inputEndDate.value && !selectedEndAction.value) {
+                endActionError.classList.remove('d-none');
+                return;
+            }
+
+            btnSubmit.disabled    = true;
+            btnSpinner.classList.remove('d-none');
+
+            try {
+                // Build the payloads to send
+                const payloads = [];
+
+                // Always create the START action
+                payloads.push({
+                    groupUuid:   selectGroup.value,
+                    labUuid:     selectLab.value,
+                    action:      'start',
+                    scheduledAt: toIsoString(inputStartDate.value),
+                });
+
+                // If an end date + end action is set, add a second scheduled action
+                if (inputEndDate.value && selectedEndAction.value) {
+                    payloads.push({
+                        groupUuid:   selectGroup.value,
+                        labUuid:     selectLab.value,
+                        action:      selectedEndAction.value,  // 'stop' or 'leave'
+                        scheduledAt: toIsoString(inputEndDate.value),
+                    });
+                }
+
+                // Send all payloads sequentially
+                const created = [];
+                for (const payload of payloads) {
+                    const res = await fetch('/api/scheduled-actions', {
+                        method:  'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body:    JSON.stringify(payload),
+                    });
+
+                    const data = await res.json();
+
+                    if (!res.ok) {
+                        throw new Error(data.error || data.message || `HTTP ${res.status}`);
+                    }
+
+                    created.push(data);
+                    appendRowToList(data);
+                }
+
+                const msg = created.length === 2
+                    ? `2 scheduled actions created: start on ${formatDate(inputStartDate.value)},
+                       ${selectedEndAction.value} on ${formatDate(inputEndDate.value)}.`
+                    : `Scheduled action created: start on ${formatDate(inputStartDate.value)}.`;
+
+                showSuccess(msg);
+                resetForm();
+
+            } catch (err) {
+                showAlert(err.message || 'An error occurred. Please try again.');
+            } finally {
+                btnSpinner.classList.add('d-none');
+                validateForm();
+            }
+        });
+
+        // ── Delete a scheduled action (all statuses) ──────────────────────────
+        document.addEventListener('click', function (e) {
+            const btn = e.target.closest('.btn-cancel');
+            if (!btn) return;
+
+            const uuid   = btn.dataset.uuid;
+            const status = btn.dataset.status;
+            if (!uuid) return;
+
+            const msg = status === 'pending'
+                ? 'Cancel this scheduled action? It will not be executed.'
+                : 'Delete this entry from the history?';
+
+            if (!confirm(msg)) return;
+
+            btn.disabled = true;
+
+            fetch(`/api/scheduled-actions/${uuid}`, { method: 'DELETE' })
+                .then(res => {
+                    if (!res.ok) return res.json().then(d => { throw new Error(d.message || `HTTP ${res.status}`); });
+                    return res.json();
+                })
+                .then(() => {
+                    const row = document.getElementById(`sa-row-${uuid}`);
+                    if (row) row.remove();
+                    updateCount(-1);
+                    // Hide clear history button if no more done/failed rows
+                    refreshClearHistoryBtn();
+                })
+                .catch(err => {
+                    btn.disabled = false;
+                    showAlert(err.message || 'Could not delete the action. Please try again.');
+                });
+        });
+
+        // ── Clear history (done + failed) ─────────────────────────────────────
+        const btnClearHistory = document.getElementById('btn-clear-history');
+        if (btnClearHistory) {
+            btnClearHistory.addEventListener('click', function () {
+                if (!confirm('Delete all done and failed entries? This cannot be undone.')) return;
+
+                btnClearHistory.disabled = true;
+
+                fetch('/api/scheduled-actions/clear-history', { method: 'DELETE' })
+                    .then(res => {
+                        if (!res.ok) return res.json().then(d => { throw new Error(d.message || `HTTP ${res.status}`); });
+                        return res.json();
+                    })
+                    .then(data => {
+                        // Remove all done/failed rows from the DOM
+                        document.querySelectorAll('.list-group-item[id^="sa-row-"]').forEach(row => {
+                            const badge = row.querySelector('.badge-success, .badge-danger');
+                            if (badge) {
+                                updateCount(-1);
+                                row.remove();
+                            }
+                        });
+                        btnClearHistory.remove();
+                        showSuccess(`${data.deleted} entry/entries deleted from history.`);
+                    })
+                    .catch(err => {
+                        btnClearHistory.disabled = false;
+                        showAlert(err.message || 'Could not clear history. Please try again.');
+                    });
+            });
+        }
+
+        /** Hides the Clear history button if no done/failed rows remain */
+        function refreshClearHistoryBtn() {
+            const btn = document.getElementById('btn-clear-history');
+            if (!btn) return;
+            const hasDoneOrFailed = document.querySelector(
+                '.list-group-item .badge-success, .list-group-item .badge-danger'
+            );
+            if (!hasDoneOrFailed) btn.remove();
+        }
+
+        // ── Helpers ───────────────────────────────────────────────────────────
+
+        /** Converts datetime-local value to ISO 8601 string */
+        function toIsoString(value) {
+            return new Date(value).toISOString();
+        }
+
+        /** Formats a datetime-local value to a human-readable UTC string */
+        function formatDate(value) {
+            return new Date(value).toLocaleString(undefined, {
+                dateStyle: 'medium',
+                timeStyle: 'short',
+                timeZone: 'UTC',
+            }) + ' UTC';
+        }
+
+        /** Appends a newly created ScheduledAction to the list */
+        function appendRowToList(sa) {
+            if (noActionsMsg) noActionsMsg.classList.add('d-none');
+
+            const date = new Date(sa.scheduledAt).toLocaleString(undefined, {
+                dateStyle: 'medium',
+                timeStyle: 'short',
+                timeZone: 'UTC',
+            }) + ' UTC';
+
+            const groupBadge = sa.group
+                ? `<span class="badge badge-pill badge-light border ml-1">${escHtml(sa.group.name)}</span>`
+                : `<span class="badge badge-pill badge-light border ml-1">All users</span>`;
+
+            const li = document.createElement('li');
+            li.className = 'list-group-item';
+            li.id = `sa-row-${sa.uuid}`;
+            li.innerHTML = `
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <span class="font-weight-bold">${escHtml(sa.lab.name)}</span>
+                        ${groupBadge}
+                        <br />
+                        <small class="text-muted">
+                            ${escHtml(date)}
+                            &nbsp;—&nbsp;
+                            <strong>${escHtml(sa.action.toUpperCase())}</strong>
+                        </small>
+                    </div>
+                    <div class="d-flex align-items-center" style="gap: 6px;">
+                        <span class="badge badge-warning">pending</span>
+                        <button type="button"
+                                class="btn btn-sm btn-outline-danger btn-cancel"
+                                data-uuid="${sa.uuid}"
+                                title="Cancel this scheduled action">
+                            ✕
+                        </button>
+                    </div>
+                </div>`;
+            scheduledList.prepend(li);
+            updateCount(+1);
+        }
+
+        function updateCount(delta) {
+            const current = parseInt(scheduledCount.textContent, 10) || 0;
+            scheduledCount.textContent = Math.max(0, current + delta);
+        }
+
+        function showAlert(msg) {
+            formAlert.textContent = msg;
+            formAlert.classList.remove('d-none');
+        }
+
+        function hideAlert() {
+            formAlert.classList.add('d-none');
+        }
+
+        function showSuccess(msg) {
+            formSuccess.textContent = msg;
+            formSuccess.classList.remove('d-none');
+        }
+
+        function hideSuccess() {
+            formSuccess.classList.add('d-none');
+        }
+
+        function escHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        function resetForm() {
+            selectGroup.value = '';
+            selectLab.innerHTML = '<option value="">— Select a group first —</option>';
+            selectLab.disabled = true;
+            inputStartDate.value = '';
+            inputEndDate.value = '';
+            endActionGroup.style.display = 'none';
+            selectedEndAction.value = '';
+            endActionCards.forEach(c => c.classList.remove('border-primary', 'shadow-sm'));
+            validateForm();
+        }
+
+        // Init
+        validateForm();
+
+        // Activate Bootstrap tooltips
+        if (typeof jQuery !== 'undefined') {
+            jQuery('[data-toggle="tooltip"]').tooltip();
+        }
+    });
+    </script>
+{% endblock %}

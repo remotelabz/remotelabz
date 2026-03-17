@@ -1,0 +1,2 @@
+0 2 * * * root cd /opt/remotelabz && php bin/console app:notifications:clean
+* * * * * root cd /opt/remotelabz && php bin/console app:scheduled-actions:run >> /var/log/remotelabz/scheduled.log 2>&1
