@@ -164,7 +164,7 @@ class IsoController extends AbstractController
                     // Supprimer l'ancien fichier physique s'il existe et qu'il est différent
                     if ($oldFilename && $oldFilename !== $uploadedFileName) {
                         $oldFile = $this->getParameter('iso_directory') . '/' . $oldFilename;
-                        if (file_exists($oldFile)) {
+                        if (is_file($oldFile)) {
                             $this->logger->debug('[IsoController:edit]::Deleting old file: ' . $oldFile);
                             unlink($oldFile);
                             $this->Files2WorkerManager->deleteFileFromAllWorkers('iso',$oldFilename);
@@ -203,7 +203,7 @@ class IsoController extends AbstractController
                 // Supprimer l'ancien fichier physique s'il existe
                 if ($oldFilename) {
                     $oldFile = $this->getParameter('iso_directory') . '/' . $oldFilename;
-                    if (file_exists($oldFile)) {
+                    if (is_file($oldFile)) {
                         $this->logger->debug('[IsoController:edit]::Deleting old file when switching to URL: ' . $oldFile);
                         unlink($oldFile);
                         $this->Files2WorkerManager->deleteFileFromAllWorkers('iso',$oldFilename);
@@ -278,7 +278,7 @@ class IsoController extends AbstractController
         if ($this->isCsrfTokenValid('delete'.$iso->getId(), $request->request->get('_token'))) {
             if ($iso->getFilename()) {
                 $file = $this->getParameter('iso_directory') . '/' . $iso->getFilename();
-                if (file_exists($file)) {
+                if (is_file($file)) {
                     unlink($file);
                     $this->Files2WorkerManager->deleteFileFromAllWorkers("iso",$iso->getFilename());
                     $this->logger->debug('[IsoController:delete]::Deleted file '.$file.' from all workers');
@@ -367,7 +367,7 @@ class IsoController extends AbstractController
     private function deleteLocalTempFile(string $filename): bool
     {
         $filePath = $this->getParameter('iso_directory') . '/' . $filename;
-        if (file_exists($filePath)) {
+        if (is_file($filePath)) {
             unlink($filePath);
             return true;
         }

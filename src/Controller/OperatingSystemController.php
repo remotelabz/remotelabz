@@ -530,8 +530,9 @@ class OperatingSystemController extends Controller
                     $remoteFilePath = '/images/'.$uploadedFilename;
                     
                     $this->Files2WorkerManager->CopyFileToAllWorkers('image',$uploadedFilename);
-                    
-                    unlink($this->getParameter('image_directory') . '/' . $old_filename);
+                    $old_file_path=$this->getParameter('image_directory') . '/' . $old_filename;
+                    if (is_file($this->getParameter('image_directory') . '/' . $old_filename))
+                        unlink($old_file_path);
                     $this->addFlash('success', 'Image created and file copied to all workers successfully.');
                         
                 }

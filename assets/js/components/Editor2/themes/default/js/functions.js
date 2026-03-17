@@ -395,19 +395,19 @@ export function getLabInfo(labId) {
         dataType: 'json',
         success: function (data) {
             if (data['status'] == 'success') {
-                logger(1, 'DEBUG: lab "' + labId + '" found.');
+                //logger(1, 'DEBUG: lab "' + labId + '" found.');
                 deferred.resolve(data['data']);
             } else {
                 // Application error
-                logger(1, 'DEBUG: application error (' + data['status'] + ') on ' + type + ' ' + url + ' (' + data['message'] + ').');
+                //logger(1, 'DEBUG: application error (' + data['status'] + ') on ' + type + ' ' + url + ' (' + data['message'] + ').');
                 deferred.reject(data['message']);
             }
         },
         error: function (data) {
             // Server error
             var message = getJsonMessage(data['responseText']);
-            logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
-            logger(1, 'DEBUG: ' + message);
+            //logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
+            //logger(1, 'DEBUG: ' + message);
         }
     })
     return deferred.promise();
@@ -427,19 +427,19 @@ export function getLabBody() {
         dataType: 'json',
         success: function (data) {
             if (data['status'] == 'success') {
-                logger(1, 'DEBUG: lab "' + lab_filename + '" body found.');
+                //logger(1, 'DEBUG: lab "' + lab_filename + '" body found.');
                 deferred.resolve(data['data']);
             } else {
                 // Application error
-                logger(1, 'DEBUG: application error (' + data['status'] + ') on ' + type + ' ' + url + ' (' + data['message'] + ').');
+                //logger(1, 'DEBUG: application error (' + data['status'] + ') on ' + type + ' ' + url + ' (' + data['message'] + ').');
                 deferred.reject(data['message']);
             }
         },
         error: function (data) {
             // Server error
             var message = getJsonMessage(data['responseText']);
-            logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
-            logger(1, 'DEBUG: ' + message);
+            //logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
+            //logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
         }
     });
@@ -492,8 +492,8 @@ export function getNodes(node_id) {
         error: function (data) {
             // Server error
             var message = getJsonMessage(data['responseText']);
-            logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
-            logger(1, 'DEBUG: ' + message);
+            //logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
+            //logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
         }
     });
