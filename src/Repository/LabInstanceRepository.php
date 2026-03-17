@@ -304,13 +304,13 @@ class LabInstanceRepository extends ServiceEntityRepository
      *
      * @return LabInstance[]
      */
-    public function findByGroupNoAuth(Group $group): array
+    public function findByGroupAndLabNoAuth(Group $group, Lab $lab): array
     {
         $instances = $this->findAll();
         $result    = [];
 
         foreach ($instances as $instance) {
-            if ($instance->getLab()->getGroups()->contains($group)) {
+            if ($instance->getLab()->getGroups()->contains($group) && $instance->getLab()->getId() == $lab->getId()) {
                 $result[] = $instance;
             }
         }

@@ -305,6 +305,7 @@ class DeviceController extends Controller
             'status'=>'success',
             'message' => 'Successfully listed nodes (60026).',
             'data' => $data]));
+        //$this->logger->debug('[DeviceController:indexActionTest]::response '.$response);
         return $response;
     }
 

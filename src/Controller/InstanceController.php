@@ -1530,6 +1530,253 @@ class InstanceController extends Controller
         ]);
     }
 
+    // =========================================================================
+    // BULK ACTIONS PAR FILTRE
+    // Ces 4 routes permettent d'agir sur TOUTES les instances correspondant
+    // au filtre actif (filter + subFilter), indépendamment de la pagination.
+    // =========================================================================
+
+    /**
+     * Démarre tous les devices de toutes les instances correspondant au filtre.
+     *
+     * @Route("/api/instances/bulk/start-all", name="api_bulk_start_all", methods={"POST"})
+     */
+    #[Post('/api/instances/bulk/start-all', name: 'api_bulk_start_all')]
+    #[Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message: "Access denied.", methods: 'POST')]
+    public function bulkStartAllAction(Request $request, InstanceManager $instanceManager): JsonResponse
+    {
+        $instances = $this->getBulkInstances($request);
+
+        $results = [];
+        $errors  = [];
+
+        foreach ($instances as $labInstance) {
+            foreach ($labInstance->getDeviceInstances() as $deviceInstance) {
+                try {
+                    if (
+                        $deviceInstance->getState() === InstanceStateMessage::STATE_STOPPED ||
+                        $deviceInstance->getState() === InstanceStateMessage::STATE_ERROR
+                    ) {
+                        $instanceManager->start($deviceInstance);
+                        $results[] = [
+                            'labUuid'    => $labInstance->getUuid(),
+                            'deviceUuid' => $deviceInstance->getUuid(),
+                            'name'       => $deviceInstance->getDevice()->getName(),
+                            'status'     => 'started',
+                        ];
+                    } else {
+                        $results[] = [
+                            'labUuid'    => $labInstance->getUuid(),
+                            'deviceUuid' => $deviceInstance->getUuid(),
+                            'name'       => $deviceInstance->getDevice()->getName(),
+                            'status'     => 'skipped',
+                            'reason'     => 'Device already running or in invalid state',
+                        ];
+                    }
+                } catch (Exception $e) {
+                    $this->logger->error('[bulkStartAll] Error starting device ' . $deviceInstance->getUuid() . ': ' . $e->getMessage());
+                    $errors[] = [
+                        'labUuid'    => $labInstance->getUuid(),
+                        'deviceUuid' => $deviceInstance->getUuid(),
+                        'name'       => $deviceInstance->getDevice()->getName(),
+                        'error'      => $e->getMessage(),
+                    ];
+                }
+            }
+        }
+
+        return $this->json([
+            'success'      => count($errors) === 0,
+            'results'      => $results,
+            'errors'       => $errors,
+            'totalLabs'    => count($instances),
+            'totalDevices' => count($results) + count($errors),
+            'started'      => count(array_filter($results, fn($r) => $r['status'] === 'started')),
+        ]);
+    }
+
+    /**
+     * Arrête tous les devices de toutes les instances correspondant au filtre.
+     *
+     * @Route("/api/instances/bulk/stop-all", name="api_bulk_stop_all", methods={"POST"})
+     */
+    #[Post('/api/instances/bulk/stop-all', name: 'api_bulk_stop_all')]
+    #[Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message: "Access denied.", methods: 'POST')]
+    public function bulkStopAllAction(Request $request, InstanceManager $instanceManager): JsonResponse
+    {
+        $instances = $this->getBulkInstances($request);
+
+        $results = [];
+        $errors  = [];
+
+        foreach ($instances as $labInstance) {
+            foreach ($labInstance->getDeviceInstances() as $deviceInstance) {
+                try {
+                    if (
+                        $deviceInstance->getState() === InstanceStateMessage::STATE_STARTED ||
+                        $deviceInstance->getState() === InstanceStateMessage::STATE_STARTING ||
+                        $deviceInstance->getState() === InstanceStateMessage::STATE_EXPORTING
+                    ) {
+                        $instanceManager->stop($deviceInstance);
+                        $results[] = [
+                            'labUuid'    => $labInstance->getUuid(),
+                            'deviceUuid' => $deviceInstance->getUuid(),
+                            'name'       => $deviceInstance->getDevice()->getName(),
+                            'status'     => 'stopped',
+                        ];
+                    } else {
+                        $results[] = [
+                            'labUuid'    => $labInstance->getUuid(),
+                            'deviceUuid' => $deviceInstance->getUuid(),
+                            'name'       => $deviceInstance->getDevice()->getName(),
+                            'status'     => 'skipped',
+                            'reason'     => 'Device already stopped or in invalid state',
+                        ];
+                    }
+                } catch (Exception $e) {
+                    $this->logger->error('[bulkStopAll] Error stopping device ' . $deviceInstance->getUuid() . ': ' . $e->getMessage());
+                    $errors[] = [
+                        'labUuid'    => $labInstance->getUuid(),
+                        'deviceUuid' => $deviceInstance->getUuid(),
+                        'name'       => $deviceInstance->getDevice()->getName(),
+                        'error'      => $e->getMessage(),
+                    ];
+                }
+            }
+        }
+
+        return $this->json([
+            'success'      => count($errors) === 0,
+            'results'      => $results,
+            'errors'       => $errors,
+            'totalLabs'    => count($instances),
+            'totalDevices' => count($results) + count($errors),
+            'stopped'      => count(array_filter($results, fn($r) => $r['status'] === 'stopped')),
+        ]);
+    }
+
+    /**
+     * Réinitialise tous les devices de toutes les instances correspondant au filtre.
+     *
+     * @Route("/api/instances/bulk/reset-all", name="api_bulk_reset_all", methods={"POST"})
+     */
+    #[Post('/api/instances/bulk/reset-all', name: 'api_bulk_reset_all')]
+    #[Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message: "Access denied.", methods: 'POST')]
+    public function bulkResetAllAction(Request $request, InstanceManager $instanceManager): JsonResponse
+    {
+        $instances = $this->getBulkInstances($request);
+
+        $results = [];
+        $errors  = [];
+
+        foreach ($instances as $labInstance) {
+            foreach ($labInstance->getDeviceInstances() as $deviceInstance) {
+                if (strtolower($deviceInstance->getDevice()->getHypervisor()->getName()) === 'natif') {
+                    continue; // Cohérent avec le comportement de resetAllDevicesAction
+                }
+                try {
+                    $instanceManager->reset($deviceInstance);
+                    $results[] = [
+                        'labUuid'    => $labInstance->getUuid(),
+                        'deviceUuid' => $deviceInstance->getUuid(),
+                        'name'       => $deviceInstance->getDevice()->getName(),
+                        'status'     => 'reset',
+                    ];
+                } catch (Exception $e) {
+                    $this->logger->error('[bulkResetAll] Error resetting device ' . $deviceInstance->getUuid() . ': ' . $e->getMessage());
+                    $errors[] = [
+                        'labUuid'    => $labInstance->getUuid(),
+                        'deviceUuid' => $deviceInstance->getUuid(),
+                        'name'       => $deviceInstance->getDevice()->getName(),
+                        'error'      => $e->getMessage(),
+                    ];
+                }
+            }
+        }
+
+        return $this->json([
+            'success'      => count($errors) === 0,
+            'results'      => $results,
+            'errors'       => $errors,
+            'totalLabs'    => count($instances),
+            'totalDevices' => count($results) + count($errors),
+            'reset'        => count(array_filter($results, fn($r) => $r['status'] === 'reset')),
+        ]);
+    }
+
+    /**
+     * Supprime (leave) toutes les instances de lab correspondant au filtre.
+     *
+     * @Route("/api/instances/bulk/leave-all", name="api_bulk_leave_all", methods={"DELETE"})
+     */
+    #[Delete('/api/instances/bulk/leave-all', name: 'api_bulk_leave_all')]
+    #[Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message: "Access denied.", methods: 'DELETE')]
+    public function bulkLeaveAllAction(Request $request, InstanceManager $instanceManager): JsonResponse
+    {
+        $instances = $this->getBulkInstances($request);
+
+        $deleted = [];
+        $errors  = [];
+
+        foreach ($instances as $labInstance) {
+            try {
+                $this->logger->info('[bulkLeaveAll] Deleting lab instance ' . $labInstance->getUuid());
+                $instanceManager->delete($labInstance);
+                $deleted[] = [
+                    'uuid'   => $labInstance->getUuid(),
+                    'status' => 'deleted',
+                ];
+            } catch (Exception $e) {
+                $this->logger->error('[bulkLeaveAll] Error deleting lab instance ' . $labInstance->getUuid() . ': ' . $e->getMessage());
+                $errors[] = [
+                    'uuid'  => $labInstance->getUuid(),
+                    'error' => $e->getMessage(),
+                ];
+            }
+        }
+
+        return $this->json([
+            'success'    => count($errors) === 0,
+            'deleted'    => $deleted,
+            'errors'     => $errors,
+            'totalLabs'  => count($instances),
+            'deletedCount' => count($deleted),
+        ]);
+    }
+
+    /**
+     * Méthode privée partagée par les 4 actions bulk.
+     * Résout les instances correspondant au filtre transmis dans le corps JSON de la requête.
+     * Body attendu : { "filter": "lab", "subFilter": "uuid-du-lab" }
+     *
+     * @return array<\App\Entity\LabInstance>
+     */
+    private function getBulkInstances(Request $request): array
+    {
+        $body      = json_decode($request->getContent(), true) ?? [];
+        $filter    = $body['filter']    ?? 'none';
+        $subFilter = $body['subFilter'] ?? 'allInstances';
+
+        $this->logger->info("[InstanceController:getBulkInstances] filter=$filter, subFilter=$subFilter");
+
+        $user = $this->getUser();
+
+        // Valider le sous-filtre pour éviter tout accès non autorisé
+        if (!$this->isValidSubFilter($filter, $subFilter, $user)) {
+            $this->logger->warning("[InstanceController:getBulkInstances] Invalid subFilter '$subFilter' for filter '$filter'");
+            throw new BadRequestHttpException("Invalid filter combination: filter=$filter, subFilter=$subFilter");
+        }
+
+        if ($subFilter === 'allInstances') {
+            if ($user->isAdministrator()) {
+                return $this->labInstanceRepository->findAll();
+            }
+            return $this->labInstanceRepository->findByUserAndAllMembersGroups($user);
+        }
+
+        return $this->getLabInstances($filter, $subFilter);
+    }
+
     private function searchInstancesByUuid(string $searchUuid): array
 {
     $results = [];

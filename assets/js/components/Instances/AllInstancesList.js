@@ -11,7 +11,13 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
     const [filter, setFilter] = useState(props.filter || 'all');
     const [subFilter, setSubFilter] = useState(props.subFilter || 'allInstances');
     const [searchUuid, setSearchUuid] = useState('');
-   
+
+    // États des actions bulk globales (par filtre, toutes instances confondues)
+    const [isBulkStarting,  setIsBulkStarting]  = useState(false);
+    const [isBulkStopping,  setIsBulkStopping]  = useState(false);
+    const [isBulkResetting, setIsBulkResetting] = useState(false);
+    const [isBulkLeaving,   setIsBulkLeaving]   = useState(false);
+
     const limit = 10;
 
     useEffect(() => {
@@ -140,6 +146,115 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
     }, []);
 
     const memoizedInstances = useMemo(() => instances, [instances]);
+
+    /**
+     * Lit les valeurs de filtre actives depuis les éléments cachés du DOM
+     * (alimentés par index.html.twig via les hidden inputs ou les selects).
+     */
+    const getBulkFilterParams = useCallback(() => {
+        const filterEl    = document.getElementById('instance_filter');
+        const subFilterEl = document.getElementById('instance_subFilter');
+        return {
+            filter:    filterEl?.value    || filter    || 'none',
+            subFilter: subFilterEl?.value || subFilter || 'allInstances',
+        };
+    }, [filter, subFilter]);
+
+    /**
+     * Appelle l'une des 4 routes bulk côté serveur avec le filtre courant.
+     * L'action s'applique à TOUTES les instances correspondant au filtre,
+     * pas seulement celles visibles à l'écran.
+     *
+     * @param {'start'|'stop'|'reset'|'leave'} action
+     */
+    const handleBulkFilterAction = useCallback(async (action) => {
+        const { filter: f, subFilter: sf } = getBulkFilterParams();
+
+        const setLoaders = {
+            start: setIsBulkStarting,
+            stop:  setIsBulkStopping,
+            reset: setIsBulkResetting,
+            leave: setIsBulkLeaving,
+        };
+        const setLoading = setLoaders[action];
+        if (!setLoading) return;
+
+        setLoading(true);
+
+        const endpointMap = {
+            start: '/api/instances/bulk/start-all',
+            stop:  '/api/instances/bulk/stop-all',
+            reset: '/api/instances/bulk/reset-all',
+            leave: '/api/instances/bulk/leave-all',
+        };
+
+        const method = action === 'leave' ? 'DELETE' : 'POST';
+
+        try {
+            const response = await fetch(endpointMap[action], {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filter: f, subFilter: sf }),
+            });
+
+            if (!response.ok) {
+                const err = await response.json().catch(() => ({}));
+                throw new Error(err.message || `HTTP ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            if (data.success) {
+                const count = data.started ?? data.stopped ?? data.reset ?? data.deletedCount ?? 0;
+                const label = action === 'leave' ? 'deleted' : `${action}ed`;
+                toast.success(
+                    `Bulk ${action}: ${count} device/instance(s) ${label} across ${data.totalLabs} lab(s).`,
+                    { autoClose: 6000 }
+                );
+            } else {
+                toast.warning(
+                    `Bulk ${action} completed with ${data.errors.length} error(s). Check the console for details.`,
+                    { autoClose: 8000 }
+                );
+                data.errors.forEach(e => {
+                    toast.error(`${e.name || e.uuid}: ${e.error}`, { autoClose: 6000 });
+                });
+            }
+
+            // Rafraîchir la liste après l'opération
+            setTimeout(() => refreshInstances(), 2000);
+
+        } catch (error) {
+            console.error(`[AllInstancesList] Bulk ${action} error:`, error);
+            toast.error(
+                error.message || `An error occurred during bulk ${action}. Please try again.`,
+                { autoClose: 10000 }
+            );
+        } finally {
+            setLoading(false);
+        }
+    }, [getBulkFilterParams, refreshInstances]);
+
+    const isBulkBusy = isBulkStarting || isBulkStopping || isBulkResetting || isBulkLeaving;
+
+    // Exposer handleBulkFilterAction au DOM pour que les boutons du Twig puissent l'appeler
+    useEffect(() => {
+        const handler = (e) => {
+            const action = e.detail?.action;
+            if (action) handleBulkFilterAction(action);
+        };
+        window.addEventListener('remotelabz:bulk-action', handler);
+        return () => window.removeEventListener('remotelabz:bulk-action', handler);
+    }, [handleBulkFilterAction]);
+
+    // Mettre à jour les boutons du Twig en fonction de l'état busy
+    useEffect(() => {
+        const btnIds = ['bulk-start-btn', 'bulk-stop-btn', 'bulk-reset-btn', 'bulk-leave-btn'];
+        btnIds.forEach(id => {
+            const btn = document.getElementById(id);
+            if (btn) btn.disabled = isBulkBusy;
+        });
+    }, [isBulkBusy]);
 
     return (
         <>
