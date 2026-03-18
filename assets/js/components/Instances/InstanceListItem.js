@@ -462,7 +462,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
                             )}
 
 
-                        {instance.state !== 'stopped' && 
+                        {instance.state !== 'stopped' && instance.device?.hypervisor?.name !== 'natif' &&
                             <div onClick={() => setShowLogs(!showLogs)}>
                                 {showLogs ?
                                     <Button variant="default"><SVG name="chevron-down"></SVG> Hide logs</Button>
@@ -581,7 +581,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
                             </a>
                         }
 
-                        { showControls && canControlInstances() &&
+                        { canControlInstances() &&
                             controls
                         }
 
