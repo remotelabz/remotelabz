@@ -12,7 +12,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
-#[Route('/flavor-disk')]
+#[Route('/admin/flavor-disk')]
 class FlavorDiskController extends AbstractController
 {
     #[Route('/', name: 'flavor_disk_index', methods: ['GET'])]
