@@ -39,6 +39,9 @@
           <a class="nav-link ml-2 {% if '/resources' in app.request.uri %}active{% endif %}" href="{{ path('resources') }}" data-toggle="tooltip" data-placement="bottom" title="Usage">
             {{ svg('tachometer', 's16') }}
           </a>
+          <a class="nav-link ml-2 {% if '/scheduled-actions/new' in app.request.uri %}active{% endif %}" href="{{ path('scheduled_actions_new') }}" data-toggle="tooltip" data-placement="bottom" title="Scheduled actions">
+            {{ svg('clock', 's16') }}
+          </a>
           {% endif %}
         {% if is_granted('ROLE_ADMINISTRATOR') %}
           <a class="nav-link ml-2" href="{{ path('admin') }}" data-toggle="tooltip" data-placement="bottom" title="Admin area">
