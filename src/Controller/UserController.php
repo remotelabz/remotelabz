@@ -711,7 +711,7 @@ class UserController extends Controller
                 }
                 $this->logger->debug("Creation of " . $group . " with slug " . $slug_wanted);
                 $group_wanted->setSlug($slug_wanted);
-                $entityManager->persist($group_wanted);
+                $this->entityManager->persist($group_wanted);
                 $group_wanted->addUser($this->getUser(), Group::ROLE_OWNER);
             }
             if (!$user->isMemberOf($group_wanted))
