@@ -89,45 +89,51 @@ const SingleValue = ({ ...props }) => (
 //     }, [group])
 // }
 
-export default function InstanceOwnerSelect(props = {user: {}, className: '', placeholder: '', fieldName: '', isClearable: false}) {
-    const [user, setUser] = useState(props.user);
+export default function InstanceOwnerSelect({ user, className, placeholder, fieldName, isClearable, onChange, value, isDisabled }) {
 
     function loadOptions(input) {
         return new Promise(resolve => {
-            Remotelabz.users.get(props.user)
+            Remotelabz.users.get(user)
                 .then(response => {
-                    const user = { ...(response.data), type: 'user', value: response.data.id, label: response.data.name, fqn: [] }
+                    const userOption = { 
+                        ...response.data, 
+                        type: 'user', 
+                        value: response.data.id, 
+                        label: response.data.name, 
+                        fqn: [] 
+                    };
+
                     Remotelabz.groups.all(input, 10, 1, false)
-                    .then(response => {
-                        const groups = response.data;
-                        let groupOptions = [];
+                        .then(response => {
+                            const groups = response.data;
+                            let groupOptions = [];
 
-                        if (Array.isArray(groups)) {
-                            for (const group of groups) {
-                                group.fullyQualifiedName.pop()
-                                group.fullyQualifiedName = group.fullyQualifiedName.reduce((acc, cur) => acc + cur + ' / ', '')
-                                groupOptions.push({
-                                    ...group,
-                                    value: group.id,
-                                    label: group.name,
-                                    type: 'group',
-                                    owner: group.users.find(user => user.role === 'owner')
-                                })
+                            if (Array.isArray(groups)) {
+                                for (const group of groups) {
+                                    // ✅ Exclure le "Default group" ou les groupes non pertinents
+                                    if (group.name === 'Default group') continue;
+
+                                    group.fullyQualifiedName.pop();
+                                    group.fullyQualifiedName = group.fullyQualifiedName.reduce(
+                                        (acc, cur) => acc + cur + ' / ', ''
+                                    );
+                                    groupOptions.push({
+                                        ...group,
+                                        value: group.id,
+                                        label: group.name,
+                                        type: 'group',
+                                        owner: group.users.find(u => u.role === 'owner')
+                                    });
+                                }
                             }
-                        }
 
-                        const data = [{
-                            label: 'User',
-                            options: [user]
-                        }, {
-                            label: 'Groups',
-                            options: groupOptions
-                            }];
-                        resolve(data)
-                    });
-                })
-        })
-        
+                            resolve([
+                                { label: 'User', options: [userOption] },
+                                { label: 'Groups', options: groupOptions }
+                            ]);
+                        });
+                });
+        });
     }
 
     return (
@@ -135,14 +141,16 @@ export default function InstanceOwnerSelect(props = {user: {}, className: '', pl
             defaultOptions
             loadOptions={loadOptions}
             cacheOptions
-            defaultValue={user.uuid}
-            className={'react-select-container ' + (props.className || "")}
+            // ✅ Pas de defaultValue — le composant est contrôlé via value
+            className={'react-select-container ' + (className || '')}
             classNamePrefix="react-select"
-            placeholder={props.placeholder || "Search for a group"}
+            placeholder={placeholder || "Search for a group"}
             components={{ ValueContainer, Option, SingleValue }}
-            name={props.fieldName || "_group"}
-            isClearable={props.isClearable || false}
-            {...props}
+            name={fieldName || "_group"}
+            isClearable={isClearable || false}
+            onChange={onChange}
+            value={value}
+            isDisabled={isDisabled}
         />
     );
 }
