@@ -4,23 +4,30 @@
 #fi;
 cd /opt/remotelabz
 git fetch
-CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 WORK_DIR=$(pwd)
 if [ ! -d "lib/network-bundle" ]; then
-    echo "Clonage de network-bundle sur la branche $CURRENT_BRANCH..."
-    git clone -b "$CURRENT_BRANCH" https://github.com/remotelabz/network-bundle lib/network-bundle
+    echo "Clonage de network-bundle"
+    git clone https://github.com/remotelabz/network-bundle "$WORK_DIR/lib/network-bundle"
+    git -C "$WORK_DIR/lib/network-bundle" fetch --tags
+    git -C "$WORK_DIR/lib/network-bundle" checkout 1.0.4
     git config --global --add safe.directory "$WORK_DIR/lib/network-bundle"
 else
-    echo "lib/network-bundle existe déjà, skip."
+    echo "lib/network-bundle existe déjà, mise à jour."
+    git -C "$WORK_DIR/lib/network-bundle" fetch --tags
+    git -C "$WORK_DIR/lib/network-bundle" checkout 1.0.4
 fi
 
 # Clone remotelabz-message-bundle si le répertoire n'existe pas
 if [ ! -d "lib/remotelabz-message-bundle" ]; then
-    echo "Clonage de remotelabz-message-bundle sur la branche $CURRENT_BRANCH..."
-    git clone -b "$CURRENT_BRANCH" https://github.com/remotelabz/remotelabz-message-bundle lib/remotelabz-message-bundle
+    echo "Clonage de remotelabz-message-bundle"
+    git clone https://github.com/remotelabz/remotelabz-message-bundle "$WORK_DIR/lib/remotelabz-message-bundle"
+    git -C "$WORK_DIR/lib/remotelabz-message-bundle" fetch --tags
+    git -C "$WORK_DIR/lib/remotelabz-message-bundle" checkout 1.0.6
     git config --global --add safe.directory "$WORK_DIR/lib/remotelabz-message-bundle"
 else
-    echo "lib/remotelabz-message-bundle existe déjà, skip."
+    echo "lib/remotelabz-message-bundle existe déjà, mise à jour."
+    git -C "$WORK_DIR/lib/remotelabz-message-bundle" fetch --tags
+    git -C "$WORK_DIR/lib/remotelabz-message-bundle" checkout 1.0.6
 fi
 mv /opt/remotelabz/config/packages/messenger.yaml ~/
 git restore /opt/remotelabz/config/packages/messenger.yaml
