@@ -13,6 +13,7 @@ if [ ! -d "lib/network-bundle" ]; then
     git config --global --add safe.directory "$WORK_DIR/lib/network-bundle"
 else
     echo "lib/network-bundle existe déjà, mise à jour."
+    git config --global --add safe.directory "$WORK_DIR/lib/network-bundle"
     git -C "$WORK_DIR/lib/network-bundle" fetch --tags
     git -C "$WORK_DIR/lib/network-bundle" checkout 1.0.4
 fi
@@ -26,6 +27,7 @@ if [ ! -d "lib/remotelabz-message-bundle" ]; then
     git config --global --add safe.directory "$WORK_DIR/lib/remotelabz-message-bundle"
 else
     echo "lib/remotelabz-message-bundle existe déjà, mise à jour."
+    git config --global --add safe.directory "$WORK_DIR/lib/remotelabz-message-bundle"
     git -C "$WORK_DIR/lib/remotelabz-message-bundle" fetch --tags
     git -C "$WORK_DIR/lib/remotelabz-message-bundle" checkout 1.0.6
 fi
