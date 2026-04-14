@@ -134,14 +134,6 @@
       {
         "type": "path",
         "url": "lib/remotelabz-message-bundle"
-      },
-      {
-        "type": "vcs",
-        "url": "https://github.com/remotelabz/network-bundle"
-      },
-      {
-        "type": "vcs",
-        "url": "https://github.com/remotelabz/remotelabz-message-bundle"
       }
     ]
   }
