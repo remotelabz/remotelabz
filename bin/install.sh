@@ -682,17 +682,15 @@ install_remotelabz_app() {
     print_info "Installation des bundles..."
 
     if [ ! -d "$SCRIPT_DIR/lib/network-bundle" ]; then
-        git clone https://github.com/remotelabz/network-bundle.git --branch Upgrade-2.5 "$SCRIPT_DIR/lib/network-bundle"
-    else 
-        cd "$SCRIPT_DIR/lib/network-bundle" && git pull
-        cd "$SCRIPT_DIR"
+        git clone https://github.com/remotelabz/network-bundle.git "$SCRIPT_DIR/lib/network-bundle"
+        git -C "$SCRIPT_DIR/lib/network-bundle" fetch --tags
+        git -C "$SCRIPT_DIR/lib/network-bundle" checkout 1.0.4
     fi
 
     if [ ! -d "$SCRIPT_DIR/lib/remotelabz-message-bundle" ]; then
-        git clone https://github.com/remotelabz/remotelabz-message-bundle.git --branch Upgrade-2.5  "$SCRIPT_DIR/lib/remotelabz-message-bundle"
-    else 
-        cd "$SCRIPT_DIR/lib/network-bundle" && git pull
-        cd "$SCRIPT_DIR"
+        git clone https://github.com/remotelabz/remotelabz-message-bundle.git "$SCRIPT_DIR/lib/remotelabz-message-bundle"
+        git -C "$SCRIPT_DIR/lib/remotelabz-message-bundle" fetch --tags
+        git -C "$SCRIPT_DIR/lib/remotelabz-message-bundle" checkout 1.0.6
     fi
 
     # Build install command
