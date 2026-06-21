@@ -166,20 +166,44 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
         setViewAs(option);
     }
 
+    async function pollForLabInstance(labUuid, instancierUuid, type, attempts = 0) {
+        if (attempts > 60) throw new Error("Timeout waiting for lab creation");
+        try {
+            let res;
+            if (type === 'user') res = await Remotelabz.instances.lab.getByLabAndUser(labUuid, instancierUuid);
+            else if (type === 'guest') res = await Remotelabz.instances.lab.getByLabAndGuest(labUuid, instancierUuid);
+            else if (type === 'group') res = await Remotelabz.instances.lab.getByLabAndGroup(labUuid, instancierUuid);
+            
+            if (res && res.data) {
+                return res.data;
+            }
+        } catch (e) {
+            if (e.response && e.response.status !== 404) throw e;
+        }
+        await new Promise(r => setTimeout(r, 2000));
+        return pollForLabInstance(labUuid, instancierUuid, type, attempts + 1);
+    }
+
     async function onJoinLab() {
         setLoadingInstanceState(true);
         try {
             const response = await Remotelabz.instances.lab.create(props.lab.uuid, viewAs.uuid, viewAs.type, false);
-            setLabInstance(response.data);
+            
+            let finalInstance = response.data;
+            if (response.status === 202) {
+                finalInstance = await pollForLabInstance(props.lab.uuid, viewAs.uuid, viewAs.type);
+            }
+
+            setLabInstance(finalInstance);
             setLoadingInstanceState(false);
             if (!isSandbox) {
                 $.ajax({
                     type: "POST",
                     url: `/api/editButton/display`,
-                    data: JSON.stringify({ user: props.user, lab: props.lab, labInstance: response.data }),
+                    data: JSON.stringify({ user: props.user, lab: props.lab, labInstance: finalInstance }),
                     dataType: "json",
-                    success: function (response) {
-                        $("#instanceButtons").html(response.data.html);
+                    success: function (res) {
+                        $("#instanceButtons").html(res.data.html);
                     }
                 });
             }

@@ -27,3 +27,4 @@ framework:
         routing:
             Remotelabz\Message\Message\InstanceActionMessage: worker
             Remotelabz\Message\Message\InstanceStateMessage: front
+            Remotelabz\Message\Message\LabLaunchRequestMessage: async
