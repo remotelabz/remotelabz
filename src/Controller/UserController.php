@@ -524,6 +524,10 @@ class UserController extends Controller
         $entityManager = $this->entityManager;
 
         $error = false;
+	
+	    if (fgets($filehandler, 4) !== "\xEF\xBB\xBF") {
+        	rewind($filehandler);
+    	}
 
         if (($data = fgetcsv($filehandler, 1000, ",")) !== FALSE) {
             // Vérifier que les colonnes obligatoires sont présentes
@@ -540,7 +544,12 @@ class UserController extends Controller
             }
             
             if ($hasAllRequired) {
-                $csv = array_map('str_getcsv', file($file, FILE_SKIP_EMPTY_LINES | FILE_IGNORE_NEW_LINES));
+                $csv = array();
+                $csv[] = $data; 
+                while (($rowValues = fgetcsv($filehandler, 1000, ",")) !== FALSE) {
+                    $csv[] = $rowValues;
+                }
+                $headers = $csv[0];
                 array_walk($csv, function(&$a) use ($csv) {
                     $a = array_combine($csv[0], $a);
                 });
