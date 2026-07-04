@@ -35,21 +35,21 @@ class DeviceInstance extends Instance
     #[Serializer\Groups(['api_get_lab_instance', 'api_get_device_instance', 'worker', 'sandbox'])]
     private $nbCpu;
 
-        #[ORM\Column(type: 'integer', nullable: true)]
+    #[ORM\Column(type: 'integer', nullable: true)]
     #[Serializer\Groups(['api_get_lab_instance', 'api_get_device_instance', 'worker', 'sandbox'])]
     private $nbCore;
 
-        #[ORM\Column(type: 'integer', nullable: true)]
+    #[ORM\Column(type: 'integer', nullable: true)]
     #[Serializer\Groups(['api_get_lab_instance', 'api_get_device_instance', 'worker', 'sandbox'])]
     private $nbSocket;
 
-        #[ORM\Column(type: 'integer', nullable: true)]
+    #[ORM\Column(type: 'integer', nullable: true)]
     #[Serializer\Groups(['api_get_lab_instance', 'api_get_device_instance', 'worker', 'sandbox'])]
     private $nbThread;
 
     #[ORM\ManyToOne(targetEntity: 'App\Entity\LabInstance', inversedBy: 'deviceInstances', cascade: ['persist', 'remove'])]
     #[ORM\JoinColumn(onDelete: 'CASCADE')]
-    #[Serializer\Groups(['api_get_lab_instance', 'api_get_device_instance'])]
+    #[Serializer\Groups(['api_get_device_instance'])]
     protected $labInstance;
 
     #[ORM\OneToMany(targetEntity: 'App\Entity\NetworkInterfaceInstance', mappedBy: 'deviceInstance', cascade: ['persist'])]
