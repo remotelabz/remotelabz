@@ -182,7 +182,7 @@
                     {% endif %}
                     <ul class="list-group list-group-flush" id="scheduled-list">
                         {% for sa in scheduledActions %}
-                            <li class="list-group-item" id="sa-row-{{ sa.uuid }}">
+                            <li class="list-group-item" id="sa-row-{{ sa.uuid }}" data-timestamp="{{ (sa.scheduledAt|date('U')) * 1000 }}">
                                 <div class="d-flex justify-content-between align-items-start">
                                     <div>
                                         <span class="font-weight-bold">{{ sa.lab.name }}</span>
@@ -360,6 +360,18 @@
 
         selectLab.addEventListener('change', validateForm);
 
+        // Date format to append to row 
+        function formatScheduledDate(isoString) {
+                const d = new Date(isoString);
+                const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                const month  = months[d.getUTCMonth()];
+                const day    = String(d.getUTCDate()).padStart(2, '0');
+                const year   = d.getUTCFullYear();
+                const hours  = String(d.getUTCHours()).padStart(2, '0');
+                const mins   = String(d.getUTCMinutes()).padStart(2, '0');
+                return `${month} ${day}, ${year} ${hours}:${mins} UTC`;
+        }
+
         // ── Form validation ───────────────────────────────────────────────────
         function validateForm() {
             const groupOk     = selectGroup.value !== '';
@@ -458,11 +470,11 @@
             btn.disabled = true;
 
             fetch(`/api/scheduled-actions/${uuid}`, { method: 'DELETE' })
-                .then(res => {
-                    if (!res.ok) return res.json().then(d => { throw new Error(d.message || `HTTP ${res.status}`); });
-                    return res.json();
-                })
-                .then(() => {
+                .then(async res => {
+                    if (!res.ok) {
+                        const d = await res.json().catch(() => ({}));
+                        throw new Error(d.message || `HTTP ${res.status}`);
+                    }
                     const row = document.getElementById(`sa-row-${uuid}`);
                     if (row) row.remove();
                     updateCount(-1);
@@ -537,11 +549,7 @@
         function appendRowToList(sa) {
             if (noActionsMsg) noActionsMsg.classList.add('d-none');
 
-            const date = new Date(sa.scheduledAt).toLocaleString(undefined, {
-                dateStyle: 'medium',
-                timeStyle: 'short',
-                timeZone: 'UTC',
-            }) + ' UTC';
+            const date = formatScheduledDate(sa.scheduledAt);
 
             const groupBadge = sa.group
                 ? `<span class="badge badge-pill badge-light border ml-1">${escHtml(sa.group.name)}</span>`
@@ -550,6 +558,7 @@
             const li = document.createElement('li');
             li.className = 'list-group-item';
             li.id = `sa-row-${sa.uuid}`;
+		    li.dataset.timestamp = new Date(sa.scheduledAt).getTime();
             li.innerHTML = `
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
@@ -572,8 +581,13 @@
                         </button>
                     </div>
                 </div>`;
-            scheduledList.prepend(li);
+            scheduledList.appendChild(li);
             updateCount(+1);
+
+        // Sort the list of scheduled actions
+        Array.from(scheduledList.querySelectorAll('.list-group-item'))
+            .sort((a, b) => (parseInt(b.dataset.timestamp, 10) || 0) - (parseInt(a.dataset.timestamp, 10) || 0))
+            .forEach(row => scheduledList.appendChild(row));
         }
 
         function updateCount(delta) {
