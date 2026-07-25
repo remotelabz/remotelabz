@@ -120,9 +120,19 @@ class SandboxListItem extends Component {
                             console.error("Error adding device:", deviceError);
                             throw deviceError; // Re-lancer pour être capturé par le catch principal
                         }
-                            // Création de l'instance avec gestion d'erreur spécifique
                         try {
-                            await Remotelabz.instances.lab.create(lab.uuid, this.props.user.uuid, 'user');
+                            const resCreate = await Remotelabz.instances.lab.create(lab.uuid, this.props.user.uuid, 'user');
+                            if (resCreate.status === 202) {
+                                let attempts = 0;
+                                while(attempts < 30) {
+                                    try {
+                                        const resPoll = await Remotelabz.instances.lab.getByLabAndUser(lab.uuid, this.props.user.uuid);
+                                        if (resPoll && resPoll.data) break;
+                                    } catch(e) { if (e.response && e.response.status !== 404) throw e; }
+                                    await new Promise(r => setTimeout(r, 2000));
+                                    attempts++;
+                                }
+                            }
                         } catch (instanceError) {
                             console.error("Error creating lab instance:", instanceError);
                             throw instanceError;
@@ -179,7 +189,18 @@ class SandboxListItem extends Component {
 
                         Remotelabz.labs.copyBanner(this.props.item.id, lab.id);
 
-                        await Remotelabz.instances.lab.create(lab.uuid, this.props.user.uuid, 'user');
+                        const resCreate = await Remotelabz.instances.lab.create(lab.uuid, this.props.user.uuid, 'user');
+                        if (resCreate.status === 202) {
+                            let attempts = 0;
+                            while(attempts < 30) {
+                                try {
+                                    const resPoll = await Remotelabz.instances.lab.getByLabAndUser(lab.uuid, this.props.user.uuid);
+                                    if (resPoll && resPoll.data) break;
+                                } catch(e) { if (e.response && e.response.status !== 404) throw e; }
+                                await new Promise(r => setTimeout(r, 2000));
+                                attempts++;
+                            }
+                        }
                         //console.log("Rendering lab in modify function after lab create ", lab);
 
                         window.location.href = "/admin/sandbox/" + lab.id;
