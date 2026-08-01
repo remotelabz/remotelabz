@@ -94,29 +94,19 @@
                             <code>{{ operatingSystem.imageFilename }}</code>
                         </div>
                     </div>
-                    {% if operatingSystem.flavorDisk %}
-                    <div class="row mb-0">
-                        <div class="col-sm-3"><strong>Flavor disk:</strong></div>
-                        <div class="col-sm-9">{{ operatingSystem.flavorDisk.name }} ({{ operatingSystem.flavorDisk.disk }}GB)</div>
-                    </div>
-                    {% endif %}
-                   {# {% if operatingSystem.hypervisor and operatingSystem.hypervisor.name == "qemu" %}
-                    <div class="row mb-3">
-                        <div class="col-sm-3"><strong>Download:</strong></div>
-                        <div class="col-sm-9">
-                            <a href="{{ absolute_url('/uploads/images/' ~ operatingSystem.imageFilename) }}" 
-                               class="btn btn-sm btn-outline-primary" target="_blank">
-                                <i class="fas fa-download me-2"></i>Download Image
-                            </a>
-                        </div>
-                    </div>
-                    {% endif %}#}
                 {% else %}
                     <a href="{{ path('edit_operating_system', {'id': operatingSystem.id}) }}">
                     <div class="alert alert-warning">
                         <i class="fas fa-exclamation-triangle me-2"></i>
                         No image source configured for this operating system.
                     </div></a>
+                {% endif %}
+                
+                {% if operatingSystem.flavorDisk %}
+                <div class="row mb-3">
+                    <div class="col-sm-3"><strong>Flavor disk:</strong></div>
+                    <div class="col-sm-9">{{ operatingSystem.flavorDisk.name }} ({{ operatingSystem.flavorDisk.disk }}GB)</div>
+                </div>
                 {% endif %}
                 
                 {% if operatingSystem.image %}
@@ -169,6 +159,40 @@
                 {% endif %}
             </div>
         </div>
+
+        {# Devices Using This OS Card #}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-server me-2"></i> Devices Using This OS
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if operatingSystem.flavorDisk %}
+                <div class="alert alert-info mb-3">
+                    <i class="fas fa-hdd me-2"></i>
+                    Disk flavor: <strong>{{ operatingSystem.flavorDisk.name }}</strong> ({{ operatingSystem.flavorDisk.disk }}GB)
+                </div>
+                {% endif %}
+                {% if devicesUsingOS|length > 0 %}
+                    <ul class="list-group list-group-flush">
+                        {% for device in devicesUsingOS %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <a href="{{ path('show_device', {'id': device.id}) }}" class="text-decoration-none">
+                                <i class="fas fa-server me-2 text-muted"></i>
+                                {{ device.name }}
+                            </a>
+                            <span class="badge bg-light text-dark">
+                                {{ device.type|title }}
+                            </span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-muted mb-0">No devices are currently using this operating system.</p>
+                {% endif %}
+            </div>
+        </div>
     </div>
 
     <div class="col-lg-4">
@@ -181,7 +205,6 @@
             </div>
             <div class="card-body">
                 <div class="d-grid gap-2">
-                     <hr class="my-2">
                     <a href="{{ path('operating_systems') }}" class="btn btn-outline-secondary">
                         <i class="fas fa-arrow-left me-2"></i> Back to list
                     </a>
@@ -192,19 +215,12 @@
                        class="btn btn-primary">
                         <i class="fas fa-edit me-2"></i> Edit Operating System
                     </a>
-                                        <hr class="my-2">
-                    {# {% if operatingSystem.imageFilename and operatingSystem.hypervisor and operatingSystem.hypervisor.name == "qemu" %}
-                    <a href="{{ absolute_url('/uploads/images/' ~ operatingSystem.imageFilename) }}" 
-                       class="btn btn-outline-success" target="_blank">
-                        <i class="fas fa-download me-2"></i>Download Image
-                    </a>
-                    {% endif %} #}
-                        {% if operatingSystem.hypervisor and operatingSystem.hypervisor.name != "natif" %}
-                            <button class="btn btn-danger" data-toggle="modal" data-target={{'.delete-modal'}}>
-                                <i class="fas fa-trash me-2"></i> Delete Operating System
-                            </button>
-                        {% endif %}
-             </button>
+                    <hr class="my-2">
+                    {% if operatingSystem.hypervisor and operatingSystem.hypervisor.name != "natif" %}
+                        <button class="btn btn-danger" data-toggle="modal" data-target={{'.delete-modal'}}>
+                            <i class="fas fa-trash me-2"></i> Delete Operating System
+                        </button>
+                    {% endif %}
                 </div>
             </div>
         </div>

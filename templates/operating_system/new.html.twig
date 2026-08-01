@@ -77,6 +77,18 @@
                             </div>
                         </div>
                         
+                        <!-- Disk Flavor Selection -->
+                        <div class="mb-4">
+                            <div class="form-floating">
+                                <label class="form-label fw-bold">{{ 'Disk Flavor'|trans }}</label>
+                                {{ form_widget(operatingSystemForm.flavorDisk, {'attr': {'class': 'form-control'}}) }}
+                            </div>
+                            {{ form_errors(operatingSystemForm.flavorDisk) }}
+                            <div class="form-text">
+                                <i class="fa fa-info-circle text-info"></i> {{ 'Select the disk flavor for this operating system (optional)'|trans }}
+                            </div>
+                        </div>
+                        
                         <!-- Image Configuration Section -->
                         <div class="mb-4">
                             <h6 class="fw-bold mb-3">{{ 'Image Configuration'|trans }}</h6>
