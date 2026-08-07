@@ -111,7 +111,8 @@ class OperatingSystemController extends Controller
         // Get filtered results
         $queryBuilder = $this->operatingSystemRepository->createQueryBuilder('os')
             ->leftJoin('os.hypervisor', 'h')
-            ->addSelect('h');
+            ->leftJoin('os.flavorDisk', 'fd')
+            ->addSelect('h', 'fd');
 
         // Apply search filters
         if ($search) {
@@ -193,7 +194,8 @@ class OperatingSystemController extends Controller
 
         $queryBuilder = $this->operatingSystemRepository->createQueryBuilder('os')
             ->leftJoin('os.hypervisor', 'h')
-            ->addSelect('h')
+            ->leftJoin('os.flavorDisk', 'fd')
+            ->addSelect('h', 'fd')
             ->setMaxResults($limit)
             ->setFirstResult($offset);
 
@@ -233,10 +235,14 @@ class OperatingSystemController extends Controller
      */
     #[Route(path: '/admin/operating-systems/{id<\d+>}', name: 'show_operating_system', methods: ['GET'])]
     #[IsGranted("ROLE_TEACHER_EDITOR", message: "Access denied.")]
-    public function show(OperatingSystem $operatingSystem): Response
+    public function show(OperatingSystem $operatingSystem)
     {
+        $devices = $this->entityManager->getRepository(\App\Entity\Device::class)
+            ->findByOperatingSystem($operatingSystem->getId());
+
         return $this->render('operating_system/view.html.twig', [
             'operatingSystem' => $operatingSystem,
+            'devicesUsingOS' => $devices,
         ]);
     }
 

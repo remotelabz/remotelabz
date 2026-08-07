@@ -24,10 +24,10 @@ class FlavorDiskType extends AbstractType
                 'help' => 'Enter a descriptive name for this disk flavor'
             ])
             ->add('disk', IntegerType::class, [
-                'label' => 'Disk Size (GB)',
+                'label' => 'Disk Size (MB)',
                 'required' => true,
                 'attr' => [
-                    'placeholder' => 'Enter size in GB',
+                    'placeholder' => 'Enter size in MB',
                     'min' => 1
                 ],
                 'help' => 'Disk size in gigabytes (must be greater than 0)'

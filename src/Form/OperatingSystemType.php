@@ -5,6 +5,7 @@ namespace App\Form;
 use App\Entity\Hypervisor;
 use App\Entity\OperatingSystem;
 use App\Entity\Arch;
+use App\Entity\FlavorDisk;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
@@ -87,6 +88,18 @@ class OperatingSystemType extends AbstractType
                 'preferred_choices' => function ($arch) {
                     return $arch->getName() === 'x86_64';
                 }
+            ])
+            ->add('flavorDisk', EntityType::class, [
+                'class' => FlavorDisk::class,
+                'choice_label' => function(FlavorDisk $flavorDisk) {
+                    return $flavorDisk->getName() . ' (' . $flavorDisk->getDisk() . ' MB)';
+                },
+                'required' => false,
+                'label' => 'Disk Flavor',
+                'placeholder' => 'Select a disk flavor (optional)...',
+                'attr' => [
+                    'class' => 'form-select'
+                ]
             ])
             ->add('description', TextareaType::class, [
                 'required' => false,

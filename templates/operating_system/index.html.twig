@@ -103,6 +103,7 @@
                         <th>Name</th>
                         <th width="120">Architecture</th>
                         <th width="150">Hypervisor</th>
+                        <th width="100">Disk Flavor</th>
                         <th width="100">Place</th>
                         {% if is_granted("ROLE_TEACHER_EDITOR") %}
                             <th width="100" class="text-end">Actions</th>
@@ -152,6 +153,15 @@
                         <td>
                             {% if operatingSystem.hypervisor %}
                                 <span class="text-muted">{{ operatingSystem.hypervisor.name }}</span>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if operatingSystem.flavorDisk %}
+                                <span class="badge bg-primary fs-6">
+                                    {{ operatingSystem.flavorDisk.name }} ({{ operatingSystem.flavorDisk.disk }}MB)
+                                </span>
                             {% else %}
                                 <span class="text-muted">-</span>
                             {% endif %}

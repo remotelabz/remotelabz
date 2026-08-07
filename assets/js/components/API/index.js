@@ -70,7 +70,7 @@ const url = require('url');
  * @property {number} id
  * @property {string} name
  * @property {number} memory Amount of RAM in MB.
- * @property {number} disk Amount of disk space in GB.
+ * @property {number} disk Amount of disk space in MB.
  * 
  * @typedef {Object} EditorData
  * @property {number} id
