@@ -52,7 +52,7 @@
                             {{ form_label(form.disk, null, {'label_attr': {'class': 'form-label'}}) }}
                             <div class="input-group">
                                 {{ form_widget(form.disk, {'attr': {'class': 'form-control'}}) }}
-                                <span class="input-group-text">GB</span>
+                                <span class="input-group-text">MB</span>
                             </div>
                             {{ form_errors(form.disk) }}
                             {% if form.disk.vars.help %}
@@ -67,9 +67,6 @@
                                 </a>
                                 {{ form_widget(form.submit, {'attr': {'class': 'btn btn-primary'}, 'label': 'Create Disk Flavor'|trans}) }}
                             </div>
-
-
-
                         </div>
 
                     {{ form_end(form) }}
@@ -78,7 +75,7 @@
 
             <div class="alert alert-info mt-3">
                 <i class="fa fa-info-circle me-2"></i>
-                <strong>{{ 'Information'|trans }}:</strong> {{ 'Disk flavors define the storage capacity for blank operating systems. Common sizes might be 4GB, 10GB, 20GB, etc.'|trans }}
+                <strong>{{ 'Information'|trans }}:</strong> {{ 'Disk flavors define the storage capacity for blank operating systems. Common sizes might be 500MB, 1024MB, ... , etc.'|trans }}
             </div>
         </div>
     </div>

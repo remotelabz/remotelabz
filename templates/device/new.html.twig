@@ -205,7 +205,7 @@
                     <ul class="small mb-0">
                         {% for disk_config in flavor.disk %}
                         <li>
-                            <strong>{{ disk_config.os_name }}</strong>: {{ disk_config.disk_gb }} GB
+                            <strong>{{ disk_config.os_name }}</strong>: {{ disk_config.disk_mb }} MB
                             <br><span class="text-muted" style="font-size: 0.85em;">Flavor disk used: {{ disk_config.name }}</span>
                         </li>
                         {% endfor %}

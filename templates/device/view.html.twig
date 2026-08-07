@@ -114,7 +114,7 @@
                         {% if device.operatingSystem %}
                             <a href="{{path('show_operating_system', {'id': device.operatingSystem.id})}}"><span class="badge bg-light text-dark">{{ device.operatingSystem.name }}</span></a>
                             {% if device.operatingSystem.flavorDisk %}
-                                <span class="text-muted small">{{ device.operatingSystem.flavorDisk.disk }}GB</span>
+                                <span class="text-muted small">{{ device.operatingSystem.flavorDisk.disk }}MB</span>
                             {% endif %}    
                         {% else %}
                             <span class="text-muted">Not specified</span>

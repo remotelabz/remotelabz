@@ -696,7 +696,7 @@ class DeviceController extends Controller
                 $flavor_global['disk'][] = [
                     'id' => $flavorDisk->getId(),
                     'name' => $flavorDisk->getName(),
-                    'disk_gb' => $flavorDisk->getDisk(), // en GB
+                    'disk_mb' => $flavorDisk->getDisk(), // en MB
                     'os_name' => $os->getName(), // Nom de l'OS qui utilise ce FlavorDisk
                     'os_id' => $os->getId()
                 ];
@@ -708,7 +708,7 @@ class DeviceController extends Controller
 
         // Trier les flavor disks par taille croissante
         usort($flavor_global['disk'], function($a, $b) {
-            return $a['disk_gb'] <=> $b['disk_gb'];
+            return $a['disk_mb'] <=> $b['disk_mb'];
         });
 
         return $flavor_global;

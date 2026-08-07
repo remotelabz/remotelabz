@@ -28,7 +28,7 @@ class BlankOperatingSystemType extends AbstractType
             ->add('flavorDisk', EntityType::class, [
                 'class' => FlavorDisk::class,
                 'choice_label' => function(FlavorDisk $flavorDisk) {
-                    return $flavorDisk->getName() . ' (' . $flavorDisk->getDisk() . ' GB)';
+                    return $flavorDisk->getName() . ' (' . $flavorDisk->getDisk() . ' MB)';
                 },
                 'required' => true,
                 'label' => 'Disk Flavor',
