@@ -301,7 +301,6 @@ services:
     App\Controller\InstanceController:
         arguments:
             $remotelabzProxyUseWss: '%app.services.proxy.wss%'
-            $bus: '@Symfony\Component\Messenger\MessageBusInterface'
 
     App\MessageHandler\InstanceStateMessageHandler:
         arguments:
