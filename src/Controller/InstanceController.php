@@ -74,7 +74,6 @@ class InstanceController extends Controller
     private $serializer;
     protected $remotelabzProxyUseWss;
     private $configworkerRepository;
-    private $bus;
 
     /** @var EntityManagerInterface */
     protected $entityManager;
@@ -94,8 +93,7 @@ class InstanceController extends Controller
         SerializerInterface $serializerInterface,
         bool $remotelabzProxyUseWss,
         ConfigWorkerRepository $configworkerRepository,
-        EntityManagerInterface $entityManager,
-        \Symfony\Component\Messenger\MessageBusInterface $bus
+        EntityManagerInterface $entityManager
     ) {
         $this->logger = $logger;
         $this->labInstanceRepository = $labInstanceRepository;
@@ -109,7 +107,6 @@ class InstanceController extends Controller
         $this->remotelabzProxyUseWss = $remotelabzProxyUseWss;
         $this->configworkerRepository = $configworkerRepository;
         $this->entityManager = $entityManager;
-        $this->bus = $bus;
     }
 
     #[Security("is_granted('ROLE_USER')", message: "Access denied.")]
@@ -518,69 +515,33 @@ class InstanceController extends Controller
             $this->logger->debug("[InstanceController:createAction]::Lab instance creation: " . $lab->getName());
             if ($instancierType == "guest") {
                 $this->logger->info("The guest" . $this->getUser()->getMail() . " " . $this->getUser()->getUuid() . " enter in lab " . $lab->getName() . " " . $lab->getUuid());
-                $instance = $instanceManager->create($lab, $instancier);
-                if (!is_null($instance)) {
-                    $this->logger->info("Lab instance " . $instance->getUuid() . " created by guest " . $this->getUser()->getMail() . " " . $this->getUser()->getUuid() . " Wait ack created message");
-                    $this->logger->info("Lab instance " . $instance->getUuid() . " executed on Worker " . $instance->getWorkerIp());
-                } else
-                    $this->logger->info("User " . $username . " has already an instance of the lab " . $lab->getName());
             } else {
                 $this->logger->info($this->getUser()->getFirstname() . " " . $username . " " . $this->getUser()->getUuid() . " enter in lab " . $lab->getName() . " " . $lab->getUuid());
-                // Utilisation du Dispatcher Asynchrone (RabbitMQ)
-                $fromExport = $request->request->all()['fromexport'] ?? 0;
-                $fromExport = filter_var($fromExport, FILTER_VALIDATE_BOOLEAN) ? 1 : 0;
-                
-                $this->bus->dispatch(new \Remotelabz\Message\Message\LabLaunchRequestMessage($lab->getUuid(), $instancier->getUuid(), $instancierType, $fromExport));
-                
-                $this->logger->info("[InstanceController:createAction]::Message LabLaunchRequestMessage dispatched for async creation.");
-                
-                return $this->json(['status' => 'pending', 'message' => 'Lab creation queued'], 202);
             }
+
+            $instance = $instanceManager->create($lab, $instancier);
+            if (!is_null($instance)) {
+                switch ($instancierType) {
+                    case "guest":
+                        $this->logger->info("Lab instance " . $instance->getUuid() . " created by guest " . $this->getUser()->getMail() . " " . $this->getUser()->getUuid() . " Wait ack created message");
+                        $this->logger->info("Lab instance " . $instance->getUuid() . " executed on Worker " . $instance->getWorkerIp());
+                        break;
+                    case "user":
+                        $this->logger->info("Lab instance " . $instance->getUuid() . " created by user " . $this->getUser()->getFirstname() . " " . $username . " " . $this->getUser()->getUuid() . " Wait ack created message");
+                        $this->logger->info("Lab instance " . $instance->getUuid() . " executed on Worker " . $instance->getWorkerIp());
+                        break;
+                    case "group":
+                        $this->logger->info("Lab instance " . $instance->getUuid() . " created by group " . $instancier->getName() . " Wait ack created message");
+                        $this->logger->info("Lab instance " . $instance->getUuid() . " executed on Worker " . $instance->getWorkerIp());
+                        break;
+                }
+            } else
+                $this->logger->info("User " . $username . " has already an instance of the lab " . $lab->getName());
         } catch (Exception $e) {
             throw $e;
         }
 
         return $this->json($instance, 200, [], ['api_get_lab_instance']);
-    }
-
-    #[Route(path: '/api/instances/create-batch', name: 'api_create_instance_batch', methods: ['POST'])]
-    #[Security("is_granted('ROLE_USER')", message: "Access denied.")]
-    public function createBatchAction(Request $request, InstanceManager $instanceManager, 
-        GroupRepository $groupRepository, LabRepository $labRepository, \App\Service\Worker\WorkerManager $workerManager, \Symfony\Component\Messenger\MessageBusInterface $bus)
-    {
-        error_log("CREATE BATCH ACTION CALLED!");
-        $labUuid = $request->request->all()['lab'] ?? null;
-        $groupUuid = $request->request->all()['group'] ?? null;
-
-        if (!$labUuid || !$groupUuid) {
-            throw new BadRequestHttpException('Missing lab or group UUID.');
-        }
-
-        $group = $groupRepository->findOneBy(['uuid' => $groupUuid]);
-        $lab = $labRepository->findOneBy(['uuid' => $labUuid]);
-        
-        $this->denyAccessUnlessGranted(LabVoter::SEE, $lab);
-
-        try {
-            $this->logger->info("[InstanceController:createBatchAction]::Collective launch for group " . $group->getName() . " on lab " . $lab->getName());
-            
-            $fromExport = $request->request->all()['fromexport'] ?? 0;
-            $fromExport = filter_var($fromExport, FILTER_VALIDATE_BOOLEAN) ? 1 : 0;
-            
-            $dispatchedCount = 0;
-            foreach ($group->getUsers() as $student) {
-                // Utilisation du Dispatcher Asynchrone (RabbitMQ) - Stratégie 2
-                $bus->dispatch(new \Remotelabz\Message\Message\LabLaunchRequestMessage($lab->getUuid(), $student->getUuid(), 'user', $fromExport));
-                $dispatchedCount++;
-            }
-            
-            $this->logger->info("[InstanceController:createBatchAction]::$dispatchedCount messages LabLaunchRequestMessage dispatched for async collective creation.");
-            
-            return $this->json(['status' => 'pending', 'message' => "$dispatchedCount labs queued for creation"], 202);
-
-        } catch (\Exception $e) {
-            throw $e;
-        }
     }
 
 

@@ -148,7 +148,7 @@ class InstanceManager
      *
      * @return LabInstance
      */
-    public function create(Lab $lab, InstancierInterface $instancier, $workerIp = null)
+    public function create(Lab $lab, InstancierInterface $instancier)
     {
 
         // Test is this user, guest or group has already started an instance of this lab
@@ -171,16 +171,7 @@ class InstanceManager
 
         if (is_null($is_exist_labinstance)) {
 
-                // Si un Worker est imposé (ex: admin), on l'utilise directement.
-                // Sinon on passe par getBestWorkerFromMetrics (Hidden Load Penalty)
-                // pour éviter le Thundering Herd.
-                if ($workerIp !== null) {
-                    $worker = $workerIp;
-                } else {
-                    $memory  = $this->workerManager->Memory_Usage($lab);
-                    $usages  = $this->workerManager->checkWorkersLightAction();
-                    $worker  = $this->workerManager->getBestWorkerFromMetrics($usages, $memory);
-                }
+                $worker = $this->workerManager->getFreeWorker($lab);
 
             if ($worker == null) {
                 $this->logger->error('[InstanceManager:create]::Could not create instance. No worker available');
@@ -230,11 +221,7 @@ class InstanceManager
                     $this->logger->debug("[InstanceManager:create]::Route to ".$network." exists, via ".$worker);
                 else {
                     $this->logger->debug("[InstanceManager:create]::Route to ".$network." doesn't exist, via ".$worker);
-                    try {
-                        IPTools::routeAdd($network,$worker);
-                    } catch (\Exception $e) {
-                        $this->logger->warning("[InstanceManager:create]::Failed to add route, maybe it was created concurrently: " . $e->getMessage());
-                    }
+                    IPTools::routeAdd($network,$worker);
                 }
             }
 
