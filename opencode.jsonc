@@ -1,0 +1,119 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "romeogate": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "RomeoGate",
+      "options": {
+        "baseURL": "https://romeogate.univ-reims.fr/llm",
+        "apiKey": "sk-VGReu_sB-Cd9oy48hUohWw"
+      },
+      "models": {
+        "qwen": {
+          "name": "Qwen 3.6 35B",
+          "id": "ilaas/qwen-3.6-35b-instruct"
+        },
+        "gptoss": {
+          "name": "GPT-OSS 120B",
+          "id": "ilaas/gpt-oss-120b"
+        },
+        "llama": {
+          "name": "Llama 3.3 70B",
+          "id": "ilaas/llama-3.3-70b"
+        },
+        "mistral-latest": {
+          "name": "Mistral latest",
+          "id": "ilaas/mistral-medium-latest"
+        },
+        "mistral-119b": {
+          "name": "Mistral 119b",
+          "id": "ilaas/mistral-small-4-119b"
+        },
+        "Mistral-Small-4-119B-2603": {
+      "id": "modelsondemand/Mistral-Small-4-119B-2603",
+      "object": "model",
+      "created": 1677610602,
+      "owned_by": "openai"
+    },
+    "mistral-small-3.2-24b":
+    {
+      "id": "mistral-small-3.2-24b",
+      "object": "model",
+      "created": 1677610602,
+      "owned_by": "openai"
+    },
+    "Qwen2.5-VL-72B-Instruct":
+    {
+      "id": "modelsondemand/Qwen2.5-VL-72B-Instruct",
+      "object": "model",
+      "created": 1677610602,
+      "owned_by": "openai"
+    },
+    "vllm-translategemma-27b-it":
+    {
+      "id": "modelsondemand/Infomaniak-AI/vllm-translategemma-27b-it",
+      "object": "model",
+      "created": 1677610602,
+      "owned_by": "openai"
+    },
+    "gemma-4-31B-it":
+    {
+      "id": "modelsondemand/google/gemma-4-31B-it",
+      "object": "model",
+      "created": 1677610602,
+      "owned_by": "openai"
+    },
+    "gemma-4-E4B-it":
+    {
+      "id": "modelsondemand/google/gemma-4-E4B-it",
+      "object": "model",
+      "created": 1677610602,
+      "owned_by": "openai"
+    },
+    "Qwen3-Coder-Next-FP8":
+    {
+      "id": "modelsondemand/Qwen/Qwen3-Coder-Next-FP8",
+      "object": "model",
+      "created": 1677610602,
+      "owned_by": "openai"
+    },
+    "Qwen3.6-35B-A3B":
+    {
+      "id": "modelsondemand/Qwen/Qwen3.6-35B-A3B",
+      "object": "model",
+      "created": 1677610602,
+      "owned_by": "openai"
+    },
+    "Qwen3-Embedding-0.6B":
+    {
+      "id": "Qwen3-Embedding-0.6B",
+      "object": "model",
+      "created": 1677610602,
+      "owned_by": "openai"
+    },
+    "Qwen3-235B-A22B-Thinking-2507-FP8":
+    {
+      "id": "modelsondemand/Qwen/Qwen3-235B-A22B-Thinking-2507-FP8",
+      "object": "model",
+      "created": 1677610602,
+      "owned_by": "openai"
+    },
+    "Qwen3.6-27B":
+    {
+      "id": "modelsondemand/Qwen/Qwen3.6-27B",
+      "object": "model",
+      "created": 1677610602,
+      "owned_by": "openai"
+    },
+    "GLM-5.2-Q3_K_XL":
+    {
+      "id": "modelsondemand/zai-org/GLM-5.2-Q3_K_XL",
+      "object": "model",
+      "created": 1677610602,
+      "owned_by": "openai"
+    },
+    
+      }
+    }
+  }
+}

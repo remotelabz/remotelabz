@@ -761,6 +761,10 @@ class LabController extends Controller
                 $editorData=$new_device->getEditorData();
                 $editorData->setX($device_array['editorData']['x']);
                 $editorData->setY($device_array['editorData']['y']);
+
+                // Récupérer le device source plus tôt pour pouvoir copier ses specs CPU
+                $sourceDevice = $this->deviceRepository->find($device_array['id']);
+
                 //$new_device->setCount($device_array['count']);
                 if (isset($device_array['icon'])) {
                     $new_device->setIcon($device_array['icon']);
@@ -774,6 +778,13 @@ class LabController extends Controller
                 
                 $new_device->setHypervisor($hypervisor);
                 $new_device->setVirtuality($device_array['virtuality']);
+
+                $new_device->setNbCpu($device_array['nbCpu'] ?? $sourceDevice?->getNbCpu() ?? 1);
+                $new_device->setNbCore($device_array['nbCore'] ?? $sourceDevice?->getNbCore());
+                $new_device->setNbSocket($device_array['nbSocket'] ?? $sourceDevice?->getNbSocket());
+                $new_device->setNbThread($device_array['nbThread'] ?? $sourceDevice?->getNbThread());
+
+
                 $this->logger->debug("[LabController:addDeviceAction]::Device added : ".$new_device->getName());
                 $entityManager->persist($new_device);
                 $editorData->setDevice($new_device);
@@ -1019,6 +1030,7 @@ class LabController extends Controller
         $newDevice->setNbSocket($device->getNbSocket());
         $newDevice->setNbCore($device->getNbCore());
         $newDevice->setNbThread($device->getNbThread());
+        $newDevice->setDelay($device->getDelay());
         $newDevice->setIsTemplate(true);
         $newDevice->setAuthor($this->getUser());
         
@@ -1032,12 +1044,11 @@ class LabController extends Controller
         $newDevice->setIcon($device->getIcon());
         if (!is_null($device->getTemplate()))
             $newDevice->setTemplate($device->getTemplate());
-        $i=0;
         foreach ($device->getNetworkInterfaces() as $network_int) {
             $new_network_inter=new NetworkInterface();
             $this->copyNetworkInterface($network_int, $new_network_inter);
             $entityManager->persist($new_network_inter);
-            $new_network_inter->setDevice($newDevice);
+            $newDevice->addNetworkInterface($new_network_inter);
             $new_network_inter->setIsTemplate(true);
         }
 
@@ -1048,6 +1059,13 @@ class LabController extends Controller
         foreach ($device->getIsos() as $iso) {
             $newDevice->addIso($iso);
         }
+
+        $this->logger->debug("[copyDevice] avant flush", [
+            'nbCpu' => $newDevice->getNbCpu(),
+            'nbSocket' => $newDevice->getNbSocket(),
+            'nbCore' => $newDevice->getNbCore(),
+            'nbThread' => $newDevice->getNbThread(),
+        ]);
 
         $entityManager->persist($newDevice);
         $entityManager->flush();
@@ -1070,7 +1088,7 @@ class LabController extends Controller
         $entityManager->persist($Net_int_dst);
         $entityManager->persist($new_setting);
         $entityManager->flush();
-        $this->logger->debug("[LabController:copyNetworkInterface]::Network interface settings copied from ".$Net_int_src->getName()." to ".$Net_int_dst->getName());
+        //$this->logger->debug("[LabController:copyNetworkInterface]::Network interface settings copied from ".$Net_int_src->getName()." to ".$Net_int_dst->getName());
     }
 
     public function copyNetworkSetting(NetworkSettings $Net_src, NetworkSettings $Net_dst) {
@@ -1081,7 +1099,7 @@ class LabController extends Controller
         $Net_dst->setGateway($Net_src->getGateway());
         $Net_dst->setProtocol($Net_src->getProtocol());
         $Net_dst->setPort($Net_src->getPort());
-        $this->logger->debug("[LabController:copyNetworkSetting]::Network settings copied from ".$Net_src->getName()." to ".$Net_dst->getName());
+        //$this->logger->debug("[LabController:copyNetworkSetting]::Network settings copied from ".$Net_src->getName()." to ".$Net_dst->getName());
     }
 
 
@@ -1116,7 +1134,7 @@ class LabController extends Controller
             foreach ($devices as $device) {
                 $this->logger->debug("[LabController:createcopyLab]::Device ".$device->getName()." is a sandbox device, copying it.");
                 //$new_device= $this->deviceRepository->find($this->copyDevice($device,'Sandbox_Lab_'.$device->getName()));
-                $new_device= $this->deviceRepository->find($this->copyDevice($device,$device->getName()));
+                $new_device = $this->copyDevice($device, $device->getName());
                 $new_device->setIsTemplate(false);
                 $new_device->setAuthor($this->getUser());                 
                 $entityManager->persist($new_device);
