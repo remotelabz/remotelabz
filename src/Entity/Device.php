@@ -72,19 +72,19 @@ class Device implements InstanciableInterface, DirectoryAwareInterface
     private $type = "vm";
 
     #[ORM\Column(type: 'integer')]
-    #[Serializer\Groups(['api_get_device', 'export_lab', 'worker', 'api_get_lab_template'])]
+    #[Serializer\Groups(['api_get_device', 'export_lab', 'worker', 'api_get_lab_template', 'sandbox'])]
     private $nbCpu;
 
     #[ORM\Column(type: 'integer', nullable: true)]
-    #[Serializer\Groups(['api_get_device', 'export_lab', 'worker', 'api_get_lab_template'])]
+    #[Serializer\Groups(['api_get_device', 'export_lab', 'worker', 'api_get_lab_template', 'sandbox'])]
     private $nbCore;
 
     #[ORM\Column(type: 'integer', nullable: true)]
-    #[Serializer\Groups(['api_get_device', 'export_lab', 'worker', 'api_get_lab_template'])]
+    #[Serializer\Groups(['api_get_device', 'export_lab', 'worker', 'api_get_lab_template', 'sandbox'])]
     private $nbSocket;
 
     #[ORM\Column(type: 'integer', nullable: true)]
-    #[Serializer\Groups(['api_get_device', 'export_lab', 'worker', 'api_get_lab_template'])]
+    #[Serializer\Groups(['api_get_device', 'export_lab', 'worker', 'api_get_lab_template', 'sandbox'])]
     private $nbThread;
 
     #[ORM\Column(type: 'integer')]
@@ -163,7 +163,7 @@ class Device implements InstanciableInterface, DirectoryAwareInterface
 
 
     #[ORM\Column(type: 'string', length: 100, nullable: true)]
-    #[Serializer\Groups(['api_get_device', 'api_get_lab_template', 'export_lab','sandbox'])]
+    #[Serializer\Groups(['api_get_device', 'api_get_lab_template', 'export_lab', 'sandbox'])]
     private $icon = "Server_Linux.png";
 
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
@@ -523,7 +523,7 @@ class Device implements InstanciableInterface, DirectoryAwareInterface
         return $this->nbCpu;
     }
 
-    public function setNbCpu(int $nb): self
+    public function setNbCpu(?int $nb): self
     {
         $this->nbCpu = $nb;
 
