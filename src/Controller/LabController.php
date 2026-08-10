@@ -1368,14 +1368,41 @@ class LabController extends Controller
                 }
             } 
             else if($device->getOperatingSystem()->getHypervisor()->getName() == "lxc") {
-                if (!$fileSystem->exists($this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid().'/'.$device->getOperatingSystem()->getImageFileName().".tar.gz")) {
+                $containerArchive = $device->getOperatingSystem()->getImageFileName().".tar.gz";
+                if (!$fileSystem->exists($this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid().'/'.$containerArchive)) {
                     exec("ls /var/lib/lxc/", $containersOutput);
                     foreach ($containersOutput as $container) {
                         if ($container == $device->getOperatingSystem()->getImageFileName()) {
                             $this->logger->debug("[LabController:exportAction]::Compressing container ".$device->getOperatingSystem()->getImageFileName());
-                            exec("tar -cvzf ".$this->getParameter('kernel.project_dir')."/public/uploads/lab/export/lab_".$lab->getUuid()."/".$device->getOperatingSystem()->getImageFileName().".tar.gz -C /var/lib/lxc/".$device->getOperatingSystem()->getImageFileName()." .");
+                            exec("tar -cvzf ".$this->getParameter('kernel.project_dir')."/public/uploads/lab/export/lab_".$lab->getUuid()."/".$containerArchive." -C /var/lib/lxc/".$device->getOperatingSystem()->getImageFileName()." .");
                             break;
                         }
+                    }
+                }
+                
+                if ($workers !== null && $fileSystem->exists($this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid().'/'.$containerArchive)) {
+                    foreach($workers as $worker) {
+                        $this->logger->debug("[LabController:exportAction]::Copying container archive to worker ".$worker->getIPv4());
+                        $workerPort = $this->getParameter('app.worker_port');
+                        $localFile = fopen($this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid().'/'.$containerArchive, 'r');
+                        $curl = curl_init();
+                        curl_setopt($curl, CURLOPT_URL, "http://".$worker->getIPv4().":".$workerPort."/images/containers/".$containerArchive);
+                        curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "PUT");
+                        curl_setopt($curl, CURLOPT_TIMEOUT, 600);
+                        curl_setopt($curl, CURLOPT_INFILE, $localFile);
+                        curl_setopt($curl, CURLOPT_INFILESIZE, filesize($this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid().'/'.$containerArchive));
+                        curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
+                        curl_exec($curl);
+                        
+                        if (curl_errno($curl)) {
+                            $this->logger->debug("[LabController:exportAction]::Curl error of container archive upload: ".curl_error($curl));
+                        }
+                        else if (curl_getinfo($curl, CURLINFO_HTTP_CODE) != 200 && curl_getinfo($curl, CURLINFO_HTTP_CODE) != 201) {
+                            $this->logger->debug("[LabController:exportAction]::Http code of container archive upload: ".curl_getinfo($curl, CURLINFO_HTTP_CODE));
+                        }
+                        
+                        curl_close($curl);
+                        fclose($localFile);
                     }
                 }
             }           

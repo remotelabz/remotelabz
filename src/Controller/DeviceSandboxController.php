@@ -79,7 +79,7 @@ class DeviceSandboxController extends Controller
 
         $propsArray = json_decode($props, true);
         $prettyProps = json_encode($propsArray, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-        $this->logger->debug("[DeviceSandboxController:indexAction]::Serialized props:\n" . $prettyProps);
+        //$this->logger->debug("[DeviceSandboxController:indexAction]::Serialized props:\n" . $prettyProps);
 
         return $this->render('device_sandbox/index.html.twig', [
             'devices' => $devices,
