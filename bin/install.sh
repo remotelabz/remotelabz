@@ -354,6 +354,18 @@ EOF
     
     print_info "MySQL configured with user '${MYSQL_DB_USER}' and password '${MYSQL_DB_PASS}'"
     
+    # Auto-detect MySQL server version and update .env.local
+    local MYSQL_INSTALLED_VERSION
+    MYSQL_INSTALLED_VERSION=$(mysql --version 2>/dev/null | grep -oP '[\d]+\.[\d]+\.[\d]+' | head -1)
+    if [ -n "$MYSQL_INSTALLED_VERSION" ] && [ -f "$ENV_FILE" ]; then
+        if grep -q '^MYSQL_VERSION=' "$ENV_FILE"; then
+            sed -i "s|^MYSQL_VERSION=.*|MYSQL_VERSION='${MYSQL_INSTALLED_VERSION}'|g" "$ENV_FILE"
+        else
+            echo "MYSQL_VERSION='${MYSQL_INSTALLED_VERSION}'" >> "$ENV_FILE"
+        fi
+        print_info "✅ MYSQL_VERSION updated to '${MYSQL_INSTALLED_VERSION}' in $ENV_FILE"
+    fi
+    
     # Install and configure RabbitMQ
     print_info "Installing and configuring RabbitMQ..."
     apt-get install -y rabbitmq-server php8.5-amqp
