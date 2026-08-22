@@ -227,9 +227,9 @@ setup_env_file() {
 set_sysctl_param() {
     local param="$1"
     local value="$2"
-    local file="/etc/sysctl.conf"
-    
-    if grep -q "^${param}=" "$file"; then
+    local file="/etc/sysctl.d/99-remotelabz.conf"
+
+    if grep -q "^${param}=" "$file" 2>/dev/null; then
         sed -i "s|^${param}=.*|${param}=${value}|" "$file"
     else
         echo "${param}=${value}" >> "$file"
@@ -524,8 +524,15 @@ configure_system() {
     
     print_info "Enabling IP forwarding..."
     sysctl -w net.ipv4.ip_forward=1
-    sed -i 's/net.ipv4.ip_forward = 0/net.ipv4.ip_forward = 1/g' /etc/sysctl.conf
-    sed -i 's/#net.ipv4.ip_forward =/net.ipv4.ip_forward =/g' /etc/sysctl.conf
+    
+    # Update both sysctl.conf and our custom file for compatibility
+    if grep -q "^net.ipv4.ip_forward=" /etc/sysctl.conf; then
+        sed -i 's/net.ipv4.ip_forward = 0/net.ipv4.ip_forward = 1/g' /etc/sysctl.conf
+        sed -i 's/#net.ipv4.ip_forward =/net.ipv4.ip_forward =/g' /etc/sysctl.conf
+    fi
+    
+    # Ensure our custom file has the IP forwarding setting
+    set_sysctl_param "net.ipv4.ip_forward" "1"
     
     print_info "Setting system limits..."
     set_sysctl_param "fs.inotify.max_user_watches" "800000"
@@ -537,7 +544,8 @@ configure_system() {
     set_sysctl_param "net.ipv6.conf.lo.disable_ipv6" "1"
     set_sysctl_param "net.ipv6.conf.default.disable_ipv6" "1"
     
-    sysctl -p
+    # Apply all sysctl settings
+    sysctl --system
     
     print_info "System configuration completed! ✅"
 }
