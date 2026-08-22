@@ -249,7 +249,7 @@ install_requirements() {
 
     # Install base packages
     print_info "Installing base packages..."
-    apt install -y fail2ban exim4 apache2 curl gnupg zip unzip ntp openvpn qemu-utils openssl git expect
+    apt install -y fail2ban exim4 apache2 curl gnupg zip unzip ntpsec openvpn qemu-utils openssl git expect
     
     # Install PHP 8.4
     print_info "Installing PHP 8.4..."
