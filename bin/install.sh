@@ -23,6 +23,8 @@ REMOTELABZ_MAX_FILESIZE="3000M"
 INSTALL_LOG_PATH="/var/log/remotelabz"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/.."
 DEFAULT_CA_PASS="R3mot3!abz-0penVPN-CA2020"
+# Global variable to track which .env.local file was used
+ENV_FILE="${REMOTELABZ_PATH}/.env.local"
 
 # Functions for colored output
 print_info() {
@@ -58,9 +60,14 @@ check_root() {
 # This function REQUIRES a base .env file to exist
 # ============================================================================
 setup_env_file() {
-    local ENV_FILE="/opt/remotelabz/.env.local"
     local BASE_ENV_FILE="${SCRIPT_DIR}/.env"
-	echo $BASE_ENV_FILE    
+    echo "$BASE_ENV_FILE"
+    
+    # Also check for .env.local in the script directory / source tree
+    if [ ! -f "$ENV_FILE" ] && [ -f "${SCRIPT_DIR}/.env.local" ]; then
+        ENV_FILE="${SCRIPT_DIR}/.env.local"
+    fi
+    
     # Create directory if it doesn't exist
     mkdir -p /opt/remotelabz
     
@@ -302,22 +309,50 @@ install_requirements() {
     systemctl start mysql
     systemctl enable mysql
     
+    # Load environment values for MySQL from the env file
+    local MYSQL_ROOT_PASS="R3mot3Lab$-2026\$"
+    local MYSQL_DB_USER="user"
+    local MYSQL_DB_PASS="Mysql-Pa33wrd\$"
+    local MYSQL_DB_NAME="remotelabz"
+
+    if [ -f "$ENV_FILE" ]; then
+        local tmp_env
+        tmp_env=$(mktemp)
+        cp "$ENV_FILE" "$tmp_env"
+        
+        # Read values from the env file, respecting quoted values
+        local val
+        val=$(grep -E '^MYSQL_ROOT_PASSWORD=' "$tmp_env" 2>/dev/null | head -1 | cut -d'=' -f2-)
+        [ -n "$val" ] && val=$(echo "$val" | sed 's/^"//;s/"$//;s/^'\''//;s/'\''$//') && [ -n "$val" ] && MYSQL_ROOT_PASS="$val"
+        
+        val=$(grep -E '^MYSQL_USER=' "$tmp_env" 2>/dev/null | head -1 | cut -d'=' -f2-)
+        [ -n "$val" ] && val=$(echo "$val" | sed 's/^"//;s/"$//;s/^'\''//;s/'\''$//') && [ -n "$val" ] && MYSQL_DB_USER="$val"
+        
+        val=$(grep -E '^MYSQL_PASSWORD=' "$tmp_env" 2>/dev/null | head -1 | cut -d'=' -f2-)
+        [ -n "$val" ] && val=$(echo "$val" | sed 's/^"//;s/"$//;s/^'\''//;s/'\''$//') && [ -n "$val" ] && MYSQL_DB_PASS="$val"
+        
+        val=$(grep -E '^MYSQL_DATABASE=' "$tmp_env" 2>/dev/null | head -1 | cut -d'=' -f2-)
+        [ -n "$val" ] && val=$(echo "$val" | sed 's/^"//;s/"$//;s/^'\''//;s/'\''$//') && [ -n "$val" ] && MYSQL_DB_NAME="$val"
+        
+        rm -f "$tmp_env"
+    fi
+
     cat > /tmp/mysql_secure_sql.sql << EOF
-ALTER USER IF EXISTS 'root'@'localhost' IDENTIFIED BY 'RemoteLabz-2022\$';
+ALTER USER IF EXISTS 'root'@'localhost' IDENTIFIED BY '${MYSQL_ROOT_PASS}';
 DELETE FROM mysql.user WHERE User='';
 DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');
 DROP DATABASE IF EXISTS test;
 DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%';
-CREATE USER IF NOT EXISTS 'user'@'localhost' IDENTIFIED WITH mysql_native_password BY 'Mysql-Pa33wrd\$';
-CREATE DATABASE IF NOT EXISTS remotelabz;
-GRANT ALL ON remotelabz.* TO 'user'@'localhost';
+CREATE USER IF NOT EXISTS '${MYSQL_DB_USER}'@'localhost' IDENTIFIED WITH caching_sha2_password BY '${MYSQL_DB_PASS}';
+CREATE DATABASE IF NOT EXISTS ${MYSQL_DB_NAME};
+GRANT ALL ON ${MYSQL_DB_NAME}.* TO '${MYSQL_DB_USER}'@'localhost';
 FLUSH PRIVILEGES;
 EOF
 
     mysql -sfu root < /tmp/mysql_secure_sql.sql 2>/dev/null || mysql < /tmp/mysql_secure_sql.sql
     rm /tmp/mysql_secure_sql.sql
     
-    print_info "MySQL configured with user 'user' and password 'Mysql-Pa33wrd\$'"
+    print_info "MySQL configured with user '${MYSQL_DB_USER}' and password '${MYSQL_DB_PASS}'"
     
     # Install and configure RabbitMQ
     print_info "Installing and configuring RabbitMQ..."
@@ -325,12 +360,28 @@ EOF
     systemctl start rabbitmq-server
     systemctl enable rabbitmq-server
     
-    if ! rabbitmqctl list_users | grep -q 'remotelabz-amqp'; then
-        rabbitmqctl add_user 'remotelabz-amqp' 'password-amqp'
+    local RABBITMQ_USER='remotelabz-amqp'
+    local RABBITMQ_PASS='password-amqp'
+
+    if [ -f "$ENV_FILE" ]; then
+        local dsn
+        dsn=$(grep -E '^MESSENGER_TRANSPORT_DSN=' "$ENV_FILE" 2>/dev/null | head -1 | cut -d'=' -f2- | sed 's/^"//;s/"$//;s/^'\''//;s/'\''$//')
+        if [ -n "$dsn" ]; then
+            local amqp_match
+            amqp_match=$(echo "$dsn" | grep -oP 'amqp://\K[^:@]+:[^:@]+(?=@)' 2>/dev/null)
+            if [ -n "$amqp_match" ]; then
+                RABBITMQ_USER=$(echo "$amqp_match" | cut -d':' -f1)
+                RABBITMQ_PASS=$(echo "$amqp_match" | cut -d':' -f2)
+            fi
+        fi
+    fi
+
+    if ! rabbitmqctl list_users | grep -q "$RABBITMQ_USER"; then
+        rabbitmqctl add_user "$RABBITMQ_USER" "$RABBITMQ_PASS"
     fi
     
-    rabbitmqctl set_permissions -p '/' 'remotelabz-amqp' '.*' '.*' '.*'
-    rabbitmqctl set_user_tags remotelabz-amqp administrator
+    rabbitmqctl set_permissions -p '/' "$RABBITMQ_USER" '.*' '.*' '.*'
+    rabbitmqctl set_user_tags "$RABBITMQ_USER" administrator
     rabbitmq-plugins enable rabbitmq_management
     systemctl restart rabbitmq-server
     
@@ -384,77 +435,152 @@ EOF
         ./easyrsa init-pki
     fi
 
-    if [ ! -f pki/ca.crt ]; then
-        print_warning "===================================================="
-        print_warning "CA Certificate Password Setup"
-        print_warning "===================================================="
-        print_info "The default password in the documentation is: R3mot3!abz-0penVPN-CA2020"
-        print_info "This password will be needed to sign VPN certificates"
-        print_warning "===================================================="
-        
+    local DEFAULT_CA_PASSPHRASE="R3mot3!abz-0penVPN-CA2020"
+    local SSL_CA_KEY_PASSPHRASE=""
+    local CA_PASS="" CA_PASS_1="" PEM_PASS="" PEM_PASS_1=""
+
+    if [ -f "$ENV_FILE" ]; then
+        SSL_CA_KEY_PASSPHRASE=$(grep -E '^SSL_CA_KEY_PASSPHRASE=' "$ENV_FILE" 2>/dev/null | head -1 | cut -d'=' -f2- | sed 's/^"//;s/"$//;s/^'\''//;s/'\''$//')
+    fi
+
+    if [ -f pki/ca.crt ]; then
+        : # CA already exists, skip
+    else
+        if [ -n "$SSL_CA_KEY_PASSPHRASE" ]; then
+            print_info "Using SSL_CA_KEY_PASSPHRASE from .env.local for CA certificate..."
+            CA_PASS="$SSL_CA_KEY_PASSPHRASE"
+            CA_PASS_1="$SSL_CA_KEY_PASSPHRASE"
+            PEM_PASS="$SSL_CA_KEY_PASSPHRASE"
+            PEM_PASS_1="$SSL_CA_KEY_PASSPHRASE"
+
+            if [ "${#CA_PASS}" -lt 4 ]; then
+                print_warning "⚠️ Passphrase from .env.local is too short (< 4 chars), prompting user..."
+                CA_PASS=""
+            fi
+
+            if [ -z "$CA_PASS" ]; then
+                print_warning "===================================================="
+                print_warning "CA Certificate Password Setup"
+                print_warning "===================================================="
+                print_info "The default password in the documentation is: ${DEFAULT_CA_PASS}"
+                print_info "This password will be needed to sign VPN certificates"
+                print_warning "===================================================="
+
+                while true; do
+                    read -p "Enter New CA passphrase [${DEFAULT_CA_PASS}]: " CA_PASS
+                    CA_PASS="${CA_PASS:-$DEFAULT_CA_PASS}"
+
+                    if [ "${#CA_PASS}" -lt 4 ]; then
+                        echo "⚠️ Passphrase is too short, must be at least 4"
+                        continue
+                    fi
+
+                    read -p "Re-Enter CA passphrase [${DEFAULT_CA_PASS}]: " CA_PASS_1
+                    CA_PASS_1="${CA_PASS_1:-$DEFAULT_CA_PASS}"
+
+                    if [ "${#CA_PASS_1}" != "${#CA_PASS}" ]; then
+                        echo "⚠️ Passphrase don't match..."
+                        continue
+                    fi
+                    break
+                done
+
+                while true; do
+                    read -p "Enter PEM passphrase: " PEM_PASS
+
+                    if [ "${#PEM_PASS}" -lt 4 ]; then
+                        echo "⚠️ Passphrase is too short, must be at least 4"
+                        continue
+                    fi
+
+                    read -p "Verifying - Enter PEM passphrase: " PEM_PASS_1
+
+                    if [ "${#PEM_PASS_1}" != "${#PEM_PASS}" ]; then
+                        echo "⚠️ Passphrase don't match..."
+                        continue
+                    fi
+                    break
+                done
+            fi
+        else
+            print_warning "===================================================="
+            print_warning "CA Certificate Password Setup"
+            print_warning "===================================================="
+            print_info "The default password in the documentation is: ${DEFAULT_CA_PASS}"
+            print_info "This password will be needed to sign VPN certificates"
+            print_warning "===================================================="
+
+            while true; do
+                read -p "Enter New CA passphrase [${DEFAULT_CA_PASS}]: " CA_PASS
+                CA_PASS="${CA_PASS:-$DEFAULT_CA_PASS}"
+
+                if [ "${#CA_PASS}" -lt 4 ]; then
+                    echo "⚠️ Passphrase is too short, must be at least 4"
+                    continue
+                fi
+
+                read -p "Re-Enter CA passphrase [${DEFAULT_CA_PASS}]: " CA_PASS_1
+                CA_PASS_1="${CA_PASS_1:-$DEFAULT_CA_PASS}"
+
+                if [ "${#CA_PASS_1}" != "${#CA_PASS}" ]; then
+                    echo "⚠️ Passphrase don't match..."
+                    continue
+                fi
+                break
+            done
+
+            while true; do
+                read -p "Enter PEM passphrase: " PEM_PASS
+
+                if [ "${#PEM_PASS}" -lt 4 ]; then
+                    echo "⚠️ Passphrase is too short, must be at least 4"
+                    continue
+                fi
+
+                read -p "Verifying - Enter PEM passphrase: " PEM_PASS_1
+
+                if [ "${#PEM_PASS_1}" != "${#PEM_PASS}" ]; then
+                    echo "⚠️ Passphrase don't match..."
+                    continue
+                fi
+                break
+            done
+        fi
+
         cp ./vars ./vars-ca
         sed -i "s/RemoteLabz-VPNServer-CA/RemoteLabz-VPNServer/g" vars
-		while true; do
-			read -p "Enter New CA passphrase [${DEFAULT_CA_PASS}]: " CA_PASS
-			CA_PASS="${CA_PASS:-$DEFAULT_CA_PASS}"
 
-			if [ "${#CA_PASS}" -lt 4 ]; then
-       			echo "⚠️ Passphrase is too short, must be at least 4 "
-        		continue
-			fi
-
-			read -p "Re-Enter CA passphrase [${DEFAULT_CA_PASS}]: " CA_PASS_1
-			CA_PASS_1="${CA_PASS_1:-$DEFAULT_CA_PASS}"
-
-			if [ "${#CA_PASS_1}" != "${#CA_PASS}"  ]; then
-				echo "⚠️ Passphrase don't match..."
-				continue
-			fi
-			break
-		done
-
-		while true; do
-			read -p "Enter PEM passphrase: " PEM_PASS
-
-			if [ "${#PEM_PASS}" -lt 4 ]; then
-               	echo "⚠️ Passphrase is too short, must be at least 4"
-               	continue
-       		fi
-
-			read -p "Verifying - Enter PEM passphrase: " PEM_PASS_1
-
-			if [ "${#PEM_PASS_1}" != "${#PEM_PASS}"  ]; then
-				echo "⚠️ Passphrase don't match..."
-				continue
-			fi
-			break
-		done
-
-
-	expect << EOF
+        expect << EOF
 spawn ./easyrsa build-ca
 expect "Enter New CA Key Passphrase:"
-send "$CA_PASS\r"
+send "${CA_PASS}\r"
 expect "Re-Enter New CA Key Passphrase:"
-send "$CA_PASS_1\r"
+send "${CA_PASS_1}\r"
 expect "Enter PEM pass phrase:"
-send "$PEM_PASS\r"
+send "${PEM_PASS}\r"
 expect "Verifying - Enter PEM pass phrase:"
-send "$PEM_PASS_1\r"
+send "${PEM_PASS_1}\r"
 expect eof
 EOF
-
     fi
 
     if [ ! -f pki/issued/RemoteLabz-VPNServer.crt ]; then
         print_info "Generating server certificate..."
         ./easyrsa gen-req RemoteLabz-VPNServer nopass
         
+        # Ensure we have the CA passphrase available for signing
+        if [ -z "$PEM_PASS" ] && [ -n "$SSL_CA_KEY_PASSPHRASE" ]; then
+            PEM_PASS="$SSL_CA_KEY_PASSPHRASE"
+            PEM_PASS_1="$SSL_CA_KEY_PASSPHRASE"
+            CA_PASS="$SSL_CA_KEY_PASSPHRASE"
+            CA_PASS_1="$SSL_CA_KEY_PASSPHRASE"
+        fi
+        
         print_info "Signing server certificate (enter CA password)..."
         expect << EOF
 spawn ./easyrsa sign-req server RemoteLabz-VPNServer
 expect "Enter pass phrase for /root/EasyRSA/pki/private/ca.key:"
-send "$PEM_PASS\r"
+send "${PEM_PASS}\r"
 expect eof
 EOF
     fi
@@ -793,13 +919,12 @@ show_completion_message() {
     echo -e "${YELLOW}📋 Important Information:${NC}"
     echo ""
     echo -e "   ${GREEN}✓${NC} Installation directory: ${BLUE}$REMOTELABZ_PATH${NC}"
-    echo -e "   ${GREEN}✓${NC} MySQL root password: ${BLUE}RemoteLabz-2022\$${NC}"
-    echo -e "   ${GREEN}✓${NC} MySQL user: ${BLUE}user${NC}"
-    echo -e "   ${GREEN}✓${NC} MySQL password: ${BLUE}Mysql-Pa33wrd\$${NC}"
-    echo -e "   ${GREEN}✓${NC} MySQL database: ${BLUE}remotelabz${NC}"
-    echo -e "   ${GREEN}✓${NC} RabbitMQ user: ${BLUE}remotelabz-amqp${NC}"
-    echo -e "   ${GREEN}✓${NC} RabbitMQ password: ${BLUE}password-amqp${NC}"
-    echo -e "   ${GREEN}✓${NC} OpenVPN CA password: ${BLUE}R3mot3!abz-0penVPN-CA2020${NC} (if you used default)"
+    echo -e "   ${GREEN}✓${NC} MySQL user: ${BLUE}${MYSQL_DB_USER:-user}${NC}"
+    echo -e "   ${GREEN}✓${NC} MySQL password: ${BLUE}${MYSQL_DB_PASS:-Mysql-Pa33wrd\$}${NC}"
+    echo -e "   ${GREEN}✓${NC} MySQL database: ${BLUE}${MYSQL_DB_NAME:-remotelabz}${NC}"
+    echo -e "   ${GREEN}✓${NC} RabbitMQ user: ${BLUE}${RABBITMQ_USER:-remotelabz-amqp}${NC}"
+    echo -e "   ${GREEN}✓${NC} RabbitMQ password: ${BLUE}${RABBITMQ_PASS:-password-amqp}${NC}"
+    echo -e "   ${GREEN}✓${NC} OpenVPN CA password: ${BLUE}${SSL_CA_KEY_PASSPHRASE:-R3mot3!abz-0penVPN-CA2020}${NC}"
     echo ""
     
     echo -e "${YELLOW}📝 Next Steps:${NC}"
