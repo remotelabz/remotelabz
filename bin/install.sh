@@ -251,13 +251,13 @@ install_requirements() {
     print_info "Installing base packages..."
     apt install -y fail2ban exim4 apache2 curl gnupg zip unzip ntpsec openvpn qemu-utils openssl git expect
     
-    # Install PHP 8.4
-    print_info "Installing PHP 8.4..."
-    add-apt-repository ppa:ondrej/php -y
-    apt update
-    apt install -y php8.4 php8.4-common php8.4-gd php8.4-amqp php8.4-cli php8.4-opcache \
-        php8.4-mysql php8.4-xml php8.4-curl php8.4-zip php8.4-mbstring php8.4-intl \
-        php8.4-bcmath php8.4-ssh2
+    # Install PHP 8.5
+    print_info "Installing PHP 8.5..."
+    #add-apt-repository ppa:ondrej/php -y
+    #apt update
+    apt install -y php8.5 php8.5-common php8.5-gd php8.5-amqp php8.5-cli \
+        php8.5-mysql php8.5-xml php8.5-curl php8.5-zip php8.5-mbstring php8.5-intl \
+        php8.5-bcmath php8.5-ssh2
     
     # Install HAProxy
     print_info "Installing HAProxy..."
@@ -265,17 +265,17 @@ install_requirements() {
     
     # Install Apache modules
     print_info "Configuring Apache..."
-    apt install -y libapache2-mod-shib libapache2-mod-php8.4
+    apt install -y libapache2-mod-shib libapache2-mod-php8.5
     apt autoremove -y
-    a2dismod php7.4 php8.1 php8.2 php8.3 2>/dev/null || true
-    a2enmod php8.4
+    a2dismod php7.4 php8.1 php8.2 php8.3 php8.4 2>/dev/null || true
+    a2enmod php8.5
     a2enmod headers 
     a2enmod remoteip
     
     # Install Composer
     print_info "Installing Composer..."
     if [ ! -f /usr/local/bin/composer ]; then
-        php -r "copy('https://getcomposer.org/download/2.8.6/composer.phar', 'composer.phar');"
+        php -r "copy('https://getcomposer.org/download/2.10.2/composer.phar', 'composer.phar');"
         cp composer.phar /usr/local/bin/composer
         chmod a+x /usr/local/bin/composer
         rm composer.phar
@@ -321,7 +321,7 @@ EOF
     
     # Install and configure RabbitMQ
     print_info "Installing and configuring RabbitMQ..."
-    apt-get install -y rabbitmq-server php8.4-amqp
+    apt-get install -y rabbitmq-server php8.5-amqp
     systemctl start rabbitmq-server
     systemctl enable rabbitmq-server
     
