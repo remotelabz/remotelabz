@@ -661,17 +661,9 @@ EOF
 # ============================================================================
 configure_system() {
     print_step "STEP 3: Configuring System Parameters"
-    
-    print_info "Enabling IP forwarding..."
-    sysctl -w net.ipv4.ip_forward=1
-    
-    # Update both sysctl.conf and our custom file for compatibility
-    if grep -q "^net.ipv4.ip_forward=" /etc/sysctl.conf; then
-        sed -i 's/net.ipv4.ip_forward = 0/net.ipv4.ip_forward = 1/g' /etc/sysctl.conf
-        sed -i 's/#net.ipv4.ip_forward =/net.ipv4.ip_forward =/g' /etc/sysctl.conf
-    fi
-    
+
     # Ensure our custom file has the IP forwarding setting
+    print_info "Enabling IP forwarding..."
     set_sysctl_param "net.ipv4.ip_forward" "1"
     
     print_info "Setting system limits..."
