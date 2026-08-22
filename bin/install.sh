@@ -567,12 +567,12 @@ install_ssl() {
     # Download EasyRSA if not present (might be different instance than OpenVPN)
     if [ ! -d /home/${SUDO_USER:-root}/EasyRSA-3.0.8 ]; then
         print_info "Downloading EasyRSA for SSL certificates..."
-        wget -q https://github.com/OpenVPN/easy-rsa/releases/download/v3.0.8/EasyRSA-3.0.8.tgz 
-        tar -xzf EasyRSA-3.0.8.tgz
+        wget -q https://github.com/OpenVPN/easy-rsa/releases/download/v3.2.6/EasyRSA-3.2.6.tgz 
+        tar -xzf EasyRSA-3.2.6.tgz
     fi
     
     if [ ! -L /home/${SUDO_USER:-root}/EasyRSA ]; then 
-        ln -s EasyRSA-3.0.8 EasyRSA
+        ln -s EasyRSA-3.2.6 EasyRSA
     fi
     
     cd /home/${SUDO_USER:-root}/EasyRSA
@@ -625,7 +625,7 @@ EOF
         openssl req -x509 -nodes -days 365 -sha512 -newkey rsa:2048 \
             -keyout RemoteLabz-WebServer.key \
             -out RemoteLabz-WebServer.crt \
-            -config cert.cnf
+            -config /home/${SUDO_USER:-root}/remotelabz/config/apache/cert.cnf
     fi
     
     # Install certificates
