@@ -61,13 +61,15 @@ check_root() {
 # ============================================================================
 setup_env_file() {
     local BASE_ENV_FILE="${SCRIPT_DIR}/.env"
-    echo "$BASE_ENV_FILE"
+    #echo "$BASE_ENV_FILE"
     
     # Also check for .env.local in the script directory / source tree
     if [ ! -f "$ENV_FILE" ] && [ -f "${SCRIPT_DIR}/.env.local" ]; then
         ENV_FILE="${SCRIPT_DIR}/.env.local"
     fi
     
+    print_info "Your .env.local used is ${ENV_FILE}"
+
     # Create directory if it doesn't exist
     mkdir -p /opt/remotelabz
     
