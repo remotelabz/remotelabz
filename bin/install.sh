@@ -26,6 +26,14 @@ DEFAULT_CA_PASS="R3mot3!abz-0penVPN-CA2020"
 # Global variable to track which .env.local file was used
 ENV_FILE="${REMOTELABZ_PATH}/.env.local"
 
+# Global variables for MySQL, RabbitMQ, and SSL so they can be displayed in the completion message
+MYSQL_DB_USER=""
+MYSQL_DB_PASS=""
+MYSQL_DB_NAME=""
+RABBITMQ_USER=""
+RABBITMQ_PASS=""
+SSL_CA_KEY_PASSPHRASE=""
+
 # Functions for colored output
 print_info() {
     echo -e "${GREEN}🔥 $1${NC}"
@@ -312,10 +320,10 @@ install_requirements() {
     systemctl enable mysql
     
     # Load environment values for MySQL from the env file
-    local MYSQL_ROOT_PASS="R3mot3Lab$-2026\$"
-    local MYSQL_DB_USER="user"
-    local MYSQL_DB_PASS="Mysql-Pa33wrd\$"
-    local MYSQL_DB_NAME="remotelabz"
+    local MYSQL_ROOT_PASS="R3mot3Lab\$-2026\$"
+    MYSQL_DB_USER="user"
+    MYSQL_DB_PASS="Mysql-Pa33wrd\$"
+    MYSQL_DB_NAME="remotelabz"
 
     if [ -f "$ENV_FILE" ]; then
         local tmp_env
@@ -339,17 +347,18 @@ install_requirements() {
         rm -f "$tmp_env"
     fi
 
-    cat > /tmp/mysql_secure_sql.sql << EOF
-ALTER USER IF EXISTS 'root'@'localhost' IDENTIFIED BY '${MYSQL_ROOT_PASS}';
-DELETE FROM mysql.user WHERE User='';
-DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');
-DROP DATABASE IF EXISTS test;
-DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%';
-CREATE USER IF NOT EXISTS '${MYSQL_DB_USER}'@'localhost' IDENTIFIED WITH caching_sha2_password BY '${MYSQL_DB_PASS}';
-CREATE DATABASE IF NOT EXISTS ${MYSQL_DB_NAME};
-GRANT ALL ON ${MYSQL_DB_NAME}.* TO '${MYSQL_DB_USER}'@'localhost';
-FLUSH PRIVILEGES;
-EOF
+    # Write SQL file with proper escaping for special characters ($ signs)
+    {
+        echo "ALTER USER IF EXISTS 'root'@'localhost' IDENTIFIED BY '${MYSQL_ROOT_PASS}';"
+        echo "DELETE FROM mysql.user WHERE User='';"
+        echo "DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');"
+        echo "DROP DATABASE IF EXISTS test;"
+        echo "DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%';"
+        echo "CREATE USER IF NOT EXISTS '${MYSQL_DB_USER}'@'localhost' IDENTIFIED WITH caching_sha2_password BY '${MYSQL_DB_PASS}';"
+        echo "CREATE DATABASE IF NOT EXISTS ${MYSQL_DB_NAME};"
+        echo "GRANT ALL ON ${MYSQL_DB_NAME}.* TO '${MYSQL_DB_USER}'@'localhost';"
+        echo "FLUSH PRIVILEGES;"
+    } > /tmp/mysql_secure_sql.sql
 
     mysql -sfu root < /tmp/mysql_secure_sql.sql 2>/dev/null || mysql < /tmp/mysql_secure_sql.sql
     rm /tmp/mysql_secure_sql.sql
@@ -374,8 +383,8 @@ EOF
     systemctl start rabbitmq-server
     systemctl enable rabbitmq-server
     
-    local RABBITMQ_USER='remotelabz-amqp'
-    local RABBITMQ_PASS='password-amqp'
+    RABBITMQ_USER='remotelabz-amqp'
+    RABBITMQ_PASS='password-amqp'
 
     if [ -f "$ENV_FILE" ]; then
         local dsn
@@ -410,18 +419,18 @@ setup_openvpn() {
     
     cd ~
     
-    if [ ! -f EasyRSA-3.0.8.tgz ]; then
+    if [ ! -f EasyRSA-3.2.6.tgz ]; then
         print_info "Downloading EasyRSA..."
-        wget -q https://github.com/OpenVPN/easy-rsa/releases/download/v3.0.8/EasyRSA-3.0.8.tgz
+        wget -q https://github.com/OpenVPN/easy-rsa/releases/download/v3.0.8/EasyRSA-3.2.6.tgz
     fi
     
-    if [ ! -d EasyRSA-3.0.8 ]; then
+    if [ ! -d EasyRSA-3.2.6 ]; then
         print_info "Extracting EasyRSA..."
-        tar -xzf EasyRSA-3.0.8.tgz
+        tar -xzf EasyRSA-3.2.6.tgz
     fi
     
     if [ ! -L EasyRSA ]; then
-        ln -s EasyRSA-3.0.8 EasyRSA
+        ln -s EasyRSA-3.2.6 EasyRSA
     fi
     
     cd EasyRSA
@@ -450,7 +459,7 @@ EOF
     fi
 
     local DEFAULT_CA_PASSPHRASE="R3mot3!abz-0penVPN-CA2020"
-    local SSL_CA_KEY_PASSPHRASE=""
+    SSL_CA_KEY_PASSPHRASE=""
     local CA_PASS="" CA_PASS_1="" PEM_PASS="" PEM_PASS_1=""
 
     if [ -f "$ENV_FILE" ]; then
@@ -697,7 +706,7 @@ install_ssl() {
     cd /home/${SUDO_USER:-root}
     
     # Download EasyRSA if not present (might be different instance than OpenVPN)
-    if [ ! -d /home/${SUDO_USER:-root}/EasyRSA-3.0.8 ]; then
+    if [ ! -d /home/${SUDO_USER:-root}/EasyRSA-3.2.6 ]; then
         print_info "Downloading EasyRSA for SSL certificates..."
         wget -q https://github.com/OpenVPN/easy-rsa/releases/download/v3.2.6/EasyRSA-3.2.6.tgz 
         tar -xzf EasyRSA-3.2.6.tgz
