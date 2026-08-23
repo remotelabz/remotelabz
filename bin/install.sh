@@ -426,7 +426,7 @@ setup_openvpn() {
     
     if [ ! -d EasyRSA-3.2.6 ]; then
         print_info "Extracting EasyRSA..."
-        tar -xzf EasyRSA-3.2.6.tgz
+        tar --warning=no-unknown-keyword -xzf EasyRSA-3.2.6.tgz
     fi
     
     if [ ! -L EasyRSA ]; then
@@ -575,14 +575,24 @@ EOF
 
         expect << EOF
 spawn ./easyrsa build-ca
-expect "Enter New CA Key Passphrase:"
-send "${CA_PASS}\r"
-expect "Re-Enter New CA Key Passphrase:"
-send "${CA_PASS_1}\r"
-expect "Enter PEM pass phrase:"
-send "${PEM_PASS}\r"
-expect "Verifying - Enter PEM pass phrase:"
-send "${PEM_PASS_1}\r"
+expect {
+    "Enter New CA Key Passphrase:" {
+        send "${CA_PASS}\r"
+        exp_continue
+    }
+    "Re-Enter New CA Key Passphrase:" {
+        send "${CA_PASS_1}\r"
+        exp_continue
+    }
+    "Enter PEM pass phrase:" {
+        send "${PEM_PASS}\r"
+        exp_continue
+    }
+    "Verifying - Enter PEM pass phrase:" {
+        send "${PEM_PASS_1}\r"
+        exp_continue
+    }
+}
 expect eof
 EOF
     fi
