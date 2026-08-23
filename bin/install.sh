@@ -719,7 +719,7 @@ install_ssl() {
     if [ ! -d /home/${SUDO_USER:-root}/EasyRSA-3.2.6 ]; then
         print_info "Downloading EasyRSA for SSL certificates..."
         wget -q https://github.com/OpenVPN/easy-rsa/releases/download/v3.2.6/EasyRSA-3.2.6.tgz 
-        tar -xzf EasyRSA-3.2.6.tgz
+        tar --warning=no-unknown-keyword -xzf EasyRSA-3.2.6.tgz
     fi
     
     if [ ! -L /home/${SUDO_USER:-root}/EasyRSA ]; then 
