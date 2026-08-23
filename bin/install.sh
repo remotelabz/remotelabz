@@ -421,7 +421,7 @@ setup_openvpn() {
     
     if [ ! -f EasyRSA-3.2.6.tgz ]; then
         print_info "Downloading EasyRSA..."
-        wget -q https://github.com/OpenVPN/easy-rsa/releases/download/v3.0.8/EasyRSA-3.2.6.tgz
+        wget -q https://github.com/OpenVPN/easy-rsa/releases/download/v3.2.6/EasyRSA-3.2.6.tgz
     fi
     
     if [ ! -d EasyRSA-3.2.6 ]; then
