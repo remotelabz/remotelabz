@@ -574,27 +574,42 @@ EOF
         sed -i "s/RemoteLabz-VPNServer-CA/RemoteLabz-VPNServer/g" vars
 
         expect << EOF
+set timeout 30
 spawn ./easyrsa build-ca
 expect {
-    "Enter New CA Key Passphrase:" {
+    -re "Enter New CA Key Passphrase:" {
         send "${CA_PASS}\r"
         exp_continue
     }
-    "Re-Enter New CA Key Passphrase:" {
+    -re "(Re-Enter|Confirm) New CA Key Passphrase:" {
         send "${CA_PASS_1}\r"
         exp_continue
     }
-    "Enter PEM pass phrase:" {
+    -re "Enter PEM pass phrase:" {
         send "${PEM_PASS}\r"
         exp_continue
     }
-    "Verifying - Enter PEM pass phrase:" {
+    -re "Verifying - Enter PEM pass phrase:" {
         send "${PEM_PASS_1}\r"
         exp_continue
     }
+    eof {
+        # process finished on its own, nothing more to do
+    }
+    timeout {
+        puts "\n\[EasyRSA build-ca\] Timed out waiting for a prompt - aborting."
+        exit 1
+    }
 }
-expect eof
 EOF
+
+        # expect always exits 0 even if the spawned process failed, so
+        # explicitly verify the CA was actually created before moving on.
+        if [ ! -f pki/private/ca.key ] || [ ! -f pki/ca.crt ]; then
+            print_error "CA key/cert was not created (pki/private/ca.key or pki/ca.crt missing)."
+            print_error "build-ca likely failed or an expect prompt pattern didn't match your EasyRSA version's output."
+            exit 1
+        fi
     fi
 
     if [ ! -f pki/issued/RemoteLabz-VPNServer.crt ]; then
@@ -611,11 +626,28 @@ EOF
         
         print_info "Signing server certificate (enter CA password)..."
         expect << EOF
+set timeout 30
 spawn ./easyrsa sign-req server RemoteLabz-VPNServer
-expect "Enter pass phrase for /root/EasyRSA/pki/private/ca.key:"
-send "${PEM_PASS}\r"
-expect eof
+expect {
+    -re "Enter pass phrase for .*ca.key:" {
+        send "${PEM_PASS}\r"
+        exp_continue
+    }
+    eof {
+        # process finished on its own, nothing more to do
+    }
+    timeout {
+        puts "\n\[EasyRSA sign-req\] Timed out waiting for CA passphrase prompt - aborting."
+        exit 1
+    }
+}
 EOF
+
+        if [ ! -f pki/issued/RemoteLabz-VPNServer.crt ]; then
+            print_error "Server certificate was not signed (pki/issued/RemoteLabz-VPNServer.crt missing)."
+            print_error "Check that the CA passphrase used matches the one entered during build-ca."
+            exit 1
+        fi
     fi
     
     print_info "Installing OpenVPN certificates..."
