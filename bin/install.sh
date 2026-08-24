@@ -685,7 +685,6 @@ tls-auth ta.key 0
 server 10.8.0.0 255.255.255.0
 keepalive 5 30
 explicit-exit-notify 1
-persist-key
 persist-tun
 status /var/log/openvpn/openvpn-status.log
 log /var/log/openvpn/openvpn.log

@@ -1,0 +1,19 @@
+Créez /etc/fail2ban/filter.d/apache-login-flood.conf :
+[Definition]
+failregex = ^<HOST> -.*"POST /signin HTTP/\d\.\d" (200|302) \d+
+failregex = ^<HOST> -.*"(POST /signin|GET /login) HTTP/\d\.\d" \d{3} \d+
+ignoreregex =
+
+Dans /etc/fail2ban/jail.local
+[apache-login-flood]
+enabled  = true
+port     = http,https
+filter   = apache-login-flood
+logpath  = /var/log/apache2/remotelabz-ssl-access.log
+maxretry = 5
+findtime = 60
+bantime  = 3600
+bantime.increment = true
+bantime.factor = 2
+bantime.maxtime = 604800
+action   = %(action_mwl)s
