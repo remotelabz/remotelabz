@@ -938,11 +938,10 @@ final_configuration() {
 		mkdir -p /home/remotelabz/.ssh
 		chown remotelabz:remotelabz /home/remotelabz/.ssh
 
-        chmod 755 /home/remotelabz/
-		chmod 711 /home/remotelabz/.ssh
+        chmod 700 /home/remotelabz/
+		chmod 700 /home/remotelabz/.ssh
 
-		runuser -u remotelabz -- ssh-keygen -m PEM -t rsa -f /home/remotelabz/.ssh/myremotelabzfront -N ""
-        chmod 644 /home/remotelabz/.ssh/myremotelabzfront
+		ssh-keygen -m PEM -t rsa -f /opt/remotelabz/config/system/keys/myremotelabzfront -N ""
 	fi
 
     # Restart all services

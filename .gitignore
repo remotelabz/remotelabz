@@ -60,3 +60,5 @@ vagrant/provision_prod.sh
 
 /lib/remotelabz-message-bundle
 /lib/network-bundle
+config/system/keys/myremotelabzfront
+config/system/keys/myremotelabzfront.pub
