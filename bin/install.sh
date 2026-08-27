@@ -940,8 +940,9 @@ final_configuration() {
 
         chmod 700 /home/remotelabz/
 		chmod 700 /home/remotelabz/.ssh
-
+        mkdir /opt/remotelabz/config/system/keys
 		ssh-keygen -m PEM -t rsa -f /opt/remotelabz/config/system/keys/myremotelabzfront -N ""
+        chown www-data:www-data /opt/remotelabz/config/system/keys/*
 	fi
 
     # Restart all services
