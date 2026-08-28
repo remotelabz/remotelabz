@@ -767,6 +767,7 @@ class InstanceManager
         $newOS->setImageFilename($imageName);
         $newOS->setHypervisor($operatingSystem->getHypervisor());
         $newOS->setArch($operatingSystem->getArch());
+        $newOS->setFlavorDisk($operatingSystem->getFlavorDisk());
         $this->entityManager->persist($newOS);
         return $newOS;
     }
