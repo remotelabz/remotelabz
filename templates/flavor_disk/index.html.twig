@@ -52,7 +52,12 @@
                         </td>
                         <td>
                             <span class="badge bg-primary">
-                                <i class="fas fa-hdd me-1"></i> {{ flavorDisk.disk }} MB
+                                <i class="fas fa-hdd me-1"></i>
+                                {% if flavorDisk.disk >= 1000 %}
+                                    {{ (flavorDisk.disk / 1000)|number_format(0, '', '') }} GB
+                                {% else %}
+                                    {{ flavorDisk.disk }} MB
+                                {% endif %}
                             </span>
                         </td>
                         <td class="text-end">

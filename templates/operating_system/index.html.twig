@@ -160,7 +160,12 @@
                         <td>
                             {% if operatingSystem.flavorDisk %}
                                 <span class="badge bg-primary fs-6">
-                                    {{ operatingSystem.flavorDisk.name }} ({{ operatingSystem.flavorDisk.disk }}MB)
+                                    {{ operatingSystem.flavorDisk.name }} (
+                                    {% if operatingSystem.flavorDisk.disk >= 1000 %}
+                                        {{ (operatingSystem.flavorDisk.disk / 1000)|number_format(0, '', '') }} GB
+                                    {% else %}
+                                        {{ operatingSystem.flavorDisk.disk }} MB
+                                    {% endif %})
                                 </span>
                             {% else %}
                                 <span class="text-muted">-</span>

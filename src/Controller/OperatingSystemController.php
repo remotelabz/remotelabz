@@ -28,6 +28,8 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\String\Slugger\SluggerInterface;
 use Symfony\Component\Process\Process;
+use Symfony\Component\HttpClient\HttpClient;
+use Symfony\Component\HttpClient\Exception\TransportException;
 use FOS\RestBundle\Controller\Annotations\Get;
 use FOS\RestBundle\Controller\Annotations\Post;
 use FOS\RestBundle\Controller\Annotations\Put;
@@ -66,6 +68,7 @@ class OperatingSystemController extends Controller
     private Files2WorkerManager $Files2WorkerManager;
     private OvaManager $ovaManager;
     private $archRepository;
+    private $httpClient;
 
 
     public function __construct(LoggerInterface $logger,
@@ -84,6 +87,9 @@ class OperatingSystemController extends Controller
         $this->logger = $logger;
         $this->operatingSystemRepository = $operatingSystemRepository;
         $this->archRepository = $archRepository;
+        $this->httpClient = HttpClient::create([
+            'timeout' => 15,
+        ]);
         $this->serializer = $serializerInterface;
         $this->bus = $bus;
         $this->configWorkerRepository = $configWorkerRepository;
@@ -672,54 +678,43 @@ class OperatingSystemController extends Controller
     #[Route(path: '/admin/operating-systems/new_lxc', name: 'new_lxc_device')]
     public function newLxcAction(Request $request, UrlGeneratorInterface $router)
     {
-        $file=file_get_contents("https://images.linuxcontainers.org/images");
-        $dom = new \DOMDocument();
-        $dom->loadHtml($file);
-        $links = $dom->getElementsByTagName('a');
-        $os = [];
-        foreach($links as $link){
-            if($link->nodeValue !== "../") {
-                array_push($os, ucfirst(substr($link->nodeValue, 0, -1)));
+        if ($request->getPathInfo() === '/api/operating-systems/lxc_params') {
+            $data = json_decode($request->getContent(), true);
+            $this->logger->debug("[OperatingSystemController:newLxcAction]::data in request ",$data);
+            if (!isset($data['version']) && isset($data['os'])) {
+                $html = $this->fetchRemoteHtml("https://images.linuxcontainers.org/images/". $data['os']);
+                if (empty($html)) {
+                    return $this->json(['error' => 'Failed to fetch versions for OS'], 502, [], []);
+                }
+                $dom = new \DOMDocument();
+                @$dom->loadHtml($html);
+                $links = $dom->getElementsByTagName('a');
+                $versions = [];
+                foreach($links as $link){
+                    if($link->nodeValue !== "../") {
+                        array_push($versions, substr($link->nodeValue, 0, -1));
+                    }
+                }
+                return $this->json($versions, 200, [], []);
             }
+            if (!isset($data['date']) && isset($data['version'])) {
+                $html = $this->fetchRemoteHtml("https://images.linuxcontainers.org/images/". $data['os'].$data['version']."amd64/default/");
+                $dom = new \DOMDocument();
+                @$dom->loadHtml($html);
+                $links = $dom->getElementsByTagName('a');
+                $updates = [];
+                foreach($links as $link){
+                    if($link->nodeValue !== "../") {
+                        array_push($updates, $link->nodeValue);
+                    }
+                }
+                $update = end($updates);
+                return $this->json($update, 200, [], []);
+            }
+            return $this->json(['error' => 'Invalid request parameters'], 400, [], []);
         }
 
-        $os_json = json_encode($os);
-
-        if ('json' === $request->getRequestFormat()) {
-            if ($request->get("_route") == "api_new_lxc_device_params") {
-                $data = json_decode($request->getContent(), true);
-                if (!isset($data['version']) && isset($data['os'])) {
-                    $fileVersion = file_get_contents("https://images.linuxcontainers.org/images/". $data['os']);
-                    $dom = new \DOMDocument();
-                    $dom->loadHtml($fileVersion);
-                    $links = $dom->getElementsByTagName('a');
-                    $versions = [];
-                    foreach($links as $link){
-                        if($link->nodeValue !== "../") {
-                            array_push($versions, substr($link->nodeValue, 0, -1));
-                        }
-                    }
-                    return $this->json($versions, 200, [], []);
-                }
-                if (!isset($data['date']) && isset($data['version'])) {
-                    $fileVersion = file_get_contents("https://images.linuxcontainers.org/images/". $data['os'].$data['version']."amd64/default/");
-                    $dom = new \DOMDocument();
-                    $dom->loadHtml($fileVersion);
-                    $links = $dom->getElementsByTagName('a');
-                    $updates = [];
-                    foreach($links as $link){
-                        if($link->nodeValue !== "../") {
-                            array_push($updates, $link->nodeValue);
-                        }
-                    }
-                    $update = end($updates);
-                    return $this->json($update, 200, [], []);
-                }
-            }
-            //return $this->json($deviceForm, 200, [], ['api_get_device']);
-        }
-
-        if ($request->get("_route") == "api_new_lxc_device") {
+        if ($request->getPathInfo() === '/api/operating-systems/lxc') {
             $data = json_decode($request->getContent(), true);
             $this->logger->debug("[OperatingSystemController:newLxcAction]::data in request ",$data);
             $hypervisor = $this->hypervisorRepository->findByName('lxc');
@@ -754,6 +749,24 @@ class OperatingSystemController extends Controller
 
             return $this->json($values, 200, [], []);
         }
+
+        $html = $this->fetchRemoteHtml("https://images.linuxcontainers.org/images");
+        if (empty($html)) {
+            $this->logger->warning("[OperatingSystemController:newLxcAction]::Could not fetch OS list from images.linuxcontainers.org");
+            $os = [];
+        } else {
+            $dom = new \DOMDocument();
+            @$dom->loadHtml($html);
+            $links = $dom->getElementsByTagName('a');
+            $os = [];
+            foreach($links as $link){
+                if($link->nodeValue !== "../") {
+                    array_push($os, ucfirst(substr($link->nodeValue, 0, -1)));
+                }
+            }
+        }
+
+        $os_json = json_encode($os);
 
         return $this->render('operating_system/newLxc.html.twig', [
             'os' => $os,
@@ -1199,6 +1212,19 @@ class OperatingSystemController extends Controller
             'operatingSystem' => $os,
             'fullPath' => $os->getFullPath()
         ], Response::HTTP_OK, [], ['groups' => ['api_get_operating_system']]);
+    }
+
+    private function fetchRemoteHtml(string $url): string
+    {
+        try {
+            $response = $this->httpClient->request('GET', $url, [
+                'max_redirects' => 2,
+            ]);
+            return $response->getContent();
+        } catch (TransportException $e) {
+            $this->logger->error("[OperatingSystemController:fetchRemoteHtml] Failed to fetch {$url}: " . $e->getMessage());
+            return '';
+        }
     }
 
 
