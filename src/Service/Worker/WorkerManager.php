@@ -117,7 +117,7 @@ class WorkerManager
         $usages = $this->checkWorkersLightAction();
         
         foreach ($usages as $usage) {
-            $val=$this->loadBalancing($usage['memory'], $usage['disk'], $usage['cpu'], $memory, $usage['memory_total'],$usage['worker'], $usage['lxcfs']);
+            $val=$this->loadBalancing($usage['memory'], $usage['disk']['rlz-vg'], $usage['cpu'], $memory, $usage['memory_total'],$usage['worker'], $usage['lxcfs']);
             $this->logger->debug("[WorkerManager:getFreeWorker]::Score for worker ".$usage["worker"]." is ".$val);
             if ($val>$min) {
                 $min=$val;
