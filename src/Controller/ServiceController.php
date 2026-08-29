@@ -404,7 +404,7 @@ class ServiceController extends Controller
         
             $usage = $this->workerManager->checkWorkersAction($doctrine);
        
-        $this->logger->debug("worker usage:",$usage);
+        $this->logger->debug("[ServiceController:ResourceAction]::Worker usage:",$usage);
 
         return $this->render('service/resources.html.twig', [
             'value' => $usage

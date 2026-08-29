@@ -47,14 +47,16 @@
                         </p>
                     </div>
                 
-                
+                {% for vg_name, usage in worker['disk'] %}
                     <div class="card-body d-flex flex-column">
-                        <div class="stats-circle disk-circle"></div>
-                        <p class="card-text flex-grow-1 text-center" id="disk" name="disk" style="display: none;">
-                            {% if worker['disk'] is null %} NA {% else %} {{ worker['disk'] }}% {% endif %}
+                        <div class="stats-circle disk-circle" data-vg="{{ vg_name }}"></div>
+                        <p class="card-text flex-grow-1 text-center" id="disk-{{ vg_name }}" name="disk" style="display: none;">
+                            {% if usage is null %} NA {% else %} {{ usage }}% {% endif %}
                         </p>
                     </div>
-                
+                {% else %}
+                    <p class="card-text text-center">Aucune donnée disque</p>
+                {% endfor %}
                 
                     <div class="card-body d-flex flex-column">
                         <div class="stats-circle lxcfs-circle"></div>

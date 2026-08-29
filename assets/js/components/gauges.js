@@ -211,24 +211,24 @@ function drawWorkerGauges() {
     disks.forEach((disk) => {
         const diskText = disk.textContent.trim();
         const match = diskText.match(/(\d+)/);
-        
+        const cardBody = disk.closest('.card-body');
+        const statsCircle = cardBody.querySelector('.stats-circle');
+        const vgName = statsCircle.getAttribute('data-vg') || 'disk';
+        const label = vgName.toUpperCase();
+
         if (match) {
             const value = parseInt(match[1]);
-            const cardBody = disk.closest('.card-body');
-            const statsCircle = cardBody.querySelector('.stats-circle');
-            
+
             statsCircle.innerHTML = '';
-            const gauge = createGauge('disk', value, 'Disk');
+            const gauge = createGauge('disk', value, label);
             const svg = gauge.querySelector('.gauge-svg');
-            const label = gauge.querySelector('.gauge-label');
-            
+            const gaugeLabel = gauge.querySelector('.gauge-label');
+
             statsCircle.appendChild(svg);
-            statsCircle.appendChild(label);
+            statsCircle.appendChild(gaugeLabel);
             statsCircle.classList.add('gauge-container');
         } else {
-            const cardBody = disk.closest('.card-body');
-            const statsCircle = cardBody.querySelector('.stats-circle');
-            statsCircle.innerHTML = '<div class="gauge-label"><div class="gauge-title">Disk</div><div class="gauge-value">NA</div></div>';
+            statsCircle.innerHTML = `<div class="gauge-label"><div class="gauge-title">${label}</div><div class="gauge-value">NA</div></div>`;
             statsCircle.classList.add('gauge-container');
         }
     });
