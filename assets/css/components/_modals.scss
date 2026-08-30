@@ -21,3 +21,9 @@
         }
     }
 }
+
+.import-user-modal .modal-dialog,
+.import-group-user-modal .modal-dialog {
+    max-width: 800px;
+    width: 90%;
+}
