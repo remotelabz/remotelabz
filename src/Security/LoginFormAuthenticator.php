@@ -108,6 +108,12 @@ class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
 
         $request->getSession()->set(Security::LAST_USERNAME, $email);
 
+        $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $email]);
+
+        if ($user && !$user->isEnabled()) {
+            throw new CustomUserMessageAuthenticationException('Your account has been blocked.');
+        }
+
         return new Passport(
             new UserBadge($email),
             new PasswordCredentials($request->request->get('password', '')),
