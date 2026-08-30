@@ -94,7 +94,6 @@ class UserController extends Controller
         $this->entityManager = $entityManager;
     }
 
-    
 	#[Get('/api/users', name: 'api_users')]
 	#[IsGranted("ROLE_TEACHER", message: "Access denied.")]
     #[Route(path: '/admin/users', name: 'users', methods: ['GET', 'POST'])]
@@ -529,7 +528,13 @@ class UserController extends Controller
         	rewind($filehandler);
     	}
 
-        if (($data = fgetcsv($filehandler, 1000, ",")) !== FALSE) {
+        // Détecter le séparateur du CSV (, ou ;)
+        rewind($filehandler);
+        $firstLine = fgets($filehandler, 4096);
+        rewind($filehandler);
+        $delimiter = str_contains($firstLine, ';') ? ';' : ',';
+
+        if (($data = fgetcsv($filehandler, 1000, $delimiter)) !== FALSE) {
             // Vérifier que les colonnes obligatoires sont présentes
             $requiredColumns = ['firstname', 'lastname', 'email'];
             $dataLower = array_map('strtolower', $data);
@@ -546,14 +551,14 @@ class UserController extends Controller
             if ($hasAllRequired) {
                 $csv = array();
                 $csv[] = $data; 
-                while (($rowValues = fgetcsv($filehandler, 1000, ",")) !== FALSE) {
+                while (($rowValues = fgetcsv($filehandler, 1000, $delimiter)) !== FALSE) {
                     $csv[] = $rowValues;
                 }
                 $headers = $csv[0];
                 array_walk($csv, function(&$a) use ($csv) {
                     $a = array_combine($csv[0], $a);
                 });
-                $this->logger->debug("CSV file parsed successfully", $csv);
+                $this->logger->debug("[UserController:createUserFromCSV]::CSV file parsed successfully", $csv);
             } else {
                 $this->addFlash('danger', "File format is incorrect. Required columns: firstname, lastname, email");
                 $error = true;

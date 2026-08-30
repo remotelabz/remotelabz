@@ -14,5 +14,13 @@
             background-color: lighten(map-get($theme-colors, "dark-lighter"), 7.5%);
         }
 
+        &.badge-info,
+        &.badge-success,
+        &.badge-danger,
+        &.badge-warning,
+        &.badge-secondary,
+        &.badge-primary {
+            color: #fff;
+        }
     }
 }

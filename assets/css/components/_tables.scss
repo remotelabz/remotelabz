@@ -35,28 +35,48 @@
 
         th, td {
             border-color: lighten(map-get($theme-colors, "dark-lighter"), 7.5%);
+            color: #f0f0f0;
         }
 
         thead th {
             border-color: lighten(map-get($theme-colors, "dark-lighter"), 7.5%);
+            color: #f0f0f0;
         }
     
         tbody > tr:nth-of-type(odd) {
-            background-color: map-get($colors, "dark-lighter");
+            background-color: map-get($theme-colors, "dark-lighter");
             color: #f0f0f0
         }
 
         tbody > tr:nth-of-type(even) {
-              background-color: map-get($colors, "dark-lightest");
+              background-color: map-get($theme-colors, "dark-lightest");
               color: #f0f0f0
         }
         
         tbody > tr:nth-of-type(odd):hover {
-            color: #000
+            color: #f0f0f0
         }
 
         tbody > tr:nth-of-type(even):hover {
-            color: #000
-        }   
+            color: #f0f0f0
+        }
+        
+        // Bootstrap .thead-dark class in dark mode
+        &.thead-dark th,
+        thead.thead-dark th {
+            background-color: lighten(map-get($theme-colors, "dark-lighter"), 5%);
+            color: #f0f0f0;
+        }
+        
+        // Ensure table-striped text is always readable
+        &.table-striped > tbody > tr:nth-of-type(odd) {
+            background-color: map-get($theme-colors, "dark-lighter");
+            color: #f0f0f0;
+        }
+        
+        &.table-striped > tbody > tr:nth-of-type(even) {
+            background-color: map-get($theme-colors, "dark-lightest");
+            color: #f0f0f0;
+        }
     }    
 }

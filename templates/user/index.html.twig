@@ -233,20 +233,20 @@
                                 <i class="fa fa-caret-down"></i>
                             </a>
                             <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownUserSettings" style="position: absolute; will-change: transform;">
-                            <a class="text-warning" href="{{ path('toggle_user', {id: user.id}) }}">
+                            <a class="dropdown-item text-warning" href="{{ path('toggle_user', {id: user.id}) }}">
                                 {% if user.enabled %}
-                                <button class="btn btn-warning">Block</button>
+                                <i class="fa fa-ban"></i> Block
                                 {% else %}
-                                Unblock
-                            {% endif %}
+                                <i class="fa fa-check"></i> Unblock
+                                {% endif %}
                             </a>
-                            <a class="text-info ml-2" href="/?_switch_user={{user.email}}">
-                                <button class="btn btn-info">Impersonate</button>
+                            <a class="dropdown-item text-info" href="/?_switch_user={{user.email}}">
+                                <i class="fa fa-user-secret"></i> Impersonate
                             </a>
                             <div class="dropdown-divider"></div>
-                            <button class="btn btn-danger" data-target={{'.delete-user-modal'~loop.index}} data-toggle="modal" type="button">
-                               {{ 'Delete'|trans }}
-                            </button>                         
+                            <button class="dropdown-item text-danger" data-target="{{'.delete-user-modal'~loop.index}}" data-toggle="modal" type="button">
+                                <i class="fa fa-trash"></i> Delete
+                            </button>
                             </div>
                             {% endif %}
                         </td>

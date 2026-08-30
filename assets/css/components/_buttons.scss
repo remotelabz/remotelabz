@@ -271,4 +271,92 @@
             border: none;
         }
     }
+
+    .user-action-dropdown {
+        .dropdown-menu {
+            position: absolute;
+            min-width: 150px;
+            max-width: none;
+            background-color: #222;
+            border: 1px solid #444;
+            border-radius: 4px;
+            padding: 4px 0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+
+            .dropdown-item {
+                color: #ddd;
+                padding: 8px 14px;
+                font-size: 13px;
+                border: none;
+                background: none;
+                width: 100%;
+                text-align: left;
+                display: block;
+
+                &:hover {
+                    background-color: rgba(255, 255, 255, 0.1);
+                    color: #fff;
+                }
+
+                i {
+                    margin-right: 6px;
+                    width: 14px;
+                    text-align: center;
+                }
+
+                &.text-warning i { color: #f0ad4e; }
+                &.text-info i { color: #5bc0de; }
+                &.text-danger i { color: #d9534f; }
+            }
+
+            .dropdown-divider {
+                border-top-color: #444;
+                margin: 4px 0;
+            }
+        }
+    }
+}
+
+.user-action-dropdown {
+    .dropdown-menu {
+        position: absolute;
+        min-width: 150px;
+        max-width: none;
+        background-color: $white;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 4px 0;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+
+        .dropdown-item {
+            color: #333;
+            padding: 8px 14px;
+            font-size: 13px;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            display: block;
+
+            &:hover {
+                background-color: rgba(0, 0, 0, 0.06);
+                color: #111;
+            }
+
+            i {
+                margin-right: 6px;
+                width: 14px;
+                text-align: center;
+            }
+
+            &.text-warning i { color: #dc3545; }
+            &.text-info i { color: #17a2b8; }
+            &.text-danger i { color: #dc3545; }
+        }
+
+        .dropdown-divider {
+            border-top-color: #ddd;
+            margin: 4px 0;
+        }
+    }
 }
