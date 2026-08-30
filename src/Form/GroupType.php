@@ -30,9 +30,9 @@ class GroupType extends AbstractType
                 'attr' => [
                     'placeholder' => 'Group-L2S3',
                     'pattern' => '[a-zA-Z0-9_\.][a-zA-Z0-9_\-\.]*[a-zA-Z0-9_\-]|[a-zA-Z0-9_]',
-                    'title' => 'Please choose a group URL with no special characters'
+                    'title' => 'Please choose a slug with no special characters'
                 ],
-                'label' => 'Group URL'
+                'label' => 'Slug'
             ])
             ->add('description', TextareaType::class, [
                 'label' => 'Group description (optional)',

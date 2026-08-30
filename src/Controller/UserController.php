@@ -704,33 +704,68 @@ class UserController extends Controller
      */
     private function manageUserGroup($user, $group)
     {
-        // Gestion des groupes (inchangée)
         if ($group != "") {
-            if (!$group_wanted = $this->groupRepository->findOneByName($group)) {
-                $this->logger->info("Creation of " . $group . " group by " . $this->getUser()->getName());
-                $group_wanted = new Group();
-                $group_wanted->setName($group);
-                $group_wanted->setVisibility(Group::VISIBILITY_PRIVATE);
-                $slug_wanted = str_replace(" ", "-", $group);
+            // Normaliser le slug exactement comme le frontend le fait (groups.js)
+            $slug = $this->normalizeSlug($group);
 
-                $slug_list = $this->groupRepository->findOneBySlug($slug_wanted);
+            // Chercher le groupe par slug et non par nom
+            if (!$group_wanted = $this->groupRepository->findOneBySlug($slug)) {
+                $this->logger->info("Creation of " . $group . " group by " . $this->getUser()->getName() . " with slug " . $slug);
+                $group_wanted = new Group();
+                $group_wanted->setName($slug);
+                $group_wanted->setVisibility(Group::VISIBILITY_PRIVATE);
+
+                // Auto-incrémenter le slug si déjà pris
+                $slug_list = $this->groupRepository->findOneBySlug($slug);
                 $i = 1;
                 while ($slug_list) {
-                    if ($slug_wanted == $slug_list->getSlug()) {
-                        $this->logger->debug("The slug " . $slug_wanted . " exists");
-                        $slug_wanted = $slug_wanted . $i;
-                        $i++;
-                    }
-                    $slug_list = $this->groupRepository->findOneBySlug($slug_wanted);
+                    $this->logger->debug("The slug " . $slug . $i . " exists");
+                    $slug = $slug . $i;
+                    $i++;
+                    $slug_list = $this->groupRepository->findOneBySlug($slug);
                 }
-                $this->logger->debug("Creation of " . $group . " with slug " . $slug_wanted);
-                $group_wanted->setSlug($slug_wanted);
+                $group_wanted->setSlug($slug);
                 $this->entityManager->persist($group_wanted);
+                $this->entityManager->flush();
                 $group_wanted->addUser($this->getUser(), Group::ROLE_OWNER);
             }
-            if (!$user->isMemberOf($group_wanted))
+
+            if (!$user->isMemberOf($group_wanted)) {
                 $group_wanted->addUser($user);
+                $this->entityManager->flush();
+            }
         }
+    }
+
+    /**
+     * Normalize a group name into a URL-safe slug, matching the behavior of groups.js
+     */
+    private function normalizeSlug(string $text): string
+    {
+        // Remove accents
+        $accentLetters = 'ÀÁÂÃÄÅàáâãäåÒÓÔÕÕÖØòóôõöøÈÉÊËèéêëÇçÐÌÍÎÏìíîïÙÚÛÜùúûüÑñŠšŸÿýŽž';
+        $plainLetters = "AAAAAAaaaaaaOOOOOOOooooooEEEEeeeeeCcDIIIIiiiiUUUUuuuuNnSsYyyZz";
+        $normalized = '';
+        $len = strlen($text);
+        for ($i = 0; $i < $len; $i++) {
+            $pos = strpos($accentLetters, $text[$i]);
+            if ($pos !== false) {
+                $normalized .= $plainLetters[$pos];
+            } else {
+                $normalized .= $text[$i];
+            }
+        }
+
+        // Remove special characters (keep word chars and whitespace)
+        $normalized = preg_replace('/[^\w\s]/', '', $normalized);
+
+        // Replace spaces with hyphens
+        $normalized = preg_replace('/\s+/', '-', $normalized);
+
+        // Lowercase
+        $normalized = strtolower($normalized);
+
+        return $normalized;
     }
 
     /**
