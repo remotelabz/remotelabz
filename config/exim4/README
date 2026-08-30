@@ -1,0 +1,17 @@
+You must have a real email at IONOS
+
+In exim4.conf.template, change in line 1855 "your_email"
+In passwd.client, change "your_email" and replace XXXXXXXXX by your password
+In update-exim4.conf.conf, change in line 22 "you_domain"
+Copy this 3 files in /etc/exim4 directory
+Execute these commands :
+sudo chown root:root /etc/exim4 -R
+sudo chown root:Debian-exim /etc/exim4/passwd.client
+sudo update-exim4.conf
+sudo systemctl restart exim4
+
+Some useful commands :
+- To force to send the mail in the queue : 
+sudo exim -qff
+- To delete all mail in the queue
+sudo exim -bp | awk '{print $3}' | grep '^[0-9A-Za-z]\{6,20\}-' | xargs -r sudo exim -Mrm
