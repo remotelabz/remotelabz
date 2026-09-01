@@ -77,7 +77,7 @@ class ScheduledActionsRunCommand extends Command
             }
             $actions = [$action];
         } else {
-            $actions = $this->scheduledActionRepository->findDue();
+            $actions = $this->scheduledActionRepository->findDue(new \DateTimeImmutable());
         }
 
         if (empty($actions)) {
