@@ -47,6 +47,8 @@ use Knp\Component\Pager\PaginatorInterface;
 use App\Service\Files2WorkerManager;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use App\Service\OvaManager;
+use Doctrine\Common\Collections\Order;
+
 
 
 
@@ -1042,7 +1044,7 @@ class OperatingSystemController extends Controller
             $criteria->andWhere(Criteria::expr()->eq('arch', $architecture));
         }
 
-        $criteria->orderBy(['name' => Criteria::ASC]);
+        $criteria->orderBy(['name' => Order::Ascending]);
 
         return $criteria;
     }

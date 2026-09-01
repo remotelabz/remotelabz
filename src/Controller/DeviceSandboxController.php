@@ -18,6 +18,8 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Doctrine\Common\Collections\Order;
+
 
 class DeviceSandboxController extends Controller
 {
@@ -49,7 +51,7 @@ class DeviceSandboxController extends Controller
             ->andWhere(Criteria::expr()->neq('type', 'switch'))
             ->andWhere(Criteria::expr()->eq('virtuality', true))
             ->orderBy([
-                'name' => Criteria::ASC
+                'name' => Order::Ascending
             ]);
 
         $devices = $this->deviceRepository->matching($criteria);

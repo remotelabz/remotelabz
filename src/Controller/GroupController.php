@@ -41,6 +41,8 @@ use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Security\Http\Attribute\Security;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\Common\Collections\Order;
+
 
 class GroupController extends Controller
 {
@@ -91,7 +93,7 @@ class GroupController extends Controller
 
         $criteria
             ->orderBy([
-                'name' => Criteria::ASC,
+                'name' => Order::Ascending,
             ])
         ;
 
@@ -132,7 +134,7 @@ class GroupController extends Controller
 
         $criteria
             ->orderBy([
-                'name' => Criteria::ASC
+                'name' => Order::Ascending
             ]);
 
         /** @param Group $value */

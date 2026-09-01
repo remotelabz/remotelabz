@@ -20,6 +20,8 @@ use FOS\RestBundle\Controller\Annotations\Route as RestRoute;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\Common\Collections\Order;
+
 
 class FlavorController extends Controller
 {
@@ -42,7 +44,7 @@ class FlavorController extends Controller
         $criteria = Criteria::create()
             ->where(Criteria::expr()->contains('name', $search))
             ->orderBy([
-                'name' => Criteria::ASC
+                'name' => Order::Ascending
             ]);
 
         $flavors = $this->flavorRepository->matching($criteria)->getValues();

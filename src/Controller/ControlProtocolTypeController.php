@@ -26,6 +26,8 @@ use Symfony\Component\Messenger\MessageBusInterface;
 use Remotelabz\Message\Message\InstanceActionMessage;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\Common\Collections\Order;
+
 
 class ControlProtocolTypeController extends Controller
 {
@@ -61,7 +63,7 @@ class ControlProtocolTypeController extends Controller
         $criteria = Criteria::create()
             ->where(Criteria::expr()->contains('name', $search))
             ->orderBy([
-                'name' => Criteria::ASC
+                'name' => Order::Ascending
             ]);
 
         $controlProtocolType = $this->controlProtocolTypeRepository->matching($criteria)->getValues();

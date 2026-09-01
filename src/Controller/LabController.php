@@ -77,6 +77,8 @@ use Symfony\Component\Filesystem\Exception\IOExceptionInterface;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\Common\Collections\Order;
+
 
 class LabController extends Controller
 {
@@ -265,7 +267,7 @@ class LabController extends Controller
 
         $criteria
             ->orderBy([
-                'name' => Criteria::ASC
+                'name' => Order::Ascending
             ])
         ;
 

@@ -26,6 +26,8 @@ use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\Common\Collections\Order;
+
 
 class NetworkInterfaceController extends Controller
 {
@@ -53,7 +55,7 @@ class NetworkInterfaceController extends Controller
                 ->where(Criteria::expr()->contains('name', $search))
                 ->andWhere(Criteria::expr()->eq('isTemplate', $template))
                 ->orderBy([
-                    'name' => Criteria::ASC
+                    'name' => Order::Ascending
                 ]);
 
             $networkInterfaces = $this->networkInterfaceRepository->matching($criteria);

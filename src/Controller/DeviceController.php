@@ -56,6 +56,8 @@ use function Symfony\Component\String\u;
 use JMS\Serializer\SerializationContext;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
+use Doctrine\Common\Collections\Order;
+
 
 class DeviceController extends Controller
 {
@@ -126,7 +128,7 @@ class DeviceController extends Controller
             ->where(Criteria::expr()->contains('name', $search))
             ->andWhere(Criteria::expr()->eq('isTemplate', $template))
             ->orderBy([
-                'name' => Criteria::ASC
+                'name' => Order::Ascending
             ]);
 
         $allDevices = $this->deviceRepository->matching($criteria);
