@@ -86,11 +86,11 @@
                 </div>
                 <hr>
                 <p class="footer-text text-left">
-                Version {{ version }} 
-                {% if commit and commit != 'unknown' %}
+                Version {{ version }}
+                {% if app.environment == 'dev' and commit and commit != 'unknown' %}
                     ( <a href="{{ commit_url }}" target="_blank" class="text-muted">commit: {{ commit }}</a>, 
                     <a href="{{ github_url}}/tree/{{branch }}" target="_blank" class="text-muted">branch: {{ branch }}</a> )
-                {% else %}
+                {% elseif app.environment == 'dev' %}
                     ( <a href="{{ github_url }}" target="_blank" class="text-muted">RemoteLabz on Github </a> )
                 {% endif %}
                 </p>
