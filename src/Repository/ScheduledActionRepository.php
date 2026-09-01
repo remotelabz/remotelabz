@@ -22,7 +22,7 @@ class ScheduledActionRepository extends ServiceEntityRepository
      *
      * @return ScheduledAction[]
      */
-    public function findDue(\DateTimeInterface $now = null): array
+    public function findDue(?\DateTimeInterface $now): array
     {
         $now ??= new \DateTimeImmutable();
 

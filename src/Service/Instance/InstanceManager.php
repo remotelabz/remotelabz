@@ -79,8 +79,12 @@ class InstanceManager
     protected $rootDirectory;
     protected $proxyManager;
     protected $OperatingSystemRepository;
-    protected $DeviceRepository;
-    protected $configWorkerRepository;
+    protected DeviceRepository $deviceRepository;
+    protected DeviceRepository $DeviceRepository;
+    protected TextObjectRepository $TextObjectRepository;
+    protected ConfigWorkerRepository $configWorkerRepository;
+    protected WorkerManager $workerManager;
+    protected PictureRepository $PictureRepository;
     protected $bannerManager;
     protected $workerSerializationGroups = [
         'worker'

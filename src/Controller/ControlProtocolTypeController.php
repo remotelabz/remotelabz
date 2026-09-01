@@ -38,6 +38,7 @@ class ControlProtocolTypeController extends Controller
     private $logger;
     private $serializer;
     protected $bus;
+    private EntityManagerInterface $entityManager;
 
     public function __construct(LoggerInterface $logger,
         ControlProtocolTypeRepository $controlProtocolTypeRepository,

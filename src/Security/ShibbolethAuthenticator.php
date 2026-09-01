@@ -68,8 +68,8 @@ class ShibbolethAuthenticator extends AbstractAuthenticator
         $idpUrl,
         $remoteUserVar,
         TokenStorageInterface $tokenStorage,
-        EntityManagerInterface $entityManager = null,
-        UserPasswordHasherInterface $passwordHasher = null,
+        ?EntityManagerInterface $entityManager,
+        ?UserPasswordHasherInterface $passwordHasher,
         JWTTokenManagerInterface $JWTManager,
         LoggerInterface $logger,
         ParameterBagInterface $params,
@@ -335,7 +335,7 @@ class ShibbolethAuthenticator extends AbstractAuthenticator
      *
      * @return Response
      */
-    public function start(Request $request, AuthenticationException $authException = null)
+    public function start(Request $request, ?AuthenticationException $authException = null)
     {
         if (in_array('application/json', $request->getAcceptableContentTypes())) {
             return new JsonResponse(array(

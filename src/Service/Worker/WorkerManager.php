@@ -16,6 +16,10 @@ class WorkerManager
     private $publicAddress;
     private $workerPort;
     private $workerServer;
+    private $logger;
+    private $client;
+    private $configWorkerRepository;
+    private $doctrine;
 
     public function __construct(
         string $publicAddress,
