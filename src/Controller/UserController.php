@@ -326,6 +326,18 @@ class UserController extends Controller
 
             $default_group->addUser($user);
 
+            $email = strtolower($user->getEmail());
+            $entityManager = $this->entityManager;
+            $groups = $this->groupRepository->findAll();
+            foreach ($groups as $group) {
+                if ($group->isAwaiting($email)) {
+                    $group->removeAwaiting($email);
+                    $group->addUser($user);
+                    $this->logger->info("User ".$user->getEmail()." added to group ".$group->getName()." from awaiting list");
+                    $entityManager->persist($group);
+                }                
+            }
+
             $password = $userForm->get('password')->getData();
             $confirmPassword = $userForm->get('confirmPassword')->getData();
             if (!$password) {

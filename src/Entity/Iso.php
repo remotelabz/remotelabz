@@ -10,6 +10,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 use JMS\Serializer\Annotation as Serializer;
 use App\Entity\Interface\DirectoryAwareInterface;
 use App\Entity\Trait\DirectoryAwareTrait;
+use App\Entity\Directory;
 /**
  * Represents an iso image disk 
  *
@@ -50,6 +51,11 @@ class Iso implements DirectoryAwareInterface
     #[Serializer\Groups(['sandbox','worker'])]
     private $arch = null;
     
+    #[ORM\ManyToOne(targetEntity: Directory::class, inversedBy: 'isos')]
+    #[ORM\JoinColumn(name: 'directory_id', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
+    #[Serializer\Groups(['api_directory_aware'])]
+    private ?Directory $directory = null;
+
     /**
      * @var Collection<int, Device>
      */
@@ -71,10 +77,11 @@ class Iso implements DirectoryAwareInterface
         return $this->name;
     }
 
-    public function setName(?string $name): void
+    public function setName(?string $name): self
     {
         $this->name = $name;
 
+        return $this;
     }
 
     public function getFilename(): ?string

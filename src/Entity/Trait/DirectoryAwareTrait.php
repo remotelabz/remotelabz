@@ -3,8 +3,6 @@
 namespace App\Entity\Trait;
 
 use App\Entity\Directory;
-use Doctrine\ORM\Mapping as ORM;
-use JMS\Serializer\Annotation as Serializer;
 
 /**
  * Trait to add directory relationship to entities
@@ -12,14 +10,6 @@ use JMS\Serializer\Annotation as Serializer;
  */
 trait DirectoryAwareTrait
 {
-    /**
-     * The directory containing this entity
-     */
-    #[ORM\ManyToOne(targetEntity: Directory::class)]
-    #[ORM\JoinColumn(name: 'directory_id', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
-    #[Serializer\Groups(['api_directory_aware'])]
-    private ?Directory $directory = null;
-
     /**
      * Get the directory containing this entity
      */

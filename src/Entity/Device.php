@@ -15,6 +15,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Validator\Constraints as Assert;
 use App\Entity\Interface\DirectoryAwareInterface;
 use App\Entity\Trait\DirectoryAwareTrait;
+use App\Entity\Directory;
 
 #[ORM\Entity(repositoryClass: 'App\Repository\DeviceRepository')]
 class Device implements InstanciableInterface, DirectoryAwareInterface
@@ -246,6 +247,11 @@ class Device implements InstanciableInterface, DirectoryAwareInterface
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
     #[Serializer\Groups(['api_get_device','worker','sandbox'])]
     private $other_options;
+
+    #[ORM\ManyToOne(targetEntity: Directory::class, inversedBy: 'devices')]
+    #[ORM\JoinColumn(name: 'directory_id', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
+    #[Serializer\Groups(['api_directory_aware'])]
+    private ?Directory $directory = null;
 
     public function __construct()
     {
@@ -535,9 +541,11 @@ class Device implements InstanciableInterface, DirectoryAwareInterface
         return $this->nbSocket;
     }
 
-    public function setNbSocket(?int $nb): void
+    public function setNbSocket(?int $nb): self
     {
         $this->nbSocket = $nb;
+
+        return $this;
     }
 
     public function getNbCore(): ?int
@@ -545,9 +553,11 @@ class Device implements InstanciableInterface, DirectoryAwareInterface
         return $this->nbCore;
     }
 
-    public function setNbCore(?int $nb): void
+    public function setNbCore(?int $nb): self
     {
         $this->nbCore = $nb;
+
+        return $this;
     }
 
     public function getNbThread(): ?int
@@ -555,9 +565,11 @@ class Device implements InstanciableInterface, DirectoryAwareInterface
         return $this->nbThread;
     }
 
-    public function setNbThread(?int $nb): void
+    public function setNbThread(?int $nb): self
     {
         $this->nbThread = $nb;
+
+        return $this;
     }
 
     public function getHypervisor(): ?Hypervisor

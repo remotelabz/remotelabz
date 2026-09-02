@@ -7,6 +7,7 @@ use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 use App\Entity\Interface\DirectoryAwareInterface;
 use App\Entity\Trait\DirectoryAwareTrait;
+use App\Entity\Directory;
 
 /**
  * Represents a disk image with metadata
@@ -102,6 +103,12 @@ class OperatingSystem implements DirectoryAwareInterface
     #[Serializer\Groups(['api_get_operating_system', 'api_get_lab_template', 'api_get_device', 'export_lab', 'worker'])]
     private $flavorDisk = null;
 
+    #[ORM\ManyToOne(targetEntity: Directory::class, inversedBy: 'operatingSystems')]
+    #[ORM\JoinColumn(name: 'directory_id', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
+    #[Serializer\Groups(['api_directory_aware'])]
+    private ?Directory $directory = null;
+
+
     public function getFlavorDisk(): ?FlavorDisk
     {
         return $this->flavorDisk;
@@ -124,10 +131,11 @@ class OperatingSystem implements DirectoryAwareInterface
         return $this->name;
     }
 
-    public function setName(?string $name): void
+    public function setName(?string $name): self
     {
         $this->name = $name;
 
+        return $this;
     }
 
     public function getImageUrl(): ?string

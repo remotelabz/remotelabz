@@ -951,11 +951,11 @@ final_configuration() {
     systemctl restart haproxy
     
     if systemctl is-active --quiet remotelabz-proxy; then
-        systemctl restart remotelabz-proxy
+        systemctl restart remotelabz-proxy.service
     fi
     
     if systemctl is-active --quiet remotelabz; then
-        systemctl restart remotelabz
+        systemctl restart remotelabz.service
     fi
     
     print_info "Final configuration completed! ✅"
