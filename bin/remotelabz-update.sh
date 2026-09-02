@@ -52,6 +52,6 @@ sed -i '/push "route/d' /etc/openvpn/server/server.conf
 NETWORK=`awk -F "=" '/BASE_NETWORK=/{print $2}' .env.local`
 NETWORK_MASK=`awk -F "=" '/BASE_NETWORK_NETMASK=/{print $2}' .env.local`
 echo "push \"route $NETWORK $NETWORK_MASK\"" | tee -a /etc/openvpn/server/server.conf
-
+systemctl daemon-reload
 systemctl restart remotelabz-proxy
 systemctl restart remotelabz
