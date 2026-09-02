@@ -633,6 +633,7 @@ class GroupController extends Controller
         return $this->render('group/dashboard_members.html.twig', [
             'group' => $group,
             'sortedUsers' => $users,
+            'awaitingEmails' => $group->getAwaiting(),
             'props' => $serializer->serialize(
                 $group,
                 'json',
