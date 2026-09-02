@@ -53,19 +53,5 @@ NETWORK=`awk -F "=" '/BASE_NETWORK=/{print $2}' .env.local`
 NETWORK_MASK=`awk -F "=" '/BASE_NETWORK_NETMASK=/{print $2}' .env.local`
 echo "push \"route $NETWORK $NETWORK_MASK\"" | tee -a /etc/openvpn/server/server.conf
 
-for i in bin/systemd/*; do
-    cp "$i" /etc/systemd/system/
-done
-
-systemctl daemon-reload
-
-for i in bin/systemd/*.timer; do
-    timer=$(basename "$i")
-    systemctl enable --force --now "$timer"
-done
-
-systemctl enable --force remotelabz-proxy.service
-systemctl enable --force remotelabz.service
 systemctl restart remotelabz-proxy
-systemctl daemon-reload
 systemctl restart remotelabz
