@@ -42,10 +42,21 @@
                     {{ form_label(form.slug) }}
 
                     <div class="input-group">
-                        <div class="input-group-prepend"><span class="input-group-text">{{ app.request.getSchemeAndHttpHost() }}/{% if parent is defined %}{{ parent.path }}/{% endif %}
-                        </span></div>
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">
+                                {%- if group.parent is defined -%}
+                                    {%- set path = group.parent.getPath()|default('') -%}
+                                    {%- if path is not empty -%}
+                                        {{ path }}/
+                                    {%- endif -%}
+                                {%- endif -%}
+                            </span>
+                        </div>
                         {{ form_widget(form.slug) }}
                     </div>
+                    <small class="form-text text-muted">
+                        Full slug path: <strong>{{ group.getPath() }}</strong>
+                    </small>
                 </div>
                 {{ form_row(form.description) }}
                 <div class="form-group">

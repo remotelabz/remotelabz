@@ -79,7 +79,7 @@ class ProxyServiceMonitor extends AbstractServiceMonitor
     {   $result="";
         $this->logger->debug("Start remotelabz-proxy requested");
         try {
-            $return=exec('sudo systemctl start remotelabz-proxy');
+            $return=exec('sudo systemctl start remotelabz-proxy.service');
             if ($return === false) {
                 $this->logger->debug("start with error: ".$return);
                 $result=false;

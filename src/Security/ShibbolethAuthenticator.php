@@ -28,6 +28,8 @@ use Symfony\Component\Security\Http\Authenticator\Passport\Passport;
 use Symfony\Component\Security\Http\Authenticator\Passport\Badge\UserBadge;
 use Symfony\Component\Security\Http\Authenticator\Passport\Credentials\CustomCredentials;
 use Symfony\Component\Security\Http\Authenticator\Passport\SelfValidatingPassport;
+use App\Entity\Group;
+use App\Repository\GroupRepository;
 
 
 use Psr\Log\LoggerInterface;
@@ -58,6 +60,7 @@ class ShibbolethAuthenticator extends AbstractAuthenticator
     private $JWTManager;
     private $params;
     private $tokenStorage;
+    private $groupRepository;
     /**
      * @var string (format "domain1, domain2, ... ")
      */
@@ -73,7 +76,8 @@ class ShibbolethAuthenticator extends AbstractAuthenticator
         JWTTokenManagerInterface $JWTManager,
         LoggerInterface $logger,
         ParameterBagInterface $params,
-        $authorized_affiliation
+        $authorized_affiliation,
+        ?GroupRepository $groupRepository = null
     ) {
         $this->idpUrl = $idpUrl ?: 'unknown';
         $this->remoteUserVar = $remoteUserVar ?: 'HTTP_EPPN';
@@ -84,6 +88,7 @@ class ShibbolethAuthenticator extends AbstractAuthenticator
         $this->logger = $logger;
         $this->params = $params;
         $this->tokenStorage = $tokenStorage;
+        $this->groupRepository = $groupRepository;
         $this->authorized_affiliation = $authorized_affiliation;
     }
 
@@ -208,12 +213,40 @@ class ShibbolethAuthenticator extends AbstractAuthenticator
             $this->entityManager->flush();
         }
 
+        // Ajout automatique aux groupes en attente
+        $this->addToAwaitingGroups($user);
+
         // Vérification que le compte est actif
         if (!$user->isEnabled()) {
             throw new DisabledException();
         }
 
         return new SelfValidatingPassport(new UserBadge($credentials['email']));
+    }
+
+    /**
+     * Ajoute l'utilisateur aux groupes dont l'email est en attente
+     *
+     * @param User $user
+     */
+    private function addToAwaitingGroups(User $user): void
+    {
+        if (!$this->groupRepository) {
+            return;
+        }
+
+        $groups = $this->groupRepository->findAll();
+        foreach ($groups as $group) {
+            $awaiting = $group->getAwaiting();
+            if (in_array($user->getEmail(), $awaiting)) {
+                $group->removeAwaiting($user->getEmail());
+                $group->addUser($user);
+                $this->logger->info("User ".$user->getEmail()." from Shibboleth automatically added to group ".$group->getName()." from awaiting list");
+                $this->entityManager->persist($group);
+            }
+        }
+            $this->entityManager->flush();
+
     }
 
     /**
@@ -432,6 +465,8 @@ class ShibbolethAuthenticator extends AbstractAuthenticator
         $this->entityManager->flush();
 
         $this->logger->info("New Shibboleth user created: " . $credentials['email']);
+
+        $this->addToAwaitingGroups($user);
 
         return $user;
     }

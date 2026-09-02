@@ -55,6 +55,10 @@ class Group implements InstancierInterface
     #[Serializer\Groups(['api_groups', 'api_get_group'])]
     private $description;
 
+    #[ORM\Column(type: 'json', nullable: true)]
+    #[Serializer\Groups([])]
+    private $awaiting = [];
+
     #[ORM\ManyToOne(targetEntity: 'App\Entity\Group', inversedBy: 'children')]
     #[Serializer\MaxDepth(1)]
     #[Serializer\Groups(['api_get_group', 'api_users', 'api_get_user', 'api_get_lab_instance'])]
@@ -300,6 +304,43 @@ class Group implements InstancierInterface
     public function setDescription(?string $description): self
     {
         $this->description = $description;
+
+        return $this;
+    }
+
+    public function getAwaiting(): array
+    {
+        return $this->awaiting ?: [];
+    }
+
+    public function setAwaiting(array $awaiting): self
+    {
+        $this->awaiting = $awaiting;
+
+        return $this;
+    }
+
+    public function isAwaiting(string $email): bool
+    {
+        return in_array($email, $this->awaiting ?: []);
+    }
+
+    public function addAwaiting(string $email): self
+    {
+        if (!$this->isAwaiting($email)) {
+            $this->awaiting[] = $email;
+        }
+
+        return $this;
+    }
+
+    public function removeAwaiting(string $email): self
+    {
+        $key = array_search($email, $this->awaiting);
+        if ($key !== false) {
+            unset($this->awaiting[$key]);
+            $this->awaiting = array_values($this->awaiting);
+        }
 
         return $this;
     }

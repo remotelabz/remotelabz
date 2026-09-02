@@ -127,9 +127,39 @@
                         spellcheck="false" value="{{ search|default('') }}" type="search">
                     </form>
                 </div> #}
+                <div class="search-panel">
+                    <ul class="nav nav-tabs" id="sortTabs" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link sort-link active" data-sort="name" href="#" role="tab">Name</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link sort-link" data-sort="firstname" href="#" role="tab">First Name</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link sort-link" data-sort="status" href="#" role="tab">Status</a>
+                        </li>
+                    </ul>
+                </div>
+                
                 <div class="labs-panel">
+                    {% for email in awaitingEmails %}
+                        <div class="lab-item border-bottom">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar identicon rounded-circle s40 mr-3 bg-{{ (email|length % 8) + 1 }} d-flex align-items-center justify-content-center">
+                                    {{ email|first|upper }}
+                                </div>
+                                <div class="d-flex flex-column">
+                                    <div class="fw600">
+                                        <span>{{ email }}</span>
+                                        <label class="badge badge-secondary ml-2 mb-0">Pending</label>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1"></div>
+                            </div>
+                        </div>
+                    {% endfor %}
                     {% for user in sortedUsers %}
-                        <div class="lab-item {% if not loop.last %}border-bottom{% endif %}">
+                        <div class="lab-item {% if awaitingEmails|length == 0 and not loop.first %}border-bottom{% endif %}">
                             <div class="d-flex align-items-center">
                                 <img src="/users/{{user.id}}/picture?size=32" alt="{{user.name}}" class="rounded-circle s40 mr-3" />
 
@@ -150,10 +180,10 @@
                                 </div>
                                 <div class="flex-grow-1"></div>
                                {% if (( 'ROLE_ADMINISTRATOR' in app.user.roles
-                                     or 'ROLE_SUPER_ADMINISTRATOR' in app.user.roles
-                                     or (group.isOwner(app.user) )
-                                     or ( group.isAdmin(app.user)) ) and ( not group.isOwner(user) ))
-                                %}
+                                      or 'ROLE_SUPER_ADMINISTRATOR' in app.user.roles
+                                      or (group.isOwner(app.user) )
+                                      or ( group.isAdmin(app.user)) ) and ( not group.isOwner(user) ))
+                                 %}
                                     
                                     <div style="min-width: 150px"> 
                                         {{- react_component('GroupRoleSelect', {'props': {'role': group.getUserRole(user), 'user': user.id, 'group': group.path}}) -}}
@@ -178,6 +208,49 @@
     {{ parent() }}
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
     <script type="text/javascript">
+    $(function() {
+        $('.sort-link').on('click', function(e) {
+            e.preventDefault();
+            var sortKey = $(this).data('sort');
+            $('.sort-link').removeClass('active');
+            $(this).addClass('active');
+
+            var $panel = $('.labs-panel');
+            var $items = $panel.find('.lab-item').toArray();
+
+            $items.sort(function(a, b) {
+                if (sortKey === 'status') {
+                    var aAwaiting = $(a).find('.badge-secondary').length > 0 ? 0 : 1;
+                    var bAwaiting = $(b).find('.badge-secondary').length > 0 ? 0 : 1;
+                    if (aAwaiting !== bAwaiting) return aAwaiting - bAwaiting;
+                    return 0;
+                }
+                if (sortKey === 'name') {
+                    var aName = $(a).find('.fw600 span').first().text().trim().toUpperCase();
+                    var bName = $(b).find('.fw600 span').first().text().trim().toUpperCase();
+                    return aName.localeCompare(bName);
+                }
+                if (sortKey === 'firstname') {
+                    var aEmail = $(a).find('.fw600 span').first().text().trim().toLowerCase();
+                    var bEmail = $(b).find('.fw600 span').first().text().trim().toLowerCase();
+                    if (aEmail.indexOf('@') !== -1) {
+                        var aFirst = aEmail.substring(0, aEmail.indexOf('@'));
+                        var bFirst = bEmail.substring(0, bEmail.indexOf('@'));
+                        return aFirst.localeCompare(bFirst);
+                    }
+                    var aParts = aEmail.split(' ');
+                    var bParts = bEmail.split(' ');
+                    var aFirst = aParts.length > 1 ? aParts.slice(1).join(' ') : aParts[0];
+                    var bFirst = bParts.length > 1 ? bParts.slice(1).join(' ') : bParts[0];
+                    return aFirst.localeCompare(bFirst);
+                }
+                return 0;
+            });
+
+            $items.forEach(function(item) { $panel.append(item); });
+        });
+    });
+
     function checkAll() {
             const boxes = document.querySelectorAll(".selectUserGroup");
             let checkAll = document.getElementById("selectAll");

@@ -1084,6 +1084,15 @@ $grid-number: 12;
     color: map-get($theme-colors, light);
   }
 
+  #sortTabs .nav-link.active:hover,
+  #sortTabs .nav-link.active:focus {
+    color: map-get($theme-colors, dark) !important;
+  }
+  #sortTabs .nav-link:hover,
+  {
+    color: map-get($theme-colors, light) !important;
+  }
+
   .text-muted {
     color: #9b9b9b !important;
     fill: currentColor;
@@ -1095,6 +1104,10 @@ $grid-number: 12;
     &:hover {
       color: color.adjust(map.get($theme-colors, primary), $lightness: 40%)
     }
+  }
+
+  .nav-link.active:hover {
+    color: inherit; // ou la couleur exacte utilisée par .nav-link.active
   }
 
   pre {

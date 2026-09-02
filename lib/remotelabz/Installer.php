@@ -500,7 +500,7 @@ class Installer
         if (file_exists('/etc/systemd/system/remotelabz.service')) {
             unlink('/etc/systemd/system/remotelabz.service');
         }
-        $returnCode = symlink($this->installPath . '/bin/remotelabz.service', '/etc/systemd/system/remotelabz.service');
+        $returnCode = symlink($this->installPath . '/bin/systemd/remotelabz.service', '/etc/systemd/system/remotelabz.service');
         if (!$returnCode) {
             throw new Exception("Could not symlink messenger service.");
         }
@@ -512,7 +512,7 @@ class Installer
         if (file_exists('/etc/systemd/system/remotelabz-proxy.service')) {
             unlink('/etc/systemd/system/remotelabz-proxy.service');
         }
-        $returnCode = symlink($this->installPath . '/bin/remotelabz-proxy.service', '/etc/systemd/system/remotelabz-proxy.service');
+        $returnCode = symlink($this->installPath . '/bin/systemd/remotelabz-proxy.service', '/etc/systemd/system/remotelabz-proxy.service');
         if (!$returnCode) {
             throw new Exception("Could not symlink proxy service.");
         }
@@ -524,7 +524,7 @@ class Installer
         if (file_exists('/etc/systemd/system/remotelabz-git-version-update.service')) {
             unlink('/etc/systemd/system/remotelabz-git-version-update.service');
         }
-        $returnCode = symlink($this->installPath . '/bin/remotelabz-git-version-update.service', '/etc/systemd/system/remotelabz-git-version-update.service');
+        $returnCode = symlink($this->installPath . '/bin/systemd/remotelabz-git-version-update.service', '/etc/systemd/system/remotelabz-git-version-update.service');
         if (!$returnCode) {
             throw new Exception("Could not symlink git version service.");
         }
@@ -536,7 +536,7 @@ class Installer
         if (file_exists('/etc/systemd/system/remotelabz-git-version-update.timer')) {
             unlink('/etc/systemd/system/remotelabz-git-version-update.timer');
         }
-        $returnCode = symlink($this->installPath . '/bin/remotelabz-git-version-update.timer', '/etc/systemd/system/remotelabz-git-version-update.timer');
+        $returnCode = symlink($this->installPath . '/bin/systemd/remotelabz-git-version-update.timer', '/etc/systemd/system/remotelabz-git-version-update.timer');
         if (!$returnCode) {
             throw new Exception("Could not symlink git version timer service.");
         }
@@ -548,7 +548,7 @@ class Installer
         if (file_exists('/etc/systemd/system/remotelabz-route-monitor.service')) {
             unlink('/etc/systemd/system/remotelabz-route-monitor.service');
         }
-        $returnCode = symlink($this->installPath . '/bin/remotelabz-route-monitor.service', '/etc/systemd/system/remotelabz-route-monitor.service');
+        $returnCode = symlink($this->installPath . '/bin/systemd/remotelabz-route-monitor.service', '/etc/systemd/system/remotelabz-route-monitor.service');
         if (!$returnCode) {
             throw new Exception("Could not symlink route monitor service.");
         }
@@ -560,7 +560,7 @@ class Installer
         if (file_exists('/etc/systemd/system/remotelabz-route-monitor.timer')) {
             unlink('/etc/systemd/system/remotelabz-route-monitor.timer');
         }
-        $returnCode = symlink($this->installPath . '/bin/remotelabz-route-monitor.timer', '/etc/systemd/system/remotelabz-route-monitor.timer');
+        $returnCode = symlink($this->installPath . '/bin/systemd/remotelabz-route-monitor.timer', '/etc/systemd/system/remotelabz-route-monitor.timer');
         if (!$returnCode) {
             throw new Exception("Could not symlink route monitor timer service.");
         }
@@ -572,7 +572,7 @@ class Installer
         if (file_exists('/etc/systemd/system/remotelabz-clean-notification.service')) {
             unlink('/etc/systemd/system/remotelabz-clean-notification.service');
         }
-        $returnCode = symlink($this->installPath . '/bin/remotelabz-clean-notification.service', '/etc/systemd/system/remotelabz-clean-notification.service');
+        $returnCode = symlink($this->installPath . '/bin/systemd/remotelabz-clean-notification.service', '/etc/systemd/system/remotelabz-clean-notification.service');
         if (!$returnCode) {
             throw new Exception("Could not symlink clean notification service.");
         }
@@ -584,7 +584,7 @@ class Installer
         if (file_exists('/etc/systemd/system/remotelabz-clean-notification.timer')) {
             unlink('/etc/systemd/system/remotelabz-clean-notification.timer');
         }
-        $returnCode = symlink($this->installPath . '/bin/remotelabz-clean-notification.timer', '/etc/systemd/system/remotelabz-clean-notification.timer');
+        $returnCode = symlink($this->installPath . '/bin/systemd/remotelabz-clean-notification.timer', '/etc/systemd/system/remotelabz-clean-notification.timer');
         if (!$returnCode) {
             throw new Exception("Could not symlink clean notification timer service.");
         }
