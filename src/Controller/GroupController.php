@@ -584,7 +584,7 @@ class GroupController extends Controller
 
         $addGroupUserFromFileForm = $this->createFormBuilder([])
             ->add('file', FileType::class, [
-                "help" => "Accepted formats: csv, txt (one email per line)",
+                "help" => "Accepted formats: csv, txt",
                 "attr" => [
                     "accepted" => ".csv,.txt",
                 ]
@@ -615,7 +615,7 @@ class GroupController extends Controller
                 } else {
                     $this->addFlash(
                         'warning',
-                        'Some users don\'t exist yet.'
+                        'Some users are in pending mode.'
                     );
                 }
             } else {
