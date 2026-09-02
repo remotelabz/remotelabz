@@ -600,14 +600,14 @@ class GroupController extends Controller
             $fileExtension = strtolower($file->getClientOriginalExtension());
 
             if (in_array($fileExtension, ['csv', 'txt'])) {
-                $fileSocket = fopen($file, 'r');
+                $filePath = $file->getPathname();
 
                 $addedUsers = [];
 
                 switch ($fileExtension) {
                     case 'csv':
                     case 'txt':
-                        $addedUsers = $this->importUserFromCSV($fileSocket,$file,$group,$fileExtension);
+                        $addedUsers = $this->importUserFromCSV($filePath, $group, $fileExtension);
                         break;
                 }
                 if ($addedUsers && count($addedUsers) > 0) {
@@ -618,8 +618,6 @@ class GroupController extends Controller
                         'Some users don\'t exist yet.'
                     );
                 }
-
-                fclose($fileSocket);
             } else {
                 $this->addFlash('danger', "This file is not accepted.");
             }
