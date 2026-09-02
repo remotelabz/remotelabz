@@ -242,7 +242,7 @@ class ShibbolethAuthenticator extends AbstractAuthenticator
                 $group->removeAwaiting($user->getEmail());
                 $group->addUser($user);
                 $this->logger->info("User ".$user->getEmail()." from Shibboleth automatically added to group ".$group->getName()." from awaiting list");
-                $entityManager->persist($group);
+                $this->entityManager->persist($group);
             }
         }
             $this->entityManager->flush();
