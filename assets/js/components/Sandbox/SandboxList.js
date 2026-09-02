@@ -40,6 +40,7 @@ const SandboxList = (props) =>
         <><h2>Devices</h2>
             {devices}
             <h2>Labs</h2>
+            <i class="fa fa-info-circle text-info">&nbsp;</i>Once a lab has been exported, you can import it into your labs using the “Import Lab” button 
             {labs}
         </>)
 }
