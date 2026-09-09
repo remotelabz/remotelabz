@@ -168,8 +168,11 @@ class LabController extends Controller
         $page = $request->query->get('page', 1);
         $virtuality = $request->query->get('virtuality');
         $orderBy = $request->query->get('order_by', 'lastUpdated');
-        $sortDirection = $request->query->get('sort_direction', Criteria::DESC);
-
+        $orderDirection = $request->query->get('sort_direction');
+		$sortDirection = match (strtoupper((string) $orderDirection)) {
+    		'ASC', 'ASCENDING' => Order::Ascending,
+    		default => Order::Descending,
+		};
         //Have to distinguish exact request from Sandbox and other request
         if (strpos($search,"Sandbox_") === false ) {
             $criteria = Criteria::create()

@@ -47,6 +47,7 @@ use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use GuzzleHttp\Client;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\Common\Collections\Order;
 
 class UserController extends Controller
 {
@@ -106,6 +107,10 @@ class UserController extends Controller
         $group = $request->query->get('group');
         $orderBy = $request->query->get('orderBy', 'lastName');
         $orderDirection = $request->query->get('orderDirection', 'ASC');
+		$sortDirection = match (strtoupper((string) $orderDirection)) {
+    		'DESC', 'DESCENDING' => Order::Descending,
+    		default => Order::Ascending,
+		};
 
         // handle incorrect orderBy field
         if (!property_exists(User::class, $orderBy)) {
@@ -117,7 +122,7 @@ class UserController extends Controller
             ->orWhere(Criteria::expr()->contains('lastName', $search))
             ->orWhere(Criteria::expr()->contains('email', $search))
             ->orderBy([
-                $orderBy => $orderDirection
+                $orderBy => $sortDirection
             ]);
 
         $users = $this->userRepository->matching($criteria);
