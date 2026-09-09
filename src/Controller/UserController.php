@@ -107,7 +107,7 @@ class UserController extends Controller
         $group = $request->query->get('group');
         $orderBy = $request->query->get('orderBy', 'lastName');
         $orderDirection = $request->query->get('orderDirection', 'ASC');
-        $orderDirection = 'ASC' === strtoupper($orderDirection) ? Order::ASC : Order::DESC;
+        $orderDirection = 'ASC' === strtoupper($orderDirection) ? Order::Ascending : Order::Descending;
 
         // handle incorrect orderBy field
         if (!property_exists(User::class, $orderBy)) {
