@@ -16,6 +16,7 @@ use App\Service\VPN\VPNConfiguratorGeneratorInterface;
 use JMS\Serializer\SerializerInterface;
 use JMS\Serializer\SerializationContext;
 use Doctrine\Common\Collections\Criteria;
+use Doctrine\Common\Collections\Order;
 use App\Service\ProfilePictureFileUploader;
 use Symfony\Component\Validator\Validation;
 use Symfony\Component\Filesystem\Filesystem;
@@ -106,6 +107,7 @@ class UserController extends Controller
         $group = $request->query->get('group');
         $orderBy = $request->query->get('orderBy', 'lastName');
         $orderDirection = $request->query->get('orderDirection', 'ASC');
+        $orderDirection = 'ASC' === strtoupper($orderDirection) ? Order::ASC : Order::DESC;
 
         // handle incorrect orderBy field
         if (!property_exists(User::class, $orderBy)) {
