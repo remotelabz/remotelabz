@@ -262,6 +262,8 @@ install_requirements() {
     # Update system
     print_info "Updating system packages..."
     apt-get update
+    apt purge -y unattended-upgrades
+    apt -y autoremove
     apt-get -y upgrade
 
     # Install base packages
