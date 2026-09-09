@@ -653,7 +653,7 @@ class InstanceManager
         if (count($labInstance->getDeviceInstances()) >= 1) {
             foreach($labInstance->getDeviceInstances() as $deviceInstance) {               
                 $device = $deviceInstance->getDevice();
-
+                
                 if ($device->getHypervisor()->getName() != "natif" && $device->getOperatingSystem()->getName() != "Service") {
                     $new_name = transliterator_transliterate('Any-Latin; Latin-ASCII; [^A-Za-z0-9_] remove; Lower()', $device->getName()."_".$name);
                     //$id = uniqid();
@@ -679,9 +679,9 @@ class InstanceManager
 
                 } elseif ($device->getHypervisor()->getName() == "natif" || $device->getOperatingSystem()->getName() == "Service") {
                     // Switch interne or DHCP server
-                    //$this->logger->debug("Copying \"system\" device instance with UUID " . $deviceInstance->getUuid() . " and name ".$deviceInstance->getDevice()->getName().".");
+                    $this->logger->debug("[InstanceManager:exportlab]::Copying \"system\" device instance with UUID " . $deviceInstance->getUuid() . " and name ".$deviceInstance->getDevice()->getName().".");
                     //$newOS = $this->copyOperatingSystem($device->getOperatingSystem(), $new_name, $new_name);
-                    $newDevice = $this->deviceRepository->find($this->copyDevice($device, $device->getOperatingSystem(), $device->getName()."_".$name));
+                    $newDevice = $this->deviceRepository->find($this->copyDevice($device, $device->getOperatingSystem(), $device->getName()));
 
                     $newDevice->getEditorData()->setX($device->getEditorData()->getX());
                     $newDevice->getEditorData()->setY($device->getEditorData()->getY());
@@ -691,7 +691,9 @@ class InstanceManager
                     }
 
                     if ($device->getTemplate() !== null) {
+                        $this->logger->debug("[InstanceManager:exportlab]::".$deviceInstance->getDevice()->getName()." has template not null");
                         $newDevice->setTemplate($device->getTemplate());
+                        $newDevice->setIsTemplate($device->getIsTemplate());
                     }
 
                     $this->entityManager->persist($newDevice);
