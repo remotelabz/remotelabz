@@ -149,6 +149,7 @@ class ConfigWorkerController extends Controller
 	#[IsGranted("ROLE_ADMINISTRATOR", message: "Access denied.")]
     public function updateAction(Request $request, int $id) {
         $error=false;
+        $workerIP ="";
         $entityManager = $this->entityManager;
         $workerPort = $this->getParameter('app.worker_port');
         $data = json_decode($request->getContent(), true);
@@ -189,8 +190,8 @@ class ConfigWorkerController extends Controller
                         $OS_first_available_worker=$this->getOS_Worker($first_available_workerIP,$workerPort); //Find OS available on the first worker
                         $OS_available_worker=$this->getOS_Worker($workerIP,$workerPort); //Find OS available on the worker which is enabled
                         
-                        $this->logger->debug("OS on first enabled worker ". $first_available_workerIP. ":".$workerPort.": ".$OS_first_available_worker);
-                        $this->logger->debug("OS on enabled worker to eventually sync ". $workerIP. ":".$workerPort.": ".$OS_available_worker);
+                        $this->logger->debug("[ConfigWorkerController:updateAction]::OS on first enabled worker ". $first_available_workerIP. ":".$workerPort.": ".$OS_first_available_worker);
+                        $this->logger->debug("[ConfigWorkerController:updateAction]::OS on enabled worker to eventually sync ". $workerIP. ":".$workerPort.": ".$OS_available_worker);
 
                         if ($OS_first_available_worker && $OS_available_worker) {
                             $OS_already_exist_on_first_worker=json_decode($OS_first_available_worker,true);
@@ -201,7 +202,7 @@ class ConfigWorkerController extends Controller
                                 $os_filename=$operatingSystem->getImageFilename();
                                 $os_hypervisor=$operatingSystem->getHypervisor()->getName();
                                 $os_url=$operatingSystem->getImageUrl();
-                                $this->logger->debug("[ConfigWorkerController:updateAction]::Test to sync ".$os_name." ".$os_filename." which is a ".$os_hypervisor." image");
+                                $this->logger->debug("[ConfigWorkerController:updateAction]::Test to sync \"".$os_name."\" with filename \"".$os_filename."\" which is a ".$os_hypervisor." image");
 
                                 if (strtolower($os_hypervisor) === "lxc") {
                                     if (!in_array($operatingSystem->getImageFilename(),$OS_already_exist_on_worker["lxc"]) && in_array($operatingSystem->getImageFilename(),$OS_already_exist_on_first_worker["lxc"])) {
@@ -225,6 +226,7 @@ class ConfigWorkerController extends Controller
                                 }
                                 else {
                                     if (strtolower($os_hypervisor) === "qemu") {
+
                                         if ( !is_null($os_filename) && !in_array($os_filename,$OS_already_exist_on_worker["qemu"]) 
                                                 && in_array($os_filename,$OS_already_exist_on_first_worker["qemu"])
                                             ) {
@@ -256,8 +258,11 @@ class ConfigWorkerController extends Controller
                                                 //It's an URL
                                                 $this->logger->debug("[ConfigWorkerController:updateAction]::This OS ".$os_name." is defined by an URL. No sync needed.");
                                             }
+                                            elseif (in_array($os_filename, $OS_already_exist_on_worker["qemu"])) {
+                                                $this->logger->debug("[ConfigWorkerController:updateAction]::This OS ".$os_name." with file ".$os_filename." already exists on worker ".$workerIP);
+                                            }
                                             else {
-                                                $this->logger->error("[ConfigWorkerController:updateAction]::This OS ".$os_name." with file ".$os_filename." is missing on the worker ".$first_available_workerIP);
+                                                $this->logger->error("[ConfigWorkerController:updateAction]::This OS ".$os_name." with file ".$os_filename." is missing on the worker ".$workerIP);
                                             }
                                         }
                                     }

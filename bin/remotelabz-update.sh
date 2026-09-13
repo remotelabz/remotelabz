@@ -48,6 +48,7 @@ chown remotelabz:www-data * -R
 chmod g+w /opt/remotelabz/var -R
 chmod g+w /opt/remotelabz/public/uploads -R
 chmod g+r config/jwt/private.pem
+chmod g+w /opt/remotelabz/config/packages/messenger.yaml
 sed -i '/push "route/d' /etc/openvpn/server/server.conf
 NETWORK=`awk -F "=" '/BASE_NETWORK=/{print $2}' .env.local`
 NETWORK_MASK=`awk -F "=" '/BASE_NETWORK_NETMASK=/{print $2}' .env.local`
