@@ -168,54 +168,58 @@ class InstanceController extends Controller
     public function apiIndexAction(Request $request, SerializerInterface $serializer)
     {
         $user = $this->getUser();
-        $instance = $request->query->all('instance');
+        if (!is_null($user)) {
+            $instance = $request->query->all('instance');
 
-        $filter = $instance ? $instance['filter'] : "none";
-        $subFilter = $instance ? $instance['subFilter'] : "allInstances";
-        $searchUuid = $instance ? ($instance['searchUuid'] ?? '') : '';
-        $page = (int)$request->query->get('page', 1);
-        $limit = 10;
+            $filter = $instance ? $instance['filter'] : "none";
+            $subFilter = $instance ? $instance['subFilter'] : "allInstances";
+            $searchUuid = $instance ? ($instance['searchUuid'] ?? '') : '';
+            $page = (int)$request->query->get('page', 1);
+            $limit = 10;
 
-        $this->logger->debug("[InstanceController:apiIndexAction]::filter=$filter, subfilter=$subFilter, searchUuid=$searchUuid");
+            $this->logger->debug("[InstanceController:apiIndexAction]::filter=$filter, subfilter=$subFilter, searchUuid=$searchUuid");
 
-        // PRIORITÉ 1 : Si un UUID est fourni, rechercher par UUID
-        if (!empty($searchUuid)) {
-            $instances = $this->searchInstancesByUuid($searchUuid);
-            
-            if (empty($instances)) {
-                $this->logger->warning("[InstanceController:apiIndexAction]::No instances found for UUID: $searchUuid");
-            } else {
-                $this->logger->info("[InstanceController:apiIndexAction]::Found " . count($instances) . " instance(s) for UUID: $searchUuid");
+            // PRIORITÉ 1 : Si un UUID est fourni, rechercher par UUID
+            if (!empty($searchUuid)) {
+                $instances = $this->searchInstancesByUuid($searchUuid);
+                
+                if (empty($instances)) {
+                    $this->logger->warning("[InstanceController:apiIndexAction]::No instances found for UUID: $searchUuid");
+                } else {
+                    $this->logger->info("[InstanceController:apiIndexAction]::Found " . count($instances) . " instance(s) for UUID: $searchUuid");
+                }
+                
+                return $this->json($instances, 200, [], ['api_get_lab_instance']);
             }
-            
-            return $this->json($instances, 200, [], ['api_get_lab_instance']);
-        }
 
-        // PRIORITÉ 2 : Sinon, utiliser les filtres normaux
-        if ($subFilter == "allInstances") {
-            if ($user->isAdministrator()) {
-                $instances = $this->labInstanceRepository->findAll();
+            // PRIORITÉ 2 : Sinon, utiliser les filtres normaux
+            if ($subFilter == "allInstances") {
+                if ($user->isAdministrator()) {
+                    $instances = $this->labInstanceRepository->findAll();
+                } else {
+                    $instances = $this->labInstanceRepository->findByUserAndAllMembersGroups($user);
+                }
             } else {
-                $instances = $this->labInstanceRepository->findByUserAndAllMembersGroups($user);
+                if ($user->getHighestRole() == "ROLE_USER") {
+                    $instances = $this->labInstanceRepository->findByUserAndAllMembersGroups($user);
+                } else {
+                    $instances = $this->getLabInstances($filter, $subFilter);
+                }
             }
-        } else {
-            if ($user->getHighestRole() == "ROLE_USER") {
-                $instances = $this->labInstanceRepository->findByUserAndAllMembersGroups($user);
-            } else {
-                $instances = $this->getLabInstances($filter, $subFilter);
+
+            $AllLabInstances = [];
+            foreach ($instances as $instance) {
+                array_push($AllLabInstances, $instance);
             }
+
+            $count = count($AllLabInstances);
+
+            $this->logger->debug("[InstanceController:apiIndexAction]::Returning JSON with " . count($AllLabInstances) . " instances");
+
+            return $this->json($AllLabInstances, 200, [], ['api_get_lab_instance']);
         }
-
-        $AllLabInstances = [];
-        foreach ($instances as $instance) {
-            array_push($AllLabInstances, $instance);
-        }
-
-        $count = count($AllLabInstances);
-
-        $this->logger->debug("[InstanceController:apiIndexAction]::Returning JSON with " . count($AllLabInstances) . " instances");
-
-        return $this->json($AllLabInstances, 200, [], ['api_get_lab_instance']);
+        else 
+            return $this->json("", 200, [], ['api_get_lab_instance']);
     }
 
     private function getLabInstances($filter, $subFilter)
