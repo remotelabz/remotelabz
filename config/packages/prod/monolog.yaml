@@ -24,6 +24,7 @@ monolog:
         app:
             type: service
             id: App\Monolog\Handler\IgnoreSecurityEventsHandler
+            level: info
             channels: ["!event", "!doctrine", "!security", "!request", "!messenger", "!php","!deprecation"]
             
         messenger:
