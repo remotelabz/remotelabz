@@ -198,7 +198,6 @@ class InstanceStateMessageHandler
                 $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Options received :', $options);
                 if (key_exists('user_id',$options))
                     $userIds=array($options['user_id']);
-                else $userIds=""; // Msg from the system, so with no userid
             }
 
             // if an error happened, set device instance in its previous state
