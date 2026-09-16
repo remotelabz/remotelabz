@@ -35,6 +35,7 @@ use Symfony\Component\Security\Http\Authenticator\Passport\Badge\CsrfTokenBadge;
 use Symfony\Component\Security\Http\Authenticator\Passport\Badge\UserBadge;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use App\Service\LoginNotificationService;
 
 
 class CodeLoginAuthenticator extends AbstractLoginFormAuthenticator
@@ -54,6 +55,7 @@ class CodeLoginAuthenticator extends AbstractLoginFormAuthenticator
     protected $refreshTokenManager;
     private $config;
     private $urlGenerator;
+    private $loginNotificationService;
     /**
      * CodeLoginAuthenticator constructor.
      *
@@ -65,6 +67,7 @@ class CodeLoginAuthenticator extends AbstractLoginFormAuthenticator
      * @param RefreshTokenManagerInterface $refreshTokenManager
      * @param ContainerBagInterface $config
      * @param UrlGeneratorInterface $urlGenerator
+     * @param LoginNotificationService $loginNotificationService
      */
     
 
@@ -76,7 +79,8 @@ class CodeLoginAuthenticator extends AbstractLoginFormAuthenticator
         JWTTokenManagerInterface $JWTManager,
         RefreshTokenManagerInterface $refreshTokenManager,
         ContainerBagInterface $config,
-        UrlGeneratorInterface $urlGenerator
+        UrlGeneratorInterface $urlGenerator,
+        LoginNotificationService $loginNotificationService
     ) {
         $this->entityManager = $entityManager;
         $this->router = $router;
@@ -86,6 +90,7 @@ class CodeLoginAuthenticator extends AbstractLoginFormAuthenticator
         $this->refreshTokenManager = $refreshTokenManager;
         $this->config = $config;
         $this->urlGenerator = $urlGenerator;
+        $this->loginNotificationService = $loginNotificationService;
     }
 
     public function supports(Request $request): bool
@@ -143,6 +148,12 @@ public function authenticate(Request $request): Passport
         $jwtTokenCookie = Cookie::create('bearer', $jwtToken, $now->getTimestamp() + 24 * 3600);
 
         $response->headers->setCookie($jwtTokenCookie);
+
+        $ip = $request->server->get('REMOTE_ADDR', 'unknown');
+        $userAgent = $request->server->get('HTTP_USER_AGENT', 'unknown');
+        $this->loginNotificationService->logLogin($user, $user->getEmail(), $ip, $userAgent, 'code');
+        $this->loginNotificationService->sendNotificationEmail($user, $ip, $userAgent, 'code', new DateTime());
+
         $response->setTargetUrl($this->router->generate('show_lab_to_guest', ['id'=> $user->getLab()->getId()]));
         return $response;
     }

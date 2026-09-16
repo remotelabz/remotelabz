@@ -362,3 +362,11 @@ services:
         tags:
             - { name: monolog.logger, channel: gitversion_monitor }
 
+    App\Service\LoginNotificationService:
+        arguments:
+            $contactMail: '%app.general.contact_mail%'
+
+    App\Security\AuthenticationSuccessHandler:
+        arguments:
+            $loginNotificationService: '@App\Service\LoginNotificationService'
+

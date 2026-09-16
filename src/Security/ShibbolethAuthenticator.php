@@ -33,10 +33,12 @@ use App\Repository\GroupRepository;
 
 
 use Psr\Log\LoggerInterface;
+use App\Service\LoginNotificationService;
 
 class ShibbolethAuthenticator extends AbstractAuthenticator
 {
     private $logger;
+    private $loginNotificationService;
 
     /**
      * @var
@@ -77,7 +79,8 @@ class ShibbolethAuthenticator extends AbstractAuthenticator
         LoggerInterface $logger,
         ParameterBagInterface $params,
         $authorized_affiliation,
-        ?GroupRepository $groupRepository = null
+        ?GroupRepository $groupRepository = null,
+        ?LoginNotificationService $loginNotificationService = null
     ) {
         $this->idpUrl = $idpUrl ?: 'unknown';
         $this->remoteUserVar = $remoteUserVar ?: 'HTTP_EPPN';
@@ -90,6 +93,7 @@ class ShibbolethAuthenticator extends AbstractAuthenticator
         $this->tokenStorage = $tokenStorage;
         $this->groupRepository = $groupRepository;
         $this->authorized_affiliation = $authorized_affiliation;
+        $this->loginNotificationService = $loginNotificationService;
     }
 
     protected function getRedirectUrl()
@@ -355,6 +359,13 @@ class ShibbolethAuthenticator extends AbstractAuthenticator
             $user->setLastActivity(new DateTime());
             $this->entityManager->persist($user);
             $this->entityManager->flush();
+
+            $ip = $request->server->get('REMOTE_ADDR', 'unknown');
+            $userAgent = $request->server->get('HTTP_USER_AGENT', 'unknown');
+            if ($this->loginNotificationService) {
+                $this->loginNotificationService->logLogin($user, $user->getEmail(), $ip, $userAgent, 'shibboleth');
+                $this->loginNotificationService->sendNotificationEmail($user, $ip, $userAgent, 'shibboleth', new DateTime());
+            }
 
             return $response;
         }
