@@ -268,7 +268,7 @@ install_requirements() {
 
     # Install base packages
     print_info "Installing base packages..."
-    apt install -y fail2ban exim4 apache2 curl gnupg zip unzip ntpsec openvpn qemu-utils openssl git expect
+    apt install -y fail2ban sudo exim4 apache2 curl gnupg zip unzip ntpsec openvpn qemu-utils openssl git expect
     
     # Install PHP 8.5
     print_info "Installing PHP 8.5..."
@@ -294,7 +294,7 @@ install_requirements() {
     # Install Composer
     print_info "Installing Composer..."
     if [ ! -f /usr/local/bin/composer ]; then
-        php -r "copy('https://getcomposer.org/download/2.10.2/composer.phar', 'composer.phar');"
+        php -r "copy('https://getcomposer.org/download/2.10.3/composer.phar', 'composer.phar');"
         cp composer.phar /usr/local/bin/composer
         chmod a+x /usr/local/bin/composer
         rm composer.phar
