@@ -34,6 +34,7 @@ use Symfony\Component\Security\Http\Authenticator\Passport\Badge\CsrfTokenBadge;
 use Symfony\Component\Security\Http\Authenticator\Passport\Badge\UserBadge;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Psr\Log\LoggerInterface;
+use App\Service\LoginNotificationService;
 
 
 class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
@@ -47,7 +48,7 @@ class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
     private $JWTManager;
     public const LOGIN_ROUTE = 'login';
     private $logger;
-
+    private $loginNotificationService;
 
     /**
      * @var RefreshTokenManagerInterface
@@ -69,8 +70,10 @@ class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
      * @param UrlGeneratorInterface $urlGenerator
      * @param bool $maintenance
      * @param LoggerInterface $logger
+     * @param LoginNotificationService $loginNotificationService
      */
     
+
 
     public function __construct(
         EntityManagerInterface $entityManager,
@@ -82,7 +85,8 @@ class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
         ContainerBagInterface $config,
         UrlGeneratorInterface $urlGenerator,
         bool $maintenance,
-        LoggerInterface $logger
+        LoggerInterface $logger,
+        LoginNotificationService $loginNotificationService
 
     ) {
         $this->entityManager = $entityManager;
@@ -95,6 +99,7 @@ class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
         $this->urlGenerator = $urlGenerator;
         $this->maintenance=$maintenance;
         $this->logger = $logger;
+        $this->loginNotificationService = $loginNotificationService;
     }
 
     public function supports(Request $request): bool
@@ -144,6 +149,11 @@ class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
             $user->setLastActivity(new DateTime());
             $this->entityManager->persist($user);
             $this->entityManager->flush();
+
+            $ip = $request->server->get('REMOTE_ADDR', 'unknown');
+            $userAgent = $request->server->get('HTTP_USER_AGENT', 'unknown');
+            $this->loginNotificationService->logLogin($user, $user->getEmail(), $ip, $userAgent, 'form');
+            $this->loginNotificationService->sendNotificationEmail($user, $ip, $userAgent, 'form', new DateTime());
 
             if ($request->query->has('ref_url')) {
                 $response->setTargetUrl(urldecode($request->query->get('ref_url')));

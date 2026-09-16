@@ -32,3 +32,10 @@ framework:
 
     annotations:
         enabled: false
+
+    trusted_proxies: '%env(TRUSTED_PROXIES)%'
+    trusted_headers:
+        - 'x-forwarded-for'
+        - 'x-forwarded-host'
+        - 'x-forwarded-proto'
+        - 'x-forwarded-port'

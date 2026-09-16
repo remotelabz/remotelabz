@@ -2,34 +2,55 @@
 
 namespace App\Security;
 
-use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Lexik\Bundle\JWTAuthenticationBundle\Events;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
+use Symfony\Component\Security\Http\Authentication\AuthenticationSuccessHandlerInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\Event\AuthenticationSuccessEvent;
 use Lexik\Bundle\JWTAuthenticationBundle\Response\JWTAuthenticationSuccessResponse;
-use Lexik\Bundle\JWTAuthenticationBundle\Security\Guard\JWTTokenAuthenticator as BaseAuthenticator;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface as ContractsEventDispatcherInterface;
+use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
+use App\Service\LoginNotificationService;
+use Symfony\Component\HttpFoundation\RequestStack;
 
-class AuthenticationSuccessHandler
+class AuthenticationSuccessHandler implements AuthenticationSuccessHandlerInterface
 {
-    public function handleAuthenticationSuccess(UserInterface $user, $jwt = null): Response
+    private $jwtManager;
+    private $dispatcher;
+    private $loginNotificationService;
+    private $requestStack;
+
+    public function __construct(
+        JWTTokenManagerInterface $jwtManager,
+        EventDispatcherInterface $dispatcher,
+        LoginNotificationService $loginNotificationService,
+        RequestStack $requestStack
+    ) {
+        $this->jwtManager = $jwtManager;
+        $this->dispatcher = $dispatcher;
+        $this->loginNotificationService = $loginNotificationService;
+        $this->requestStack = $requestStack;
+    }
+
+    public function onAuthenticationSuccess(Request $request, TokenInterface $token): Response
     {
-        if (null === $jwt) {
-            $jwt = $this->jwtManager->create($user);
-        }
+        $user = $token->getUser();
+        $jwt = $this->jwtManager->create($user);
 
         $response = new JWTAuthenticationSuccessResponse($jwt);
-        $response->headers->setCookie(new Cookie('bearer', $jwt));
-        $event    = new AuthenticationSuccessEvent(['token' => $jwt], $user, $response);
-        if ($this->dispatcher instanceof ContractsEventDispatcherInterface) {
-            $this->dispatcher->dispatch($event, Events::AUTHENTICATION_SUCCESS);
-        } else {
-            $this->dispatcher->dispatch(Events::AUTHENTICATION_SUCCESS, $event);
-        }
+        $event = new AuthenticationSuccessEvent(['token' => $jwt], $user, $response);
+        $this->dispatcher->dispatch($event, Events::AUTHENTICATION_SUCCESS);
         $response->setData($event->getData());
+
+        if ($this->loginNotificationService) {
+            $ip = $request->server->get('REMOTE_ADDR', 'unknown');
+            $userAgent = $request->server->get('HTTP_USER_AGENT', 'unknown');
+            $this->loginNotificationService->logLogin($user, $user->getUserIdentifier(), $ip, $userAgent, 'api');
+            $this->loginNotificationService->sendNotificationEmail($user, $ip, $userAgent, 'api', new \DateTime());
+        }
+
         return $response;
     }
 }
