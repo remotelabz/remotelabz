@@ -4,7 +4,7 @@
     "type": "project",
     "license": "proprietary",
     "require": {
-        "php": ">=8.2",
+        "php": ">=8.5",
         "composer/package-versions-deprecated": "^1.11.99",
         "doctrine/common": "^3",
         "doctrine/dbal": "^4.3",
@@ -43,7 +43,7 @@
         "symfony/framework-bundle": "^6.4",
         "symfony/google-mailer": "^6.4",
         "symfony/http-client": "6.4.*",
-        "symfony/http-foundation": "^6.4",
+        "symfony/http-foundation": "^7",
         "symfony/http-kernel": "^6.4",
         "symfony/mailer": "^6.4",
         "symfony/messenger": "^6.4",
