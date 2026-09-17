@@ -26,6 +26,10 @@
             <label for="log_end">To</label>
             <input type="date" class="form-control" id="log_end" name="end" value="{{ end|date('Y-m-d') }}">
         </div>
+        <div class="form-group mr-2">
+            <label for="log_user">User</label>
+            <input type="text" class="form-control" id="log_user" name="user" value="{{ userFilter }}" placeholder="Name or email">
+        </div>
         <button type="submit" class="btn btn-primary mr-2">Filter</button>
         <a href="{{ path('login_logs') }}" class="btn btn-secondary">Last 7 days</a>
     </form>
@@ -48,7 +52,7 @@
         <tbody>
         {% for log in logs %}
             <tr>
-                <td>{{ log.createdAt|date('d/m/Y H:i:s') }}</td>
+                <td><span class="login-log-date" data-timestamp="{{ log.createdAt|date('U') }}">{{ log.createdAt|date('d/m/Y H:i:s') }} UTC</span></td>
                 <td>
                     {% if log.user %}
                         {{ log.user.name }}<br>
@@ -81,4 +85,18 @@
         </div>
     {% endif %}
 </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script type="text/javascript">
+        document.querySelectorAll('.login-log-date').forEach(function (el) {
+            var date = new Date(parseInt(el.dataset.timestamp, 10) * 1000);
+            el.title = date.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short', timeZone: 'UTC' }) + ' UTC';
+            el.textContent = date.toLocaleString(undefined, {
+                dateStyle: 'medium',
+                timeStyle: 'short'
+            });
+        });
+    </script>
 {% endblock %}

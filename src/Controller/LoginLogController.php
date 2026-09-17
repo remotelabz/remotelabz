@@ -26,10 +26,11 @@ class LoginLogController extends Controller
     public function indexAction(Request $request)
     {
         [$start, $end] = $this->getDateRange($request);
+        $userFilter = trim($request->query->get('user', ''));
         $page = $request->query->getInt('page', 1);
 
         $pagination = $this->paginator->paginate(
-            $this->loginLogRepository->createQueryBuilderForRange($start, $end),
+            $this->loginLogRepository->createQueryBuilderForRange($start, $end, $userFilter),
             $page,
             self::PAGE_LIMIT
         );
@@ -39,6 +40,7 @@ class LoginLogController extends Controller
             'pagination' => $pagination,
             'start' => $start,
             'end' => $end,
+            'userFilter' => $userFilter,
             'total' => $pagination->getTotalItemCount(),
         ]);
     }
