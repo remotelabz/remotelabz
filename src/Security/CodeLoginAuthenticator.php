@@ -35,6 +35,7 @@ use Symfony\Component\Security\Http\Authenticator\Passport\Badge\CsrfTokenBadge;
 use Symfony\Component\Security\Http\Authenticator\Passport\Badge\UserBadge;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Psr\Log\LoggerInterface;
 use App\Service\LoginNotificationService;
 
 
@@ -56,6 +57,7 @@ class CodeLoginAuthenticator extends AbstractLoginFormAuthenticator
     private $config;
     private $urlGenerator;
     private $loginNotificationService;
+    private $logger;
     /**
      * CodeLoginAuthenticator constructor.
      *
@@ -68,8 +70,9 @@ class CodeLoginAuthenticator extends AbstractLoginFormAuthenticator
      * @param ContainerBagInterface $config
      * @param UrlGeneratorInterface $urlGenerator
      * @param LoginNotificationService $loginNotificationService
+     * @param LoggerInterface $logger
      */
-    
+
 
     public function __construct(
         EntityManagerInterface $entityManager,
@@ -80,7 +83,8 @@ class CodeLoginAuthenticator extends AbstractLoginFormAuthenticator
         RefreshTokenManagerInterface $refreshTokenManager,
         ContainerBagInterface $config,
         UrlGeneratorInterface $urlGenerator,
-        LoginNotificationService $loginNotificationService
+        LoginNotificationService $loginNotificationService,
+        LoggerInterface $logger
     ) {
         $this->entityManager = $entityManager;
         $this->router = $router;
@@ -91,6 +95,7 @@ class CodeLoginAuthenticator extends AbstractLoginFormAuthenticator
         $this->config = $config;
         $this->urlGenerator = $urlGenerator;
         $this->loginNotificationService = $loginNotificationService;
+        $this->logger = $logger;
     }
 
     public function supports(Request $request): bool
@@ -149,8 +154,21 @@ public function authenticate(Request $request): Passport
 
         $response->headers->setCookie($jwtTokenCookie);
 
-        $ip = $request->server->get('REMOTE_ADDR', 'unknown');
+        $this->logger->debug('[CodeLoginAuthenticator:onAuthenticationSuccess]::Login of user: ' . $user->getEmail(), [
+            'remote_addr' => $request->server->get('REMOTE_ADDR', 'unknown'),
+            'x_forwarded_for' => $request->server->get('HTTP_X_FORWARDED_FOR', 'unknown'),
+            'x_real_ip' => $request->server->get('HTTP_X_REAL_IP', 'unknown'),
+            'client_real_ip' => $request->server->get('HTTP_CLIENT_REAL_IP', 'unknown'),
+            'cf_connecting_ip' => $request->server->get('HTTP_CF_CONNECTING_IP', 'unknown'),
+            'resolved_client_ip' => $request->getClientIp(),
+            'user_agent' => $request->server->get('HTTP_USER_AGENT', 'unknown'),
+        ]);
+
+        $ip = $request->getClientIp() ?: $request->server->get('REMOTE_ADDR', 'unknown');
         $userAgent = $request->server->get('HTTP_USER_AGENT', 'unknown');
+        $this->logger->debug('[CodeLoginAuthenticator:onAuthenticationSuccess]::IP stored in login notification: ' . $ip, [
+            'x_forwarded_for' => $request->server->get('HTTP_X_FORWARDED_FOR', 'unknown'),
+        ]);
         $this->loginNotificationService->logLogin($user, $user->getEmail(), $ip, $userAgent, 'code');
         $this->loginNotificationService->sendNotificationEmail($user, $ip, $userAgent, 'code', new DateTime());
 

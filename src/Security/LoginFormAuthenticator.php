@@ -150,8 +150,21 @@ class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
             $this->entityManager->persist($user);
             $this->entityManager->flush();
 
-            $ip = $request->server->get('REMOTE_ADDR', 'unknown');
+            $this->logger->debug('[LoginFormAuthenticator:onAuthenticationSuccess]::Login of user: ' . $user->getEmail(), [
+                'remote_addr' => $request->server->get('REMOTE_ADDR', 'unknown'),
+                'x_forwarded_for' => $request->server->get('HTTP_X_FORWARDED_FOR', 'unknown'),
+                'x_real_ip' => $request->server->get('HTTP_X_REAL_IP', 'unknown'),
+                'client_real_ip' => $request->server->get('HTTP_CLIENT_REAL_IP', 'unknown'),
+                'cf_connecting_ip' => $request->server->get('HTTP_CF_CONNECTING_IP', 'unknown'),
+                'resolved_client_ip' => $request->getClientIp(),
+                'user_agent' => $request->server->get('HTTP_USER_AGENT', 'unknown'),
+            ]);
+
+            $ip = $request->getClientIp() ?: $request->server->get('REMOTE_ADDR', 'unknown');
             $userAgent = $request->server->get('HTTP_USER_AGENT', 'unknown');
+            $this->logger->debug('[LoginFormAuthenticator:onAuthenticationSuccess]::IP stored in login notification: ' . $ip, [
+                'x_forwarded_for' => $request->server->get('HTTP_X_FORWARDED_FOR', 'unknown'),
+            ]);
             $this->loginNotificationService->logLogin($user, $user->getEmail(), $ip, $userAgent, 'form');
             $this->loginNotificationService->sendNotificationEmail($user, $ip, $userAgent, 'form', new DateTime());
 
