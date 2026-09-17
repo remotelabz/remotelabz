@@ -17,9 +17,122 @@
 
 {% block wrapper %}
 <div class="container">
-    <div>
-        <p class="lead">Welcome {{ app.user.firstname }} in your admin zone</p>
-    </div>
+    <h2>Workers services health</h2>
+
+    {% if workersSystemdStatus is empty %}
+        <div class="alert alert-warning">No worker configured.</div>
+    {% endif %}
+
+    {% for status in workersSystemdStatus %}
+        <div class="card m-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span class="font-weight-bold">
+                    Worker {{ status.worker }}
+                    {% if not status.available %}
+                        <span class="badge badge-secondary">disabled</span>
+                    {% elseif status.reachable %}
+                        {% if status.running == status.total %}
+                            <span class="badge badge-success">{{ status.running }}/{{ status.total }} running</span>
+                        {% elseif status.running > 0 %}
+                            <span class="badge badge-warning">{{ status.running }}/{{ status.total }} running</span>
+                        {% else %}
+                            <span class="badge badge-danger">0/{{ status.total }} running</span>
+                        {% endif %}
+                    {% else %}
+                        <span class="badge badge-danger">unreachable</span>
+                    {% endif %}
+                </span>
+                {% if status.generated_at is not null %}
+                    <small class="text-muted">Updated: {{ status.generated_at }}</small>
+                {% endif %}
+            </div>
+            {% if status.reachable %}
+                {% set usage = usages[status.worker] | default(null) %}
+                <div class="card-body pt-3">
+                    <h6>Usage</h6>
+                    {% if usage is not null %}
+                        <table class="table table-sm">
+                            <tbody>
+                                <tr>
+                                    <th scope="row">CPU</th>
+                                    <td>{% if usage.cpu is null %}NA{% else %}{{ usage.cpu }}%{% endif %}</td>
+                                    <th scope="row">Memory</th>
+                                    <td>{% if usage.memory is null %}NA{% else %}{{ usage.memory }}%{% endif %}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">LXCFS load</th>
+                                    <td>{% if usage.lxcfs is null %}NA{% else %}{{ usage.lxcfs }}%{% endif %}</td>
+                                    <th scope="row">Opened files</th>
+                                    <td>{{ usage.openedfiles | default('NA') }}</td>
+                                </tr>
+                                {% for vg_name, vg_usage in usage.disk | default({}) %}
+                                    <tr>
+                                        <th scope="row">Disk {{ vg_name }}</th>
+                                        <td>{% if vg_usage is null %}NA{% else %}{{ vg_usage }}%{% endif %}</td>
+                                        <th scope="row"></th>
+                                        <td></td>
+                                    </tr>
+                                {% endfor %}
+                                <tr>
+                                    <th scope="row">LXC containers running</th>
+                                    <td>{{ usage.lxclsrun | default('NA') }}</td>
+                                    <th scope="row">QEMU VMs running</th>
+                                    <td>{{ usage.qemurun | default('NA') }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <p class="text-muted mb-0">No usage data available for this worker.</p>
+                    {% endif %}
+                </div>
+                <div class="card-body pt-0">
+                    <h6>Systemd units</h6>
+                    <table class="table table-sm mb-0">
+                    <thead>
+                        <tr>
+                            <th>Unit</th>
+                            <th>Description</th>
+                            <th>Status</th>
+                            <th>Unit file</th>
+                            <th>PID</th>
+                            <th>Active since</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for service in status.services %}
+                            {% set stateClass = service.is_running
+                                ? 'text-success font-weight-bold'
+                                : (service.active_state == 'failed' ? 'text-danger font-weight-bold'
+                                : (service.sub_state == 'waiting' ? 'text-success'
+                                : 'text-muted')) %}
+                            <tr>
+                                <td class="{{ stateClass }}">{{ service.name }}</td>
+                                <td>{{ service.description }}</td>
+                                <td class="{{ stateClass }}">
+                                    {{ service.active_state }}
+                                    {% if service.sub_state is not empty and service.sub_state != service.active_state %}
+                                        ({{ service.sub_state }})
+                                    {% endif %}
+                                </td>
+                                <td>{{ service.unit_file_state }}</td>
+                                <td>{{ service.main_pid is not null ? service.main_pid : '-' }}</td>
+                                <td>{{ service.active_since is not null ? service.active_since : '-' }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                    </table>
+                </div>
+            {% elseif not status.available %}
+                <div class="card-body text-muted">
+                    {{ status.error }}
+                </div>
+            {% else %}
+                <div class="card-body text-danger">
+                    {{ status.error }}
+                </div>
+            {% endif %}
+        </div>
+    {% endfor %}
 </div>
 {% endblock %}
 

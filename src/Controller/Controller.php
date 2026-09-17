@@ -8,6 +8,7 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use FOS\RestBundle\Controller\AbstractFOSRestController;
 use App\Service\Network\NetworkManager;
+use App\Service\Worker\WorkerManager;
 
 /**
  * Provides custom JSON handling using JMSSerializer.
@@ -56,9 +57,17 @@ class Controller extends AbstractFOSRestController
     }
 
     #[Route(path: '/admin', name: 'admin')]
-    public function adminAction()
+    public function adminAction(WorkerManager $workerManager)
     {
-        return $this->render('dashboard/admin.html.twig');
+        $workersSystemdStatus = $workerManager->checkWorkersSystemdStatusAction();
+        $usages = [];
+        foreach ($workerManager->checkWorkersAction(5) as $usage) {
+            $usages[$usage['worker']] = $usage;
+        }
+        return $this->render('dashboard/admin.html.twig', [
+            'workersSystemdStatus' => $workersSystemdStatus,
+            'usages' => $usages,
+        ]);
     }
 
     #[Route(path: '/react/{reactRouting}', name: 'index_react', defaults: ['reactRouting' => 'null'])]
