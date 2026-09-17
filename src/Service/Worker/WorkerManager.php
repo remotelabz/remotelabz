@@ -39,9 +39,10 @@ class WorkerManager
         $this->doctrine=$doctrine;
     }
 
-    public function checkWorkersAction()
+    public function checkWorkersAction($timeout = null)
     {
-        $client = new Client();
+        $options = is_numeric($timeout) && $timeout > 0 ? ['timeout' => (float) $timeout] : [];
+        $client = new Client($options);
         //$workers = explode(',', $this->workerServer);
         $workers = $this->configWorkerRepository->findBy(["available" => true]);
         $usage = [];
@@ -87,6 +88,51 @@ class WorkerManager
         }
         $this->logger->info('Usage of each worker:',$usage);
             return $usage;
+    }
+
+    public function checkWorkersSystemdStatusAction()
+    {
+        $client = new Client(['timeout' => 5]);
+        $workers = $this->configWorkerRepository->findAll();
+        $statuses = [];
+        foreach($workers as $worker) {
+            $status = [
+                'worker' => $worker->getIPv4(),
+                'available' => (bool) $worker->getAvailable(),
+                'reachable' => false,
+                'error' => null,
+                'generated_at' => null,
+                'total' => 0,
+                'running' => 0,
+                'services' => [],
+            ];
+            if (!$status['available']) {
+                $status['error'] = 'Worker is disabled, no check performed';
+                array_push($statuses, $status);
+                continue;
+            }
+            $url = 'http://'.$worker->getIPv4().':'.$this->workerPort.'/api/systemd/status';
+            try {
+                $response = $client->get($url);
+                $content = json_decode($response->getBody()->getContents(), true);
+                $this->logger->debug('Get '. $url);
+                if (is_array($content) && isset($content['services'])) {
+                    $status['reachable'] = true;
+                    $status['generated_at'] = $content['generated_at'] ?? null;
+                    $status['total'] = $content['total'] ?? 0;
+                    $status['running'] = $content['running'] ?? 0;
+                    $status['services'] = $content['services'];
+                } else {
+                    $status['error'] = 'Invalid response from systemd API';
+                }
+            } catch (Exception $exception) {
+                $status['error'] = 'Web service or worker is not available';
+                $this->logger->error("Systemd status error - Web service or Worker ".$worker->getIPv4()." is not available");
+            }
+            array_push($statuses, $status);
+        }
+        $this->logger->info('Systemd status of each worker:',$statuses);
+        return $statuses;
     }
 
     /*
