@@ -48,15 +48,16 @@
             {{ sidebar.link("Schedule actions", 'scheduled_actions_new', null, 'clock', 'scheduled_actions_new', _context) }}
             {{ sidebar.link("Codes", 'codes', null, 'doc-text', 'codes', _context) }}
             <li class="nav-item">
-                <a class="nav-link dropdown-toggle {% if category in ['config', 'services', 'resources', 'database'] %}parent-active{% endif %}" href="#systemSubmenu" data-toggle="collapse" aria-expanded="{% if category in ['config', 'services', 'resources', 'database'] %}true{% else %}false{% endif %}">
+                <a class="nav-link dropdown-toggle {% if category in ['config', 'services', 'resources', 'database', 'login_logs'] %}parent-active{% endif %}" href="#systemSubmenu" data-toggle="collapse" aria-expanded="{% if category in ['config', 'services', 'resources', 'database', 'login_logs'] %}true{% else %}false{% endif %}">
                     {{- svg('api', 'image-sm') -}}
                     <span class="menu-title">System</span>
                 </a>
-                <ul class="collapse list-unstyled submenu {% if category in ['config', 'services', 'resources', 'database'] %}show{% endif %}" id="systemSubmenu">
+                <ul class="collapse list-unstyled submenu {% if category in ['config', 'services', 'resources', 'database', 'login_logs'] %}show{% endif %}" id="systemSubmenu">
                     {{ sidebar.link("Workers", 'admin_config', null, 'settings', 'config', _context) }}
                     {{ sidebar.link("Service", 'services', null, 'status-health', 'services', _context) }}
                     {{ sidebar.link("Usage", 'resources', null, 'tachometer', 'resources', _context) }}
                     {{ sidebar.link("Database", 'admin_database', null, 'redo', 'database', _context) }}
+                    {{ sidebar.link("Login logs", 'login_logs', null, 'sign-in-alt', 'login_logs', _context) }}
                     {{ sidebar.link("Icon", 'app_icons_gallery', null, 'list-task', '', _context) }}
                 </ul>
             </li>

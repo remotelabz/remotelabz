@@ -13,6 +13,16 @@ class LoginLogRepository extends ServiceEntityRepository
         parent::__construct($registry, LoginLog::class);
     }
 
+    public function createQueryBuilderForRange(\DateTimeInterface $start, \DateTimeInterface $end)
+    {
+        return $this->createQueryBuilder('l')
+            ->where('l.created_at >= :start')
+            ->andWhere('l.created_at <= :end')
+            ->setParameter('start', $start)
+            ->setParameter('end', $end)
+            ->orderBy('l.created_at', 'DESC');
+    }
+
     public function findRecentByUser($user, int $limit = 10): array
     {
         return $this->createQueryBuilder('l')

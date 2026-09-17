@@ -1,0 +1,84 @@
+{% extends 'dashboard.base.html.twig' %}
+
+{% block breadcrumbs %}
+    {%- set breadcrumbs = breadcrumbs|merge({ 'Login logs': path('login_logs') }) -%}
+    {{ parent() }}
+{% endblock %}
+
+{% block sidebar %}
+    {% set category = 'login_logs' %}
+    {{ parent() }}
+{% endblock %}
+
+{% block wrapper %}
+<div class="content-title">
+    <div class="content-title-infos">
+        <h1>Login logs</h1>
+    </div>
+</div>
+<div class="content-body">
+    <form method="get" action="{{ path('login_logs') }}" class="form-inline mb-3">
+        <div class="form-group mr-2">
+            <label for="log_start">From</label>
+            <input type="date" class="form-control" id="log_start" name="start" value="{{ start|date('Y-m-d') }}">
+        </div>
+        <div class="form-group mr-2">
+            <label for="log_end">To</label>
+            <input type="date" class="form-control" id="log_end" name="end" value="{{ end|date('Y-m-d') }}">
+        </div>
+        <button type="submit" class="btn btn-primary mr-2">Filter</button>
+        <a href="{{ path('login_logs') }}" class="btn btn-secondary">Last 7 days</a>
+    </form>
+
+    <p class="text-muted mb-2">
+        {{ total }} login{{ total > 1 ? 's' : '' }} between {{ start|date('d/m/Y') }} and {{ end|date('d/m/Y') }}
+    </p>
+
+    <table class="table table-hover table-striped" style="width:100%">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>User</th>
+                <th>IP</th>
+                <th>Login type</th>
+                <th>Browser</th>
+                <th>OS</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for log in logs %}
+            <tr>
+                <td>{{ log.createdAt|date('d/m/Y H:i:s') }}</td>
+                <td>
+                    {% if log.user %}
+                        {{ log.user.name }}<br>
+                        <small class="text-muted">{{ log.email }}</small>
+                    {% else %}
+                        {{ log.email }}
+                    {% endif %}
+                </td>
+                <td>{{ log.ip }}</td>
+                <td>{{ log.loginType }}</td>
+                <td>{{ log.browser }}</td>
+                <td>{{ log.os }}</td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="6" class="text-center text-muted">No login found in this date range.</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    {% if pagination.pageCount > 1 %}
+        <div class="d-flex align-items-center justify-content-between">
+            <div>
+                Showing page <strong>{{ pagination.currentPageNumber }}</strong> of <strong>{{ pagination.pageCount }}</strong>
+            </div>
+            <div>
+                {{ knp_pagination_render(pagination, 'pagination/my_pagination.html.twig') }}
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
