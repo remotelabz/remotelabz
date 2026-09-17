@@ -56,6 +56,11 @@ class IsoType extends AbstractType
                     'class' => 'form-select'
                 ]
             ])
+
+            // Champ Directory (organisation arborescente)
+            ->add('directory', DirectoryChoiceType::class, [
+                'label' => 'Directory',
+            ])
             
             // Sélecteur de type de fichier
             ->add('fileSourceType', ChoiceType::class, [

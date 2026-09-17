@@ -1,0 +1,239 @@
+{% extends 'dashboard.base.html.twig' %}
+
+{% block title %}Directories - {{ parent() }}{% endblock %}
+
+{% block breadcrumbs %}
+    {%- set breadcrumbs = breadcrumbs|merge({ 'Directories': path('admin_directories') }) -%}
+    {{ parent() }}
+{% endblock %}
+
+{% block sidebar %}
+    {% set category = 'directories' %}
+    {{ parent() }}
+{% endblock %}
+
+{% block wrapper %}
+<div class="top-panel">
+    <div class="d-flex justify-content-between align-items-center">
+        <h1 class="h3 mb-0">
+            Directories
+            <small class="text-muted fs-6 d-block">
+                {{ statistics.total }} folder(s) - max depth: {{ statistics.maxDepth }}
+            </small>
+        </h1>
+    </div>
+</div>
+
+<div class="labs-panel mt-3">
+    <h5 class="mb-3"><i class="fas fa-folder-plus me-2 text-success"></i>New root directory</h5>
+    <form method="post" action="{{ path('admin_directory_create') }}" class="d-flex align-items-center gap-2 flex-wrap">
+        <input type="text" name="name" class="form-control" style="max-width: 260px;"
+               placeholder="Directory name" required maxlength="255">
+        <input type="hidden" name="parent_id" value="">
+        <input type="hidden" name="return_to" value="{{ app.request.uri }}">
+        <input type="hidden" name="_token" value="{{ csrf_token('directory_admin') }}">
+        <button type="submit" class="btn btn-success btn-sm">
+            <i class="fas fa-plus me-1"></i>Create
+        </button>
+    </form>
+</div>
+
+<div class="labs-panel mt-3">
+    <h5 class="mb-3"><i class="fas fa-sitemap me-2"></i>Directory tree</h5>
+    {% if rows is empty %}
+        <div class="text-center py-5">
+            <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
+            <h4 class="text-muted">No directory</h4>
+            <p class="text-muted">Create your first directory above to organize devices, ISOs and operating systems.</p>
+        </div>
+    {% else %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Directory</th>
+                        <th width="90">Devices</th>
+                        <th width="80">ISOs</th>
+                        <th width="100">OS</th>
+                        <th width="90">Sub-dirs</th>
+                        <th width="170" class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in rows %}
+                        {% set directory = row.directory %}
+                        {% set counts = row.counts %}
+                        <tr>
+                            <td>
+                                <div style="padding-left: {{ (directory.level * 1.25) ~ 'rem' }}">
+                                    <i class="fas fa{% if counts.children > 0 %}folders{% else %}folder{% endif %} me-2 text-warning"></i>
+                                    <strong>{{ directory.name }}</strong>
+                                    {% if directory.description %}
+                                        <span class="text-muted small"> - {{ directory.description|truncate(60) }}</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>
+                                {% if counts.devices > 0 %}
+                                    <a class="badge bg-info text-decoration-none" href="{{ path('devices', {directory: directory.id}) }}" title="View devices in this directory">
+                                        {{ counts.devices }}
+                                    </a>
+                                {% else %}
+                                    <span class="text-muted">0</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if counts.isos > 0 %}
+                                    <a class="badge bg-success text-decoration-none" href="{{ path('app_iso_index', {directory: directory.id}) }}" title="View ISOs in this directory">
+                                        {{ counts.isos }}
+                                    </a>
+                                {% else %}
+                                    <span class="text-muted">0</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if counts.operatingSystems > 0 %}
+                                    <a class="badge bg-primary text-decoration-none" href="{{ path('operating_systems', {directory: directory.id}) }}" title="View operating systems in this directory">
+                                        {{ counts.operatingSystems }}
+                                    </a>
+                                {% else %}
+                                    <span class="text-muted">0</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if counts.children > 0 %}
+                                    <span class="badge bg-secondary">{{ counts.children }}</span>
+                                {% else %}
+                                    <span class="text-muted">0</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <button type="button" class="btn btn-outline-success" data-toggle-form="subdir-{{ directory.id }}"
+                                            title="New sub-directory">
+                                        <i class="fas fa-folder-plus"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-outline-primary" data-toggle-form="rename-{{ directory.id }}"
+                                            title="Rename">
+                                        <i class="fas fa-pen"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary" data-toggle-form="move-{{ directory.id }}"
+                                            title="Move">
+                                        <i class="fas fa-arrows-alt-h"></i>
+                                    </button>
+                                    <form method="post" action="{{ path('admin_directory_delete', {id: directory.id}) }}"
+                                          onsubmit="return confirm('Delete the directory &quot;{{ directory.name }}&quot; ? Its content and sub-directories will be moved to its parent folder.');">
+                                        <input type="hidden" name="return_to" value="{{ app.request.uri }}">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('directory_admin') }}">
+                                        <button type="submit" class="btn btn-outline-danger" title="Delete">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr class="d-none" id="subdir-{{ directory.id }}">
+                            <td colspan="6" class="bg-light">
+                                <form method="post" action="{{ path('admin_directory_create') }}" class="d-flex align-items-center gap-2 flex-wrap mt-2">
+                                    <span class="text-muted small">New sub-directory of <strong>{{ directory.name }}</strong>:</span>
+                                    <input type="text" name="name" class="form-control" style="max-width: 240px;"
+                                           placeholder="Name" required maxlength="255">
+                                    <input type="hidden" name="parent_id" value="{{ directory.id }}">
+                                    <input type="hidden" name="return_to" value="{{ app.request.uri }}">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('directory_admin') }}">
+                                    <button type="submit" class="btn btn-success btn-sm"><i class="fas fa-plus me-1"></i>Create</button>
+                                </form>
+                            </td>
+                        </tr>
+                        <tr class="d-none" id="rename-{{ directory.id }}">
+                            <td colspan="6" class="bg-light">
+                                <form method="post" action="{{ path('admin_directory_rename', {id: directory.id}) }}" class="d-flex align-items-center gap-2 flex-wrap mt-2">
+                                    <span class="text-muted small">Rename <strong>{{ directory.name }}</strong> to:</span>
+                                    <input type="text" name="name" class="form-control" style="max-width: 240px;"
+                                           value="{{ directory.name }}" required maxlength="255">
+                                    <input type="hidden" name="return_to" value="{{ app.request.uri }}">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('directory_admin') }}">
+                                    <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-check me-1"></i>Rename</button>
+                                </form>
+                            </td>
+                        </tr>
+                        <tr class="d-none" id="move-{{ directory.id }}">
+                            <td colspan="6" class="bg-light">
+                                <form method="post" action="{{ path('admin_directory_move', {id: directory.id}) }}" class="d-flex align-items-center gap-2 flex-wrap mt-2">
+                                    <span class="text-muted small">Move <strong>{{ directory.name }}</strong> to:</span>
+                                    <select name="parent_id" class="form-select" style="max-width: 320px;">
+                                        <option value="">(Root)</option>
+                                        {% for other in rows %}
+                                            {% if other.directory.id != directory.id and not (other.directory.path starts with directory.path ~ '/') %}
+                                                <option value="{{ other.directory.id }}"
+                                                    {% if directory.parent and directory.parent.id == other.directory.id %}selected{% endif %}>
+                                                    {% for i in 1..other.directory.level %}&nbsp;&nbsp;&nbsp;&nbsp;{% endfor %}{{ other.directory.name }}
+                                                </option>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </select>
+                                    <input type="hidden" name="return_to" value="{{ app.request.uri }}">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('directory_admin') }}">
+                                    <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-arrows-alt-h me-1"></i>Move</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+</div>
+
+{% if deletedDirectories|length > 0 %}
+<div class="labs-panel mt-3">
+    <h5 class="mb-3"><i class="fas fa-trash me-2 text-danger"></i>Trash</h5>
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>Directory</th>
+                <th width="180">Deleted at</th>
+                <th width="100" class="text-end">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for deleted in deletedDirectories %}
+                <tr>
+                    <td>
+                        <i class="fas fa-folder me-2 text-muted"></i>
+                        <span class="text-muted">{{ deleted.name }} ({{ deleted.path }})</span>
+                    </td>
+                    <td class="text-muted">{{ deleted.deletedAt ? deleted.deletedAt|date('Y-m-d H:i') : '-' }}</td>
+                    <td class="text-end">
+                        <form method="post" action="{{ path('admin_directory_restore', {id: deleted.id}) }}"
+                              onsubmit="return confirm('Restore the directory &quot;{{ deleted.name }}&quot; ?');">
+                            <input type="hidden" name="_token" value="{{ csrf_token('directory_admin') }}">
+                            <button type="submit" class="btn btn-sm btn-outline-secondary" title="Restore">
+                                <i class="fas fa-undo"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('[data-toggle-form]').forEach(function (btn) {
+                btn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    var target = document.getElementById(this.dataset.toggleForm);
+                    if (target) {
+                        target.classList.toggle('d-none');
+                    }
+                });
+            });
+        });
+    </script>
+{% endblock %}

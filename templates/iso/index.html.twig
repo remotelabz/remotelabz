@@ -1,4 +1,5 @@
 {% extends 'dashboard.base.html.twig' %}
+{% import 'partials/directory.html.twig' as dir %}
 
 {% block title %}ISO Images - {{ parent() }}{% endblock %}
 
@@ -52,18 +53,30 @@
 
 <div class="search-panel mt-3">
     <div class="row">
-        <div class="col-md-6">
-            <form action="{{ path('app_iso_index') }}" method="GET" class="d-flex">
+        <div class="col-md-8">
+            <form action="{{ path('app_iso_index') }}" method="GET" class="d-flex flex-wrap">
                 <input type="search" class="form-control" name="search"
                        placeholder="{{ 'Search by name...'|trans }}"
                        spellcheck="false" value="{{ search|default('') }}"
                        id="searchInput">
+                <select name="directory" class="form-select ms-2" style="max-width: 280px;"
+                        onchange="this.form.submit()" title="{{ 'Filter by directory (includes sub-directories)'|trans }}">
+                    {{ dir.directory_options(directoryOptions|default({}), selectedDirectory|default('all')) }}
+                </select>
                 <button class="btn btn-outline-secondary ms-2" type="submit">
                     <i class="fas fa-search"></i>
                 </button>
             </form>
         </div>
+        <div class="col-md-4">
+            <div class="d-flex justify-content-end">
+                <a href="{{ path('admin_directories') }}" class="btn btn-outline-secondary" title="{{ 'Manage directories'|trans }}">
+                    <i class="fas fa-folder-open me-1"></i> {{ 'Directories'|trans }}
+                </a>
+            </div>
+        </div>
     </div>
+    {{ dir.create_form(app.request.uri, directoryOptions|default({}), selectedDirectory is not null and selectedDirectory != 'all' and selectedDirectory != 'root' ? selectedDirectory : '', 'directory_admin') }}
 </div>
 
 <div class="labs-panel mt-3">
@@ -81,12 +94,14 @@
             <table class="table table-hover">
                 <thead>
                     <tr>
+                        {{ dir.select_all_checkbox() }}
                         <th width="100">{{ 'Type'|trans }}</th>
                         <th>{{ 'Name'|trans }}</th>
+                        <th width="180">{{ 'Directory'|trans }}</th>
                         <th>{{ 'Description'|trans }}</th>
                         <th width="150">{{ 'Source'|trans }}</th>
                         <th width="150">{{ 'Architecture'|trans }}</th>
-                        <th width="120">{{ 'Actions'|trans }}</th>
+                        <th width="140">{{ 'Actions'|trans }}</th>
                     </tr>
                 </thead>
                 <tbody id="isoTableBody">
@@ -94,6 +109,7 @@
                     <tr class="iso-item"
                         data-type="{% if iso.FilenameUrl is not null %}url{% elseif iso.Filename is not null %}file{% else %}none{% endif %}"
                         data-name="{{ iso.Name|lower }}">
+                        <td><input type="checkbox" class="item-check" value="{{ iso.id }}"></td>
                         <td>
                             {% if iso.FilenameUrl is not null %}
                                 <span class="badge bg-info">
@@ -113,6 +129,9 @@
                             <a href="{{ path('app_iso_show', {id: iso.id}) }}" class="text-decoration-none fw-medium">
                                 {{ iso.Name }}
                             </a>
+                        </td>
+                        <td>
+                            {{ dir.directory_cell(iso) }}
                         </td>
                         <td>
                             <a href="{{ path('app_iso_show', {id: iso.id}) }}" class="text-decoration-none fw-medium">
@@ -139,6 +158,11 @@
                             <a href="{{ path('app_iso_edit', {id: iso.id}) }}" class="btn btn-sm btn-outline-primary" title="{{ 'Edit'|trans }}">
                                 <i class="fa fa-edit"></i>
                             </a>
+                            <button type="button" class="btn btn-sm btn-outline-secondary"
+                                    data-move-id="{{ iso.id }}" data-move-name="{{ iso.Name }}"
+                                    title="{{ 'Move to directory'|trans }}">
+                                <i class="fa fa-folder-open"></i>
+                            </button>
                             <form method="post" action="{{ path('app_iso_delete', {id: iso.id}) }}" style="display:inline-block;" onsubmit="return confirm('{{ 'Are you sure?'|trans }}');">
                                 <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ iso.id) }}">
                                 <input type="hidden" name="_method" value="DELETE">
@@ -152,6 +176,8 @@
                 </tbody>
             </table>
         </div>
+        {{ dir.batch_bar(path('app_iso_move'), app.request.uri, 'ISOs', directoryOptions|default({})) }}
+        {{ dir.move_modal(path('app_iso_move'), 'ISO', directoryOptions|default({})) }}
         {# Pagination (à adapter si tu utilises KnpPaginator) #}
         {% if pagination is defined and pagination.pageCount > 1 %}
         <div class="row align-items-center mt-4">
