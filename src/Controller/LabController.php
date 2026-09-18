@@ -553,7 +553,7 @@ class LabController extends Controller
             throw new NotFoundHttpException("Lab " . $id . " does not exist.");
         };
 
-        if ($request->getContentType() === 'json') {
+        if ($request->getContentTypeFormat() === 'json') {
             $lab = json_decode($request->getContent(), true);
         }
 
@@ -691,7 +691,7 @@ class LabController extends Controller
         $deviceForm = $this->createForm(DeviceType::class, $device);
         $deviceForm->handleRequest($request);
 
-        if ($request->getContentType() === 'json') {
+        if ($request->getContentTypeFormat() === 'json') {
             $device_array = json_decode($request->getContent(), true);
             /*$json_example='{
                 "id": 121,
@@ -889,7 +889,7 @@ class LabController extends Controller
         $labForm = $this->createForm(LabType::class, $lab);
         $labForm->handleRequest($request);
 
-        if ($request->getContentType() === 'json') {
+        if ($request->getContentTypeFormat() === 'json') {
             $lab = json_decode($request->getContent(), true);
             $labForm->submit($lab, false);
         }
@@ -923,7 +923,7 @@ class LabController extends Controller
             throw new NotFoundHttpException("Lab " . $id . " does not exist.");
         };
 
-        if ($request->getContentType() === 'json') {
+        if ($request->getContentTypeFormat() === 'json') {
             $lab = json_decode($request->getContent(), true);
         }
 
