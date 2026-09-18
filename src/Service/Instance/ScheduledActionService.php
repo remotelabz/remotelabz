@@ -28,6 +28,7 @@ class ScheduledActionService
         private readonly LabInstanceRepository     $labInstanceRepository,
         private readonly InstanceManager           $instanceManager,
         private readonly LoggerInterface           $logger,
+        private readonly ScheduledActionMailService $scheduledActionMailService,
     ) {}
 
     // =========================================================================
@@ -145,16 +146,31 @@ class ScheduledActionService
                         ]);
 
                         if (!$labInstance) {
-                            $labInstance = $this->instanceManager->create($sa->getLab(), $user);
+                            // autoStartDevices = true: the devices are started by the
+                            // LabLaunchRequestMessageHandler once the instance is placed
+                            $labInstance = $this->instanceManager->create($sa->getLab(), $user, true);
                             $this->logger->info(sprintf(
                                 '[ScheduledActionService] Created lab instance %s for user %s.',
                                 $labInstance->getUuid(), $user->getName()
                             ));
                         }
 
-                        $result  = $this->applyAction(ScheduledAction::ACTION_START, $labInstance);
-                        $report  = array_merge($report, $result['report']);
-                        $errors  = array_merge($errors, $result['errors']);
+                        if (is_null($labInstance->getWorkerIp())) {
+                            // The instance was just created: its placement (and the devices'
+                            // start) is delegated to the async LabLaunchRequestMessageHandler.
+                            $this->logger->info(sprintf(
+                                '[ScheduledActionService] Lab instance %s placed asynchronously, devices start delegated.',
+                                $labInstance->getUuid()
+                            ));
+                            $report[] = [
+                                'labInstanceUuid' => $labInstance->getUuid(),
+                                'status'          => 'placement delegated',
+                            ];
+                        } else {
+                            $result  = $this->applyAction(ScheduledAction::ACTION_START, $labInstance);
+                            $report  = array_merge($report, $result['report']);
+                            $errors  = array_merge($errors, $result['errors']);
+                        }
 
                     } catch (\Throwable $e) {
                         $this->logger->error(sprintf(
@@ -210,6 +226,16 @@ class ScheduledActionService
             $errors[] = ['error' => $e->getMessage()];
         } finally {
             $this->entityManager->flush();
+        }
+
+        // Notify by e-mail the user who created this scheduled action
+        try {
+            $this->scheduledActionMailService->sendExecutionNotification($sa);
+        } catch (\Throwable $e) {
+            $this->logger->error(sprintf(
+                '[ScheduledActionService] Failed to send execution notification e-mail for uuid=%s: %s',
+                $sa->getUuid(), $e->getMessage()
+            ));
         }
 
         return [

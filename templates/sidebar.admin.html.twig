@@ -5,7 +5,7 @@
     <nav class="sidebar sidebar-offcanvas {% if app.request.cookies.get('sidebar_collapsed') == 'true' %}sidebar-collapsed{%endif%}" id="sidebar">
         {% block sidebar_header %}
             <div class="context-header" id ="sidebarContext">
-                {{ sidebar.header('users', 'admin') }}
+                {{ sidebar.header('admin', 'admin') }}
             </div>
         {% endblock %}
 

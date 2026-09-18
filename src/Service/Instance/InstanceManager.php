@@ -21,6 +21,8 @@ use App\Entity\ControlProtocolTypeInstance;
 use App\Instance\InstanceState;
 use Remotelabz\Message\Message\InstanceActionMessage;
 use Remotelabz\Message\Message\InstanceStateMessage;
+use Remotelabz\Message\Message\LabLaunchRequestMessage;
+use App\Service\Worker\LabPlacementCache;
 use App\Repository\DeviceRepository;
 use App\Repository\TextObjectRepository;
 use App\Repository\PictureRepository;
@@ -84,6 +86,7 @@ class InstanceManager
     protected TextObjectRepository $TextObjectRepository;
     protected ConfigWorkerRepository $configWorkerRepository;
     protected WorkerManager $workerManager;
+    protected LabPlacementCache $placementCache;
     protected PictureRepository $PictureRepository;
     protected $bannerManager;
     protected $workerSerializationGroups = [
@@ -116,7 +119,8 @@ class InstanceManager
         ProxyManager $proxyManager,
         WorkerManager $workerManager,
         BannerManager $bannerManager,
-        TokenStorageInterface $tokenStorage
+        TokenStorageInterface $tokenStorage,
+        LabPlacementCache $placementCache
     ) {
         $this->bus = $bus;
         $this->logger = $logger;
@@ -142,17 +146,29 @@ class InstanceManager
         $this->bannerManager = $bannerManager;
         $this->tokenStorage = $tokenStorage;
         $this->singleServer = $singleServer;
+        $this->placementCache = $placementCache;
     }
 
     /**
      * Creates a new lab instance.
      *
-     * @param Lab                 $lab        the lab to instanciate
-     * @param InstancierInterface $instancier the owner of the new instance
+     * The worker placement is decoupled from the creation: the instance is
+     * persisted without a worker and a LabLaunchRequestMessage is dispatched.
+     * The LabLaunchRequestMessageHandler (async, on the "front" queue) picks
+     * the best worker with the real worker stats plus the memory reservations
+     * of the other pending instances, then launches the instance on it.
+     * This avoids the race condition where all instances of a lab scheduled
+     * at the same time would be placed on the same worker.
+     *
+     * @param Lab                 $lab              the lab to instanciate
+     * @param InstancierInterface $instancier       the owner of the new instance
+     * @param bool                $autoStartDevices if true, the devices are
+     *                                              started automatically once
+     *                                              the instance is placed
      *
      * @return LabInstance
      */
-    public function create(Lab $lab, InstancierInterface $instancier)
+    public function create(Lab $lab, InstancierInterface $instancier, bool $autoStartDevices = false)
     {
 
         // Test is this user, guest or group has already started an instance of this lab
@@ -175,18 +191,8 @@ class InstanceManager
 
         if (is_null($is_exist_labinstance)) {
 
-                $worker = $this->workerManager->getFreeWorker($lab);
-
-            if ($worker == null) {
-                $this->logger->error('[InstanceManager:create]::Could not create instance. No worker available');
-                throw new Exception('[InstanceManager:create]::No worker available');
-            }
-            //$this->logger->info("Worker choosen is :".$worker);
-            $this->logger->debug("[InstanceManager:create]::Worker available from create function in InstanceManager:".$worker);
-            
             $labInstance = LabInstance::create()
                 ->setLab($lab)
-                ->setworkerIp($worker)
                 ->setInternetConnected(false)
                 ->setInterconnected(false);
 
@@ -219,15 +225,6 @@ class InstanceManager
                 ->setState(InstanceStateMessage::STATE_CREATING)
                 ->setNetwork($network)
                 ->populate();
-                
-            if (!$this->singleServer) {// One server for the Front and one server for the worker
-                if (IPTools::routeExists($network))
-                    $this->logger->debug("[InstanceManager:create]::Route to ".$network." exists, via ".$worker);
-                else {
-                    $this->logger->debug("[InstanceManager:create]::Route to ".$network." doesn't exist, via ".$worker);
-                    IPTools::routeAdd($network,$worker);
-                }
-            }
 
             if ($lab->getHasTimer() == true) {
                 $timer = $lab->getTimer();
@@ -240,16 +237,18 @@ class InstanceManager
             $this->entityManager->persist($labInstance);
             $this->entityManager->flush();
 
-            $context = SerializationContext::create()->setGroups($this->workerSerializationGroups);
-            $labJson = $this->serializer->serialize($labInstance, 'json', $context);
-    
-            //$this->logger->debug("[InstanceManager:create]::Send labJson ".$labJson);
+            // Register the memory reservation (sum of the devices' memory) so that
+            // WorkerManager::getFreeWorker() takes it into account while the instance
+            // is not yet running on its worker.
+            $neededMemory = $this->workerManager->computeMemoryUsage($lab);
+            $this->placementCache->add($labInstance->getUuid(), $neededMemory);
 
+            // Delegate the worker placement + launch to the async handler
+            $this->logger->debug("[InstanceManager:create]::Lab instance ".$labInstance->getUuid()." created, worker placement delegated (needed memory: ".$neededMemory.")");
             $this->bus->dispatch(
-                new InstanceActionMessage($labJson, $labInstance->getUuid(), InstanceActionMessage::ACTION_CREATE), [
-                    new AmqpStamp($worker, AMQP_NOPARAM, []),
-                ]
+                new LabLaunchRequestMessage($labInstance->getUuid(), $autoStartDevices)
             );
+
             return $labInstance;
         } else 
             return null;   
@@ -265,6 +264,10 @@ class InstanceManager
     public function delete(LabInstance $labInstance)
     {
         $workerIP = $labInstance->getWorkerIp();
+        if (is_null($workerIP)) {
+            $this->logger->error('[InstanceManager:delete]::Could not delete instance. Lab instance has no worker assigned (placement pending or failed).');
+            throw new BadRequestHttpException('Lab instance has no worker assigned yet');
+        }
         $worker = $this->configWorkerRepository->findOneBy(["IPv4"=>$workerIP]);
         if ($worker->getAvailable() == true) {
             $context = SerializationContext::create()->setGroups($this->workerSerializationGroups);
@@ -319,8 +322,12 @@ class InstanceManager
             
             $uuid = $deviceInstance->getUuid();
             $device = $deviceInstance->getDevice();
-            
+
             $workerIP = $deviceInstance->getLabInstance()->getWorkerIp();
+            if (is_null($workerIP)) {
+                $this->logger->error('[InstanceManager:start]::Could not start device instance '.$uuid.'. Lab instance has no worker assigned (placement pending or failed).');
+                throw new BadRequestHttpException('Lab instance has no worker assigned yet');
+            }
             $worker = $this->configWorkerRepository->findOneBy(["IPv4"=>$workerIP]);
             if ($worker->getAvailable() == true) {
                 foreach ($deviceInstance->getControlProtocolTypeInstances() as $control_protocol_instance) {
@@ -415,6 +422,10 @@ class InstanceManager
     {
         $uuid = $deviceInstance->getUuid();
         $workerIP = $deviceInstance->getLabInstance()->getWorkerIp();
+        if (is_null($workerIP)) {
+            $this->logger->error('[InstanceManager:stop]::Could not stop device instance '.$uuid.'. Lab instance has no worker assigned (placement pending or failed).');
+            throw new BadRequestHttpException('Lab instance has no worker assigned yet');
+        }
         $worker = $this->configWorkerRepository->findOneBy(["IPv4"=>$workerIP]);
         $device = $deviceInstance->getDevice();
 
@@ -474,6 +485,10 @@ class InstanceManager
         $uuid = $deviceInstance->getUuid();
         $device = $deviceInstance->getDevice();
         $workerIP = $deviceInstance->getLabInstance()->getWorkerIp();
+        if (is_null($workerIP)) {
+            $this->logger->error('[InstanceManager:reset]::Could not reset device instance '.$uuid.'. Lab instance has no worker assigned (placement pending or failed).');
+            throw new BadRequestHttpException('Lab instance has no worker assigned yet');
+        }
         $worker = $this->configWorkerRepository->findOneBy(["IPv4"=>$workerIP]);
         $context = SerializationContext::create()->setGroups($this->workerSerializationGroups);
         

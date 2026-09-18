@@ -1,0 +1,33 @@
+<html>
+    <body>
+        <p>
+            Hello {{ firstName }},<br><br>
+            The scheduled {{ action }} action on the lab "{{ labName }}" has been executed:<br><br>
+            <ul>
+                <li><strong>Lab:</strong> {{ labName }}</li>
+                <li><strong>Action:</strong> {{ action }}</li>
+                <li><strong>Group:</strong> {{ groupName }}</li>
+                <li><strong>Scheduled for:</strong> {{ scheduledAt }}</li>
+                <li><strong>Executed at:</strong> {{ executedAt }}</li>
+                <li><strong>Result:</strong> {{ result }}</li>
+                <li><strong>Operations performed:</strong> {{ reportCount }}</li>
+            </ul>
+            {% if errorCount > 0 %}
+            <br>
+            {{ errorCount }} error(s) occurred during execution:<br><br>
+            <ul>
+                {% for error in errors %}
+                <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+            {% if errorMessage is not null and errorMessage != '' %}
+            <br>
+            <strong>Execution report:</strong> {{ errorMessage }}
+            {% endif %}
+            <br>
+            Regards,<br>
+            The RemoteLabz team.
+        </p>
+    </body>
+</html>

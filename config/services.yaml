@@ -237,6 +237,15 @@ services:
             $workerPort: '%app.worker_port%'
             $publicAddress: '%app.general.public_address%'
 
+    App\Service\Worker\LabPlacementCache:
+        arguments:
+            $pool: '@lab_placement'
+
+    App\Service\Instance\ScheduledActionMailService:
+        arguments:
+            $contactMail: '%app.general.contact_mail%'
+            $mailSubject: '%env(resolve:MAIL_SUBJECT)%'
+
     App\Service\Lab\BannerManager:
         arguments:
             $bannerDirectory: '%directory.public.upload.lab.banner%'
@@ -305,6 +314,10 @@ services:
     App\MessageHandler\InstanceStateMessageHandler:
         arguments:
             $rootDirectory: '%kernel.project_dir%'
+
+    App\MessageHandler\LabLaunchRequestMessageHandler:
+        arguments:
+            $singleServer: '%app.general.single_srv%'
 
     instance_manager: '@App\Service\Instance\InstanceManager'
     network_manager: '@App\Service\Network\NetworkManager'
