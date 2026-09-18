@@ -17,29 +17,32 @@
     <div class="d-flex justify-content-between align-items-center">
         <h1 class="h3 mb-0">
             Directories
-            <small class="text-muted fs-6 d-block">
-                {{ statistics.total }} folder(s) - max depth: {{ statistics.maxDepth }}
-            </small>
         </h1>
     </div>
 </div>
 
-<div class="labs-panel mt-3">
-    <h5 class="mb-3"><i class="fas fa-folder-plus me-2 text-success"></i>New root directory</h5>
-    <form method="post" action="{{ path('admin_directory_create') }}" class="d-flex align-items-center gap-2 flex-wrap">
-        <input type="text" name="name" class="form-control" style="max-width: 260px;"
-               placeholder="Directory name" required maxlength="255">
+<div class="search-panel mt-4">
+    <form method="post" action="{{ path('admin_directory_create') }}" class="row align-items-center g-2">
+        <div class="col-auto">
+            <label for="new-root-directory" class="form-label mb-0">New root directory</label>
+        </div>
+        <div class="col-auto">
+            <input type="text" id="new-root-directory" name="name" class="form-control" style="width: 260px;"
+                   placeholder="Directory name" required maxlength="255">
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-success">
+                <i class="fas fa-plus me-1"></i>Create
+            </button>
+        </div>
         <input type="hidden" name="parent_id" value="">
         <input type="hidden" name="return_to" value="{{ app.request.uri }}">
         <input type="hidden" name="_token" value="{{ csrf_token('directory_admin') }}">
-        <button type="submit" class="btn btn-success btn-sm">
-            <i class="fas fa-plus me-1"></i>Create
-        </button>
     </form>
 </div>
 
 <div class="labs-panel mt-3">
-    <h5 class="mb-3"><i class="fas fa-sitemap me-2"></i>Directory tree</h5>
+    <h5 class="mb-3"><i class="fas fa-sitemap me-2"></i> Directory tree</h5>
     {% if rows is empty %}
         <div class="text-center py-5">
             <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>

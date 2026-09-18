@@ -102,6 +102,7 @@ security:
         - { path: ^/admin/labs, roles: ['ROLE_TEACHER'] }
         - { path: ^/admin/sandbox, roles: ['ROLE_TEACHER'] }
         - { path: ^/admin/resources, roles: ['ROLE_TEACHER'] }
+        - { path: ^/admin/directories, roles: ['ROLE_TEACHER_EDITOR'] }
         - { path: ^/admin/devices, roles: ['ROLE_TEACHER_EDITOR'] }
         - { path: ^/admin/operating-systems, roles: ['ROLE_TEACHER_EDITOR'] }
         - { path: ^/admin/isos, roles: ['ROLE_TEACHER_EDITOR'] }
