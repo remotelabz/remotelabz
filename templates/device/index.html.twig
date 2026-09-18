@@ -91,9 +91,11 @@
             </div>
         </div>
     </div>
+    {% if is_granted("ROLE_ADMINISTRATOR") %}
     <div class="mt-3">
         {{ dir.create_form(app.request.uri, directoryOptions|default({}), selectedDirectory is not null and selectedDirectory != 'all' and selectedDirectory != 'root' ? selectedDirectory : '', 'directory_admin') }}
     </div>
+    {% endif %}
 </div>
 
 <div class="devices-panel mt-3">
@@ -116,7 +118,8 @@
             <table class="table table-hover">
                 <thead>
                     <tr>
-                        {{ dir.select_all_checkbox() }}
+                        {% if is_granted("ROLE_ADMINISTRATOR") %}
+                        {{ dir.select_all_checkbox() }}                        {% endif %}
                         <th width="50">Type</th>
                         <th>Name</th>
                         <th width="150">Brand & Model</th>
@@ -137,7 +140,8 @@
                         data-name="{{ device.name|lower }}"
                         data-brand="{{ device.brand|default('')|lower }}"
                         data-model="{{ device.model|default('')|lower }}">
-                        <td><input type="checkbox" class="item-check" value="{{ device.id }}"></td>
+                        {% if is_granted("ROLE_ADMINISTRATOR") %}
+                        <td><input type="checkbox" class="item-check" value="{{ device.id }}"></td>                        {% endif %}
                         <td>
                             {% if device.type == 'vm' %}
                                 <span class="badge bg-info">
@@ -224,11 +228,13 @@
                                     title="Edit Device">
                                     <i class="fas fa-edit"></i>
                                 </a>
-                                <button type="button" class="btn btn-sm btn-outline-primary"
-                                        data-move-id="{{ device.id }}" data-move-name="{{ device.name }}"
-                                        title="Move to directory">
-                                    <i class="fas fa-folder-open"></i>
-                                </button>
+{% if is_granted("ROLE_ADMINISTRATOR") %}
+                                    <button type="button" class="btn btn-sm btn-outline-primary"
+                                            data-move-id="{{ device.id }}" data-move-name="{{ device.name }}"
+                                            title="Move to directory">
+                                        <i class="fas fa-folder-open"></i>
+                                    </button>
+    {% endif %}
                                 <form method="post" action="{{ path('delete_device', {id: device.id}) }}" style="display:inline-block;" onsubmit="return confirm('{{ 'Are you sure?'|trans }}');">
                                 <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ device.id) }}">
                                 <input type="hidden" name="_method" value="DELETE">
@@ -245,8 +251,9 @@
                 </tbody>
             </table>
         </div>
+        {% if is_granted("ROLE_ADMINISTRATOR") %}
         {{ dir.batch_bar(path('device_move'), app.request.uri, 'devices', directoryOptions|default({})) }}
-        {{ dir.move_modal(path('device_move'), 'device', directoryOptions|default({})) }}
+        {{ dir.move_modal(path('device_move'), 'device', directoryOptions|default({})) }}        {% endif %}
 
         <div class="text-muted mt-3">
             Showing {{ devices|length }} device template{% if devices|length > 1 %}s{% endif %}

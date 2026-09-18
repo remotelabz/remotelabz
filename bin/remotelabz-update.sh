@@ -45,7 +45,6 @@ php bin/console doctrine:migrations:migrate -n
 #npx browserslist@latest --update-db
 php bin/console cache:clear
 chown remotelabz:www-data * -R
-chmod g+w /opt/remotelabz/var -R
 chmod g+w /opt/remotelabz/public/uploads -R
 chmod g+r config/jwt/private.pem
 chmod g+w /opt/remotelabz/config/packages/messenger.yaml
@@ -56,3 +55,5 @@ echo "push \"route $NETWORK $NETWORK_MASK\"" | tee -a /etc/openvpn/server/server
 systemctl daemon-reload
 systemctl restart remotelabz-proxy
 systemctl restart remotelabz
+chown remotelabz:www-data /opt/remotelabz/var -R
+chmod g+w /opt/remotelabz/var -R

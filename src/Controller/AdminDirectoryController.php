@@ -11,7 +11,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
-#[IsGranted("ROLE_TEACHER_EDITOR", message: "Access denied.")]
+#[IsGranted("ROLE_ADMINISTRATOR", message: "Access denied.")]
 class AdminDirectoryController extends AbstractController
 {
     #[Route('/admin/directories', name: 'admin_directories', methods: ['GET'])]

@@ -87,9 +87,11 @@
             </div>
         </div>
     </div>
+    {% if is_granted("ROLE_ADMINISTRATOR") %}
     <div class="mt-3">
         {{ dir.create_form(app.request.uri, directoryOptions|default({}), selectedDirectory is not null and selectedDirectory != 'all' and selectedDirectory != 'root' ? selectedDirectory : '', 'directory_admin') }}
     </div>
+    {% endif %}
 </div>
 
 <div class="labs-panel mt-3">
@@ -107,7 +109,8 @@
             <table class="table table-hover">
                 <thead>
                     <tr>
-                        {{ dir.select_all_checkbox() }}
+                        {% if is_granted("ROLE_ADMINISTRATOR") %}
+                        {{ dir.select_all_checkbox() }}                        {% endif %}
                         <th width="50">Type</th>
                         <th>Name</th>
                         <th width="180">Directory</th>
@@ -129,7 +132,8 @@
                         data-arch="{% if operatingSystem.arch is not null %}{{operatingSystem.arch.name |lower}}{% else %}none{% endif %}"
 
                         data-name="{{ operatingSystem.name|lower }}">
-                        <td><input type="checkbox" class="item-check" value="{{ operatingSystem.id }}"></td>
+                        {% if is_granted("ROLE_ADMINISTRATOR") %}
+                        <td><input type="checkbox" class="item-check" value="{{ operatingSystem.id }}"></td>                        {% endif %}
                         <td>
                             {% if operatingSystem.imageUrl is not null %}
                                 <span class="badge bg-warning">
@@ -211,11 +215,13 @@
                                 title="{{ 'Edit'|trans }}">
                                 <i class="fas fa-edit"></i>
                             </a>
-                            <button type="button" class="btn btn-sm btn-outline-secondary"
-                                    data-move-id="{{ operatingSystem.id }}" data-move-name="{{ operatingSystem.name }}"
-                                    title="Move to directory">
-                                <i class="fas fa-folder-open"></i>
-                            </button>
+{% if is_granted("ROLE_ADMINISTRATOR") %}
+                                <button type="button" class="btn btn-sm btn-outline-secondary"
+                                        data-move-id="{{ operatingSystem.id }}" data-move-name="{{ operatingSystem.name }}"
+                                        title="Move to directory">
+                                    <i class="fas fa-folder-open"></i>
+                                </button>
+    {% endif %}
                             {% if operatingSystem.hypervisor and operatingSystem.hypervisor.name != "natif" %}
                                 <form method="post" action="{{ path('delete_operating_system', {id: operatingSystem.id}) }}" style="display:inline-block;" onsubmit="return confirm('{{ 'Are you sure?'|trans }}');">
                                     <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ operatingSystem.id) }}">
@@ -234,8 +240,9 @@
                 </tbody>
             </table>
         </div>
+        {% if is_granted("ROLE_ADMINISTRATOR") %}
         {{ dir.batch_bar(path('operating_system_move'), app.request.uri, 'operating systems', directoryOptions|default({})) }}
-        {{ dir.move_modal(path('operating_system_move'), 'operating system', directoryOptions|default({})) }}
+        {{ dir.move_modal(path('operating_system_move'), 'operating system', directoryOptions|default({})) }}        {% endif %}
         {# Pagination #}
         {% if pagination.pageCount > 1 %}
         <div class="row align-items-center mt-4">
