@@ -151,12 +151,12 @@
                         </td>
                         <td>
                             <a href="{{ path('app_iso_edit', {id: iso.id}) }}" class="btn btn-sm btn-outline-primary" title="{{ 'Edit'|trans }}">
-                                <i class="fa fa-edit"></i>
+                                <i class="fas fa-edit"></i>
                             </a>
                             <button type="button" class="btn btn-sm btn-outline-secondary"
                                     data-move-id="{{ iso.id }}" data-move-name="{{ iso.Name }}"
                                     title="{{ 'Move to directory'|trans }}">
-                                <i class="fa fa-folder-open"></i>
+                                <i class="fas fa-folder-open"></i>
                             </button>
                             <form method="post" action="{{ path('app_iso_delete', {id: iso.id}) }}" style="display:inline-block;" onsubmit="return confirm('{{ 'Are you sure?'|trans }}');">
                                 <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ iso.id) }}">
