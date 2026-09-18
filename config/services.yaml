@@ -241,6 +241,11 @@ services:
         arguments:
             $pool: '@lab_placement'
 
+    App\Service\Instance\ScheduledActionMailService:
+        arguments:
+            $contactMail: '%app.general.contact_mail%'
+            $mailSubject: '%env(resolve:MAIL_SUBJECT)%'
+
     App\Service\Lab\BannerManager:
         arguments:
             $bannerDirectory: '%directory.public.upload.lab.banner%'

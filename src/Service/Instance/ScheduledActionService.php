@@ -28,6 +28,7 @@ class ScheduledActionService
         private readonly LabInstanceRepository     $labInstanceRepository,
         private readonly InstanceManager           $instanceManager,
         private readonly LoggerInterface           $logger,
+        private readonly ScheduledActionMailService $scheduledActionMailService,
     ) {}
 
     // =========================================================================
@@ -225,6 +226,16 @@ class ScheduledActionService
             $errors[] = ['error' => $e->getMessage()];
         } finally {
             $this->entityManager->flush();
+        }
+
+        // Notify by e-mail the user who created this scheduled action
+        try {
+            $this->scheduledActionMailService->sendExecutionNotification($sa);
+        } catch (\Throwable $e) {
+            $this->logger->error(sprintf(
+                '[ScheduledActionService] Failed to send execution notification e-mail for uuid=%s: %s',
+                $sa->getUuid(), $e->getMessage()
+            ));
         }
 
         return [
