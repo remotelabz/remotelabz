@@ -476,7 +476,7 @@ const DetailsModal = ({ selectedInstance, onClose, sharedStates, onStateUpdate, 
                                   <a
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      href={"/instances/" + instance.uuid + "/view/admin"}
+                                      href={"/instances/" + deviceInstance.uuid + "/view/admin"}
                                       className="btn btn-primary ml-3"
                                       title="Open VNC console"
                                       data-toggle="tooltip"
