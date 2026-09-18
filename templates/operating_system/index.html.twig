@@ -61,12 +61,12 @@
 <div class="search-panel mt-3">
     <div class="row">
         <div class="col-md-8">
-            <form action="{{ path('operating_systems') }}" method="GET" class="d-flex flex-wrap">
+            <form action="{{ path('operating_systems') }}" method="GET" class="d-flex">
                 <input type="search" class="form-control" name="search"
                        placeholder="Search by name"
                        spellcheck="false" value="{{ search|default('') }}"
-                       id="searchInput">
-                <select name="directory" class="form-select ms-2" style="max-width: 280px;"
+                       id="searchInput" style="flex-grow: 1; min-width: 0;">
+                <select name="directory" class="form-select ms-2" style="width: 260px; flex-shrink: 0;"
                         onchange="this.form.submit()" title="Filter by directory (includes sub-directories)">
                     {{ dir.directory_options(directoryOptions|default({}), selectedDirectory|default('all')) }}
                 </select>
@@ -75,8 +75,8 @@
                 </button>
             </form>
         </div>
-        <div class="col-md-6">
-            <div class="d-flex justify-content-end">
+        <div class="col-md-4">
+            <div class="d-flex">
                 <select class="form-select" style="width: auto;" id="archFilter">
                     <option value="">All Architectures</option>
                     <option value="x86">x86 (32-bit)</option>
@@ -84,13 +84,12 @@
                     <option value="arm">ARM (32-bit)</option>
                     <option value="arm64">ARM64 (64-bit)</option>
                 </select>
-                <a href="{{ path('admin_directories') }}" class="btn btn-outline-secondary ms-2" title="Manage directories">
-                    <i class="fas fa-folder-open me-1"></i> Directories
-                </a>
             </div>
         </div>
     </div>
-    {{ dir.create_form(app.request.uri, directoryOptions|default({}), selectedDirectory is not null and selectedDirectory != 'all' and selectedDirectory != 'root' ? selectedDirectory : '', 'directory_admin') }}
+    <div class="mt-3">
+        {{ dir.create_form(app.request.uri, directoryOptions|default({}), selectedDirectory is not null and selectedDirectory != 'all' and selectedDirectory != 'root' ? selectedDirectory : '', 'directory_admin') }}
+    </div>
 </div>
 
 <div class="labs-panel mt-3">

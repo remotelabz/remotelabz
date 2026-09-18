@@ -125,7 +125,7 @@
 {% endmacro %}
 
 {% macro create_form(return_to, options, selected_parent, csrf_id) %}
-    <form method="post" action="{{ path('admin_directory_create') }}" class="d-flex align-items-center gap-2 flex-wrap mt-3" id="newDirectoryForm">
+    <form method="post" action="{{ path('admin_directory_create') }}" class="d-flex align-items-center gap-3 flex-wrap" id="newDirectoryForm">
         <span class="text-muted small"><i class="fas fa-folder-plus me-1"></i>New directory:</span>
         <input type="text" name="name" class="form-control" style="max-width: 220px;"
                placeholder="Directory name" required maxlength="255">

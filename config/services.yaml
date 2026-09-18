@@ -365,6 +365,16 @@ services:
     App\Service\LoginNotificationService:
         arguments:
             $contactMail: '%app.general.contact_mail%'
+            $mailSubject: '%env(resolve:MAIL_SUBJECT)%'
+
+    App\Service\IpGeolocationService:
+        arguments:
+            $baseUrl: '%env(resolve:GEOIP_API_BASE_URL)%'
+
+    App\Service\IpReputationService:
+        arguments:
+            $apiKey: '%env(resolve:ABUSEIPDB_API_KEY)%'
+            $ttl: '%env(int:ABUSEIPDB_CHECK_TTL)%'
 
     App\Security\AuthenticationSuccessHandler:
         arguments:
