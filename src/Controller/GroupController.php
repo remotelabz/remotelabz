@@ -308,7 +308,7 @@ class GroupController extends Controller
         $groupForm = $this->createForm(GroupType::class, $group);
         $groupForm->handleRequest($request);
 
-        if ('json' === $request->getContentType()) {
+        if ('json' === $request->getContentTypeFormat()) {
             $group = json_decode($request->getContent(), true);
             $groupForm->submit($group);
         }
@@ -467,7 +467,7 @@ class GroupController extends Controller
         $groupForm = $this->createForm(GroupType::class, $group);
         $groupForm->handleRequest($request);
 
-        if ('json' === $request->getContentType()) {
+        if ('json' === $request->getContentTypeFormat()) {
             $group = json_decode($request->getContent(), true);
             $groupForm->submit($group, false);
         }

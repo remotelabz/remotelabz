@@ -81,7 +81,7 @@ class FlavorController extends Controller
         $flavorForm = $this->createForm(FlavorType::class, $flavor);
         $flavorForm->handleRequest($request);
 
-        if ($request->getContentType() === 'json') {
+        if ($request->getContentTypeFormat() === 'json') {
             $flavor = json_decode($request->getContent(), true);
             $flavorForm->submit($flavor);
         }
@@ -125,7 +125,7 @@ class FlavorController extends Controller
         $flavorForm = $this->createForm(FlavorType::class, $flavor);
         $flavorForm->handleRequest($request);
 
-        if ($request->getContentType() === 'json') {
+        if ($request->getContentTypeFormat() === 'json') {
             $flavor = json_decode($request->getContent(), true);
             $flavorForm->submit($flavor, false);
         }

@@ -99,7 +99,7 @@ class PduController extends Controller
         $pduForm = $this->createForm(PduType::class, $pdu);
         $pduForm->handleRequest($request);
 
-        if ($request->getContentType() === 'json') {
+        if ($request->getContentTypeFormat() === 'json') {
             $pdu = json_decode($request->getContent(), true);
             $pduForm->submit($pdu);
         }
@@ -207,7 +207,7 @@ class PduController extends Controller
         $pduForm = $this->createForm(PduType::class, $pdu);
         $pduForm->handleRequest($request);
 
-        if ($request->getContentType() === 'json') {
+        if ($request->getContentTypeFormat() === 'json') {
             $pdu = json_decode($request->getContent(), true);
             $pduForm->submit($pdu, false);
         }

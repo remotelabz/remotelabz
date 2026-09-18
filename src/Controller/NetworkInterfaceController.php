@@ -97,7 +97,7 @@ class NetworkInterfaceController extends Controller
         $networkInterfaceForm = $this->createForm(NetworkInterfaceType::class, $networkInterface);
         $networkInterfaceForm->handleRequest($request);
 
-        if ($request->getContentType() === 'json') {
+        if ($request->getContentTypeFormat() === 'json') {
             $networkInterface = json_decode($request->getContent(), true);
             $networkInterfaceForm->submit($networkInterface, false);
         }
@@ -412,7 +412,7 @@ class NetworkInterfaceController extends Controller
         $networkInterfaceForm = $this->createForm(NetworkInterfaceType::class, $networkInterface);
         $networkInterfaceForm->handleRequest($request);
 
-        if ($request->getContentType() === 'json') {
+        if ($request->getContentTypeFormat() === 'json') {
             $networkInterface = json_decode($request->getContent(), true);
             $networkInterfaceForm->submit($networkInterface, false);
         }

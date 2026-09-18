@@ -45,7 +45,7 @@ class MailController extends Controller
         $mailForm = $this->createForm(MailType::class);
         $mailForm->handleRequest($request);
 
-        if ($request->getContentType() === 'json') {
+        if ($request->getContentTypeFormat() === 'json') {
             $mail = json_decode($request->getContent(), true);
             $mailForm->submit($mail, false);
         }

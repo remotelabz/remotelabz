@@ -244,7 +244,7 @@ class BookingController extends Controller
                 
             }
         }
-        if ($request->getContentType() === 'json') {
+        if ($request->getContentTypeFormat() === 'json') {
             $booking = json_decode($request->getContent(), true);
             $bookingForm->submit($booking);
         }
@@ -292,7 +292,7 @@ class BookingController extends Controller
         $bookingForm = $this->createForm(BookingType::class, $booking);
         $bookingForm->handleRequest($request);
 
-        if ($request->getContentType() === 'json') {
+        if ($request->getContentTypeFormat() === 'json') {
             $booking = json_decode($request->getContent(), true);
             $bookingForm->submit($booking);
         }

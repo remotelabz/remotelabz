@@ -49,7 +49,7 @@ class PduOutletDeviceController extends Controller
         ]);
         $pduOutletDeviceForm->handleRequest($request);
 
-        if ($request->getContentType() === 'json') {
+        if ($request->getContentTypeFormat() === 'json') {
             $pduOutletDeviceJson = json_decode($request->getContent(), true);
             $pduOutletDeviceForm->submit($pduOutletDeviceJson, false);
         }        

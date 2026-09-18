@@ -108,7 +108,7 @@ class InvitationController extends Controller
         $invitationForm = $this->createForm(InvitationCodeType::class);
         $invitationForm->handleRequest($request);
         
-        if ($request->getContentType() === 'json') {
+        if ($request->getContentTypeFormat() === 'json') {
             $adresses = json_decode($request->getContent(), true);
             $invitationForm->submit($adresses, false);
         }
