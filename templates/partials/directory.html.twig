@@ -53,6 +53,13 @@
             if (!modalElement || moveButtons.length === 0) {
                 return;
             }
+            function openModal() {
+                if (window.jQuery && jQuery.fn.modal) {
+                    jQuery('#moveDirectoryModal').modal('show');
+                } else if (window.bootstrap && window.bootstrap.Modal) {
+                    window.bootstrap.Modal.getOrCreateInstance(modalElement).show();
+                }
+            }
             moveButtons.forEach(function (btn) {
                 btn.addEventListener('click', function (e) {
                     e.preventDefault();
@@ -61,7 +68,7 @@
                     if (nameElement) {
                         nameElement.textContent = this.dataset.moveName || '';
                     }
-                    bootstrap.Modal.getOrCreateInstance(modalElement).show();
+                    openModal();
                 });
             });
         });

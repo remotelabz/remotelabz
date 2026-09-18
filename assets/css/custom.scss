@@ -35,12 +35,12 @@ h1 {
 
 .container-limited
 {
-  max-width: 990px;
+  max-width: 90%;
 }
 
 .container-limited-xl
 {
-  max-width: 1280px;
+  max-width: 95%;
 }
 
 .navbar {
@@ -1088,7 +1088,8 @@ $grid-number: 12;
   #sortTabs .nav-link.active:focus {
     color: map-get($theme-colors, dark) !important;
   }
-  #sortTabs .nav-link:hover,
+
+  #sortTabs .nav-link:hover
   {
     color: map-get($theme-colors, light) !important;
   }

@@ -117,7 +117,7 @@
                 <thead>
                     <tr>
                         {{ dir.select_all_checkbox() }}
-                        <th width="100">Type</th>
+                        <th width="50">Type</th>
                         <th>Name</th>
                         <th width="150">Brand & Model</th>
                         <th width="120">vCPU</th>
@@ -220,11 +220,11 @@
                         <td>
                             <div class="btn-group btn-group-sm" role="group">
                                 <a href="{{ path('edit_device', {'id': device.id}) }}"
-                                    class="btn btn-outline-secondary btn-sm"
+                                    class="btn btn-sm btn-outline-primary"
                                     title="Edit Device">
                                     <i class="fas fa-edit"></i>
                                 </a>
-                                <button type="button" class="btn btn-outline-secondary btn-sm"
+                                <button type="button" class="btn btn-sm btn-outline-primary"
                                         data-move-id="{{ device.id }}" data-move-name="{{ device.name }}"
                                         title="Move to directory">
                                     <i class="fas fa-folder-open"></i>

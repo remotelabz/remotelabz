@@ -108,11 +108,11 @@
                 <thead>
                     <tr>
                         {{ dir.select_all_checkbox() }}
-                        <th width="100">Type</th>
+                        <th width="50">Type</th>
                         <th>Name</th>
                         <th width="180">Directory</th>
-                        <th width="120">Architecture</th>
-                        <th width="150">Hypervisor</th>
+                        <th width="50">Architecture</th>
+                        <th width="50">Hypervisor</th>
                         <th width="100">Disk Flavor</th>
                         <th width="100">Place</th>
                         {% if is_granted("ROLE_TEACHER_EDITOR") %}
@@ -204,25 +204,28 @@
                    
                     {% if is_granted("ROLE_TEACHER_EDITOR") %}
                         <td>
-                        
-                        <a href="{{ path('edit_operating_system', {id: operatingSystem.id}) }}" class="btn btn-sm btn-outline-primary" title="{{ 'Edit'|trans }}">
-                            <i class="fa fa-edit"></i>
-                        </a>
-                        <button type="button" class="btn btn-sm btn-outline-secondary"
-                                data-move-id="{{ operatingSystem.id }}" data-move-name="{{ operatingSystem.name }}"
-                                title="Move to directory">
-                            <i class="fa fa-folder-open"></i>
-                        </button>
-                        {% if operatingSystem.hypervisor and operatingSystem.hypervisor.name != "natif" %}
-                            <form method="post" action="{{ path('delete_operating_system', {id: operatingSystem.id}) }}" style="display:inline-block;" onsubmit="return confirm('{{ 'Are you sure?'|trans }}');">
-                                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ operatingSystem.id) }}">
-                                <input type="hidden" name="_method" value="DELETE">
-                                <button class="btn btn-sm btn-outline-danger" title="{{ 'Delete'|trans }}">
-                                    <i class="fa fa-trash"></i>
-                                </button>
-                            </form>
-                        {% endif %}
-                        
+                            <div class="btn-group btn-group-sm" role="group">
+
+                            <a href="{{ path('edit_operating_system', {'id': operatingSystem.id}) }}"
+                                class="btn btn-sm btn-outline-primary"
+                                title="{{ 'Edit'|trans }}">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <button type="button" class="btn btn-sm btn-outline-secondary"
+                                    data-move-id="{{ operatingSystem.id }}" data-move-name="{{ operatingSystem.name }}"
+                                    title="Move to directory">
+                                <i class="fas fa-folder-open"></i>
+                            </button>
+                            {% if operatingSystem.hypervisor and operatingSystem.hypervisor.name != "natif" %}
+                                <form method="post" action="{{ path('delete_operating_system', {id: operatingSystem.id}) }}" style="display:inline-block;" onsubmit="return confirm('{{ 'Are you sure?'|trans }}');">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ operatingSystem.id) }}">
+                                    <input type="hidden" name="_method" value="DELETE">
+                                    <button class="btn btn-sm btn-outline-danger" title="{{ 'Delete'|trans }}">
+                                        <i class="fa fa-trash"></i>
+                                    </button>
+                                </form>
+                            {% endif %}
+                            </div>
                         </td>
                     {% endif %}
 
