@@ -20,6 +20,7 @@ class WorkerManager
     private $client;
     private $configWorkerRepository;
     private $doctrine;
+    private LabPlacementCache $placementCache;
 
     public function __construct(
         string $publicAddress,
@@ -28,7 +29,8 @@ class WorkerManager
         LoggerInterface $logger,
         ClientInterface $client,
         ConfigWorkerRepository $configWorkerRepository,
-        ManagerRegistry $doctrine
+        ManagerRegistry $doctrine,
+        LabPlacementCache $placementCache
     ) {
         $this->publicAddress = $publicAddress;
         $this->workerServer = $workerServer;
@@ -37,6 +39,7 @@ class WorkerManager
         $this->client = $client;
         $this->configWorkerRepository = $configWorkerRepository;
         $this->doctrine=$doctrine;
+        $this->placementCache = $placementCache;
     }
 
     public function checkWorkersAction($timeout = null)
@@ -139,7 +142,7 @@ class WorkerManager
     $item : the device or the lab we want to execute
     return The value of needed memory for all devices
     */
-    private function Memory_Usage($item)
+    public function computeMemoryUsage($item)
     {
         $memory=0;
         if ($item instanceof Device) {
@@ -163,17 +166,36 @@ class WorkerManager
     {
         $min=0;
         $result="";
-        $memory=$this->Memory_Usage($item);
+        $memory=$this->computeMemoryUsage($item);
         $usages = $this->checkWorkersLightAction();
-        
+
         foreach ($usages as $usage) {
-            $val=$this->loadBalancing($usage['memory'], $usage['disk']['rlz-vg'], $usage['cpu'], $memory, $usage['memory_total'],$usage['worker'], $usage['lxcfs']);
+            $workerIp = $usage['worker'];
+
+            // Take into account the memory already reserved (via the placement
+            // cache) for lab instances placed on this worker but not yet running.
+            $reservedMemory = $this->placementCache->memoryAssignedTo($workerIp);
+            $reservedMemoryPct = ($usage['memory_total'] > 0) ? ($reservedMemory / $usage['memory_total']) * 100 : 0;
+            $adjustedMemory = $usage['memory'] + $reservedMemoryPct;
+
+            if ($reservedMemory > 0) {
+                $this->logger->debug("[WorkerManager:getFreeWorker]::Worker ".$workerIp." has ".$reservedMemory." of reserved memory (".$reservedMemoryPct."%), adjusted memory usage: ".$adjustedMemory."%");
+            }
+
+            // Exclude workers that do not have enough free memory (real + reserved) for the lab
+            $availableMemory = (100 - $adjustedMemory) * $usage['memory_total'];
+            if ($availableMemory < $memory) {
+                $this->logger->info("[WorkerManager:getFreeWorker]::Worker ".$workerIp." excluded: insufficient free memory. It needs ".$memory." and has only ".$availableMemory." free (after ".$reservedMemory." reserved).");
+                continue;
+            }
+
+            $val=$this->loadBalancing($adjustedMemory, $usage['disk']['rlz-vg'], $usage['cpu'], $memory, $usage['memory_total'],$usage['worker'], $usage['lxcfs']);
             $this->logger->debug("[WorkerManager:getFreeWorker]::Score for worker ".$usage["worker"]." is ".$val);
             if ($val>$min) {
                 $min=$val;
                 $result=$usage['worker'];
             }
-        }   
+        }
 
         return $result;
     }

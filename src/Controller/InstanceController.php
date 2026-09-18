@@ -528,17 +528,15 @@ class InstanceController extends Controller
                 switch ($instancierType) {
                     case "guest":
                         $this->logger->info("Lab instance " . $instance->getUuid() . " created by guest " . $this->getUser()->getMail() . " " . $this->getUser()->getUuid() . " Wait ack created message");
-                        $this->logger->info("Lab instance " . $instance->getUuid() . " executed on Worker " . $instance->getWorkerIp());
                         break;
                     case "user":
                         $this->logger->info("Lab instance " . $instance->getUuid() . " created by user " . $this->getUser()->getFirstname() . " " . $username . " " . $this->getUser()->getUuid() . " Wait ack created message");
-                        $this->logger->info("Lab instance " . $instance->getUuid() . " executed on Worker " . $instance->getWorkerIp());
                         break;
                     case "group":
                         $this->logger->info("Lab instance " . $instance->getUuid() . " created by group " . $instancier->getName() . " Wait ack created message");
-                        $this->logger->info("Lab instance " . $instance->getUuid() . " executed on Worker " . $instance->getWorkerIp());
                         break;
                 }
+                $this->logger->info("Lab instance " . $instance->getUuid() . " worker placement in progress (async, LabLaunchRequestMessageHandler).");
             } else
                 $this->logger->info("User " . $username . " has already an instance of the lab " . $lab->getName());
         } catch (Exception $e) {

@@ -13,6 +13,7 @@ use App\Repository\DeviceRepository;
 use App\Repository\UserRepository;
 use App\Repository\OperatingSystemRepository;
 use App\Service\Instance\InstanceManager;
+use App\Service\Worker\LabPlacementCache;
 use App\Controller\OperatingSystemController;
 //To redirect to a route
 //use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
@@ -36,6 +37,7 @@ class InstanceStateMessageHandler
     private NotificationService $notificationService;
     private ManagerRegistry $managerRegistry;
     private UserRepository $userRepository;
+    private LabPlacementCache $placementCache;
 
     public function __construct(
         DeviceInstanceRepository $deviceInstanceRepository,
@@ -48,7 +50,8 @@ class InstanceStateMessageHandler
         string $rootDirectory,
         NotificationService $notificationService,
         ManagerRegistry $managerRegistry,
-        UserRepository $userRepository
+        UserRepository $userRepository,
+        LabPlacementCache $placementCache
     ) {
         $this->deviceInstanceRepository = $deviceInstanceRepository;
         $this->labInstanceRepository = $labInstanceRepository;
@@ -61,6 +64,7 @@ class InstanceStateMessageHandler
         $this->notificationService = $notificationService;
         $this->managerRegistry = $managerRegistry;
         $this->userRepository = $userRepository;
+        $this->placementCache = $placementCache;
     }
 
     /**
@@ -193,6 +197,19 @@ class InstanceStateMessageHandler
             if (!is_null($instance)) {
                 $userIds = $this->getUserIdFromInstance($instance);
                 $this->logger->debug("[InstanceStateMessageHandler:__invoke]::User id of the instance is ",$userIds);
+            }
+
+            // The lab instance reached its final state on the worker: stop reserving
+            // its memory in the placement cache.
+            if (!is_null($instance)
+                && $message->getType() === InstanceStateMessage::TYPE_LAB
+                && in_array($message->getState(), [
+                    InstanceStateMessage::STATE_CREATED,
+                    InstanceStateMessage::STATE_DELETED,
+                    InstanceStateMessage::STATE_ERROR,
+                ], true)
+            ) {
+                $this->placementCache->remove($instance->getUuid());
             }
             if (!is_null($options)) {
                 $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Options received :', $options);
