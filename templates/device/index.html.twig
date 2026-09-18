@@ -1,4 +1,5 @@
 {% extends 'dashboard.base.html.twig' %}
+{% import 'partials/directory.html.twig' as dir %}
 
 {% block title %}Device Templates - {{ parent() }}{% endblock %}
 
@@ -60,19 +61,23 @@
 
 <div class="search-panel mt-3">
     <div class="row">
-        <div class="col-md-6">
+        <div class="col-md-8">
             <form action="{{ path('devices') }}" method="GET" class="d-flex">
                 <input type="search" class="form-control" name="search"
                        placeholder="Search by name, brand, or model..."
                        spellcheck="false" value="{{ search|default('') }}"
-                       id="searchInput">
+                       id="searchInput" style="flex-grow: 1; min-width: 0;">
+                <select name="directory" class="form-select ms-2" style="width: 260px; flex-shrink: 0;"
+                        onchange="this.form.submit()" title="Filter by directory (includes sub-directories)">
+                    {{ dir.directory_options(directoryOptions|default({}), selectedDirectory|default('all')) }}
+                </select>
                 <button class="btn btn-outline-secondary ms-2" type="submit">
                     <i class="fas fa-search"></i>
                 </button>
             </form>
         </div>
-        <div class="col-md-6">
-            <div class="d-flex justify-content-end">
+        <div class="col-md-4">
+            <div class="d-flex">
                 <select class="form-select" style="width: auto;" id="osFilter">
                     <option value="">All Operating Systems</option>
                     {% set unique_os = [] %}
@@ -85,6 +90,9 @@
                 </select>
             </div>
         </div>
+    </div>
+    <div class="mt-3">
+        {{ dir.create_form(app.request.uri, directoryOptions|default({}), selectedDirectory is not null and selectedDirectory != 'all' and selectedDirectory != 'root' ? selectedDirectory : '', 'directory_admin') }}
     </div>
 </div>
 
@@ -108,25 +116,28 @@
             <table class="table table-hover">
                 <thead>
                     <tr>
-                        <th width="100">Type</th>
+                        {{ dir.select_all_checkbox() }}
+                        <th width="50">Type</th>
                         <th>Name</th>
                         <th width="150">Brand & Model</th>
                         <th width="120">vCPU</th>
                         <th width="120">Arch.</th>
                         <th width="150">Operating System</th>
+                        <th width="180">Directory</th>
                         {% if is_granted("ROLE_TEACHER_EDITOR") %}
-                            <th width="80">Actions</th>
+                            <th width="100">Actions</th>
                         {% endif %}
                     </tr>
                 </thead>
                 <tbody id="deviceTableBody">
                     {% for device in devices %}
-                    <tr class="device-item" 
+                    <tr class="device-item"
                         data-type="{{ device.type }}"
                         data-os="{% if device.operatingSystem %}{{ device.operatingSystem.name|lower }}{% else %}none{% endif %}"
                         data-name="{{ device.name|lower }}"
                         data-brand="{{ device.brand|default('')|lower }}"
                         data-model="{{ device.model|default('')|lower }}">
+                        <td><input type="checkbox" class="item-check" value="{{ device.id }}"></td>
                         <td>
                             {% if device.type == 'vm' %}
                                 <span class="badge bg-info">
@@ -202,14 +213,22 @@
                                 <span class="text-muted">-</span>
                             {% endif %}
                         </td>
+                        <td>
+                            {{ dir.directory_cell(device) }}
+                        </td>
                         {% if is_granted("ROLE_TEACHER_EDITOR") %}
                         <td>
                             <div class="btn-group btn-group-sm" role="group">
-                                <a href="{{ path('edit_device', {'id': device.id}) }}" 
-                                   class="btn btn-outline-secondary btn-sm" 
-                                   title="Edit Device">
+                                <a href="{{ path('edit_device', {'id': device.id}) }}"
+                                    class="btn btn-sm btn-outline-primary"
+                                    title="Edit Device">
                                     <i class="fas fa-edit"></i>
                                 </a>
+                                <button type="button" class="btn btn-sm btn-outline-primary"
+                                        data-move-id="{{ device.id }}" data-move-name="{{ device.name }}"
+                                        title="Move to directory">
+                                    <i class="fas fa-folder-open"></i>
+                                </button>
                                 <form method="post" action="{{ path('delete_device', {id: device.id}) }}" style="display:inline-block;" onsubmit="return confirm('{{ 'Are you sure?'|trans }}');">
                                 <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ device.id) }}">
                                 <input type="hidden" name="_method" value="DELETE">
@@ -226,7 +245,9 @@
                 </tbody>
             </table>
         </div>
-        
+        {{ dir.batch_bar(path('device_move'), app.request.uri, 'devices', directoryOptions|default({})) }}
+        {{ dir.move_modal(path('device_move'), 'device', directoryOptions|default({})) }}
+
         <div class="text-muted mt-3">
             Showing {{ devices|length }} device template{% if devices|length > 1 %}s{% endif %}
         </div>

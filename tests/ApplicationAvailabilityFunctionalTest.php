@@ -38,6 +38,8 @@ class ApplicationAvailabilityFunctionalTest extends AuthenticatedWebTestCase
         yield ['/admin/instances'];
         yield ['/admin/devices'];
         yield ['/admin/devices/new'];
+        yield ['/admin/isos'];
+        yield ['/admin/directories'];
 
         yield ['/profile'];
         yield ['/groups'];

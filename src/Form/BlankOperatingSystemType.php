@@ -38,6 +38,9 @@ class BlankOperatingSystemType extends AbstractType
                 ],
                 'help' => 'Optional: Select a disk size configuration'
             ])
+            ->add('directory', DirectoryChoiceType::class, [
+                'label' => 'Directory',
+            ])
             ->add('description', TextareaType::class, [
                 'required' => false,
                 'label' => 'Description',

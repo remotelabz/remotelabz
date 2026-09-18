@@ -1,0 +1,159 @@
+{% macro directory_options(options, selected = null) %}
+    {% for value, label in options %}
+        <option value="{{ value }}" {{ value == selected ? 'selected' }}>{{ label }}</option>
+    {% endfor %}
+{% endmacro %}
+
+{% macro directory_cell(entity) %}
+    {% if entity.directory %}
+        <span class="text-muted" title="{{ entity.directory.path }}">
+            <i class="fas fa-folder me-1"></i>{{ entity.directory.path }}
+        </span>
+    {% else %}
+        <span class="text-muted"><i class="fas fa-folder-open me-1"></i>—</span>
+    {% endif %}
+{% endmacro %}
+
+{% macro move_modal(move_url, item_label, options) %}
+    <div class="modal fade" id="moveDirectoryModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-folder-open me-2"></i>Move {{ item_label }}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form method="post" action="{{ move_url }}">
+                    <div class="modal-body">
+                        <p>Move <strong id="moveModalName"></strong> to:</p>
+                        <input type="hidden" name="ids" id="moveModalIds" value="">
+                        <select name="directory_id" class="form-select" required>
+                            <option value="">Choose a directory...</option>
+                            {% for value, label in options %}
+                                {% if value != 'all' %}
+                                    <option value="{{ value }}">{{ label }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-arrows-alt-h me-1"></i>Move</button>
+                    </div>
+                    <input type="hidden" name="_token" value="{{ csrf_token('directory_move') }}">
+                </form>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const moveButtons = document.querySelectorAll('[data-move-id]');
+            const modalElement = document.getElementById('moveDirectoryModal');
+            if (!modalElement || moveButtons.length === 0) {
+                return;
+            }
+            function openModal() {
+                if (window.jQuery && jQuery.fn.modal) {
+                    jQuery('#moveDirectoryModal').modal('show');
+                } else if (window.bootstrap && window.bootstrap.Modal) {
+                    window.bootstrap.Modal.getOrCreateInstance(modalElement).show();
+                }
+            }
+            moveButtons.forEach(function (btn) {
+                btn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    document.getElementById('moveModalIds').value = this.dataset.moveId;
+                    const nameElement = document.getElementById('moveModalName');
+                    if (nameElement) {
+                        nameElement.textContent = this.dataset.moveName || '';
+                    }
+                    openModal();
+                });
+            });
+        });
+    </script>
+{% endmacro %}
+
+{% macro batch_bar(move_url, return_to, item_label, options) %}
+    <div class="d-flex align-items-center gap-2 mt-3" id="batchMoveBar" style="display:none;">
+        <form method="post" action="{{ move_url }}" class="d-flex align-items-center gap-2 flex-wrap">
+            <span class="text-muted small"><i class="fas fa-folder-open me-1"></i>Move selected {{ item_label }} to:</span>
+            <input type="hidden" name="ids" id="batchMoveIds" value="">
+            <input type="hidden" name="return_to" value="{{ return_to }}">
+            <select name="directory_id" class="form-select" style="max-width: 280px;" required>
+                {% for value, label in options %}
+                    {% if value != 'all' %}
+                        <option value="{{ value }}">{{ label }}</option>
+                    {% endif %}
+                {% endfor %}
+            </select>
+            <input type="hidden" name="_token" value="{{ csrf_token('directory_move') }}">
+            <button type="submit" class="btn btn-outline-primary btn-sm">
+                <i class="fas fa-arrows-alt-h me-1"></i>Move
+            </button>
+        </form>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const checks = document.querySelectorAll('.item-check');
+            const selectAll = document.getElementById('selectAllItems');
+            const batchBar = document.getElementById('batchMoveBar');
+            const batchIds = document.getElementById('batchMoveIds');
+            if (checks.length === 0) {
+                return;
+            }
+            function updateBatch() {
+                const ids = Array.from(checks)
+                    .filter(function (c) { return c.checked; })
+                    .map(function (c) { return c.value; })
+                    .join(',');
+                if (batchIds) {
+                    batchIds.value = ids;
+                }
+                if (batchBar) {
+                    batchBar.style.display = ids ? 'flex' : 'none';
+                }
+            }
+            checks.forEach(function (c) {
+                c.addEventListener('change', updateBatch);
+            });
+            if (selectAll) {
+                selectAll.addEventListener('change', function () {
+                    checks.forEach(function (c) {
+                        c.checked = selectAll.checked;
+                    });
+                    updateBatch();
+                });
+            }
+            updateBatch();
+        });
+    </script>
+{% endmacro %}
+
+{% macro create_form(return_to, options, selected_parent, csrf_id) %}
+    <form method="post" action="{{ path('admin_directory_create') }}" class="d-flex align-items-center gap-3 flex-wrap" id="newDirectoryForm">
+        <span class="text-muted small"><i class="fas fa-folder-plus me-1"></i>New directory:</span>
+        <input type="text" name="name" class="form-control" style="max-width: 220px;"
+               placeholder="Directory name" required maxlength="255">
+        <select name="parent_id" class="form-select" style="max-width: 280px;">
+            <option value="">(Root)</option>
+            {% for value, label in options %}
+                {% if value not in ['all', 'root'] %}
+                    <option value="{{ value }}" {{ value == selected_parent ? 'selected' }}>{{ label }}</option>
+                {% endif %}
+            {% endfor %}
+        </select>
+        <input type="hidden" name="return_to" value="{{ return_to }}">
+        <input type="hidden" name="_token" value="{{ csrf_token(csrf_id) }}">
+        <button type="submit" class="btn btn-outline-success btn-sm">
+            <i class="fas fa-folder-plus"></i>
+        </button>
+    </form>
+{% endmacro %}
+
+{% macro select_all_checkbox() %}
+    <th width="30">
+        <input type="checkbox" id="selectAllItems" title="Select all">
+    </th>
+{% endmacro %}

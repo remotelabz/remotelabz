@@ -101,6 +101,9 @@ class OperatingSystemType extends AbstractType
                     'class' => 'form-select'
                 ]
             ])
+            ->add('directory', DirectoryChoiceType::class, [
+                'label' => 'Directory',
+            ])
             ->add('description', TextareaType::class, [
                 'required' => false,
                 'label' => 'Description',

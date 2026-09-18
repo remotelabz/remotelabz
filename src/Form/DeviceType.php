@@ -77,11 +77,15 @@ class DeviceType extends AbstractType
             ->add('icon', ChoiceType::class, [
                 'choices' => $this->getAvailableIcons(),
                 'attr' => [
-                    'class' => 'icon-selector'                
+                    'class' => 'icon-selector'
                 ],
                 'help' => 'Select an icon to represent this device',
                 'required' => false,
                 'placeholder' => 'Choose an icon...'
+            ])
+
+            ->add('directory', DirectoryChoiceType::class, [
+                'label' => 'Directory',
             ])
 
             

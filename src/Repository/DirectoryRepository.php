@@ -61,8 +61,59 @@ class DirectoryRepository extends ServiceEntityRepository
     }
 
     /**
+     * Find all active directories ordered by path (for select dropdowns)
+     *
+     * @return Directory[]
+     */
+    public function findActiveOrdered(): array
+    {
+        return $this->createQueryBuilder('d')
+            ->where('d.deletedAt IS NULL')
+            ->orderBy('d.path', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Count devices/isos/operating systems/children for all active directories
+     * in a single query.
+     *
+     * @return array<int, array{devices: int, isos: int, operatingSystems: int, children: int}>
+     *   keyed by directory id
+     */
+    public function findAllActiveCounts(): array
+    {
+        $results = $this->createQueryBuilder('d')
+            ->select('d.id AS id')
+            ->addSelect('COUNT(dev.id) AS devicesCount')
+            ->addSelect('COUNT(iso.id) AS isosCount')
+            ->addSelect('COUNT(os.id) AS osCount')
+            ->addSelect('COUNT(child.id) AS childrenCount')
+            ->leftJoin('d.devices', 'dev')
+            ->leftJoin('d.isos', 'iso')
+            ->leftJoin('d.operatingSystems', 'os')
+            ->leftJoin('d.children', 'child')
+            ->where('d.deletedAt IS NULL')
+            ->groupBy('d.id')
+            ->getQuery()
+            ->getScalarResult();
+
+        $counts = [];
+        foreach ($results as $result) {
+            $counts[(int) $result['id']] = [
+                'devices' => (int) $result['devicesCount'],
+                'isos' => (int) $result['isosCount'],
+                'operatingSystems' => (int) $result['osCount'],
+                'children' => (int) $result['childrenCount'],
+            ];
+        }
+
+        return $counts;
+    }
+
+    /**
      * Find directory by path
-     * 
+     *
      * @param string $path Full path (e.g., "/parent/child")
      * @return Directory|null
      */

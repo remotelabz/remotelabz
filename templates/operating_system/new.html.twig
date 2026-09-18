@@ -88,6 +88,18 @@
                                 <i class="fa fa-info-circle text-info"></i> {{ 'Select the disk flavor for this operating system (optional)'|trans }}
                             </div>
                         </div>
+
+                        <!-- Directory Selection -->
+                        <div class="mb-4">
+                            <div class="form-floating">
+                                <label class="form-label fw-bold">{{ 'Directory'|trans }}</label>
+                                {{ form_widget(operatingSystemForm.directory, {'attr': {'class': 'form-control'}}) }}
+                            </div>
+                            {{ form_errors(operatingSystemForm.directory) }}
+                            <div class="form-text">
+                                <i class="fa fa-info-circle text-info"></i> {{ 'Organize this operating system inside a directory (optional)'|trans }}
+                            </div>
+                        </div>
                         
                         <!-- Image Configuration Section -->
                         <div class="mb-4">

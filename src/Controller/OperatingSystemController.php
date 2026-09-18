@@ -44,6 +44,7 @@ use Symfony\Component\Messenger\MessageBusInterface;
 use Remotelabz\Message\Message\InstanceActionMessage;
 use Doctrine\ORM\EntityManagerInterface;
 use Knp\Component\Pager\PaginatorInterface;
+use App\Service\DirectoryService;
 use App\Service\Files2WorkerManager;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use App\Service\OvaManager;
@@ -104,12 +105,13 @@ class OperatingSystemController extends Controller
     
 	#[IsGranted("ROLE_TEACHER_EDITOR", message: "Access denied.")]
     #[Route(path: '/admin/operating-systems', name: 'operating_systems', methods: ['GET'])]
-    public function indexAction(Request $request)
+    public function indexAction(Request $request, DirectoryService $directoryService)
     {
         $search = trim($request->query->get('search', ''));
         $architecture = $request->query->get('arch', '');
         $imageType = $request->query->get('type', ''); // 'file', 'url', 'none'
         $hypervisorId = $request->query->get('hypervisor', '');
+        $directoryParam = $request->query->get('directory', '');
         $page = $request->query->getInt('page', 1);
         $limit = $request->query->getInt('limit', 10);
 
@@ -158,6 +160,15 @@ class OperatingSystemController extends Controller
                 break;
         }
 
+        // Apply directory filter (includes sub-directories)
+        $scope = $directoryService->resolveScope($directoryParam);
+        if ($scope['scope'] === 'root') {
+            $queryBuilder->andWhere('os.directory IS NULL');
+        } elseif ($scope['scope'] === 'dir' && $scope['directories']) {
+            $queryBuilder->andWhere('os.directory IN (:directories)')
+                ->setParameter('directories', $scope['directories']);
+        }
+
         $queryBuilder->orderBy('os.name', 'ASC');
 
         // Paginate results
@@ -181,10 +192,38 @@ class OperatingSystemController extends Controller
             'selectedArch' => $architecture,
             'selectedType' => $imageType,
             'selectedHypervisor' => $hypervisorId,
+            'selectedDirectory' => $directoryParam ?: 'all',
+            'directoryOptions' => $directoryService->getSelectOptions($directoryParam ?: 'all'),
             'stats' => $stats,
             'hypervisors' => $this->getHypervisorsList(),
             'architectures' => $this->getAvailableArchitectures(),
         ]);
+    }
+
+    #[Route(path: '/admin/operating-systems/move', name: 'operating_system_move', methods: ['POST'])]
+    public function moveAction(Request $request, DirectoryService $directoryService): Response
+    {
+        if (!$this->isCsrfTokenValid('directory_move', $request->request->get('_token'))) {
+            $this->addFlash('danger', 'Invalid security token');
+            return $this->redirectToRoute('operating_systems');
+        }
+
+        $ids = $directoryService->parseIds($request->request->get('ids', ''));
+        $targetDirectory = $directoryService->resolveTarget($request->request->get('directory_id'));
+
+        $moved = 0;
+        foreach ($ids as $id) {
+            $operatingSystem = $this->operatingSystemRepository->find($id);
+            if ($operatingSystem) {
+                $operatingSystem->setDirectory($targetDirectory);
+                $moved++;
+            }
+        }
+        $this->entityManager->flush();
+
+        $this->addFlash('success', sprintf('%d operating system(s) moved successfully', $moved));
+
+        return $this->redirect($directoryService->getReturnTo($request, $this->generateUrl('operating_systems')));
     }
 
     /**
@@ -1152,11 +1191,7 @@ class OperatingSystemController extends Controller
         }
     }
 
-        /**
-     * Get Operating Systems in a directory
-     * 
-     * @Route("/api/directories/{id}/operating-systems", name="api_directory_os", methods={"GET"})
-     */
+    #[Route(path: '/api/directories/{id}/operating-systems', name: 'api_directory_os', methods: ['GET'])]
     public function getOperatingSystemsInDirectory(
         int $id,
         DirectoryRepository $directoryRepo
@@ -1174,11 +1209,7 @@ class OperatingSystemController extends Controller
         ]);
     }
 
-    /**
-     * Move Operating System to directory
-     * 
-     * @Route("/api/operating-systems/{id}/move", name="api_os_move", methods={"PUT"})
-     */
+    #[Route(path: '/api/operating-systems/{id}/move', name: 'api_os_move', methods: ['PUT'])]
     public function moveOperatingSystemToDirectory(
         int $id,
         Request $request,

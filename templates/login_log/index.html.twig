@@ -61,7 +61,21 @@
                         {{ log.email }}
                     {% endif %}
                 </td>
-                <td>{{ log.ip }}</td>
+                <td>
+                    {% set reputation = reputations[log.ip] ?? none %}
+                    <a href="{{ abuseipdbCheckBase ~ '/' ~ log.ip }}" target="_blank" rel="noopener" title="Voir la réputation sur AbuseIPDB">{{ log.ip }}</a>
+                    {% if reputation and reputation.abuseScore is not null %}
+                        {% set score = reputation.abuseScore %}
+                        {% if score < 20 %}
+                            <i class="fa fa-check-circle text-success ms-1" title="Bonne réputation (score {{ score }}/100)"></i>
+                        {% else %}
+                            <span class="badge bg-{{ score >= 50 ? 'danger' : 'warning' }} {{ score >= 50 ? 'text-light' : 'text-dark' }} ms-1"
+                                  title="Réputation douteuse (score {{ score }}/100, {{ reputation.totalReports|default(0) }} rapports)">
+                                <i class="fa fa-exclamation-triangle me-1"></i>Score {{ score }}
+                            </span>
+                        {% endif %}
+                    {% endif %}
+                </td>
                 <td>{{ log.loginType }}</td>
                 <td>{{ log.browser }}</td>
                 <td>{{ log.os }}</td>

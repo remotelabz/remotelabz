@@ -15,12 +15,14 @@ use App\Repository\DirectoryRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\String\Slugger\SluggerInterface;
 use Psr\Log\LoggerInterface;
 use App\Service\SshService;
+use App\Service\DirectoryService;
 use App\Repository\ConfigWorkerRepository;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use App\Service\Files2WorkerManager;
@@ -45,11 +47,69 @@ class IsoController extends AbstractController
     }   
 
     #[Route('/admin/isos', name: 'app_iso_index', methods: ['GET'])]
-    public function index(IsoRepository $isoRepository): Response
-    {
+    public function index(
+        Request $request,
+        IsoRepository $isoRepository,
+        DirectoryService $directoryService
+    ): Response {
+        $search = trim($request->query->get('search', ''));
+        $directoryParam = $request->query->get('directory', '');
+
+        $queryBuilder = $isoRepository->createQueryBuilder('i')
+            ->leftJoin('i.arch', 'a')
+            ->addSelect('a');
+
+        $scope = $directoryService->resolveScope($directoryParam);
+        if ($scope['scope'] === 'root') {
+            $queryBuilder->andWhere('i.directory IS NULL');
+        } elseif ($scope['scope'] === 'dir' && $scope['directories']) {
+            $queryBuilder->andWhere('i.directory IN (:directories)')
+                ->setParameter('directories', $scope['directories']);
+        }
+
+        if ($search) {
+            $queryBuilder->andWhere($queryBuilder->expr()->like('LOWER(i.name)', ':search'))
+                ->setParameter('search', '%' . strtolower($search) . '%');
+        }
+
+        $queryBuilder->orderBy('i.name', 'ASC');
+
         return $this->render('iso/index.html.twig', [
-            'isos' => $isoRepository->findAll(),
+            'isos' => $queryBuilder->getQuery()->getResult(),
+            'search' => $search,
+            'selectedDirectory' => $directoryParam ?: 'all',
+            'directoryOptions' => $directoryService->getSelectOptions($directoryParam ?: 'all'),
         ]);
+    }
+
+    #[Route('/admin/isos/move', name: 'app_iso_move', methods: ['POST'])]
+    public function move(
+        Request $request,
+        EntityManagerInterface $entityManager,
+        IsoRepository $isoRepository,
+        DirectoryService $directoryService
+    ): Response {
+        if (!$this->isCsrfTokenValid('directory_move', $request->request->get('_token'))) {
+            $this->addFlash('danger', 'Invalid security token');
+            return $this->redirectToRoute('app_iso_index');
+        }
+
+        $ids = $directoryService->parseIds($request->request->get('ids', ''));
+        $targetDirectory = $directoryService->resolveTarget($request->request->get('directory_id'));
+
+        $moved = 0;
+        foreach ($ids as $id) {
+            $iso = $isoRepository->find($id);
+            if ($iso) {
+                $iso->setDirectory($targetDirectory);
+                $moved++;
+            }
+        }
+        $entityManager->flush();
+
+        $this->addFlash('success', sprintf('%d ISO(s) moved successfully', $moved));
+
+        return $this->redirect($directoryService->getReturnTo($request, $this->generateUrl('app_iso_index')));
     }
 
     #[Route('/admin/isos/new', name: 'app_iso_new', methods: ['GET','POST'])]
@@ -524,11 +584,7 @@ class IsoController extends AbstractController
         return $bytes;
     }
 
-        /**
-     * Get ISOs in a directory
-     * 
-     * @Route("/api/directories/{id}/isos", name="api_directory_isos", methods={"GET"})
-     */
+    #[Route('/api/directories/{id}/isos', name: 'api_directory_isos', methods: ['GET'])]
     public function getIsosInDirectory(
         int $id,
         DirectoryRepository $directoryRepo
@@ -544,11 +600,7 @@ class IsoController extends AbstractController
         return $this->json($isos, Response::HTTP_OK, [], ['groups' => ['worker', 'sandbox']]);
     }
 
-    /**
-     * Move ISO to directory
-     * 
-     * @Route("/api/isos/{id}/move", name="api_iso_move", methods={"PUT"})
-     */
+    #[Route('/api/isos/{id}/move', name: 'api_iso_move', methods: ['PUT'])]
     public function moveIsoToDirectory(
         int $id,
         Request $request,

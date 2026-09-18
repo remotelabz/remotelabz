@@ -54,6 +54,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Yaml\Yaml;
 use function Symfony\Component\String\u;
 use JMS\Serializer\SerializationContext;
+use App\Service\DirectoryService;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Common\Collections\Order;
@@ -117,11 +118,12 @@ class DeviceController extends Controller
 	#[Get('/api/devices', name: 'api_devices')]
 	#[Security("is_granted('ROLE_TEACHER_EDITOR')", message: "Access denied.")]
     #[Route(path: '/admin/devices', name: 'devices')]
-    public function indexAction(Request $request)
+    public function indexAction(Request $request, DirectoryService $directoryService)
     {
         $search = $request->query->get('search', '');
         $type = $request->query->get('type');
         $template = $request->query->get('template', true);
+        $directoryParam = $request->query->get('directory', '');
         $deviceArray = [];
 
         $criteria = Criteria::create()
@@ -130,6 +132,13 @@ class DeviceController extends Controller
             ->orderBy([
                 'name' => Order::Ascending
             ]);
+
+        $scope = $directoryService->resolveScope($directoryParam);
+        if ($scope['scope'] === 'root') {
+            $criteria->andWhere(Criteria::expr()->isNull('directory'));
+        } elseif ($scope['scope'] === 'dir' && $scope['directories']) {
+            $criteria->andWhere(Criteria::expr()->in('directory', $scope['directories']));
+        }
 
         $allDevices = $this->deviceRepository->matching($criteria);
         $devices = $allDevices->filter(function ($device) {
@@ -177,9 +186,38 @@ class DeviceController extends Controller
                 'vms' => $vmCount,
                 'containers' => $containerCount,
                 'physical' => $physicalCount
-            ],        
-            'search' => $search
+            ],
+            'search' => $search,
+            'selectedDirectory' => $directoryParam ?: 'all',
+            'directoryOptions' => $directoryService->getSelectOptions($directoryParam ?: 'all'),
         ]);
+    }
+
+    #[Route(path: '/admin/devices/move', name: 'device_move', methods: ['POST'])]
+    #[Security("is_granted('ROLE_TEACHER_EDITOR')", message: "Access denied.")]
+    public function moveAction(Request $request, DirectoryService $directoryService)
+    {
+        if (!$this->isCsrfTokenValid('directory_move', $request->request->get('_token'))) {
+            $this->addFlash('danger', 'Invalid security token');
+            return $this->redirectToRoute('devices');
+        }
+
+        $ids = $directoryService->parseIds($request->request->get('ids', ''));
+        $targetDirectory = $directoryService->resolveTarget($request->request->get('directory_id'));
+
+        $moved = 0;
+        foreach ($ids as $id) {
+            $device = $this->deviceRepository->find($id);
+            if ($device) {
+                $device->setDirectory($targetDirectory);
+                $moved++;
+            }
+        }
+        $this->entityManager->flush();
+
+        $this->addFlash('success', sprintf('%d device(s) moved successfully', $moved));
+
+        return $this->redirect($directoryService->getReturnTo($request, $this->generateUrl('devices')));
     }
 
     // Used in lab editor
@@ -548,7 +586,7 @@ class DeviceController extends Controller
                 
         $deviceForm->handleRequest($request);
 
-        if ($request->getContentType() === 'json') {
+        if ('json' === $request->getRequestFormat()) {
             $device = json_decode($request->getContent(), true);
             $deviceForm->submit($device);
         }
@@ -976,7 +1014,7 @@ class DeviceController extends Controller
         $entityManager->persist($device);
         $entityManager->flush();
 
-        if ($request->getContentType() === 'json') {
+        if ('json' === $request->getRequestFormat()) {
             $device_json = json_decode($request->getContent(), true);
             
             $device_json['networkInterfaces']=count($device->getNetworkInterfaces());
@@ -1566,7 +1604,7 @@ class DeviceController extends Controller
         //     throw new NotFoundHttpException("Device " . $id . " does not exist.");
         // }
 
-        if ($request->getContentType() === 'json') {
+        if ('json' === $request->getRequestFormat()) {
             $editorData = json_decode($request->getContent(), true);
 
             if (!$editorData) {
@@ -1965,11 +2003,7 @@ class DeviceController extends Controller
                 }*/
     }
 
-    /**
-     * Get devices in a directory
-     * 
-     * @Route("/api/directories/{id}/devices", name="api_directory_devices", methods={"GET"})
-     */
+    #[Route(path: '/api/directories/{id}/devices', name: 'api_directory_devices', methods: ['GET'])]
     public function getDevicesInDirectory(
         int $id,
         DirectoryRepository $directoryRepo
@@ -1987,11 +2021,7 @@ class DeviceController extends Controller
         ]);
     }
 
-    /**
-     * Move device to directory
-     * 
-     * @Route("/api/devices/{id}/move", name="api_device_move", methods={"PUT"})
-     */
+    #[Route(path: '/api/devices/{id}/move', name: 'api_device_move', methods: ['PUT'])]
     public function moveDeviceToDirectory(
         int $id,
         Request $request,
@@ -2030,11 +2060,7 @@ class DeviceController extends Controller
         ], Response::HTTP_OK, [], ['groups' => ['api_get_device']]);
     }
 
-    /**
-     * Get device with breadcrumb
-     * 
-     * @Route("/api/devices/{id}/breadcrumb", name="api_device_breadcrumb", methods={"GET"})
-     */
+    #[Route(path: '/api/devices/{id}/breadcrumb', name: 'api_device_breadcrumb', methods: ['GET'])]
     public function getDeviceBreadcrumb(
         int $id,
         DeviceRepository $deviceRepo

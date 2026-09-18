@@ -2,7 +2,9 @@
 
 namespace App\Controller;
 
+use App\Repository\IpReputationRepository;
 use App\Repository\LoginLogRepository;
+use App\Service\IpReputationService;
 use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
@@ -14,11 +16,19 @@ class LoginLogController extends Controller
     private const PAGE_LIMIT = 25;
 
     private $loginLogRepository;
+    private $ipReputationRepository;
+    private $ipReputationService;
     private $paginator;
 
-    public function __construct(LoginLogRepository $loginLogRepository, PaginatorInterface $paginator)
-    {
+    public function __construct(
+        LoginLogRepository $loginLogRepository,
+        IpReputationRepository $ipReputationRepository,
+        IpReputationService $ipReputationService,
+        PaginatorInterface $paginator
+    ) {
         $this->loginLogRepository = $loginLogRepository;
+        $this->ipReputationRepository = $ipReputationRepository;
+        $this->ipReputationService = $ipReputationService;
         $this->paginator = $paginator;
     }
 
@@ -35,13 +45,21 @@ class LoginLogController extends Controller
             self::PAGE_LIMIT
         );
 
+        $logs = $pagination->getItems();
+        $ips = array_values(array_unique(array_map(
+            static fn ($log) => $log->getIp(),
+            $logs
+        )));
+
         return $this->render('login_log/index.html.twig', [
-            'logs' => $pagination->getItems(),
+            'logs' => $logs,
             'pagination' => $pagination,
             'start' => $start,
             'end' => $end,
             'userFilter' => $userFilter,
             'total' => $pagination->getTotalItemCount(),
+            'reputations' => $this->ipReputationRepository->findByIps($ips),
+            'abuseipdbCheckBase' => $this->ipReputationService->getCheckUrlBase(),
         ]);
     }
 

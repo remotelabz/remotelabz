@@ -60,6 +60,17 @@
                             </div>
                         </div>
 
+                        <div class="mb-4">
+                            <div class="form-floating">
+                                <label class="form-label fw-bold">{{ 'Directory'|trans }}</label>
+                                {{ form_widget(form.directory, {'attr': {'class': 'form-control'}}) }}
+                            </div>
+                            {{ form_errors(form.directory) }}
+                            <div class="form-text">
+                                <i class="fa fa-info-circle text-info"></i> {{ 'Organize this ISO inside a directory (optional)'|trans }}
+                            </div>
+                        </div>
+
                         <!-- Sélecteur de type de source -->
                         <div class="mb-4">
                             <label class="form-label fw-bold">{{ 'File Source Type'|trans }}</label>

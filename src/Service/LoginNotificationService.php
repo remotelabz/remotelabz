@@ -15,17 +15,26 @@ class LoginNotificationService
     private $mailer;
     private $twig;
     private $contactMail;
+    private $mailSubject;
+    private $ipGeolocationService;
+    private $ipReputationService;
 
     public function __construct(
         EntityManagerInterface $entityManager,
         MailerInterface $mailer,
         \Twig\Environment $twig,
-        #[\SensitiveParameter] string $contactMail
+        IpGeolocationService $ipGeolocationService,
+        IpReputationService $ipReputationService,
+        #[\SensitiveParameter] string $contactMail,
+        string $mailSubject
     ) {
         $this->entityManager = $entityManager;
         $this->mailer = $mailer;
         $this->twig = $twig;
+        $this->ipGeolocationService = $ipGeolocationService;
+        $this->ipReputationService = $ipReputationService;
         $this->contactMail = $contactMail;
+        $this->mailSubject = $mailSubject;
     }
 
     public function logLogin(?User $user, string $email, string $ip, string $userAgent, string $loginType): void
@@ -44,6 +53,12 @@ class LoginNotificationService
 
         $this->entityManager->persist($log);
         $this->entityManager->flush();
+
+        try {
+            $this->ipReputationService->getReputation($ip);
+        } catch (\Throwable $e) {
+            error_log('Failed to update IP reputation on login: ' . $e->getMessage());
+        }
     }
 
     public function sendNotificationEmail(User $user, string $ip, string $userAgent, string $loginType, \DateTime $loginDate): void
@@ -62,7 +77,7 @@ class LoginNotificationService
         $email = (new Email())
             ->from($this->contactMail)
             ->to($user->getEmail())
-            ->subject('Login detected on your RemoteLabz account')
+            ->subject($this->mailSubject)
             ->html(
                 $this->twig->render('emails/login_notification.html.twig', [
                     'firstName' => $user->getFirstName(),
@@ -70,6 +85,7 @@ class LoginNotificationService
                     'loginDate' => $loginDate->format('d/m/Y H:i'),
                     'loginType' => $loginTypeLabel,
                     'ip' => $ip,
+                    'location' => $this->ipGeolocationService->getLocation($ip),
                     'browser' => $parsed['browser'],
                     'os' => $parsed['os'],
                 ])

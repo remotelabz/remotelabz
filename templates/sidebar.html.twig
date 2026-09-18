@@ -43,7 +43,8 @@
             {% if is_granted('ROLE_TEACHER_EDITOR') %}
                 {{ _self.link("ISO", 'app_iso_index', null, 'dvd', 'isos', _context) }}
                 {{ _self.link("Operating System", 'operating_systems', null, 'os', 'operating_systems', _context) }}
-                {{ _self.link("Device Template", 'devices', null, 'document', 'devices', _context) }} 
+                {{ _self.link("Device Template", 'devices', null, 'document', 'devices', _context) }}
+                {{ _self.link("Directories", 'admin_directories', null, 'folder', 'directories', _context) }}
                 {{ _self.link("Sandbox", 'sandbox', null, 'documents', 'sandbox', _context) }}
                 {{ _self.link("Instance", 'instances', null, 'monitor', 'instances', _context) }}
                 {{ _self.link("Schedule actions", 'scheduled_actions_new',null, 'clock', 'scheduled_actions_new', _context) }}
