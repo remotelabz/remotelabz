@@ -189,6 +189,170 @@
         <source>New Connexion</source>
         <target>__New Connexion</target>
       </trans-unit>
+      <trans-unit id="smMsg01" resname="Messages">
+        <source>Messages</source>
+        <target>Messages</target>
+      </trans-unit>
+      <trans-unit id="smMsg02" resname="New message">
+        <source>New message</source>
+        <target>Nouveau message</target>
+      </trans-unit>
+      <trans-unit id="smMsg03" resname="Edit message">
+        <source>Edit message</source>
+        <target>Modifier le message</target>
+      </trans-unit>
+      <trans-unit id="smMsg04" resname="No message found.">
+        <source>No message found.</source>
+        <target>Aucun message trouvé.</target>
+      </trans-unit>
+      <trans-unit id="smMsg05" resname="Get started by creating your first message.">
+        <source>Get started by creating your first message.</source>
+        <target>Commencez en créant votre premier message.</target>
+      </trans-unit>
+      <trans-unit id="smMsg06" resname="Title">
+        <source>Title</source>
+        <target>Titre</target>
+      </trans-unit>
+      <trans-unit id="smMsg07" resname="Message">
+        <source>Message</source>
+        <target>Message</target>
+      </trans-unit>
+      <trans-unit id="smMsg08" resname="Target">
+        <source>Target</source>
+        <target>Cible</target>
+      </trans-unit>
+      <trans-unit id="smMsg09" resname="Actions">
+        <source>Actions</source>
+        <target>Actions</target>
+      </trans-unit>
+      <trans-unit id="smMsg10" resname="General">
+        <source>General</source>
+        <target>Général</target>
+      </trans-unit>
+      <trans-unit id="smMsg35" resname="General (login page)">
+        <source>General (login page)</source>
+        <target>Général (page de connexion)</target>
+      </trans-unit>
+      <trans-unit id="smMsg36" resname="Information (connected users)">
+        <source>Information (connected users)</source>
+        <target>Information (utilisateurs connectés)</target>
+      </trans-unit>
+      <trans-unit id="smMsg11" resname="Information">
+        <source>Information</source>
+        <target>Information</target>
+      </trans-unit>
+      <trans-unit id="smMsg12" resname="Login page">
+        <source>Login page</source>
+        <target>Page de connexion</target>
+      </trans-unit>
+      <trans-unit id="smMsg13" resname="All users">
+        <source>All users</source>
+        <target>Tous les utilisateurs</target>
+      </trans-unit>
+      <trans-unit id="smMsg14" resname="user(s)">
+        <source>user(s)</source>
+        <target>utilisateur(s)</target>
+      </trans-unit>
+      <trans-unit id="smMsg15" resname="group(s)">
+        <source>group(s)</source>
+        <target>groupe(s)</target>
+      </trans-unit>
+      <trans-unit id="smMsg16" resname="Active">
+        <source>Active</source>
+        <target>Actif</target>
+      </trans-unit>
+      <trans-unit id="smMsg17" resname="Inactive">
+        <source>Inactive</source>
+        <target>Inactif</target>
+      </trans-unit>
+      <trans-unit id="smMsg18" resname="Activate">
+        <source>Activate</source>
+        <target>Activer</target>
+      </trans-unit>
+      <trans-unit id="smMsg19" resname="Deactivate">
+        <source>Deactivate</source>
+        <target>Désactiver</target>
+      </trans-unit>
+      <trans-unit id="smMsg20" resname="Delete">
+        <source>Delete</source>
+        <target>Supprimer</target>
+      </trans-unit>
+      <trans-unit id="smMsg21" resname="Administrator only">
+        <source>Administrator only</source>
+        <target>Administrateur uniquement</target>
+      </trans-unit>
+      <trans-unit id="smMsg22" resname="General message">
+        <source>General message</source>
+        <target>Message général</target>
+      </trans-unit>
+      <trans-unit id="smMsg23" resname="Information message">
+        <source>Information message</source>
+        <target>Message d'information</target>
+      </trans-unit>
+      <trans-unit id="smMsg24" resname="General: displayed on the login page. Information: persistent banner on the pages of the targeted users.">
+        <source>General: displayed on the login page. Information: persistent banner on the pages of the targeted users.</source>
+        <target>Général : affiché sur la page de connexion. Information : bannière persistante sur les pages des utilisateurs ciblés.</target>
+      </trans-unit>
+      <trans-unit id="smMsg25" resname="Information: persistent banner on the pages of the targeted users.">
+        <source>Information: persistent banner on the pages of the targeted users.</source>
+        <target>Information : bannière persistante sur les pages des utilisateurs ciblés.</target>
+      </trans-unit>
+      <trans-unit id="smMsg26" resname="Select one or more users, or leave empty to target everyone.">
+        <source>Select one or more users, or leave empty to target everyone.</source>
+        <target>Sélectionnez un ou plusieurs utilisateurs, ou laissez vide pour cibler tout le monde.</target>
+      </trans-unit>
+      <trans-unit id="smMsg27" resname="Users belonging to a selected group (or one of its subgroups) will see the message.">
+        <source>Users belonging to a selected group (or one of its subgroups) will see the message.</source>
+        <target>Les utilisateurs appartenant à un groupe sélectionné (ou à un de ses sous-groupes) verront le message.</target>
+      </trans-unit>
+      <trans-unit id="smMsg28" resname="Create a general message for the login page or an information message for connected users">
+        <source>Create a general message for the login page or an information message for connected users</source>
+        <target>Créez un message général pour la page de connexion ou un message d'information pour les utilisateurs connectés</target>
+      </trans-unit>
+      <trans-unit id="smMsg29" resname="Are you sure?">
+        <source>Are you sure?</source>
+        <target>Êtes-vous sûr ?</target>
+      </trans-unit>
+      <trans-unit id="smMsg30" resname="Back">
+        <source>Back</source>
+        <target>Retour</target>
+      </trans-unit>
+      <trans-unit id="smMsg31" resname="Cancel">
+        <source>Cancel</source>
+        <target>Annuler</target>
+      </trans-unit>
+      <trans-unit id="smMsg32" resname="Save">
+        <source>Save</source>
+        <target>Enregistrer</target>
+      </trans-unit>
+      <trans-unit id="smMsg33" resname="Target users">
+        <source>Target users</source>
+        <target>Utilisateurs ciblés</target>
+      </trans-unit>
+      <trans-unit id="smMsg37" resname="Published on">
+        <source>Published on</source>
+        <target>Publié le</target>
+      </trans-unit>
+      <trans-unit id="smMsg38" resname="Expires">
+        <source>Expires</source>
+        <target>Expire le</target>
+      </trans-unit>
+      <trans-unit id="smMsg39" resname="Expiry date">
+        <source>Expiry date</source>
+        <target>Date d'expiration</target>
+      </trans-unit>
+      <trans-unit id="smMsg40" resname="Expired">
+        <source>Expired</source>
+        <target>Expiré</target>
+      </trans-unit>
+      <trans-unit id="smMsg41" resname="Optional. The message will automatically no longer be displayed from this date and time.">
+        <source>Optional. The message will automatically no longer be displayed from this date and time.</source>
+        <target>Optionnel. Le message ne sera plus affiché à partir de cette date et heure.</target>
+      </trans-unit>
+      <trans-unit id="smMsg34" resname="Target groups">
+        <source>Target groups</source>
+        <target>Groupes ciblés</target>
+      </trans-unit>
     </body>
   </file>
 </xliff>

@@ -1,0 +1,143 @@
+{% extends 'dashboard.base.html.twig' %}
+
+{% block title %}Messages - {{ parent() }}{% endblock %}
+
+{% block breadcrumbs %}
+    {% set breadcrumbs = breadcrumbs|merge({ 'Messages': path('app_site_message_index') }) %}
+    {{ parent() }}
+{% endblock %}
+
+{% block sidebar %}
+    {% set category = 'messages' %}
+    {{ parent() }}
+{% endblock %}
+
+{% block wrapper %}
+<div class="top-panel">
+    <div class="d-flex justify-content-between align-items-center">
+        <h1 class="h3 mb-0">{{ 'Messages'|trans }}</h1>
+        <div class="quick-actions">
+            <a class="btn btn-success" role="button" href="{{ path('app_site_message_new') }}">
+                <i class="fas fa-plus me-2"></i> {{ 'New message'|trans }}
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="labs-panel mt-3">
+    {% if messages is empty %}
+        <div class="text-center py-5">
+            <i class="fas fa-bullhorn fa-3x text-muted mb-3"></i>
+            <h4 class="text-muted">{{ 'No message found.'|trans }}</h4>
+            <p class="text-muted">{{ 'Get started by creating your first message.'|trans }}</p>
+            <a href="{{ path('app_site_message_new') }}" class="btn btn-success">
+                <i class="fas fa-plus me-2"></i> {{ 'New message'|trans }}
+            </a>
+        </div>
+    {% else %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th width="140">{{ 'Type'|trans }}</th>
+                        <th>{{ 'Title'|trans }}</th>
+                        <th>{{ 'Message'|trans }}</th>
+                        <th width="180">{{ 'Target'|trans }}</th>
+                        <th width="160">{{ 'Expires'|trans }}</th>
+                        <th width="100">{{ 'Status'|trans }}</th>
+                        <th width="150">{{ 'Actions'|trans }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for message in messages %}
+                    <tr>
+                        <td>
+                            {% if message.isGeneral %}
+                                <span class="badge bg-primary"><i class="fas fa-globe me-1"></i> {{ 'General'|trans }}</span>
+                            {% else %}
+                                <span class="badge bg-info"><i class="fas fa-bullhorn me-1"></i> {{ 'Information'|trans }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if message.title is not empty %}
+                                {{ message.title }}
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="text-muted">{{ message.message|striptags|truncate(60) }}</span>
+                        </td>
+                        <td>
+                            {% if message.isGeneral %}
+                                <span class="text-muted">{{ 'Login page'|trans }}</span>
+                            {% elseif message.targetUserIds is empty and message.targetGroupIds is empty %}
+                                <span class="badge bg-secondary">{{ 'All users'|trans }}</span>
+                            {% else %}
+                                {% if message.targetUserIds is not empty %}
+                                    <span class="badge bg-success">{{ message.targetUserIds|length }} {{ 'user(s)'|trans }}</span>
+                                {% endif %}
+                                {% if message.targetGroupIds is not empty %}
+                                    <span class="badge bg-warning text-dark">{{ message.targetGroupIds|length }} {{ 'group(s)'|trans }}</span>
+                                {% endif %}
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if message.expiresAt %}
+                                <span class="text-muted site-message-date" data-date="{{ message.expiresAt|date('c') }}">{{ message.expiresAt|date('d/m/Y H:i') }}</span>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if not message.active %}
+                                <span class="badge bg-secondary">{{ 'Inactive'|trans }}</span>
+                            {% elseif message.isExpired %}
+                                <span class="badge bg-dark">{{ 'Expired'|trans }}</span>
+                            {% else %}
+                                <span class="badge bg-success">{{ 'Active'|trans }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if is_admin or not message.isGeneral %}
+                                <a href="{{ path('app_site_message_edit', {id: message.id}) }}" class="btn btn-sm btn-outline-primary" title="{{ 'Edit'|trans }}">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <form method="post" action="{{ path('app_site_message_toggle', {id: message.id}) }}" style="display:inline-block;">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('toggle' ~ message.id) }}">
+                                    <button class="btn btn-sm btn-outline-secondary" title="{% if message.active %}{{ 'Deactivate'|trans }}{% else %}{{ 'Activate'|trans }}{% endif %}">
+                                        <i class="fas {% if message.active %}fa-pause{% else %}fa-play{% endif %}"></i>
+                                    </button>
+                                </form>
+                                <form method="post" action="{{ path('app_site_message_delete', {id: message.id}) }}" style="display:inline-block;" onsubmit="return confirm('{{ 'Are you sure?'|trans }}');">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ message.id) }}">
+                                    <button class="btn btn-sm btn-outline-danger" title="{{ 'Delete'|trans }}">
+                                        <i class="fa fa-trash"></i>
+                                    </button>
+                                </form>
+                            {% else %}
+                                <span class="text-muted" title="{{ 'Administrator only'|trans }}"><i class="fas fa-lock"></i></span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        // Display dates in the browser's local timezone
+        // (data-date is an ISO 8601 string with explicit UTC offset)
+        document.querySelectorAll('.site-message-date').forEach(function (el) {
+            var d = new Date(el.dataset.date);
+            if (!isNaN(d)) {
+                el.textContent = d.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
+            }
+        });
+    </script>
+{% endblock %}

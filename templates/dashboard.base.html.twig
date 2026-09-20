@@ -86,6 +86,36 @@
             {# Notifications will be displayed via JavaScript using Noty #}
           </div>
         {% endif %}
+        {# Display persistent site messages (information) targeted at the current user #}
+        {% set site_messages = get_user_site_messages() %}
+        {% if site_messages is not empty %}
+          <div class="site-messages-container">
+            {% for site_message in site_messages %}
+              <div class="site-message alert alert-warning">
+                <div class="d-flex align-items-start">
+                  {{ svg('bullhorn', 'image-sm me-2 mt-1') }}
+                  <div>
+                    <small class="text-muted">{{ 'Published on'|trans }} <span class="site-message-date" data-date="{{ site_message.createdAt|date('c') }}">{{ site_message.createdAt|date('d/m/Y H:i') }}</span></small><br>
+                    {% if site_message.title is not empty %}
+                      <strong>{{ site_message.title }}</strong><br>
+                    {% endif %}
+                    {{ site_message.message|nl2br }}
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+          <script>
+            // Display site message dates in the browser's local timezone
+            // (data-date is an ISO 8601 string with explicit UTC offset)
+            document.querySelectorAll('.site-message-date').forEach(function (el) {
+              var d = new Date(el.dataset.date);
+              if (!isNaN(d)) {
+                el.textContent = d.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
+              }
+            });
+          </script>
+        {% endif %}
         <div class="flashbag-container">
           {%- for label, messages in app.flashes -%}
             {%- for message in messages -%}

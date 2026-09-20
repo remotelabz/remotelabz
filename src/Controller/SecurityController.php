@@ -8,6 +8,7 @@ use App\Service\GitVersionService;
 
 use App\Repository\UserRepository;
 use App\Entity\PasswordResetRequest;
+use App\Entity\SiteMessage;
 use Doctrine\Common\Collections\Criteria;
 use Nelmio\ApiDocBundle\Annotation\Model;
 use Symfony\Component\HttpFoundation\Request;
@@ -110,7 +111,11 @@ class SecurityController extends AbstractController
         $versionData = $this->gitVersionService->getFullVersion();
         $this->logger->debug('[SecurityController:login]::getFullVersion git version',$versionData);
 
-        return $this->render('security/login.html.twig', 
+        // Prefer the general message managed from the admin interface,
+        // fall back to the GENERAL_MESSAGE parameter from .env
+        $generalMessage = $this->entityManager->getRepository(SiteMessage::class)->findActiveGeneral();
+
+        return $this->render('security/login.html.twig',
         [
             'last_username' => $lastUsername,
             'error' => $error,
@@ -120,7 +125,7 @@ class SecurityController extends AbstractController
             'branch' => $versionData['branch'],
             'github_url' => $versionData['github_url'],
             'maintenance' => $this->maintenance,
-            'general_message' => $this->general_message
+            'general_message' => $generalMessage ? $generalMessage->getMessage() : $this->general_message
         ]);
     }
 

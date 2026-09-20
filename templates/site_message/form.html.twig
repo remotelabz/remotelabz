@@ -1,0 +1,86 @@
+<div class="content-body">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-xl-7">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fa fa-bullhorn me-2"></i> {{ form.vars.value.isGeneral ? ('General message'|trans) : ('Information message'|trans) }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {{ form_start(form) }}
+
+                    {{ form_widget(form.expiresAtOffset) }}
+
+                    {{ form_row(form.type) }}
+
+                    <div class="site-message-information-fields">
+                        {{ form_row(form.title) }}
+                    </div>
+
+                    {{ form_row(form.message) }}
+
+                    <div class="site-message-information-fields">
+                        {{ form_row(form.targetUsers) }}
+                    </div>
+
+                    <div class="site-message-information-fields">
+                        {{ form_row(form.targetGroups) }}
+                    </div>
+
+                    {{ form_row(form.expiresAt) }}
+
+                    {{ form_row(form.active) }}
+
+                    <div class="d-flex gap-3 justify-content-end mt-4 pt-3 border-top">
+                        <a href="{{ path('app_site_message_index') }}" class="btn btn-danger btn-lg px-3">
+                            <i class="fa fa-times me-1"></i> {{ 'Cancel'|trans }}
+                        </a>
+                        <button type="submit" class="btn btn-primary btn-lg px-4">
+                            <i class="fa fa-save me-1"></i> {{ 'Save'|trans }}
+                        </button>
+                    </div>
+                    {{ form_end(form) }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var typeSelect = document.getElementById('site_message_type');
+        if (typeSelect) {
+            function toggleInformationFields() {
+                var fields = document.querySelectorAll('.site-message-information-fields');
+                fields.forEach(function (field) {
+                    field.style.display = typeSelect.value === 'information' ? '' : 'none';
+                });
+            }
+            typeSelect.addEventListener('change', toggleInformationFields);
+            toggleInformationFields();
+        }
+
+        // Expiry date: displayed and edited in the browser's local timezone.
+        // The raw local value is submitted as-is; the server converts it to
+        // UTC using the browser's UTC offset sent in "expiresAtOffset".
+        // Without JS the raw value is submitted and stored as-is.
+        var expiryInput = document.getElementById('site_message_expiresAt');
+        if (expiryInput) {
+            if (expiryInput.value) {
+                function pad(n) { return String(n).padStart(2, '0'); }
+                var d = new Date(expiryInput.value + ':00Z');
+                expiryInput.value = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) +
+                    'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+            }
+            var offsetInput = document.querySelector('input[name="site_message[expiresAtOffset]"]');
+            if (offsetInput) {
+                var setOffset = function () {
+                    offsetInput.value = -new Date().getTimezoneOffset();
+                };
+                setOffset();
+                expiryInput.form.addEventListener('submit', setOffset);
+            }
+        }
+    });
+</script>

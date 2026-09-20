@@ -106,5 +106,6 @@ security:
         - { path: ^/admin/devices, roles: ['ROLE_TEACHER_EDITOR'] }
         - { path: ^/admin/operating-systems, roles: ['ROLE_TEACHER_EDITOR'] }
         - { path: ^/admin/isos, roles: ['ROLE_TEACHER_EDITOR'] }
+        - { path: ^/admin/messages, roles: ['ROLE_TEACHER_EDITOR'] }
         - { path: ^/admin, roles: ['ROLE_ADMINISTRATOR'] }
         - { path: ^/, roles: ['ROLE_USER'] }

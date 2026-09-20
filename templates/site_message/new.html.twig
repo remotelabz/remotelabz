@@ -1,0 +1,29 @@
+{% extends 'dashboard.base.html.twig' %}
+
+{% block title %}New message - {{ parent() }}{% endblock %}
+
+{% block breadcrumbs %}
+    {% set breadcrumbs = breadcrumbs|merge({ 'New': path('app_site_message_new'), 'Messages': path('app_site_message_index') }) %}
+    {{ parent() }}
+{% endblock %}
+
+{% block sidebar %}
+    {% set category = 'messages' %}
+    {{ parent() }}
+{% endblock %}
+
+{% block wrapper %}
+    <div class="content-title">
+        <div class="content-title-infos">
+            <h1>{{ 'New message'|trans }}</h1>
+            <p class="text-muted">{{ 'Create a general message for the login page or an information message for connected users'|trans }}</p>
+        </div>
+        <div class="content-title-actions">
+            <a href="{{ path('app_site_message_index') }}" class="btn btn-outline-secondary">
+                <i class="fa fa-arrow-left"></i> {{ 'Back'|trans }}
+            </a>
+        </div>
+    </div>
+
+    {% include 'site_message/form.html.twig' %}
+{% endblock %}

@@ -43,7 +43,7 @@ class Lab implements InstanciableInterface
     #[Serializer\Groups(['api_get_lab', 'export_lab'])]
     private $tasks;
 
-    #[ORM\Column(type: 'string', length: 10, options: ['default' => 1])]
+    #[ORM\Column(type: 'string', length: 10, options: ['default' => '1'])]
     #[Serializer\Groups(['api_get_lab', 'export_lab'])]
     private $version = "1";
 
