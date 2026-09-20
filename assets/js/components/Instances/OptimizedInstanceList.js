@@ -4,7 +4,7 @@ import Remotelabz from '../API';
 import SVG from '../Display/SVG';
 import { ListGroupItem, Button, Spinner, Modal } from 'react-bootstrap';
 import { toast } from 'react-toastify';
-import { is_vnc, is_login, is_serial, is_real } from './deviceProtocolHelpers';
+import { is_vnc, is_login, is_serial, is_real, is_native } from './deviceProtocolHelpers';
 import InstanceStateBadge from './InstanceStateBadge';
 import { fetchDeviceLogs, startLogsPolling, stopLogsPolling, formatLogEntry, getLastLogs } from './deviceLogsHelpers';
 import DeviceLogs from './DeviceLogs';
@@ -467,7 +467,7 @@ const DetailsModal = ({ selectedInstance, onClose, sharedStates, onStateUpdate, 
                                 {deviceStates[deviceInstance.uuid] === 'start' ? <Spinner animation="border" size="sm" /> : <SVG name="play" />}
                               </button>
                             )}
-                            {(deviceInstance.state == 'started' && is_login(deviceInstance) && !is_real(deviceInstance) && user.roles 
+                            {(deviceInstance.state == 'started' && is_login(deviceInstance) && !is_real(deviceInstance) && !is_native(deviceInstance) && user.roles
                               && ( user.roles.includes("ROLE_ADMINISTRATOR") || user.roles.includes("ROLE_SUPER_ADMINISTRATOR") || ((user.roles.includes("ROLE_TEACHER") || user.roles.includes("ROLE_TEACHER_EDITOR")
                                 ) 
                               ))
@@ -485,7 +485,7 @@ const DetailsModal = ({ selectedInstance, onClose, sharedStates, onStateUpdate, 
                                       <SVG name="incognito" />
                                   </a>
                             }
-                            {(deviceInstance.state === 'started' && is_login(deviceInstance)) &&
+                            {(deviceInstance.state === 'started' && is_login(deviceInstance) && !is_native(deviceInstance)) &&
                                 <a
                                   target="_blank"
                                   rel="noopener noreferrer"
@@ -496,7 +496,7 @@ const DetailsModal = ({ selectedInstance, onClose, sharedStates, onStateUpdate, 
                                   <SVG name="terminal" />
                                 </a>
                             }
-                            {(deviceInstance.state === 'started' && is_vnc(deviceInstance)) &&
+                            {(deviceInstance.state === 'started' && is_vnc(deviceInstance) && !is_native(deviceInstance)) &&
                               <a
                                 target="_blank"
                                 rel="noopener noreferrer"
@@ -508,7 +508,7 @@ const DetailsModal = ({ selectedInstance, onClose, sharedStates, onStateUpdate, 
                               </a>
                             }
 
-                            {(deviceInstance.state === 'started' && is_serial(deviceInstance)) &&
+                            {(deviceInstance.state === 'started' && is_serial(deviceInstance) && !is_native(deviceInstance)) &&
                               <a
                                 target="_blank"
                                 rel="noopener noreferrer"
