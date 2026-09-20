@@ -441,7 +441,7 @@ const DetailsModal = ({ selectedInstance, onClose, sharedStates, onStateUpdate, 
                               </h6>                            
                               <InstanceStateBadge state={deviceInstance.device?.hypervisor?.name === 'natif' ? 'started' : deviceInstance.state}/>
                             </div>
-                            <small style={{ color: '#6c757d', display: 'block' }}>
+                            <small style={{ color: '#6c757d', display: 'block' }}> 
                               {deviceInstance.uuid}
                             </small>
                           </div>
@@ -478,7 +478,7 @@ const DetailsModal = ({ selectedInstance, onClose, sharedStates, onStateUpdate, 
                                       rel="noopener noreferrer"
                                       href={"/instances/" + deviceInstance.uuid + "/view/admin"}
                                       className="btn btn-primary ml-3"
-                                      title="Open VNC console"
+                                      title="Open admin console"
                                       data-toggle="tooltip"
                                       data-placement="top"
                                   >

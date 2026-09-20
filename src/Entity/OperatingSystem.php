@@ -37,7 +37,7 @@ class OperatingSystem implements DirectoryAwareInterface
      */
     #[ORM\Column(type: 'string', length: 255)]
     #[Serializer\XmlAttribute]
-    #[Serializer\Groups(['api_get_operating_system', 'api_get_lab_template', 'api_get_device', 'export_lab', 'worker', 'sandbox'])]
+    #[Serializer\Groups(['api_get_operating_system', 'api_get_lab_template', 'api_get_device', 'api_get_lab_instance', 'export_lab', 'worker', 'sandbox'])]
     private $name;
 
     /**
