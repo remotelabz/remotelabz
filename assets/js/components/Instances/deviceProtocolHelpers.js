@@ -56,6 +56,18 @@ export const is_real = (instance) => {
 };
 
 /**
+ * Vérifie si le device est natif (OS natif + hyperviseur natif)
+ * Ces devices ne peuvent pas être contrôlés
+ * @param {Object} instance - L'instance du device
+ * @returns {boolean}
+ */
+export const is_native = (instance) => {
+  const hypervisor = instance?.device?.hypervisor?.name?.toLowerCase();
+  const os = instance?.device?.operatingSystem?.name?.toLowerCase();
+  return hypervisor === 'natif' && os === 'natif';
+};
+
+/**
  * Obtient tous les protocoles disponibles pour une instance
  * @param {Object} instance - L'instance du device
  * @returns {Object} Objet contenant les drapeaux pour chaque protocole
@@ -65,6 +77,7 @@ export const getAvailableProtocols = (instance) => {
     vnc: is_vnc(instance),
     login: is_login(instance),
     serial: is_serial(instance),
-    isPhysical: is_real(instance)
+    isPhysical: is_real(instance),
+    isNative: is_native(instance)
   };
 };

@@ -65,7 +65,6 @@ class SecurityController extends AbstractController
     private $gitVersionService;
 
     protected $maintenance;
-    protected $general_message;
     protected $contact_mail;
     protected $entityManager;
      /** @var LoggerInterface $logger */
@@ -77,7 +76,6 @@ class SecurityController extends AbstractController
         PasswordResetRequestRepository $passwordResetRequestRepository,
         UserPasswordHasherInterface $passwordHasher,
         bool $maintenance,
-        string $general_message = null,
         string $contact_mail,
         EntityManagerInterface $entityManager,
         GitVersionService $gitVersionService,
@@ -90,7 +88,6 @@ class SecurityController extends AbstractController
         $this->passwordResetRequestRepository = $passwordResetRequestRepository;
         $this->passwordHasher = $passwordHasher;
         $this->maintenance = $maintenance;
-        $this->general_message=$general_message;
         $this->contact_mail = $contact_mail;
         $this->entityManager = $entityManager;
         $this->gitVersionService = $gitVersionService;
@@ -111,8 +108,6 @@ class SecurityController extends AbstractController
         $versionData = $this->gitVersionService->getFullVersion();
         $this->logger->debug('[SecurityController:login]::getFullVersion git version',$versionData);
 
-        // Prefer the general message managed from the admin interface,
-        // fall back to the GENERAL_MESSAGE parameter from .env
         $generalMessage = $this->entityManager->getRepository(SiteMessage::class)->findActiveGeneral();
 
         return $this->render('security/login.html.twig',
@@ -125,7 +120,7 @@ class SecurityController extends AbstractController
             'branch' => $versionData['branch'],
             'github_url' => $versionData['github_url'],
             'maintenance' => $this->maintenance,
-            'general_message' => $generalMessage ? $generalMessage->getMessage() : $this->general_message
+            'general_message' => $generalMessage ? $generalMessage->getMessage() : null
         ]);
     }
 
