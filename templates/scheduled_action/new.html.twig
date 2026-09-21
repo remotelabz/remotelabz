@@ -195,7 +195,7 @@
                                         {% endif %}
                                         <br />
                                         <small class="text-muted">
-                                            {{ sa.scheduledAt|date('M d, Y H:i', 'UTC') }} UTC
+                                            <span class="sa-date" data-date="{{ sa.scheduledAt|date('c') }}">{{ sa.scheduledAt|date('M d, Y H:i', 'UTC') }} UTC</span>
                                             &nbsp;—&nbsp;
                                             <strong>{{ sa.action|upper }}</strong>
                                         </small>
@@ -524,13 +524,12 @@
             return new Date(value).toISOString();
         }
 
-        /** Formats a datetime-local value to a human-readable UTC string */
+        /** Formats a datetime-local value to a human-readable string (browser local timezone) */
         function formatDate(value) {
             return new Date(value).toLocaleString(undefined, {
                 dateStyle: 'medium',
                 timeStyle: 'short',
-                timeZone: 'UTC',
-            }) + ' UTC';
+            });
         }
 
         /** Appends a newly created ScheduledAction to the list */
@@ -540,8 +539,7 @@
             const date = new Date(sa.scheduledAt).toLocaleString(undefined, {
                 dateStyle: 'medium',
                 timeStyle: 'short',
-                timeZone: 'UTC',
-            }) + ' UTC';
+            });
 
             const groupBadge = sa.group
                 ? `<span class="badge badge-pill badge-light border ml-1">${escHtml(sa.group.name)}</span>`
@@ -618,6 +616,15 @@
             endActionCards.forEach(c => c.classList.remove('border-primary', 'shadow-sm'));
             validateForm();
         }
+
+        // Display server-rendered dates in the browser's local timezone
+        // (data-date is an ISO 8601 string with explicit UTC offset)
+        document.querySelectorAll('.sa-date').forEach(function (el) {
+            const d = new Date(el.dataset.date);
+            if (!isNaN(d)) {
+                el.textContent = d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+            }
+        });
 
         // Init
         validateForm();
