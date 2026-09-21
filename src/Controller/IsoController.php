@@ -2,31 +2,32 @@
 
 namespace App\Controller;
 
-use App\Entity\Iso;
+use App\Controller\InstanceErrorHandlerTrait;
 use App\Entity\Arch;
-use App\Entity\User;
 use App\Entity\ConfigWorker;
-use App\Entity\OperatingSystem;
 use App\Entity\Directory;
+use App\Entity\Iso;
+use App\Entity\OperatingSystem;
 
+use App\Entity\User;
 use App\Form\IsoType;
-use App\Repository\IsoRepository;
+use App\Repository\ConfigWorkerRepository;
 use App\Repository\DirectoryRepository;
+use App\Repository\IsoRepository;
+use App\Service\DirectoryService;
+use App\Service\Files2WorkerManager;
+use App\Service\SshService;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
+use SortDirection;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\String\Slugger\SluggerInterface;
-use Psr\Log\LoggerInterface;
-use App\Service\SshService;
-use App\Service\DirectoryService;
-use App\Repository\ConfigWorkerRepository;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
-use App\Service\Files2WorkerManager;
-use App\Controller\InstanceErrorHandlerTrait;
+use Symfony\Component\String\Slugger\SluggerInterface;
 
 
 
@@ -72,7 +73,7 @@ class IsoController extends AbstractController
                 ->setParameter('search', '%' . strtolower($search) . '%');
         }
 
-        $queryBuilder->orderBy('i.name', 'ASC');
+        $queryBuilder->orderBy('i.name', SortDirection::Ascending);
 
         return $this->render('iso/index.html.twig', [
             'isos' => $queryBuilder->getQuery()->getResult(),

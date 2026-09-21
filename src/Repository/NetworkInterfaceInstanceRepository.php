@@ -3,8 +3,9 @@
 namespace App\Repository;
 
 use App\Entity\NetworkInterfaceInstance;
-use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\Persistence\ManagerRegistry;
+use SortDirection;
 
 /**
  * @method NetworkInterfaceInstance|null find($id, $lockMode = null, $lockVersion = null)
@@ -41,7 +42,7 @@ class NetworkInterfaceInstanceRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('n')
             ->andWhere('n.exampleField = :val')
             ->setParameter('val', $value)
-            ->orderBy('n.id', 'ASC')
+            ->orderBy('n.id', SortDirection::Ascending)
             ->setMaxResults(10)
             ->getQuery()
             ->getResult()

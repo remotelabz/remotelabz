@@ -2,23 +2,24 @@
 
 namespace App\Form;
 
-use App\Entity\Hypervisor;
-use App\Entity\OperatingSystem;
 use App\Entity\Arch;
 use App\Entity\FlavorDisk;
-use Symfony\Component\Form\AbstractType;
-use Symfony\Component\Form\FormBuilderInterface;
-use Symfony\Bridge\Doctrine\Form\Type\EntityType;
-use Symfony\Component\Validator\Constraints\File;
-use Symfony\Component\OptionsResolver\OptionsResolver;
-use Symfony\Component\Form\Extension\Core\Type\UrlType;
-use Symfony\Component\Form\Extension\Core\Type\FileType;
-use Symfony\Component\Form\Extension\Core\Type\TextType;
-use Symfony\Component\Form\Extension\Core\Type\SubmitType;
-use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
-use Symfony\Component\Form\Extension\Core\Type\TextareaType;
-use Symfony\Component\Form\Extension\Core\Type\HiddenType;
+use App\Entity\Hypervisor;
+use App\Entity\OperatingSystem;
 use Doctrine\ORM\EntityRepository;
+use SortDirection;
+use Symfony\Bridge\Doctrine\Form\Type\EntityType;
+use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
+use Symfony\Component\Form\Extension\Core\Type\FileType;
+use Symfony\Component\Form\Extension\Core\Type\HiddenType;
+use Symfony\Component\Form\Extension\Core\Type\SubmitType;
+use Symfony\Component\Form\Extension\Core\Type\TextareaType;
+use Symfony\Component\Form\Extension\Core\Type\TextType;
+use Symfony\Component\Form\Extension\Core\Type\UrlType;
+use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Validator\Constraints\File;
 
 
 class OperatingSystemType extends AbstractType
@@ -44,7 +45,7 @@ class OperatingSystemType extends AbstractType
                 'choice_label' => 'name',
                 'query_builder' => function (EntityRepository $er) {
                     return $er->createQueryBuilder('h')
-                        ->orderBy('h.name', 'ASC');
+                        ->orderBy('h.name', SortDirection::Ascending);
                 }
             ])
             ->add('uploaded_filename', HiddenType::class, [
@@ -83,7 +84,7 @@ class OperatingSystemType extends AbstractType
                 ],
                 'query_builder' => function (EntityRepository $er) {
                     return $er->createQueryBuilder('a')
-                        ->orderBy('a.name', 'ASC');
+                        ->orderBy('a.name', SortDirection::Ascending);
                 },
                 'preferred_choices' => function ($arch) {
                     return $arch->getName() === 'x86_64';

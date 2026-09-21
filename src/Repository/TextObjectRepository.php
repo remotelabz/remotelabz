@@ -3,8 +3,9 @@
 namespace App\Repository;
 
 use App\Entity\TextObject;
-use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\Persistence\ManagerRegistry;
+use SortDirection;
 
 /**
  * @method TextObject|null find($id, $lockMode = null, $lockVersion = null)
@@ -24,7 +25,7 @@ class TextObjectRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('o')
             ->andWhere('o.name LIKE :val')
             ->setParameter('val', '%'.$value.'%')
-            ->orderBy('o.id', 'DESC')
+            ->orderBy('o.id', SortDirection::Descending)
             ->getQuery()
             ->getResult()
         ;
@@ -63,7 +64,7 @@ class TextObjectRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('o')
             ->andWhere('o.exampleField = :val')
             ->setParameter('val', $value)
-            ->orderBy('o.id', 'ASC')
+            ->orderBy('o.id', SortDirection::Ascending)
             ->setMaxResults(10)
             ->getQuery()
             ->getResult()

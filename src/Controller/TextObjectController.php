@@ -71,6 +71,8 @@ class TextObjectController extends Controller
 
     /** @var TextObjectRepository $textobjectRepository */
     private $textobjectRepository;
+    private $labRepository;
+    private $entityManager;
 
     public function __construct(
         LoggerInterface $logger,

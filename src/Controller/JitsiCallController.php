@@ -25,6 +25,7 @@ use Doctrine\ORM\EntityManagerInterface;
 class JitsiCallController extends Controller
 {
     private $jitsiCallRepository;
+    private $entityManager;
 
     public function __construct(JitsiCallRepository $jitsiCallRepository, EntityManagerInterface $entityManager)
     {

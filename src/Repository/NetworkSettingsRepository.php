@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Entity\NetworkSettings;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use SortDirection;
 
 /**
  * @method NetworkSettings|null find($id, $lockMode = null, $lockVersion = null)
@@ -28,7 +29,7 @@ class NetworkSettingsRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('n')
             ->andWhere('n.exampleField = :val')
             ->setParameter('val', $value)
-            ->orderBy('n.id', 'ASC')
+            ->orderBy('n.id', SortDirection::Ascending)
             ->setMaxResults(10)
             ->getQuery()
             ->getResult()

@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Entity\FlavorDisk;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use SortDirection;
 
 /**
  * @extends ServiceEntityRepository<FlavorDisk>
@@ -53,7 +54,7 @@ class FlavorDiskRepository extends ServiceEntityRepository
     public function findAllOrderedByName(): array
     {
         return $this->createQueryBuilder('f')
-            ->orderBy('f.name', 'ASC')
+            ->orderBy('f.name', SortDirection::Ascending)
             ->getQuery()
             ->getResult();
     }
@@ -66,7 +67,7 @@ class FlavorDiskRepository extends ServiceEntityRepository
     public function findAllOrderedBySize(): array
     {
         return $this->createQueryBuilder('f')
-            ->orderBy('f.disk', 'ASC')
+            ->orderBy('f.disk', SortDirection::Ascending)
             ->getQuery()
             ->getResult();
     }
@@ -93,7 +94,7 @@ class FlavorDiskRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('f')
             ->where('f.disk >= :minSize')
             ->setParameter('minSize', $minSize)
-            ->orderBy('f.disk', 'ASC')
+            ->orderBy('f.disk', SortDirection::Ascending)
             ->getQuery()
             ->getResult();
     }
@@ -110,7 +111,7 @@ class FlavorDiskRepository extends ServiceEntityRepository
             ->andWhere('f.disk <= :maxSize')
             ->setParameter('minSize', $minSize)
             ->setParameter('maxSize', $maxSize)
-            ->orderBy('f.disk', 'ASC')
+            ->orderBy('f.disk', SortDirection::Ascending)
             ->getQuery()
             ->getResult();
     }
@@ -158,7 +159,7 @@ class FlavorDiskRepository extends ServiceEntityRepository
             ->select('f.id', 'f.name', 'f.disk', 'COUNT(os.id) as osCount')
             ->leftJoin('App\Entity\OperatingSystem', 'os', 'WITH', 'os.flavorDisk = f.id')
             ->groupBy('f.id')
-            ->orderBy('osCount', 'DESC')
+            ->orderBy('osCount', SortDirection::Descending)
             ->getQuery()
             ->getResult();
     }

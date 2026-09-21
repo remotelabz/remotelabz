@@ -51,6 +51,7 @@ class Picture implements InstanciableInterface
     #[ORM\ManyToOne(targetEntity: 'App\Entity\Lab', inversedBy: 'pictures', cascade: ['persist'])]
     #[ORM\JoinColumn(nullable: true, onDelete: 'CASCADE')]
     private $lab;
+    private $uuid;
 
 
     public function __construct()

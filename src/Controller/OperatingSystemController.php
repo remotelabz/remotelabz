@@ -2,53 +2,54 @@
 
 namespace App\Controller;
 
-use App\Entity\OperatingSystem;
 use App\Entity\Device;
 use App\Entity\Directory;
-use App\Repository\HypervisorRepository;
-use App\Repository\OperatingSystemRepository;
+use App\Entity\OperatingSystem;
+use App\Form\BlankOperatingSystemType;
+use App\Form\OperatingSystemType;
 use App\Repository\ArchRepository;
 use App\Repository\ConfigWorkerRepository;
 use App\Repository\DirectoryRepository;
-use Psr\Log\LoggerInterface;
-use App\Form\OperatingSystemType;
-use App\Form\BlankOperatingSystemType;
-use App\Service\ImageFileUploader;
-use Doctrine\Common\Collections\Criteria;
-use Symfony\Component\Filesystem\Filesystem;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\HttpFoundation\File\UploadedFile;
-use Symfony\Component\Filesystem\Exception\IOExceptionInterface;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Symfony\Component\Security\Http\Attribute\IsGranted;
-use Symfony\Component\Messenger\Bridge\Amqp\Transport\AmqpStamp;
-use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\String\Slugger\SluggerInterface;
-use Symfony\Component\Process\Process;
-use Symfony\Component\HttpClient\HttpClient;
-use Symfony\Component\HttpClient\Exception\TransportException;
-use FOS\RestBundle\Controller\Annotations\Get;
-use FOS\RestBundle\Controller\Annotations\Post;
-use FOS\RestBundle\Controller\Annotations\Put;
-use FOS\RestBundle\Controller\Annotations\Patch;
-use FOS\RestBundle\Controller\Annotations\Delete;
-use FOS\RestBundle\Controller\Annotations\View;
-use FOS\RestBundle\Controller\Annotations\Route as RestRoute;
-use Doctrine\DBAL\Exception\ForeignKeyConstraintViolationException;
-use JMS\Serializer\SerializationContext;
-use JMS\Serializer\SerializerInterface;
-use Symfony\Component\Messenger\MessageBusInterface;
-use Remotelabz\Message\Message\InstanceActionMessage;
-use Doctrine\ORM\EntityManagerInterface;
-use Knp\Component\Pager\PaginatorInterface;
+use App\Repository\HypervisorRepository;
+use App\Repository\OperatingSystemRepository;
 use App\Service\DirectoryService;
 use App\Service\Files2WorkerManager;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
+use App\Service\ImageFileUploader;
 use App\Service\OvaManager;
+use Doctrine\Common\Collections\Criteria;
 use Doctrine\Common\Collections\Order;
+use Doctrine\DBAL\Exception\ForeignKeyConstraintViolationException;
+use Doctrine\ORM\EntityManagerInterface;
+use FOS\RestBundle\Controller\Annotations\Delete;
+use FOS\RestBundle\Controller\Annotations\Get;
+use FOS\RestBundle\Controller\Annotations\Patch;
+use FOS\RestBundle\Controller\Annotations\Post;
+use FOS\RestBundle\Controller\Annotations\Put;
+use FOS\RestBundle\Controller\Annotations\Route as RestRoute;
+use FOS\RestBundle\Controller\Annotations\View;
+use JMS\Serializer\SerializationContext;
+use JMS\Serializer\SerializerInterface;
+use Knp\Component\Pager\PaginatorInterface;
+use Psr\Log\LoggerInterface;
+use Remotelabz\Message\Message\InstanceActionMessage;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
+use SortDirection;
+use Symfony\Component\Filesystem\Exception\IOExceptionInterface;
+use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\HttpClient\Exception\TransportException;
+use Symfony\Component\HttpClient\HttpClient;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\Messenger\Bridge\Amqp\Transport\AmqpStamp;
+use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\Process\Process;
+use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\String\Slugger\SluggerInterface;
 
 
 
@@ -169,7 +170,7 @@ class OperatingSystemController extends Controller
                 ->setParameter('directories', $scope['directories']);
         }
 
-        $queryBuilder->orderBy('os.name', 'ASC');
+        $queryBuilder->orderBy('os.name', SortDirection::Ascending);
 
         // Paginate results
         $pagination = $this->paginator->paginate(
@@ -264,7 +265,7 @@ class OperatingSystemController extends Controller
                 ->setParameter('hypervisorId', $hypervisorId);
         }
 
-        $queryBuilder->orderBy('os.name', 'ASC');
+        $queryBuilder->orderBy('os.name', SortDirection::Ascending);
 
         $operatingSystems = $queryBuilder->getQuery()->getResult();
         $total = $this->operatingSystemRepository->count([]);

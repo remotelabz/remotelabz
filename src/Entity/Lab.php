@@ -140,6 +140,8 @@ class Lab implements InstanciableInterface
     #[ORM\OneToMany(targetEntity: 'App\Entity\InvitationCode', mappedBy: 'lab', cascade: ['persist', 'remove'])]
     #[Serializer\Groups([])]
     private $invitationCodes;
+    private $connexions;
+    private $activities;
 
     public function __construct()
     {

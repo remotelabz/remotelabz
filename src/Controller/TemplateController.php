@@ -74,6 +74,12 @@ class TemplateController extends Controller
 {
     /** @var LoggerInterface $logger */
     private $logger;
+    private $operatingSystemRepository;
+    private $hypervisorRepository;
+    private $controlProtocolTypeRepository;
+    private $flavorRepository;
+    private $deviceRepository;
+    private $isoRepository;
 
     public function __construct(
         LoggerInterface $logger,

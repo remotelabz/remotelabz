@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Entity\Flavor;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use SortDirection;
 
 /**
  * @method Flavor|null find($id, $lockMode = null, $lockVersion = null)
@@ -39,7 +40,7 @@ class FlavorRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('f')
             ->andWhere('f.exampleField = :val')
             ->setParameter('val', $value)
-            ->orderBy('f.id', 'ASC')
+            ->orderBy('f.id', SortDirection::Ascending)
             ->setMaxResults(10)
             ->getQuery()
             ->getResult()

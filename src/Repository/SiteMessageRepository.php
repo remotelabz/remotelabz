@@ -6,6 +6,7 @@ use App\Entity\SiteMessage;
 use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use SortDirection;
 
 /**
  * @extends ServiceEntityRepository<SiteMessage>
@@ -29,7 +30,7 @@ class SiteMessageRepository extends ServiceEntityRepository
             ->setParameter('type', SiteMessage::TYPE_GENERAL)
             ->setParameter('active', true)
             ->setParameter('now', new \DateTime())
-            ->orderBy('m.updatedAt', 'DESC')
+            ->orderBy('m.updatedAt', SortDirection::Descending)
             ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult();
@@ -50,7 +51,7 @@ class SiteMessageRepository extends ServiceEntityRepository
             ->setParameter('type', SiteMessage::TYPE_INFORMATION)
             ->setParameter('active', true)
             ->setParameter('now', new \DateTime())
-            ->orderBy('m.createdAt', 'DESC')
+            ->orderBy('m.createdAt', SortDirection::Descending)
             ->getQuery()
             ->getResult();
 

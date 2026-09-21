@@ -17,6 +17,7 @@ class ProxyServiceMonitor extends AbstractServiceMonitor
     private $remotelabzProxyApiPort;
     protected $deviceInstanceRepository;
     protected $proxyManager;
+    private $logger;
 
     public function __construct(
        $remotelabzProxyServerAPI,

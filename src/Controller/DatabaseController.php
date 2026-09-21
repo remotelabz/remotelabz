@@ -32,6 +32,8 @@ class DatabaseController extends Controller
 {
     /** @var LoggerInterface $logger */
     private $logger;
+    private $validator;
+    private $mailer;
 
     public function __construct(
         ValidatorInterface $validator,

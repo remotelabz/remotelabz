@@ -26,6 +26,7 @@ use Doctrine\Common\Collections\Order;
 class FlavorController extends Controller
 {
     public $flavorRepository;
+    private $entityManager;
 
     public function __construct(FlavorRepository $flavorRepository, EntityManagerInterface $entityManager)
     {

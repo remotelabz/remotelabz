@@ -7,6 +7,7 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\OptimisticLockException;
 use Doctrine\ORM\ORMException;
 use Doctrine\Persistence\ManagerRegistry;
+use SortDirection;
 
 /**
  * @extends ServiceEntityRepository<ControlProtocolTypeInstance>
@@ -56,7 +57,7 @@ class ControlProtocolTypeInstanceRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('c')
             ->andWhere('c.exampleField = :val')
             ->setParameter('val', $value)
-            ->orderBy('c.id', 'ASC')
+            ->orderBy('c.id', SortDirection::Ascending)
             ->setMaxResults(10)
             ->getQuery()
             ->getResult()

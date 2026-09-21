@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Entity\ScheduledAction;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use SortDirection;
 
 /**
  * @extends ServiceEntityRepository<ScheduledAction>
@@ -31,7 +32,7 @@ class ScheduledActionRepository extends ServiceEntityRepository
             ->andWhere('sa.scheduledAt <= :now')
             ->setParameter('status', ScheduledAction::STATUS_PENDING)
             ->setParameter('now', $now)
-            ->orderBy('sa.scheduledAt', 'DESC')
+            ->orderBy('sa.scheduledAt', SortDirection::Descending)
             ->getQuery()
             ->getResult();
     }
@@ -46,7 +47,7 @@ class ScheduledActionRepository extends ServiceEntityRepository
     public function findForUser(\App\Entity\User $user, int $limit = 100): array
     {
         $qb = $this->createQueryBuilder('sa')
-            ->orderBy('sa.scheduledAt', 'DESC')
+            ->orderBy('sa.scheduledAt', SortDirection::Descending)
             ->setMaxResults($limit);
 
         if (!$user->isAdministrator()) {

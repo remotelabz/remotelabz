@@ -24,6 +24,7 @@ use Doctrine\ORM\EntityManagerInterface;
 class PduOutletDeviceController extends Controller
 {
     public $pduOutletDeviceRepository;
+    private $entityManager;
 
     public function __construct(PduOutletDeviceRepository $pduOutletDeviceRepository, EntityManagerInterface $entityManager)
     {

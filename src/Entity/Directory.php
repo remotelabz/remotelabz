@@ -5,8 +5,9 @@ namespace App\Entity;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Validator\Constraints as Assert;
 use JMS\Serializer\Annotation as Serializer;
+use SortDirection;
+use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * Represents a generic directory that can contain various entities
@@ -64,7 +65,7 @@ class Directory
      * @var Collection<int, Directory>
      */
     #[ORM\OneToMany(targetEntity: Directory::class, mappedBy: 'parent', cascade: ['persist', 'remove'])]
-    #[ORM\OrderBy(['name' => 'ASC'])]
+    #[ORM\OrderBy(['name' => SortDirection::Ascending])]
     private Collection $children;
 
     /**

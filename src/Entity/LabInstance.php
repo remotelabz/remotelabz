@@ -63,6 +63,7 @@ class LabInstance extends Instance
 
     const SCOPE_STANDALONE = 'standalone';
     const SCOPE_ACTIVITY = 'activity';
+    private $scope;
 
     public function __construct()
     {

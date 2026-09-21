@@ -14,6 +14,7 @@ class UserFixtures extends Fixture
     private KernelInterface $kernel;
 
     private $passwordHasher;
+    private $container;
 
     public function __construct(UserPasswordHasherInterface $passwordHasher, KernelInterface $kernel)
     {

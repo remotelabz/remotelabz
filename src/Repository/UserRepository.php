@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use SortDirection;
 
 /**
  * @method User|null find($id, $lockMode = null, $lockVersion = null)
@@ -63,7 +64,7 @@ class UserRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('u')
             ->andWhere('u.exampleField = :val')
             ->setParameter('val', $value)
-            ->orderBy('u.id', 'ASC')
+            ->orderBy('u.id', SortDirection::Ascending)
             ->setMaxResults(10)
             ->getQuery()
             ->getResult()

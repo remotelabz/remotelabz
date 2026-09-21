@@ -65,6 +65,9 @@ class PictureController extends Controller
 
     /** @var PictureRepository $textobjectRepository */
     private $picturetRepository;
+    private $labRepository;
+    private $pictureRepository;
+    private $entityManager;
 
     public function __construct(
         LoggerInterface $logger,

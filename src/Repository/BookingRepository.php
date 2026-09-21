@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Entity\Booking;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use SortDirection;
 
 /**
  * @method Booking|null find($id, $lockMode = null, $lockVersion = null)
@@ -78,7 +79,7 @@ class BookingRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('b')
             ->andWhere('b.exampleField = :val')
             ->setParameter('val', $value)
-            ->orderBy('b.id', 'ASC')
+            ->orderBy('b.id', SortDirection::Ascending)
             ->setMaxResults(10)
             ->getQuery()
             ->getResult()

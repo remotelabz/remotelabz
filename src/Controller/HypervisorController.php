@@ -38,6 +38,7 @@ class HypervisorController extends Controller
     private $logger;
     private $serializer;
     protected $bus;
+    private $entityManager;
 
     public function __construct(LoggerInterface $logger,
         HypervisorRepository $hypervisorRepository,

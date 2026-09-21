@@ -65,6 +65,9 @@ class ServiceController extends Controller
     private $sslTlsKey;
     private $remotelabzProxySslKey;
     private $remotelabzProxySslCert;
+    private $configWorkerRepository;
+    private $LabInstanceRepository;
+    private $entityManager;
 
     public function __construct(
         string $workerPort,

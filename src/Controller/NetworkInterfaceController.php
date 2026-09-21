@@ -32,6 +32,9 @@ use Doctrine\Common\Collections\Order;
 class NetworkInterfaceController extends Controller
 {
     public $networkInterfaceRepository;
+    private $deviceRepository;
+    private $labRepository;
+    private $entityManager;
 
     public function __construct(NetworkInterfaceRepository $networkInterfaceRepository, DeviceRepository $deviceRepository, LabRepository $labRepository, EntityManagerInterface $entityManager)
     {

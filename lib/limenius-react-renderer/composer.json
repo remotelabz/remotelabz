@@ -1,0 +1,41 @@
+{
+    "name": "limenius/react-renderer",
+    "description": "Client and Server-side React rendering",
+    "type": "library",
+    "keywords": [
+        "react",
+        "reactjs",
+        "isomorphic",
+        "twig"
+    ],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Nacho Martin",
+            "email": "nacho@limenius.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Limenius\\ReactRenderer\\": "src/Limenius/ReactRenderer"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Limemius\\ReactRenderer\\Tests\\": "tests/Limenius/ReactRenderer/Tests"
+        }
+    },
+    "require": {
+        "php": ">=7.2.0",
+        "ext-json": "*",
+        "nacmartin/phpexecjs": "^3.0",
+        "twig/twig": "^2.4|^3.0"
+    },
+    "require-dev": {
+        "escapestudios/symfony2-coding-standard": "^3.0",
+        "phpcompatibility/php-compatibility": "^9.0",
+        "phpstan/phpstan": "^0.11.19",
+        "dealerdirect/phpcodesniffer-composer-installer": "^0.7"
+    },
+    "version": "5.0.4"
+}
