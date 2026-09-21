@@ -1865,6 +1865,16 @@ $(document).on('submit', '#form-lab-edit', function (e) {
         success: function (data) {
             if (data['status'] == 'success') {
                 logger(1, 'DEBUG: lab "' + form_data['name'] + '" saved.');
+                var originalAuthor = $('#form-lab-edit').attr('data-original-author');
+                if (form_data['author'] !== undefined && form_data['author'] !== '' &&
+                        String(form_data['author']) !== String(originalAuthor)) {
+                    // The author has been changed: the user may no longer have
+                    // the rights to edit this lab, so send him back to the
+                    // home page.
+                    logger(1, 'DEBUG: lab author changed, redirecting to the home page.');
+                    window.location.href = '/';
+                    return;
+                }
                 // Close the modal
                 $(e.target).parents('.modal').attr('skipRedraw', true);
                 $(e.target).parents('.modal').modal('hide');
