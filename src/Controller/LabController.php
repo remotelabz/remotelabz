@@ -476,6 +476,7 @@ class LabController extends Controller
             "description"=>$labInfo["description"],
             "body"=>$labInfo["body"],
             "author"=>$labInfo["author"],
+            "author_id"=>$labInfo["authorId"] ?? null,
             "version"=>$labInfo["version"],
             "scripttimeout"=>$labInfo["scripttimeout"],
             "lock"=>$labInfo["locked"],
@@ -1167,12 +1168,28 @@ class LabController extends Controller
 
     
 	#[Put('/api/labs/test/{id<\d+>}', name: 'api_edit_lab_test')]
-    public function updateActionTest(Request $request, int $id, LabBannerFileUploader $fileUploader)
+    public function updateActionTest(Request $request, int $id, LabBannerFileUploader $fileUploader, UserRepository $userRepository)
     {
         $lab = $this->labRepository->find($id);
         $this->denyAccessUnlessGranted(LabVoter::EDIT, $lab);
 
-        $data = json_decode($request->getContent(), true); 
+        $data = json_decode($request->getContent(), true);
+
+        if (isset($data['author']) && $data['author'] !== '' && $data['author'] !== null) {
+            $newAuthor = $userRepository->find((int) $data['author']);
+            if ($newAuthor === null || !($newAuthor->isAdministrator() || $newAuthor->isEditor())) {
+                $this->logger->warning("Lab named ".$lab->getName()." author change denied: user id ".$data['author']." is not eligible.");
+                $response = new Response();
+                $response->setContent(json_encode([
+                    'code' => 403,
+                    'status' => 'error',
+                    'message' => 'The new author must be a teacher editor, an administrator or a super administrator.']));
+                $response->headers->set('Content-Type', 'application/json');
+                return $response;
+            }
+            $lab->setAuthor($newAuthor);
+            $this->logger->info("Lab named ".$lab->getName()." author changed to ".$newAuthor->getName());
+        }
 
         $lab->setName($data['name']);
         $lab->setVersion($data['version']);

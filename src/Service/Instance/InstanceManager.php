@@ -265,8 +265,17 @@ class InstanceManager
     {
         $workerIP = $labInstance->getWorkerIp();
         if (is_null($workerIP)) {
-            $this->logger->error('[InstanceManager:delete]::Could not delete instance. Lab instance has no worker assigned (placement pending or failed).');
-            throw new BadRequestHttpException('Lab instance has no worker assigned yet');
+            // No worker was ever assigned to this instance (placement failed
+            // or is still pending): nothing has been created on any worker,
+            // so the instance can be deleted directly from the database. If a
+            // placement request is still in the queue, the
+            // LabLaunchRequestMessageHandler will not find the instance and
+            // will drop it (and release its memory reservation).
+            $this->logger->info('[InstanceManager:delete]::Lab instance '.$labInstance->getUuid().' has no worker assigned, deleting it directly.');
+            $this->placementCache->remove($labInstance->getUuid());
+            $this->entityManager->remove($labInstance);
+            $this->entityManager->flush();
+            return;
         }
         $worker = $this->configWorkerRepository->findOneBy(["IPv4"=>$workerIP]);
         if ($worker->getAvailable() == true) {

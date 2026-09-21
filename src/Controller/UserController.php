@@ -173,6 +173,12 @@ class UserController extends Controller
                         return $user->getHighestRole() === 'ROLE_USER';
                     });
                 break;
+                case 'labauthor':
+                    $users = $users->filter(function ($user) {
+                        $role = $user->getHighestRole();
+                        return $role === 'ROLE_TEACHER_EDITOR' || $role === 'ROLE_ADMINISTRATOR' || $role === 'ROLE_SUPER_ADMINISTRATOR';
+                    });
+                break;
             }
         }
 

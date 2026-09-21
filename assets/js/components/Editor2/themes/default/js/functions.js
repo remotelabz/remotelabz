@@ -1294,6 +1294,7 @@ export function printFormLab(action, values) {
         version: (values['version'] != null) ? values['version'] : '',
         scripttimeout: (values['scripttimeout'] != null) ? values['scripttimeout'] : '300',
         author: (values['author'] != null) ? values['author'] : '',
+        authorId: (values['author_id'] != null) ? values['author_id'] : '',
         description: (values['description'] != null) ? values['description'] : '',
         body: (values['body'] != null) ? values['body'] : '',
         banner: (values['banner'] != null) ? values['banner'] : '',
@@ -1309,6 +1310,47 @@ export function printFormLab(action, values) {
     //logger(1, 'DEBUG: printFormLab popping up the lab-add form.');
     //logger(1, 'DEBUG: printFormLab timer.' + values['timer']);
     addModalWide(title, html, '');
+
+    if (action == 'edit') {
+        // Fill the author select with users allowed to own a lab
+        // (teacher editors, administrators and super administrators)
+        var currentAuthorId = (values['author_id'] != null) ? String(values['author_id']) : '';
+        var currentAuthorName = (values['author'] != null) ? values['author'] : '';
+        // Remember the author at the time the form was opened, so that the
+        // submit handler can detect an author change.
+        $('#form-lab-edit').attr('data-original-author', currentAuthorId);
+        $.ajax({
+            cache: false,
+            timeout: TIMEOUT,
+            type: 'GET',
+            url: '/api/users?role=labauthor&limit=1000',
+            dataType: 'json',
+            success: function (users) {
+                var select = $('#labAuthorSelect');
+                if (!select.length) {
+                    return;
+                }
+                select.empty();
+                var currentFound = false;
+                for (var i = 0; i < users.length; i++) {
+                    var user = users[i];
+                    var option = $('<option></option>').val(user.id).text(user.firstName + ' ' + user.lastName);
+                    if (String(user.id) === currentAuthorId) {
+                        option.prop('selected', true);
+                        currentFound = true;
+                    }
+                    select.append(option);
+                }
+                if (!currentFound && currentAuthorId !== '') {
+                    select.append($('<option></option>').val(currentAuthorId).text(currentAuthorName).prop('selected', true));
+                }
+            },
+            error: function (data) {
+                var message = getJsonMessage(data['responseText']);
+                logger(1, 'DEBUG: server error on GET /api/users (' + message + ').');
+            }
+        });
+    }
 
     // ATTENDRE que la modal soit complètement affichée
     $('.modal').one('shown.bs.modal', function() {
