@@ -7,7 +7,7 @@ import React, { useState, useEffect, Component } from 'react';
 import InstanceStateBadge from './InstanceStateBadge';
 import InstanceExport from './InstanceExport';
 import { ListGroupItem, Button, Spinner, Modal, Form } from 'react-bootstrap';
-import { is_vnc, is_login, is_serial, is_real } from './deviceProtocolHelpers';
+import { is_vnc, is_login, is_serial, is_real, is_native } from './deviceProtocolHelpers';
 import { fetchDeviceLogs, startLogsPolling, stopLogsPolling, formatLogEntry, getLastLogs } from './deviceLogsHelpers';
 import DeviceLogs from './DeviceLogs';
 import IsoSelector from './IsoSelector';
@@ -34,7 +34,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
 
     const currentDeviceIsos = deviceIsos;
 
-    const displayState = instance.device?.hypervisor?.name === 'natif' ? 'started' : instance.state;
+    const displayState = is_native(instance) ? 'started' : instance.state;
     
 
     /*console.log("Device ID:", instance.device.id);
@@ -582,6 +582,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
                         }
 
                         { canControlInstances() &&
+                            !is_native(instance) &&
                             controls
                         }
 

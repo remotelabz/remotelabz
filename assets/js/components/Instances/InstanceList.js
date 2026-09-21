@@ -5,6 +5,7 @@ import SVG from '../Display/SVG';
 import InstanceExport from './InstanceExport';
 import Remotelabz from '../API';
 import { toast } from 'react-toastify';
+import { is_native } from './deviceProtocolHelpers';
 
 const InstanceList = (props) => {
     const [showExport, setShowExport] = useState(false);
@@ -22,7 +23,7 @@ const InstanceList = (props) => {
 
     const instancesList = props.instances.map(
         (deviceInstance, index) => {
-            const shouldShowControls = deviceInstance.device?.hypervisor?.name !== 'natif';
+            const shouldShowControls = !is_native(deviceInstance);
             
             return (
                 <InstanceListItem

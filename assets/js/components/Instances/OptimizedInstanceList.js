@@ -439,7 +439,7 @@ const DetailsModal = ({ selectedInstance, onClose, sharedStates, onStateUpdate, 
                               <h6 style={{ marginBottom: 0, marginRight: '8px' }}>
                                 {deviceInstance.device?.name || 'Unknown device'}
                               </h6>                            
-                              <InstanceStateBadge state={deviceInstance.device?.hypervisor?.name === 'natif' ? 'started' : deviceInstance.state}/>
+                              <InstanceStateBadge state={is_native(deviceInstance) ? 'started' : deviceInstance.state}/>
                             </div>
                             <small style={{ color: '#6c757d', display: 'block' }}> 
                               {deviceInstance.uuid}
@@ -457,7 +457,7 @@ const DetailsModal = ({ selectedInstance, onClose, sharedStates, onStateUpdate, 
                                 <SVG name={expandedLogs[deviceInstance.uuid] ? 'chevron-down' : 'chevron-right'} />
                               </button>
                             )}
-                            {(deviceInstance.state === 'stopped' || deviceInstance.state === 'error' || deviceInstance.state === 'reset') && deviceInstance.device?.hypervisor?.name !== 'natif' && (
+                            {(deviceInstance.state === 'stopped' || deviceInstance.state === 'error' || deviceInstance.state === 'reset') && !is_native(deviceInstance) && (
                               <button
                                 className="btn btn-sm btn-success"
                                 onClick={() => handleDeviceAction(deviceInstance.uuid, 'start')}
@@ -520,7 +520,7 @@ const DetailsModal = ({ selectedInstance, onClose, sharedStates, onStateUpdate, 
                               </a>
                             }
 
-                            {deviceInstance.state === 'started' && (
+                            {deviceInstance.state === 'started' && !is_native(deviceInstance) && (
                               <button
                                 className="btn btn-sm btn-danger"
                                 onClick={() => handleDeviceAction(deviceInstance.uuid, 'stop')}
@@ -530,7 +530,7 @@ const DetailsModal = ({ selectedInstance, onClose, sharedStates, onStateUpdate, 
                                 {deviceStates[deviceInstance.uuid] === 'stop' ? <Spinner animation="border" size="sm" /> : <SVG name="stop" />}
                               </button>
                             )}
-                            {(deviceInstance.state === 'stopped' || deviceInstance.state === 'error') && deviceInstance.device?.hypervisor?.name !== 'natif' && (
+                            {(deviceInstance.state === 'stopped' || deviceInstance.state === 'error') && !is_native(deviceInstance) && (
                                 <button
                                 className="btn btn-sm btn-warning"
                                 onClick={() => handleDeviceAction(deviceInstance.uuid, 'reset')}

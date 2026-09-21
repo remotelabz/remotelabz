@@ -56,15 +56,15 @@ export const is_real = (instance) => {
 };
 
 /**
- * Vérifie si le device est natif (OS natif + hyperviseur natif)
- * Ces devices ne peuvent pas être contrôlés
+ * Vérifie si le device est natif (OS natif ou hyperviseur natif)
+ * Ces devices sont toujours considérés comme started et ne peuvent pas être contrôlés
  * @param {Object} instance - L'instance du device
  * @returns {boolean}
  */
 export const is_native = (instance) => {
   const hypervisor = instance?.device?.hypervisor?.name?.toLowerCase();
   const os = instance?.device?.operatingSystem?.name?.toLowerCase();
-  return hypervisor === 'natif' && os === 'natif';
+  return hypervisor === 'natif' || os === 'natif';
 };
 
 /**
