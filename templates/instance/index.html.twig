@@ -115,7 +115,7 @@
             </div>
         {% endif %}
 
-       <div class="col">{{ react_component('AllInstancesList', {"props": props})}}</div>
+       <div class="col"><div {{ react_component('AllInstancesList', props|json_decode(true)) }}></div></div>
     </div>
 {% endblock %}
 

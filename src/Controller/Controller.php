@@ -70,10 +70,4 @@ class Controller extends AbstractFOSRestController
         ]);
     }
 
-    #[Route(path: '/react/{reactRouting}', name: 'index_react', defaults: ['reactRouting' => 'null'])]
-    public function defaultReactAction()
-    {
-        return $this->render('react.html.twig');
-    }
-
 }

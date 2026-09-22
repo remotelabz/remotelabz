@@ -62,7 +62,6 @@ class LabInstance extends Instance
     private $jitsiCall;
 
     const SCOPE_STANDALONE = 'standalone';
-    const SCOPE_ACTIVITY = 'activity';
     private $scope;
 
     public function __construct()

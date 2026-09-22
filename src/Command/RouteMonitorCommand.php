@@ -2,6 +2,7 @@
 
 namespace App\Command;
 
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -25,10 +26,12 @@ use App\Service\Network\RouteManagerService;
     * php bin/console app:route:monitor --no-interaction
     */
 
+#[AsCommand(
+    name: 'app:route:monitor',
+    description: 'Monitor and restore missing routes to lab instances',
+)]
 class RouteMonitorCommand extends Command
 {
-    protected static $defaultName = 'app:route:monitor';
-    protected static $defaultDescription = 'Monitor and restore missing routes to lab instances';
 
     private $routeManager;
 
@@ -41,7 +44,6 @@ class RouteMonitorCommand extends Command
     protected function configure(): void
     {
         $this
-            ->setDescription(self::$defaultDescription)
             ->addOption(
                 'dry-run',
                 null,

@@ -208,11 +208,21 @@
                                             <span class="badge badge-info">running</span>
                                         {% elseif sa.status == 'done' %}
                                             <span class="badge badge-success">done</span>
-                                        {% elseif sa.status == 'failed' %}
-                                            <span class="badge badge-danger"
-                                                  data-toggle="tooltip"
-                                                  title="{{ sa.errorMessage }}">failed</span>
-                                        {% endif %}
+                                         {% elseif sa.status == 'failed' %}
+                                             {% if sa.executionReport is not null %}
+                                                 <button type="button"
+                                                         class="badge badge-danger border-0"
+                                                         style="cursor: pointer;"
+                                                         data-toggle="tooltip"
+                                                         title="{{ sa.errorMessage }} — click for details"
+                                                         data-toggle-report
+                                                         data-report="{{ sa.executionReport|json_encode|e }}">failed</button>
+                                             {% else %}
+                                                 <span class="badge badge-danger"
+                                                       data-toggle="tooltip"
+                                                       title="{{ sa.errorMessage }}">failed</span>
+                                             {% endif %}
+                                         {% endif %}
 
                                         {# Delete button — available for all statuses #}
                                         <button type="button"
@@ -236,6 +246,24 @@
 
     </div>{# /row #}
 </div>{# /content-body #}
+
+{# Execution report modal #}
+<div class="modal fade" id="execution-report-modal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Execution report</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="execution-report-body"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block javascripts %}
@@ -473,6 +501,56 @@
                     btn.disabled = false;
                     showAlert(err.message || 'Could not delete the action. Please try again.');
                 });
+        });
+
+        // ── Execution report modal (failed actions) ───────────────────────────
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        document.addEventListener('click', function (e) {
+            const badge = e.target.closest('[data-toggle-report]');
+            if (!badge) return;
+
+            let report = null;
+            try { report = JSON.parse(badge.dataset.report || 'null'); } catch (err) { report = null; }
+
+            const body = document.getElementById('execution-report-body');
+            if (!report) {
+                body.innerHTML = '<p class="text-muted">No report available for this action.</p>';
+            } else {
+                const errors = Array.isArray(report.errors) ? report.errors : [];
+                const items  = Array.isArray(report.report) ? report.report : [];
+
+                let html = '<h6 class="mb-2">Errors (' + errors.length + ')</h6>';
+                html += errors.length
+                    ? '<ul class="mb-0">' + errors.map(err => {
+                        const msg = typeof err === 'string' ? err : (err && err.error) || JSON.stringify(err);
+                        const who = (err && err.user) ? ' <small class="text-muted">— ' + escapeHtml(err.user) + '</small>' : '';
+                        return '<li class="text-danger">' + escapeHtml(msg) + who + '</li>';
+                    }).join('') + '</ul>'
+                    : '<p class="text-muted mb-0">None</p>';
+
+                html += '<h6 class="mt-3 mb-2">Actions applied (' + items.length + ')</h6>';
+                html += items.length
+                    ? '<ul class="mb-0">' + items.map(r => '<li><code>' + escapeHtml(JSON.stringify(r)) + '</code></li>').join('') + '</ul>'
+                    : '<p class="text-muted mb-0">Empty</p>';
+
+                html += '<h6 class="mt-3 mb-2">Raw JSON</h6>'
+                     + '<pre class="bg-light p-2 mb-0" style="max-height: 220px; overflow: auto;">'
+                     + escapeHtml(JSON.stringify(report, null, 2)) + '</pre>';
+                body.innerHTML = html;
+            }
+
+            if (window.jQuery) {
+                jQuery('#execution-report-modal').modal('show');
+            } else {
+                document.getElementById('execution-report-modal').classList.add('show');
+                document.getElementById('execution-report-modal').style.display = 'block';
+                document.body.classList.add('modal-open');
+            }
         });
 
         // ── Clear history (done + failed) ─────────────────────────────────────

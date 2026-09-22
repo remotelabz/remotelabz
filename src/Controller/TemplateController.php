@@ -22,7 +22,6 @@ use App\Repository\TextObjectRepository;
 use App\Repository\LabRepository;
 use App\Repository\UserRepository;
 use App\Repository\DeviceRepository;
-use App\Repository\ActivityRepository;
 use App\Repository\LabInstanceRepository;
 use App\Repository\HypervisorRepository;
 use App\Repository\ControlProtocolTypeRepository;

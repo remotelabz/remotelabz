@@ -2,6 +2,7 @@
 
 namespace App\Command;
 
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -19,9 +20,9 @@ use App\Entity\LoginLog;
  *
  * It performs all scheduled maintenance tasks (login logs cleanup, etc.).
  */
+#[AsCommand('app:cron:nightly')]
 class CronNightlyCommand extends Command
 {
-    protected static $defaultName = 'app:cron:nightly';
 
     private EntityManagerInterface $entityManager;
     private LoggerInterface $logger;

@@ -25,7 +25,6 @@ use App\Repository\UserRepository;
 use FOS\RestBundle\Context\Context;
 use App\Repository\DeviceRepository;
 use Remotelabz\Message\Message\InstanceActionMessage;
-use App\Repository\ActivityRepository;
 use JMS\Serializer\SerializerInterface;
 use App\Exception\NotInstancedException;
 use JMS\Serializer\SerializationContext;

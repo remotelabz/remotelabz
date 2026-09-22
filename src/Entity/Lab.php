@@ -141,13 +141,11 @@ class Lab implements InstanciableInterface
     #[Serializer\Groups([])]
     private $invitationCodes;
     private $connexions;
-    private $activities;
 
     public function __construct()
     {
         $this->devices = new ArrayCollection();
         $this->connexions = new ArrayCollection();
-        $this->activities = new ArrayCollection();
         $this->groups = new ArrayCollection();
         $this->uuid = (string) new Uuid();
         $this->createdAt = new \DateTime();

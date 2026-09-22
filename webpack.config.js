@@ -30,7 +30,6 @@ Encore
     .addEntry('flavor', './assets/js/flavor.js')
     .addEntry('network-settings', './assets/js/network-settings.js')
     .addEntry('network-interface', './assets/js/network-interface.js')
-    .addEntry('activity', './assets/js/activity.js')
     .addEntry('vnc', './assets/js/vnc.js')
     .addEntry('editor-react', './assets/js/editor.jsx')
     .addEntry('timeago', './assets/js/timeago.js')
@@ -46,6 +45,9 @@ Encore
 
     // When enabled, Webpack "splits" your files into smaller pieces for greater optimization.
     .splitEntryChunks()
+
+    // enables the Symfony UX Stimulus bridge (used in assets/bootstrap.js)
+    .enableStimulusBridge('./assets/controllers.json')
 
     // will require an extra script tag for runtime.js
     // but, you probably want this, unless you're building a single-page app

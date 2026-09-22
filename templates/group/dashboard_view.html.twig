@@ -96,7 +96,7 @@
                         None
                     </div>
                 {% else %}
-                    {{- react_component('GroupExplorer', {'props': {"path": group.path, "user": app.user.email, 'trace': true}}) -}}
+                    <div {{ react_component('GroupExplorer', {"path": group.path, "user": app.user.email, 'trace': true}) }}></div>
                 {% endif %}
             </div>
             <div class="tab-pane fade" id="labs" role="tabpanel" aria-labelledby="labs-tab">

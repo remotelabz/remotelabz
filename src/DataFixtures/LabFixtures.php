@@ -14,7 +14,6 @@ class LabFixtures extends Fixture implements DependentFixtureInterface, FixtureG
 {
     
     private KernelInterface $kernel;
-    private $container;
 
     public function __construct(KernelInterface $kernel)
     {
@@ -38,13 +37,5 @@ class LabFixtures extends Fixture implements DependentFixtureInterface, FixtureG
     public static function getGroups(): array
     {
         return ['labs'];
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function setContainer(ContainerInterface $container = null)
-    {
-        $this->container = $container;
     }
 }

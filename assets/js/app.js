@@ -35,7 +35,7 @@ import 'select2';
 import 'select2/dist/css/select2.css';
 import 'select2-bootstrap-5-theme/dist/select2-bootstrap-5-theme.min.css';
 
-import './components/registration';
+import '../bootstrap';
 import 'react-toastify';
 import './components/gauges';
 

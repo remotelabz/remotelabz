@@ -138,7 +138,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Instanc
     #[Serializer\Groups(['api_get_user'])]
     private $isShibbolethUser = false;
     private $courses;
-    private $createdActivities;
     private $ownedGroups;
 
     public function __construct()
@@ -147,7 +146,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Instanc
         $this->labInstances = new ArrayCollection();
         $this->createdLabs = new ArrayCollection();
         $this->createdDevices = new ArrayCollection();
-        $this->createdActivities = new ArrayCollection();
         $this->createdAt = new \DateTime();
         $this->ownedGroups = new ArrayCollection();
         $this->_groups = new ArrayCollection();
