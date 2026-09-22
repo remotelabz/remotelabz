@@ -10,7 +10,7 @@ class WorkerException extends \RuntimeException implements InstanceExceptionInte
     private $instance;
     private $response;
 
-    public function __construct(string $message = null, Instance $instance, ResponseInterface $response, ?\Throwable $previous = null, ?int $code = 0)
+    public function __construct(?string $message = null, Instance $instance, ResponseInterface $response, ?\Throwable $previous = null, ?int $code = 0)
     {
         $this->instance = $instance;
         $this->response = $response;

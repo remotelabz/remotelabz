@@ -50,7 +50,7 @@ class ConfigWorkerController extends Controller
 
 
     public function __construct(
-        LoggerInterface $logger=null,
+        ?LoggerInterface $logger=null,
         ConfigWorkerRepository $configWorkerRepository,
         LabInstanceRepository $labInstanceRepository,
         SerializerInterface $serializer,

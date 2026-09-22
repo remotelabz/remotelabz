@@ -24,7 +24,7 @@ class ProxyServiceMonitor extends AbstractServiceMonitor
        $remotelabzProxyApiPort,
        $deviceInstanceRepository,
        $proxyManager,
-       LoggerInterface $logger=null        
+        ?LoggerInterface $logger=null
     ) {
        $this->remotelabzProxyServerAPI;
        $this->remotelabzProxyApiPort;

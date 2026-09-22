@@ -84,7 +84,7 @@ class ServiceController extends Controller
         string $remotelabzProxySslKey,
         string $remotelabzProxySslCert,
         string $sshPort,
-        LoggerInterface $logger=null,
+        ?LoggerInterface $logger=null,
         WorkerManager $workerManager,
         ProxyManager $proxyManager,
         ConfigWorkerRepository $configWorkerRepository,

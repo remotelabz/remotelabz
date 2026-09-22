@@ -26,7 +26,7 @@
         "phpdocumentor/reflection-docblock": "^5.2",
         "phpseclib/bcmath_compat": "^2.0",
         "remotelabz/network-bundle": "^1.0.4",
-        "remotelabz/remotelabz-message-bundle": "^1.0.7",
+        "remotelabz/remotelabz-message-bundle": "^1.0.8",
         "s1lentium/iptools": "^1.1",
         "symfony/amqp-messenger": "^6.4",
         "symfony/apache-pack": "^1.0",
