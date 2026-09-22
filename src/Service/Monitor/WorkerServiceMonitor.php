@@ -30,7 +30,7 @@ class WorkerServiceMonitor extends AbstractServiceMonitor
         string $sshUser,
         string $sshPassword,
         LabInstanceRepository $labInstanceRepository,
-        LoggerInterface $logger = null         
+        ?LoggerInterface $logger = null
     ) {
         $this->workerPort = $workerPort;
         $this->workerServer = $workerServer;

@@ -2,6 +2,7 @@
 
 namespace App\Command;
 
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -11,9 +12,9 @@ use App\Entity\LoginLog;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 
+#[AsCommand('app:login-logs:clean')]
 class CleanLoginLogsCommand extends Command
 {
-    protected static $defaultName = 'app:login-logs:clean';
 
     private EntityManagerInterface $entityManager;
     private LoggerInterface $logger;

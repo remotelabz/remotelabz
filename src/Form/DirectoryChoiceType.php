@@ -5,6 +5,7 @@ namespace App\Form;
 use App\Entity\Directory;
 use App\Service\DirectoryService;
 use Doctrine\ORM\EntityRepository;
+use SortDirection;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
@@ -33,7 +34,7 @@ class DirectoryChoiceType extends EntityType
             'query_builder' => function (EntityRepository $er) {
                 return $er->createQueryBuilder('d')
                     ->where('d.deletedAt IS NULL')
-                    ->orderBy('d.path', 'ASC');
+                    ->orderBy('d.path', SortDirection::Ascending);
             },
         ]);
     }

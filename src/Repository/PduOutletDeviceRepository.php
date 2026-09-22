@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Entity\PduOutletDevice;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use SortDirection;
 
 /**
  * @extends ServiceEntityRepository<PduOutletDevice>
@@ -47,7 +48,7 @@ class PduOutletDeviceRepository extends ServiceEntityRepository
 //        return $this->createQueryBuilder('p')
 //            ->andWhere('p.exampleField = :val')
 //            ->setParameter('val', $value)
-//            ->orderBy('p.id', 'ASC')
+//            ->orderBy('p.id', SortDirection::Ascending)
 //            ->setMaxResults(10)
 //            ->getQuery()
 //            ->getResult()

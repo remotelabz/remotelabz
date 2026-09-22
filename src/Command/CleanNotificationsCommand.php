@@ -2,6 +2,7 @@
 
 namespace App\Command;
 
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -22,9 +23,9 @@ php bin/console app:notifications:clean --days=7
 php bin/console app:notifications:clean --keep-unread
 */
 
+#[AsCommand('app:notifications:clean')]
 class CleanNotificationsCommand extends Command
 {
-    protected static $defaultName = 'app:notifications:clean';
     
     private EntityManagerInterface $entityManager;
     private LoggerInterface $logger;

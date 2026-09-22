@@ -240,9 +240,6 @@
     "myclabs/deep-copy": {
         "version": "1.11.0"
     },
-    "nacmartin/phpexecjs": {
-        "version": "v3.1.0"
-    },
     "namshi/jose": {
         "version": "7.2.3"
     },
@@ -681,6 +678,20 @@
     "symfony/service-contracts": {
         "version": "v2.5.1"
     },
+    "symfony/stimulus-bundle": {
+        "version": "2.36",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "2.13",
+            "ref": "cef742b8d032ecf36f5da9386af91d012b5f5110"
+        },
+        "files": [
+            "assets/bootstrap.js",
+            "assets/controllers.json",
+            "assets/controllers/hello_controller.js"
+        ]
+    },
     "symfony/stopwatch": {
         "version": "v5.2.12"
     },
@@ -718,6 +729,18 @@
             "config/packages/test/twig.yaml",
             "config/packages/twig.yaml",
             "templates/base.html.twig"
+        ]
+    },
+    "symfony/ux-react": {
+        "version": "3.5",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "3.4",
+            "ref": "1fd6b362511456064d80779d8774707a685f6f1b"
+        },
+        "files": [
+            "assets/react/controllers/Hello.jsx"
         ]
     },
     "symfony/validator": {

@@ -10,6 +10,7 @@ use Symfony\Component\Security\Http\Event\LogoutEvent;
 class LogoutEventSubscriber implements EventSubscriberInterface
 {
     private $apiKeyCookieName;
+    private $router;
 
     public function __construct(string $apiKeyCookieName, RouterInterface $router)
     {

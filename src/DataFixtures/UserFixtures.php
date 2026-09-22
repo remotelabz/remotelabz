@@ -47,12 +47,4 @@ class UserFixtures extends Fixture
         $environment = $this->kernel->getEnvironment();
         $manager->flush();
     }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function setContainer(ContainerInterface $container = null)
-    {
-        $this->container = $container;
-    }
 }

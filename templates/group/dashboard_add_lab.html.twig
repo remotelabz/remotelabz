@@ -44,7 +44,7 @@
                         <form action="{{ path('add_lab_group', {slug: group.path}) }}" method="POST">
                             <div class="d-flex">
                                 <div class="flex-grow-1 mr-2">
-                                    <div>{{ react_component('LabSelect') }}</div>
+                                    <div><div {{ react_component('LabSelect') }}></div></div>
                                     <div class="form-text text-muted">
                                         Search for laboratory by name.
                                     </div>

@@ -3,8 +3,9 @@
 namespace App\Repository;
 
 use App\Entity\Group;
-use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\Persistence\ManagerRegistry;
+use SortDirection;
 
 /**
  * @method Group|null find($id, $lockMode = null, $lockVersion = null)
@@ -62,7 +63,7 @@ class GroupRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('g')
             ->andWhere('g.exampleField = :val')
             ->setParameter('val', $value)
-            ->orderBy('g.id', 'ASC')
+            ->orderBy('g.id', SortDirection::Ascending)
             ->setMaxResults(10)
             ->getQuery()
             ->getResult()

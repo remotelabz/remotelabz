@@ -8,7 +8,7 @@ class InstanceException extends \RuntimeException implements InstanceExceptionIn
 {
     private $instance;
 
-    public function __construct(?Instance $instance = null, string $message = null, ?\Throwable $previous = null, ?int $code = 0)
+    public function __construct(?Instance $instance = null, ?string $message = null, ?\Throwable $previous = null, ?int $code = 0)
     {
         $this->instance = $instance;
 

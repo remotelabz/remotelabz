@@ -7,6 +7,7 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\OptimisticLockException;
 use Doctrine\ORM\ORMException;
 use Doctrine\Persistence\ManagerRegistry;
+use SortDirection;
 
 /**
  * @extends ServiceEntityRepository<ConfigWorker>
@@ -56,7 +57,7 @@ class ConfigWorkerRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('w')
             ->andWhere('w.exampleField = :val')
             ->setParameter('val', $value)
-            ->orderBy('w.id', 'ASC')
+            ->orderBy('w.id', SortDirection::Ascending)
             ->setMaxResults(10)
             ->getQuery()
             ->getResult()

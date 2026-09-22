@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Entity\Directory;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use SortDirection;
 
 /**
  * Repository for Directory entity
@@ -33,7 +34,7 @@ class DirectoryRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('d')
             ->where('d.parent IS NULL')
             ->andWhere('d.deletedAt IS NULL')
-            ->orderBy('d.name', 'ASC')
+            ->orderBy('d.name', SortDirection::Ascending)
             ->getQuery()
             ->getResult();
     }
@@ -48,7 +49,7 @@ class DirectoryRepository extends ServiceEntityRepository
     {
         $qb = $this->createQueryBuilder('d')
             ->andWhere('d.deletedAt IS NULL')
-            ->orderBy('d.name', 'ASC');
+            ->orderBy('d.name', SortDirection::Ascending);
 
         if ($parent === null) {
             $qb->andWhere('d.parent IS NULL');
@@ -69,7 +70,7 @@ class DirectoryRepository extends ServiceEntityRepository
     {
         return $this->createQueryBuilder('d')
             ->where('d.deletedAt IS NULL')
-            ->orderBy('d.path', 'ASC')
+            ->orderBy('d.path', SortDirection::Ascending)
             ->getQuery()
             ->getResult();
     }
@@ -139,7 +140,7 @@ class DirectoryRepository extends ServiceEntityRepository
             ->where('d.path LIKE :pattern')
             ->andWhere('d.deletedAt IS NULL')
             ->setParameter('pattern', $pattern)
-            ->orderBy('d.path', 'ASC')
+            ->orderBy('d.path', SortDirection::Ascending)
             ->getQuery()
             ->getResult();
     }
@@ -160,7 +161,7 @@ class DirectoryRepository extends ServiceEntityRepository
             ->andWhere('d.deletedAt IS NULL')
             ->setParameter('path', $path . '/%')
             ->setParameter('id', $directory->getId())
-            ->orderBy('d.path', 'ASC')
+            ->orderBy('d.path', SortDirection::Ascending)
             ->getQuery()
             ->getResult();
     }
@@ -177,7 +178,7 @@ class DirectoryRepository extends ServiceEntityRepository
             ->where('d.level = :level')
             ->andWhere('d.deletedAt IS NULL')
             ->setParameter('level', $level)
-            ->orderBy('d.path', 'ASC')
+            ->orderBy('d.path', SortDirection::Ascending)
             ->getQuery()
             ->getResult();
     }
@@ -238,7 +239,7 @@ class DirectoryRepository extends ServiceEntityRepository
             ->where('d.name LIKE :name')
             ->andWhere('d.deletedAt IS NULL')
             ->setParameter('name', '%' . $name . '%')
-            ->orderBy('d.path', 'ASC')
+            ->orderBy('d.path', SortDirection::Ascending)
             ->getQuery()
             ->getResult();
     }
@@ -314,7 +315,7 @@ class DirectoryRepository extends ServiceEntityRepository
             ->where('d.updatedAt > :date')
             ->andWhere('d.deletedAt IS NULL')
             ->setParameter('date', $date)
-            ->orderBy('d.updatedAt', 'DESC')
+            ->orderBy('d.updatedAt', SortDirection::Descending)
             ->getQuery()
             ->getResult();
     }
@@ -375,7 +376,7 @@ class DirectoryRepository extends ServiceEntityRepository
     {
         return $this->createQueryBuilder('d')
             ->where('d.deletedAt IS NOT NULL')
-            ->orderBy('d.deletedAt', 'DESC')
+            ->orderBy('d.deletedAt', SortDirection::Descending)
             ->getQuery()
             ->getResult();
     }

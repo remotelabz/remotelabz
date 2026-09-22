@@ -2,31 +2,32 @@
 
 namespace App\Form;
 
-use App\Entity\Lab;
+use App\Entity\Arch;
+use App\Entity\ControlProtocolType;
 use App\Entity\Device;
 use App\Entity\Flavor;
-use App\Entity\OperatingSystem;
 use App\Entity\Hypervisor;
-use App\Entity\NetworkInterface;
-use App\Entity\ControlProtocolType;
 use App\Entity\Iso;
-use App\Entity\Arch;
-use App\Repository\OperatingSystemRepository;
+use App\Entity\Lab;
+use App\Entity\NetworkInterface;
+use App\Entity\OperatingSystem;
 use App\Repository\IsoRepository;
-use Symfony\Component\Form\AbstractType;
-use Symfony\Component\Form\FormBuilderInterface;
+use App\Repository\OperatingSystemRepository;
+use Doctrine\ORM\QueryBuilder;
+use SortDirection;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
-use Symfony\Component\OptionsResolver\OptionsResolver;
-use Symfony\Component\Form\Extension\Core\Type\TextType;
-use Symfony\Component\Form\Extension\Core\Type\SubmitType;
+use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\NumberType;
-use Symfony\Component\Form\FormEvents;
+use Symfony\Component\Form\Extension\Core\Type\SubmitType;
+use Symfony\Component\Form\Extension\Core\Type\TextType;
+use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormEvent;
+use Symfony\Component\Form\FormEvents;
 use Symfony\Component\Form\FormInterface;
-use Doctrine\ORM\QueryBuilder;
 use Symfony\Component\HttpKernel\KernelInterface;
+use Symfony\Component\OptionsResolver\OptionsResolver;
 
 
 class DeviceType extends AbstractType
@@ -95,7 +96,7 @@ class DeviceType extends AbstractType
                 'query_builder' => function(OperatingSystemRepository $operatingSystemRepository) use ($virtuality): QueryBuilder {
                     $qb = $operatingSystemRepository->createQueryBuilder('o')
                         ->join('o.hypervisor', 'h')
-                        ->orderBy('o.name', 'ASC');
+                        ->orderBy('o.name', SortDirection::Ascending);
                     
                     if ($virtuality === 0) {
                         $qb->where('h.name = :name');
@@ -156,7 +157,7 @@ class DeviceType extends AbstractType
                 'query_builder' => function(IsoRepository $isoRepository): QueryBuilder {
                     return $isoRepository->createQueryBuilder('i')
                         ->leftJoin('i.arch', 'a')
-                        ->orderBy('i.name', 'ASC');
+                        ->orderBy('i.name', SortDirection::Ascending);
                 },
                 'choice_label' => function(Iso $iso) {
                     $arch = $iso->getArch();

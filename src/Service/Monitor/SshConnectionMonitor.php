@@ -24,7 +24,7 @@ class SshConnectionMonitor implements ServiceMonitorInterface
         string $privateKeyFile,
         string $sshPort,
         ConfigWorkerRepository $configWorkerRepository,
-        LoggerInterface $logger = null
+        ?LoggerInterface $logger = null
     ) {
         $this->sshUser = $sshUser;
         $this->sshPassword = $sshPassword;

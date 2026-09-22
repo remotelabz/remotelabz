@@ -13,7 +13,7 @@
 {%- set edit = app.request.uri ends with 'edit' -%}
 
 {% block wrapper_xl %}
-    {{- react_component('Editor', {'props': {"id": lab.id}}) -}}
+    <div {{ react_component('Editor', {"id": lab.id}) }}></div>
 {% endblock %}
 
 {% block javascripts %}

@@ -4,16 +4,19 @@ namespace App\Command;
 
 use App\Service\Monitor\SshConnectionMonitor;
 use App\Service\Monitor\CertificateMonitor;
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
+#[AsCommand(
+    name: 'app:check:system',
+    description: 'Check SSH connections and SSL certificates validity',
+)]
 class CheckSystemCommand extends Command
 {
-    protected static $defaultName = 'app:check:system';
-    protected static $defaultDescription = 'Check SSH connections and SSL certificates validity';
 
     private $sshMonitor;
     private $certMonitor;
@@ -30,7 +33,6 @@ class CheckSystemCommand extends Command
     protected function configure(): void
     {
         $this
-            ->setDescription(self::$defaultDescription)
             ->addOption('ssh', null, InputOption::VALUE_NONE, 'Check SSH connections only')
             ->addOption('cert', null, InputOption::VALUE_NONE, 'Check certificates only')
             ->addOption('json', null, InputOption::VALUE_NONE, 'Output as JSON')

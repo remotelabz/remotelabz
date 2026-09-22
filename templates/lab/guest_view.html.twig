@@ -18,9 +18,9 @@
 
     <div class="row">
         {# Call to assets/js/components/Instances/InstanceManager.js to check if the lab is instantiated
-            Use the react component https://packagist.org/packages/limenius/react-renderer
+            Use the react component https://symfony.com/bundles/ux-react/current/index.html
             Need yarn and webpack to compile the js #}
-        <div class="col">{{ react_component('InstanceManager', {'props': props}) }}</div>
+        <div class="col"><div {{ react_component('InstanceManager', props|json_decode(true)) }}></div></div>
     </div>
 </div>
 {% if lab.description is defined %}

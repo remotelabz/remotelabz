@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Entity\InvitationCode;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use SortDirection;
 
 /**
  * @method Flavor|null find($id, $lockMode = null, $lockVersion = null)
@@ -120,7 +121,7 @@ class InvitationCodeRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('c')
             ->andWhere('c.exampleField = :val')
             ->setParameter('val', $value)
-            ->orderBy('c.id', 'ASC')
+            ->orderBy('c.id', SortDirection::Ascending)
             ->setMaxResults(10)
             ->getQuery()
             ->getResult()

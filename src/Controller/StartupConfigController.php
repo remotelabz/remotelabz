@@ -48,6 +48,8 @@ class StartupConfigController extends Controller
 
     /** @var LoggerInterface $logger */
     private $logger;
+    private $serializer;
+    private $entityManager;
 
     public function __construct(
         LoggerInterface $logger,

@@ -31,7 +31,7 @@
         {% endif %}
     </div>
     <div class="row">
-        <div class="col">{{ react_component('InstanceManager', {'props': props}) }}</div>
+        <div class="col"><div {{ react_component('InstanceManager', props|json_decode(true)) }}></div></div>
     </div>
 </div>
 {% endblock %}

@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Entity\DeviceInstanceLog;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use SortDirection;
 
 /**
  * @method DeviceInstanceLog|null find($id, $lockMode = null, $lockVersion = null)
@@ -28,7 +29,7 @@ class DeviceInstanceLogRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('i')
             ->andWhere('i.exampleField = :val')
             ->setParameter('val', $value)
-            ->orderBy('i.id', 'ASC')
+            ->orderBy('i.id', SortDirection::Ascending)
             ->setMaxResults(10)
             ->getQuery()
             ->getResult()

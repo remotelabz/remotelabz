@@ -36,6 +36,7 @@ class BookingController extends Controller
     public $bookingRepository;
     public $userRepository;
     public $groupRepository;
+    private $entityManager;
 
     public function __construct(
         LabRepository $labRepository, 

@@ -19,7 +19,7 @@
         </div>
     </div>
     <div class="content-body">
-        {{ react_component('WorkerConfig', {"props": props}) }}
+        <div {{ react_component('WorkerConfig', props|json_decode(true)) }}></div>
     </div>
 {% endblock %}
     

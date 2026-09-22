@@ -66,7 +66,7 @@
                         {% endblock %}
                         {% block body %}
                             <form action="{{ path('add_user_group', {slug: group.path}) }}" method="POST">
-                                {{ react_component('UserSelect') }}
+                                <div {{ react_component('UserSelect') }}></div>
                                 <hr>
                                 <button type="submit" class="btn btn-success">Add selected user(s)</button>
                             </form>

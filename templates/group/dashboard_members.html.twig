@@ -71,7 +71,7 @@
                         <form action="{{ path('add_user_group', {slug: group.path}) }}" method="POST">
                             <div class="d-flex">
                                 <div class="flex-grow-1 mr-2">
-                                    <div>{{ react_component('UserSelect') }}</div>
+                                    <div><div {{ react_component('UserSelect') }}></div></div>
                                     <div class="form-text text-muted">
                                         Search for members by name or email address.
                                     </div>
@@ -96,7 +96,7 @@
                         <form action="{{ path('add_user_group', {slug: group.path}) }}" method="POST">
                             <div class="d-flex">
                                 <div class="flex-grow-1 mr-2">
-                                    <div>{{ react_component('GroupImport', {'props': props}) }}</div>
+                                    <div><div {{ react_component('GroupImport', props|json_decode(true)) }}></div></div>
                                 </div>
                             </div>
                         </form>
@@ -186,7 +186,7 @@
                                  %}
                                     
                                     <div style="min-width: 150px"> 
-                                        {{- react_component('GroupRoleSelect', {'props': {'role': group.getUserRole(user), 'user': user.id, 'group': group.path}}) -}}
+                                        <div {{ react_component('GroupRoleSelect', {'role': group.getUserRole(user), 'user': user.id, 'group': group.path}) }}></div>
                                     </div>
                                     <div class="ml-5">
                                         <input type="checkbox" name="selectUserGroup" class="selectUserGroup" value="{{user.id}}"/>

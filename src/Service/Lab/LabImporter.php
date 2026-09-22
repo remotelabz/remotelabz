@@ -39,6 +39,8 @@ class LabImporter
     private $rootDirectory;
     private $publicImageDirectory;
     private $bannerDirectory;
+    private $hypervisorRepository;
+    private $controlProtocolTypeRepository;
 
     public function __construct(
         LoggerInterface $logger,

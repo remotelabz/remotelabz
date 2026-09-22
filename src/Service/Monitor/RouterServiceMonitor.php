@@ -14,7 +14,7 @@ class RouterServiceMonitor extends AbstractServiceMonitor
 
     public function __construct(
         RouteManagerService $routeManager,
-        LoggerInterface $logger = null        
+        ?LoggerInterface $logger = null
     ) {
         $this->routeManager = $routeManager;
         $this->logger = $logger ?: new NullLogger();

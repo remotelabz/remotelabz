@@ -1698,7 +1698,7 @@ class DeviceController extends Controller
         return $this->redirectToRoute('devices');
     }
 
-    private function delete_device(Device $device, int $labId = null) {
+    private function delete_device(Device $device, ?int $labId = null) {
 
         if (!$device = $this->deviceRepository->find($device->getId())) {
             throw new NotFoundHttpException();

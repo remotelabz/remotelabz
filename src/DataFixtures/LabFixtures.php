@@ -38,12 +38,4 @@ class LabFixtures extends Fixture implements DependentFixtureInterface, FixtureG
     {
         return ['labs'];
     }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function setContainer(ContainerInterface $container = null)
-    {
-        $this->container = $container;
-    }
 }

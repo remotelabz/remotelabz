@@ -2,12 +2,13 @@
 
 namespace App\Repository;
 
-use App\Entity\Lab;
-use App\Entity\User;
 use App\Entity\Instance;
+use App\Entity\Lab;
 use App\Entity\LabInstance;
-use Doctrine\Persistence\ManagerRegistry;
+use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\Persistence\ManagerRegistry;
+use SortDirection;
 
 /**
  * @method Instance|null find($id, $lockMode = null, $lockVersion = null)
@@ -53,7 +54,7 @@ class InstanceRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('i')
             ->andWhere('i.exampleField = :val')
             ->setParameter('val', $value)
-            ->orderBy('i.id', 'ASC')
+            ->orderBy('i.id', SortDirection::Ascending)
             ->setMaxResults(10)
             ->getQuery()
             ->getResult()

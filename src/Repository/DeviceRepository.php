@@ -3,8 +3,9 @@
 namespace App\Repository;
 
 use App\Entity\Device;
-use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\Persistence\ManagerRegistry;
+use SortDirection;
 
 /**
  * @method Device|null find($id, $lockMode = null, $lockVersion = null)
@@ -24,7 +25,7 @@ class DeviceRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('l')
             ->andWhere('l.name LIKE :val')
             ->setParameter('val', '%'.$value.'%')
-            ->orderBy('l.id', 'DESC')
+            ->orderBy('l.id', SortDirection::Descending)
             ->getQuery()
             ->getResult()
         ;
@@ -35,7 +36,7 @@ class DeviceRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('l')
             ->andWhere('l.isTemplate = :val')
             ->setParameter('val', $template ? 1 : 0)
-            ->orderBy('l.id', 'DESC')
+            ->orderBy('l.id', SortDirection::Descending)
             ->getQuery()
             ->getResult()
         ;
@@ -58,7 +59,7 @@ class DeviceRepository extends ServiceEntityRepository
             ->andWhere('l.name = :name')
             ->setParameter('val', $template ? 1 : 0)
             ->setParameter('name', $name)
-            ->orderBy('l.id', 'DESC')
+            ->orderBy('l.id', SortDirection::Descending)
             ->getQuery()
             ->getResult()
         ;
@@ -115,7 +116,7 @@ class DeviceRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('d')
             ->andWhere('d.operatingSystem = :id')
             ->setParameter('id', $operatingSystemId)
-            ->orderBy('d.name', 'ASC')
+            ->orderBy('d.name', SortDirection::Ascending)
             ->getQuery()
             ->getResult();
     }

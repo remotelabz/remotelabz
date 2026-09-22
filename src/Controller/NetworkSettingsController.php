@@ -13,6 +13,7 @@ use Doctrine\ORM\EntityManagerInterface;
 class NetworkSettingsController extends Controller
 {
     public $networkSettingsRepository;
+    private $entityManager;
 
     public function __construct(NetworkSettingsRepository $networkSettingsRepository, EntityManagerInterface $entityManager)
     {

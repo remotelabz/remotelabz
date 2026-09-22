@@ -2,11 +2,12 @@
 
 namespace App\Repository;
 
+use App\Entity\Group;
 use App\Entity\Lab;
 use App\Entity\User;
-use App\Entity\Group;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use SortDirection;
 
 /**
  * @method Lab|null find($id, $lockMode = null, $lockVersion = null)
@@ -26,7 +27,7 @@ class LabRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('l')
             ->andWhere('l.name LIKE :val')
             ->setParameter('val', '%'.$value.'%')
-            ->orderBy('l.id', 'DESC')
+            ->orderBy('l.id', SortDirection::Descending)
             ->getQuery()
             ->getResult()
         ;
@@ -157,7 +158,7 @@ class LabRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('l')
             ->andWhere('l.exampleField = :val')
             ->setParameter('val', $value)
-            ->orderBy('l.id', 'ASC')
+            ->orderBy('l.id', SortDirection::Ascending)
             ->setMaxResults(10)
             ->getQuery()
             ->getResult()

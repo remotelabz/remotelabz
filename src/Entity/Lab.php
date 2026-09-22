@@ -140,12 +140,12 @@ class Lab implements InstanciableInterface
     #[ORM\OneToMany(targetEntity: 'App\Entity\InvitationCode', mappedBy: 'lab', cascade: ['persist', 'remove'])]
     #[Serializer\Groups([])]
     private $invitationCodes;
+    private $connexions;
 
     public function __construct()
     {
         $this->devices = new ArrayCollection();
         $this->connexions = new ArrayCollection();
-        $this->activities = new ArrayCollection();
         $this->groups = new ArrayCollection();
         $this->uuid = (string) new Uuid();
         $this->createdAt = new \DateTime();

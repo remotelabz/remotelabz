@@ -2,9 +2,10 @@
 
 namespace App\Repository;
 
-use Remotelabz\NetworkBundle\Entity\IP;
-use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\Persistence\ManagerRegistry;
+use Remotelabz\NetworkBundle\Entity\IP;
+use SortDirection;
 
 /**
  * @method IP|null find($id, $lockMode = null, $lockVersion = null)
@@ -30,7 +31,7 @@ class IPRepository extends ServiceEntityRepository
     {
         return $this->createQueryBuilder('i')
             ->andWhere('i.long BETWEEN ' . $from->getLong() . ' AND ' . $to->getLong())
-            ->orderBy('i.long', 'ASC')
+            ->orderBy('i.long', SortDirection::Ascending)
             ->getQuery()
             ->getResult();
     }
@@ -44,7 +45,7 @@ class IPRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('i')
             ->andWhere('i.exampleField = :val')
             ->setParameter('val', $value)
-            ->orderBy('i.id', 'ASC')
+            ->orderBy('i.id', SortDirection::Ascending)
             ->setMaxResults(10)
             ->getQuery()
             ->getResult()

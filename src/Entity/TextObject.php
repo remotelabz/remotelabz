@@ -47,6 +47,7 @@ class TextObject implements InstanciableInterface
     #[ORM\JoinColumn(nullable: true, onDelete: 'CASCADE')]
     #[Serializer\Groups(['api_get_text_object'])]
     private $lab;
+    private $uuid;
 
 
     public function __construct()

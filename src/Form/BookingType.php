@@ -30,6 +30,10 @@ use Symfony\Bundle\SecurityBundle\Security;;
 
 class BookingType extends AbstractType implements DataMapperInterface
 {
+    private $bookingRepository;
+    private $userRepository;
+    private $groupRepository;
+    private $security;
     
     public function __construct(
         BookingRepository $bookingRepository, 

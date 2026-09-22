@@ -45,10 +45,12 @@ class ConfigWorkerController extends Controller
     private $operatingSystemRepository;
     private $workerManager;
     private Files2WorkerManager $Files2WorkerManager;
+    private $configWorkerRepository;
+    private $entityManager;
 
 
     public function __construct(
-        LoggerInterface $logger=null,
+        ?LoggerInterface $logger=null,
         ConfigWorkerRepository $configWorkerRepository,
         LabInstanceRepository $labInstanceRepository,
         SerializerInterface $serializer,

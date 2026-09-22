@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Entity\OperatingSystem;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use SortDirection;
 
 /**
  * @method OperatingSystem|null find($id, $lockMode = null, $lockVersion = null)
@@ -66,7 +67,7 @@ class OperatingSystemRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('s')
             ->andWhere('s.exampleField = :val')
             ->setParameter('val', $value)
-            ->orderBy('s.id', 'ASC')
+            ->orderBy('s.id', SortDirection::Ascending)
             ->setMaxResults(10)
             ->getQuery()
             ->getResult()

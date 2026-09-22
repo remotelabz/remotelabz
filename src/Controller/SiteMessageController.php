@@ -8,6 +8,7 @@ use App\Repository\GroupRepository;
 use App\Repository\SiteMessageRepository;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use SortDirection;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -53,8 +54,8 @@ class SiteMessageController extends AbstractController
     {
         $messages = $this->siteMessageRepository
             ->createQueryBuilder('m')
-            ->orderBy('m.type', 'ASC')
-            ->addOrderBy('m.createdAt', 'DESC')
+            ->orderBy('m.type', SortDirection::Ascending)
+            ->addOrderBy('m.createdAt', SortDirection::Descending)
             ->getQuery()
             ->getResult();
 

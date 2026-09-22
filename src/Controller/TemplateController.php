@@ -22,7 +22,6 @@ use App\Repository\TextObjectRepository;
 use App\Repository\LabRepository;
 use App\Repository\UserRepository;
 use App\Repository\DeviceRepository;
-use App\Repository\ActivityRepository;
 use App\Repository\LabInstanceRepository;
 use App\Repository\HypervisorRepository;
 use App\Repository\ControlProtocolTypeRepository;
@@ -74,6 +73,12 @@ class TemplateController extends Controller
 {
     /** @var LoggerInterface $logger */
     private $logger;
+    private $operatingSystemRepository;
+    private $hypervisorRepository;
+    private $controlProtocolTypeRepository;
+    private $flavorRepository;
+    private $deviceRepository;
+    private $isoRepository;
 
     public function __construct(
         LoggerInterface $logger,

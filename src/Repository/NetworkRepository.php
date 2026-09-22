@@ -2,9 +2,10 @@
 
 namespace App\Repository;
 
-use Remotelabz\NetworkBundle\Entity\Network;
-use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\Persistence\ManagerRegistry;
+use Remotelabz\NetworkBundle\Entity\Network;
+use SortDirection;
 
 /**
  * @method Network|null find($id, $lockMode = null, $lockVersion = null)
@@ -28,7 +29,7 @@ class NetworkRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('n')
             ->andWhere('n.exampleField = :val')
             ->setParameter('val', $value)
-            ->orderBy('n.id', 'ASC')
+            ->orderBy('n.id', SortDirection::Ascending)
             ->setMaxResults(10)
             ->getQuery()
             ->getResult()

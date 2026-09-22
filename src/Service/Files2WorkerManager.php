@@ -98,7 +98,7 @@ class Files2WorkerManager
     /**
      * Supprime un fichier ISO ou Image de tous les workers disponibles
      */
-    public function deleteFileFromAllWorkers(string $type,string $localFilename,string $hypervisor=null){
+    public function deleteFileFromAllWorkers(string $type,string $localFilename, ?string $hypervisor=null){
         $this->logger->debug('[Files2WorkerManager:deleteFileFromAllWorkers]::Receive order to delete '.$type." file with name ".$localFilename);
 
         $workers = $this->configWorkerRepository->findAll();

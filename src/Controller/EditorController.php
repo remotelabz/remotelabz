@@ -29,6 +29,9 @@ class EditorController extends Controller
 
     /** @var LoggerInterface $logger */
     private $logger;
+    private $jwtManager;
+    private $tokenStorageInterface;
+    private $labInstanceRepository;
 
     public function __construct(TokenStorageInterface $tokenStorageInterface, JWTTokenManagerInterface $jwtManager, LabInstanceRepository $labInstanceRepository, LabRepository $labRepository)
     {

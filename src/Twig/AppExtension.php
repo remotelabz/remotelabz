@@ -24,6 +24,7 @@ class AppExtension extends AbstractExtension
             new TwigFilter('cast_to_array', [$this, 'stdClassObject']),
             new TwigFilter('firstLetter', [$this, 'firstLetterFilter']),
             new TwigFilter('truncate', [$this, 'truncate']),
+            new TwigFilter('json_decode', [$this, 'jsonDecode']),
         ];
     }
 
@@ -82,6 +83,15 @@ class AppExtension extends AbstractExtension
         
     }
     
+    public function jsonDecode(string|array $value, bool $assoc = true): array
+    {
+        if (is_array($value)) {
+            return $value;
+        }
+
+        return json_decode($value, $assoc) ?? [];
+    }
+
     public function truncate(?string $text, int $length = 50, string $suffix = '...'): string
     {
         if (empty($text)) {

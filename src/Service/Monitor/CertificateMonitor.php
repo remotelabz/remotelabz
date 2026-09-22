@@ -24,7 +24,7 @@ class CertificateMonitor implements ServiceMonitorInterface
         string $remotelabzProxySslKey,
         string $remotelabzProxySslCert,
         int $warningDays = 30,
-        LoggerInterface $logger = null
+        ?LoggerInterface $logger = null
     ) {
         $this->sslCaKey = $sslCaKey;
         $this->sslCaCert = $sslCaCert;

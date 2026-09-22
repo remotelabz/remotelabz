@@ -2,12 +2,13 @@
 
 namespace App\Repository;
 
-use App\Entity\NetworkInterface;
 use App\Entity\Device;
+use App\Entity\NetworkInterface;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
-use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\ORM\Query\ResultSetMapping;
 use Doctrine\ORM\Query\ResultSetMappingBuilder;
+use Doctrine\Persistence\ManagerRegistry;
+use SortDirection;
 
 /**
  * @method NetworkInterface|null find($id, $lockMode = null, $lockVersion = null)
@@ -142,7 +143,7 @@ class NetworkInterfaceRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('n')
             ->andWhere('n.exampleField = :val')
             ->setParameter('val', $value)
-            ->orderBy('n.id', 'ASC')
+            ->orderBy('n.id', SortDirection::Ascending)
             ->setMaxResults(10)
             ->getQuery()
             ->getResult()

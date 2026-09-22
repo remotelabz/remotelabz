@@ -37,7 +37,7 @@
         </div>
     </form>
 </div>
-{{ react_component('SandboxManager', {props: props}) }}
+<div {{ react_component('SandboxManager', props|json_decode(true)) }}></div>
 {% endblock %}
 
 {% block javascripts %}

@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Entity\LoginLog;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use SortDirection;
 
 class LoginLogRepository extends ServiceEntityRepository
 {
@@ -32,7 +33,7 @@ class LoginLogRepository extends ServiceEntityRepository
                 ->setParameter('userFilter', '%' . mb_strtolower($userFilter) . '%');
         }
 
-        return $queryBuilder->orderBy('l.created_at', 'DESC');
+        return $queryBuilder->orderBy('l.created_at', SortDirection::Descending);
     }
 
     public function findRecentByUser($user, int $limit = 10): array
@@ -40,7 +41,7 @@ class LoginLogRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('l')
             ->where('l.user = :user')
             ->setParameter('user', $user)
-            ->orderBy('l.created_at', 'DESC')
+            ->orderBy('l.created_at', SortDirection::Descending)
             ->setMaxResults($limit)
             ->getQuery()
             ->getResult();
@@ -51,7 +52,7 @@ class LoginLogRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('l')
             ->where('l.ip = :ip')
             ->setParameter('ip', $ip)
-            ->orderBy('l.created_at', 'DESC')
+            ->orderBy('l.created_at', SortDirection::Descending)
             ->setMaxResults($limit)
             ->getQuery()
             ->getResult();
@@ -62,7 +63,7 @@ class LoginLogRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('l')
             ->where('l.created_at > :date')
             ->setParameter('date', $date)
-            ->orderBy('l.created_at', 'DESC')
+            ->orderBy('l.created_at', SortDirection::Descending)
             ->getQuery()
             ->getResult();
     }
