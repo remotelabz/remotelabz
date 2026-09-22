@@ -13,6 +13,7 @@ export default class LabForm extends React.Component
 
         this.schema = Yup.object().shape({
             isInternetAuthorized: Yup.boolean(),
+            chatEnabled: Yup.boolean(),
         });
 
         this.state = {
@@ -36,12 +37,14 @@ export default class LabForm extends React.Component
                     this.props.onSubmit({
                         id: values.id,
                         isInternetAuthorized: values.isInternetAuthorized,
+                        chatEnabled: values.chatEnabled,
                     });
                 }}
                 enableReinitialize
                 initialValues={{
                     id: this.props.lab.id,
                     isInternetAuthorized: this.props.lab.isInternetAuthorized,
+                    chatEnabled: this.props.lab.chatEnabled,
                 }}
             >
                 {({
@@ -58,6 +61,10 @@ export default class LabForm extends React.Component
                         <label>
                             <Field type="checkbox" name="isInternetAuthorized" className="mr-2" />
                             Can connect to Internet
+                        </label>
+                        <label className="d-block">
+                            <Field type="checkbox" name="chatEnabled" className="mr-2" />
+                            Enable chat
                         </label>
                         <Button variant="success" type="submit" block {...(dirty || {disabled: true})}>
                             Save

@@ -1242,6 +1242,67 @@ export class RemotelabzAPI {
             });
         }
     }
+
+    chat = {
+        /**
+         * Get the chat room of the current user for a lab (group, members, topic).
+         * Sets the mercureAuthorization cookie used by the SSE subscription.
+         * 
+         * Implements GET `/api/chat/{labUuid}/room`
+         * 
+         * @param {string} labUuid 
+         * 
+         * @returns {Promise<import('axios').AxiosResponse<{topic: string, group: {id: number, uuid: string, name: string}, members: [{id: number, uuid: string, name: string, email: string, hasInstance: boolean, instanceState: string|null}] }>>}
+         */
+        room(labUuid) {
+            return axios.get(`/chat/${labUuid}/room`);
+        },
+
+        /**
+         * Get the chat history of a lab room (oldest to newest).
+         * 
+         * Implements GET `/api/chat/{labUuid}/messages`
+         * 
+         * @param {string} labUuid 
+         * @param {number} [before] Only return messages with an id lower than this value
+         * @param {number} [limit] 
+         * 
+         * @returns {Promise<import('axios').AxiosResponse<{id: number, uuid: string, name: string, message: string, createdAt: string}[]>>}
+         */
+        messages(labUuid, before = null, limit = 50) {
+            return axios.get(`/chat/${labUuid}/messages`, {
+                params: { before, limit }
+            });
+        },
+
+        /**
+         * Send a chat message (persisted and pushed to the room through Mercure).
+         * 
+         * Implements POST `/api/chat/{labUuid}/messages`
+         * 
+         * @param {string} labUuid 
+         * @param {string} message 
+         * 
+         * @returns {Promise<import('axios').AxiosResponse<{id: number, uuid: string, name: string, message: string, createdAt: string}>>}
+         */
+        sendMessage(labUuid, message) {
+            return axios.post(`/chat/${labUuid}/messages`, { message });
+        },
+
+        /**
+         * Report presence in the chat room (join/leave, also used as heartbeat).
+         * 
+         * Implements POST `/api/chat/{labUuid}/presence`
+         * 
+         * @param {string} labUuid 
+         * @param {"join"|"leave"} action 
+         * 
+         * @returns {Promise<import('axios').AxiosResponse<{ok: boolean}>>}
+         */
+        sendPresence(labUuid, action) {
+            return axios.post(`/chat/${labUuid}/presence`, { action });
+        }
+    }
 }
 
 const Remotelabz = new RemotelabzAPI();

@@ -6,12 +6,14 @@ import { GroupRoles } from '../Groups/Groups';
 import React, { useState, useEffect, useRef } from 'react';
 import InstanceOwnerSelect from './InstanceOwnerSelect';
 import JitsiCallButton from '../JitsiCall/JitsiCallButton';
+import ChatWindow from '../Chat/ChatWindow';
 import { ListGroup, ListGroupItem, Button, Modal, Spinner } from 'react-bootstrap';
 import moment from 'moment/moment';
 
 function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCallEnabled: false, isSandbox: false, hasBooking: false}) {
     const [labInstance, setLabInstance] = useState(props.labInstance);
     const [showLeaveLabModal, setShowLeaveLabModal] = useState(false);
+    const [showChatModal, setShowChatModal] = useState(false);
     const [isLoadingInstanceState, setLoadingInstanceState] = useState(false);
     const [viewAs, setViewAs] = useState({ type: props.user.code ? 'guest' : 'user', uuid: props.user.uuid, value: props.user.id, label: props.user.name });
     const [timerCountDown, setTimerCountDown] = useState("");
@@ -287,6 +289,12 @@ useEffect(() => {
                             <span className="ml-1">OpenVPN file</span>
                         </Button>
                     }
+                    {props.lab.chatEnabled === true && !props.user.code && labInstance.state === "created" &&
+                        <Button variant="primary" className="ml-2" onClick={() => setShowChatModal(true)}>
+                            <SVG name="comment" className="v-sub image-sm"></SVG>
+                            <span className="ml-1">Chat</span>
+                        </Button>
+                    }
                     {(props.isJitsiCallEnabled && isOwnedByGroup()) &&
                         <JitsiCallButton
                             className="mr-2"
@@ -406,6 +414,12 @@ useEffect(() => {
                 <Button variant="danger" onClick={onLeaveLab}>Leave</Button>
             </Modal.Footer>
         </Modal>
+        <ChatWindow
+            show={showChatModal}
+            onHide={() => setShowChatModal(false)}
+            lab={props.lab}
+            user={props.user}
+        />
     </>)
 }
 //console.log("test de InstanceManager");
