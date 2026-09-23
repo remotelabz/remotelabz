@@ -56,6 +56,7 @@ use FOS\RestBundle\Controller\Annotations\Delete;
 use FOS\RestBundle\Controller\Annotations\View;
 use FOS\RestBundle\Controller\Annotations\Route as RestRoute;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Doctrine\DBAL\Exception\ForeignKeyConstraintViolationException;
 use Doctrine\ORM\ORMException;
@@ -395,6 +396,36 @@ class LabController extends Controller
             'labInstance' => $userLabInstance,
             'deviceStarted' => $deviceStarted,
             'user' => $user,
+            'props' => $props,
+        ]);
+    }
+
+    #[Route(path: '/labs/chat/{labUuid}', name: 'lab_chat_window', methods: ['GET'],
+        requirements: ['labUuid' => '[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}'])]
+    public function chatWindowAction(
+        string $labUuid,
+        UserInterface $user,
+        LabRepository $labRepository
+    ): Response
+    {
+        $lab = $labRepository->findOneBy(['uuid' => $labUuid]);
+        if (!$lab) {
+            throw new NotFoundHttpException("Lab with uuid " . $labUuid . " does not exist.");
+        }
+
+        $this->denyAccessUnlessGranted(LabVoter::SEE, $lab);
+        if (!$this->chatService->canChat($lab, $user)) {
+            throw new AccessDeniedException('You are not allowed to open the chat window of this lab.');
+        }
+
+        $props = $this->serializer->serialize(
+            ['user' => $user, 'lab' => $lab],
+            'json',
+            SerializationContext::create()->setGroups(['api_get_lab'])
+        );
+
+        return $this->render('lab/chat_window.html.twig', [
+            'lab' => $lab,
             'props' => $props,
         ]);
     }

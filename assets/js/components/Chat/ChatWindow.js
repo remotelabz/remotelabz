@@ -8,13 +8,24 @@ const PRESENCE_TIMEOUT = 60 * 1000;
 const PRESENCE_INTERVAL = 30 * 1000;
 const ROOM_REFRESH_INTERVAL = 50 * 60 * 1000;
 
+const FLOATING_MIN_WIDTH = 320;
+const FLOATING_MIN_HEIGHT = 240;
+const FLOATING_DEFAULT_WIDTH = 460;
+const FLOATING_DEFAULT_HEIGHT = 520;
+
 /**
  * Real-time chat window for the users of a group executing a lab.
  *
  * Subscribes to the Mercure hub (SSE, same origin on /mercure/) using the
  * __Secure-mercure_access_token cookie set by GET /api/chat/{labUuid}/room.
+ *
+ * Display modes:
+ *  - variant "modal" (default): react-bootstrap modal, optionally detachable
+ *    into a floating panel (draggable, resizable, minimizable).
+ *  - variant "standalone": full-page chat, meant for the separate browser
+ *    window served at /labs/chat/{labUuid}.
  */
-function ChatWindow({ show, onHide, lab, user }) {
+function ChatWindow({ show, onHide, lab, user, variant = 'modal' }) {
     const [room, setRoom] = useState(null);
     const [members, setMembers] = useState([]);
     const [messages, setMessages] = useState([]);
@@ -24,12 +35,27 @@ function ChatWindow({ show, onHide, lab, user }) {
     const [loading, setLoading] = useState(true);
     const [now, setNow] = useState(Date.now());
 
+    const [detached, setDetached] = useState(false);
+    const [minimized, setMinimized] = useState(false);
+    const [unread, setUnread] = useState(0);
+    const [pos, setPos] = useState(() => ({
+        x: Math.max(16, window.innerWidth - FLOATING_DEFAULT_WIDTH - 24),
+        y: 96,
+    }));
+    const [size, setSize] = useState({ w: FLOATING_DEFAULT_WIDTH, h: FLOATING_DEFAULT_HEIGHT });
+
     const eventSourceRef = useRef(null);
     const heartbeatRef = useRef(null);
     const roomRefreshRef = useRef(null);
     const presenceRef = useRef({});
     const messagesEndRef = useRef(null);
+    // Mirrors detached/minimized for the (stable) SSE handler closure.
+    const displayRef = useRef({ detached: false, minimized: false });
     const myUuid = user.uuid;
+
+    useEffect(() => {
+        displayRef.current = { detached, minimized };
+    }, [detached, minimized]);
 
     const isOnline = (uuid) => {
         const lastSeen = presenceRef.current[uuid];
@@ -50,6 +76,9 @@ function ChatWindow({ show, onHide, lab, user }) {
 
         if (data.type === 'message') {
             setMessages(prev => prev.some(m => m.id === data.id) ? prev : [...prev, data]);
+            if (displayRef.current.detached && displayRef.current.minimized) {
+                setUnread(u => u + 1);
+            }
         } else if (data.type === 'presence') {
             if (data.action === 'leave') {
                 delete presenceRef.current[data.uuid];
@@ -150,99 +179,234 @@ function ChatWindow({ show, onHide, lab, user }) {
         }
     };
 
+    const startDrag = (e, mode, origin, setter) => {
+        e.preventDefault();
+        const startX = e.clientX;
+        const startY = e.clientY;
+        const onMove = (ev) => {
+            if (mode === 'move') {
+                setter({
+                    x: Math.min(Math.max(origin.x + ev.clientX - startX, 0), window.innerWidth - 120),
+                    y: Math.min(Math.max(origin.y + ev.clientY - startY, 0), window.innerHeight - 48),
+                });
+            } else {
+                setter({
+                    w: Math.max(FLOATING_MIN_WIDTH, origin.w + ev.clientX - startX),
+                    h: Math.max(FLOATING_MIN_HEIGHT, origin.h + ev.clientY - startY),
+                });
+            }
+        };
+        const onUp = () => {
+            window.removeEventListener('mousemove', onMove);
+            window.removeEventListener('mouseup', onUp);
+        };
+        window.addEventListener('mousemove', onMove);
+        window.addEventListener('mouseup', onUp);
+    };
+
+    const openInWindow = () => {
+        window.open('/labs/chat/' + lab.uuid, 'remotelabz_chat_' + lab.uuid, 'width=420,height=640');
+    };
+
+    const restoreFromMinimized = () => {
+        setMinimized(false);
+        setUnread(0);
+    };
+
     const onlineCount = members.filter(m => isOnline(m.uuid)).length;
 
-    return (
-        <Modal show={show} onHide={onHide} size="lg" backdrop="static">
-            <Modal.Header closeButton>
-                <Modal.Title>
-                    <SVG name="comment" className="v-sub image-sm"></SVG>
-                    <span className="ml-2">Chat { room && <span className="text-muted">— {room.group.name}</span> }</span>
-                    <span className={`ml-2 small ${connected ? 'text-success' : 'text-danger'}`}>
-                        {connected ? 'Connected' : 'Reconnecting...'}
-                    </span>
-                </Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-                {error
-                    ?
-                    <div className="text-danger py-5 text-center">{error}</div>
-                    :
-                    <div className="d-flex" style={{ height: 480 }}>
-                        {/* Participants */}
-                        <div className="border-right pr-3" style={{ width: 220 }}>
-                            <div className="text-muted small mb-2">
-                                Participants ({onlineCount} online / {members.length})
-                            </div>
-                            {loading
-                                ?
-                                <Spinner animation="border" size="sm" className="my-3" />
-                                :
-                                members.length === 0
-                                    ?
-                                    <div className="text-muted small">Nobody is executing this lab yet.</div>
-                                    :
-                                    members.map(member => (
-                                        <div key={member.uuid} className="d-flex align-items-center mb-2" title={member.email}>
-                                            <span
-                                                style={{
-                                                    display: 'inline-block',
-                                                    width: 8,
-                                                    height: 8,
-                                                    borderRadius: '50%',
-                                                    marginRight: 8,
-                                                    backgroundColor: isOnline(member.uuid) ? '#28a745' : '#adb5bd'
-                                                }}
-                                            ></span>
-                                            <span className="small text-truncate">
-                                                {member.name}{member.uuid === myUuid ? ' (you)' : ''}
-                                            </span>
-                                        </div>
-                                    ))
-                            }
-                        </div>
+    const statusBadge = (
+        <span className={`ml-2 small ${connected ? 'text-success' : 'text-danger'}`}>
+            {connected ? 'Connected' : 'Reconnecting...'}
+        </span>
+    );
 
-                        {/* Messages */}
-                        <div className="d-flex flex-column pl-3 flex-grow-1">
-                            <div className="flex-grow-1 overflow-auto pr-1" style={{ minHeight: 320 }}>
-                                {messages.length === 0
-                                    ?
-                                    <div className="text-muted text-center mt-5">
-                                        No messages yet. Say hello!
-                                    </div>
-                                    :
-                                    messages.map(message => (
-                                        <div key={message.id} className="mb-3">
-                                            <strong className="small">{message.name}</strong>
-                                            <span className="text-muted small ml-2">
-                                                {new Date(message.createdAt).toLocaleTimeString()}
-                                            </span>
-                                            <div className="small" style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{message.message}</div>
-                                        </div>
-                                    ))
-                                }
-                                <div ref={messagesEndRef}></div>
-                            </div>
-                            <form onSubmit={onSubmit} className="d-flex mt-2">
-                                <input
-                                    type="text"
-                                    className="form-control"
-                                    placeholder="Type a message..."
-                                    value={inputValue}
-                                    maxLength={2000}
-                                    onChange={e => setInputValue(e.target.value)}
-                                    disabled={!connected}
-                                />
-                                <Button type="submit" variant="primary" className="ml-2" disabled={!connected || inputValue.trim() === ''}>
-                                    Send
-                                </Button>
-                            </form>
-                        </div>
+    const renderBody = (height) => (
+        error
+            ?
+            <div className="text-danger py-5 text-center">{error}</div>
+            :
+            <div className="d-flex" style={{ height }}>
+                {/* Participants */}
+                <div className="border-right pr-3" style={{ width: 220 }}>
+                    <div className="text-muted small mb-2">
+                        Participants ({onlineCount} online / {members.length})
                     </div>
-                }
-            </Modal.Body>
-        </Modal>
-    )
+                    {loading
+                        ?
+                        <Spinner animation="border" size="sm" className="my-3" />
+                        :
+                        members.length === 0
+                            ?
+                            <div className="text-muted small">Nobody is executing this lab yet.</div>
+                            :
+                            members.map(member => (
+                                <div key={member.uuid} className="d-flex align-items-center mb-2" title={member.email}>
+                                    <span
+                                        style={{
+                                            display: 'inline-block',
+                                            width: 8,
+                                            height: 8,
+                                            borderRadius: '50%',
+                                            marginRight: 8,
+                                            backgroundColor: isOnline(member.uuid) ? '#28a745' : '#adb5bd'
+                                        }}
+                                    ></span>
+                                    <span className="small text-truncate">
+                                        {member.name}{member.uuid === myUuid ? ' (you)' : ''}
+                                    </span>
+                                </div>
+                            ))
+                    }
+                </div>
+
+                {/* Messages */}
+                <div className="d-flex flex-column pl-3 flex-grow-1">
+                    <div className="flex-grow-1 overflow-auto pr-1" style={{ minHeight: 320 }}>
+                        {messages.length === 0
+                            ?
+                            <div className="text-muted text-center mt-5">
+                                No messages yet. Say hello!
+                            </div>
+                            :
+                            messages.map(message => (
+                                <div key={message.id} className="mb-3">
+                                    <strong className="small">{message.name}</strong>
+                                    <span className="text-muted small ml-2">
+                                        {new Date(message.createdAt).toLocaleTimeString()}
+                                    </span>
+                                    <div className="small" style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{message.message}</div>
+                                </div>
+                            ))
+                        }
+                        <div ref={messagesEndRef}></div>
+                    </div>
+                    <form onSubmit={onSubmit} className="d-flex mt-2">
+                        <input
+                            type="text"
+                            className="form-control"
+                            placeholder="Type a message..."
+                            value={inputValue}
+                            maxLength={2000}
+                            onChange={e => setInputValue(e.target.value)}
+                            disabled={!connected}
+                        />
+                        <Button type="submit" variant="primary" className="ml-2" disabled={!connected || inputValue.trim() === ''}>
+                            Send
+                        </Button>
+                    </form>
+                </div>
+            </div>
+    );
+
+    if (variant === 'standalone') {
+        return (
+            <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
+                <div style={{ padding: '8px 12px', background: '#f8f9fa', borderBottom: '1px solid #dee2e6', display: 'flex', alignItems: 'center' }}>
+                    <SVG name="comment" className="v-sub image-sm"></SVG>
+                    <strong className="ml-2">Chat { room && <span className="text-muted">— {room.group.name}</span> }</strong>
+                    {statusBadge}
+                    <Button size="sm" variant="light" className="ml-auto" title="Close this window" onClick={onHide}>
+                        <SVG name="close" className="v-sub image-sm"></SVG>
+                    </Button>
+                </div>
+                <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>{renderBody('100%')}</div>
+            </div>
+        );
+    }
+
+    return (
+        <>
+            <Modal show={show && !detached} onHide={onHide} size="lg" backdrop="static">
+                <Modal.Header closeButton>
+                    <Modal.Title>
+                        <SVG name="comment" className="v-sub image-sm"></SVG>
+                        <span className="ml-2">Chat { room && <span className="text-muted">— {room.group.name}</span> }</span>
+                        {statusBadge}
+                        <Button variant="light" size="sm" className="ml-3" title="Open in a separate window" onClick={openInWindow}>
+                            <SVG name="external-link" className="v-sub image-sm"></SVG>
+                        </Button>
+                        <Button variant="light" size="sm" title="Detach from the modal" onClick={() => setDetached(true)}>
+                            <SVG name="expand" className="v-sub image-sm"></SVG>
+                        </Button>
+                    </Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    {renderBody(480)}
+                </Modal.Body>
+            </Modal>
+
+            {show && detached && (
+                minimized
+                    ?
+                    <div
+                        onMouseDown={(e) => startDrag(e, 'move', pos, setPos)}
+                        style={{
+                            position: 'fixed', left: pos.x, top: pos.y, zIndex: 1060,
+                            background: '#212529', color: '#fff', borderRadius: 16,
+                            padding: '6px 14px', cursor: 'move', userSelect: 'none',
+                            display: 'flex', alignItems: 'center',
+                            boxShadow: '0 4px 12px rgba(0,0,0,.3)',
+                        }}
+                    >
+                        <SVG name="comment" className="image-sm" style={{ color: '#fff' }}></SVG>
+                        <span className="small ml-2">Chat { room && room.group.name }</span>
+                        {unread > 0 && (
+                            <span style={{ background: '#dc3545', borderRadius: 10, padding: '0 8px', fontSize: 12, marginLeft: 6 }}>
+                                {unread}
+                            </span>
+                        )}
+                        <Button size="sm" variant="light" className="ml-2" title="Restore" onClick={restoreFromMinimized}>
+                            <SVG name="expand" className="v-sub image-sm"></SVG>
+                        </Button>
+                        <Button size="sm" variant="light" title="Close" onClick={onHide}>
+                            <SVG name="close" className="v-sub image-sm"></SVG>
+                        </Button>
+                    </div>
+                    :
+                    <div style={{
+                        position: 'fixed', left: pos.x, top: pos.y,
+                        width: size.w, height: size.h, zIndex: 1060,
+                        background: '#fff', border: '1px solid #ced4da', borderRadius: 8,
+                        boxShadow: '0 8px 24px rgba(0,0,0,.25)',
+                        display: 'flex', flexDirection: 'column', overflow: 'hidden',
+                    }}>
+                        <div
+                            onMouseDown={(e) => startDrag(e, 'move', pos, setPos)}
+                            style={{
+                                cursor: 'move', userSelect: 'none', padding: '6px 10px',
+                                background: '#f8f9fa', borderBottom: '1px solid #dee2e6',
+                                display: 'flex', alignItems: 'center',
+                            }}
+                        >
+                            <SVG name="comment" className="v-sub image-sm"></SVG>
+                            <strong className="small ml-2">Chat { room && <span className="text-muted">— {room.group.name}</span> }</strong>
+                            {statusBadge}
+                            <div className="ml-auto d-flex" onMouseDown={(e) => e.stopPropagation()}>
+                                <Button size="sm" variant="light" title="Open in a separate window" onClick={openInWindow}>
+                                    <SVG name="external-link" className="v-sub image-sm"></SVG>
+                                </Button>
+                                <Button size="sm" variant="light" title="Re-attach to the page" onClick={() => setDetached(false)}>
+                                    <SVG name="collapse" className="v-sub image-sm"></SVG>
+                                </Button>
+                                <Button size="sm" variant="light" title="Minimize" onClick={() => setMinimized(true)}>
+                                    <SVG name="dash" className="v-sub image-sm"></SVG>
+                                </Button>
+                                <Button size="sm" variant="light" title="Close" onClick={onHide}>
+                                    <SVG name="close" className="v-sub image-sm"></SVG>
+                                </Button>
+                            </div>
+                        </div>
+                        <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>{renderBody('100%')}</div>
+                        <div
+                            onMouseDown={(e) => startDrag(e, 'resize', size, setSize)}
+                            title="Resize"
+                            style={{ position: 'absolute', right: 0, bottom: 0, width: 16, height: 16, cursor: 'nwse-resize' }}
+                        ></div>
+                    </div>
+            )}
+        </>
+    );
 }
 
 export default ChatWindow;

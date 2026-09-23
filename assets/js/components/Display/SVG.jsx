@@ -8,7 +8,7 @@ export default class SVG extends Component {
 
     render() {
         return (
-            <svg className={this.props.className || 'image-sm'}>
+            <svg className={this.props.className || 'image-sm'} style={this.props.style}>
                 <use xlinkHref={"/build/svg/icons.svg#" + this.props.name}></use>
             </svg>
         )

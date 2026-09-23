@@ -1,0 +1,18 @@
+{% extends 'base.html.twig' %}
+
+{# Standalone chat window, opened from the lab chat via
+   assets/js/components/Chat/ChatWindow.js ("Open in a separate window").
+   Boots the StandaloneChat react component (assets/js/components/Chat/StandaloneChat.jsx). #}
+
+{% block title %}Chat — {{ lab.name }}{% endblock %}
+
+{% block body %}
+<style>
+    html, body, .container-scroller {
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+    }
+</style>
+<div style="height: 100vh;" {{ react_component('StandaloneChat', props|json_decode(true)) }}></div>
+{% endblock %}
