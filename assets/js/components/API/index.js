@@ -1246,7 +1246,7 @@ export class RemotelabzAPI {
     chat = {
         /**
          * Get the chat room of the current user for a lab (group, members, topic).
-         * Sets the mercureAuthorization cookie used by the SSE subscription.
+         * Sets the __Secure-mercure_access_token cookie used by the SSE subscription.
          * 
          * Implements GET `/api/chat/{labUuid}/room`
          * 

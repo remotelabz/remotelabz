@@ -88,8 +88,8 @@ class ChatControllerTest extends WebTestCase
     {
         $token = $this->getJwtToken($this->getRootUser());
 
-        // HTTPS: the mercureAuthorization cookie is Secure (BrowserKit, like a
-        // real browser, only stores Secure cookies over https).
+        // HTTPS: the __Secure-mercure_access_token cookie is Secure (BrowserKit,
+        // like a real browser, only stores Secure cookies over https).
         $this->client->request('GET',
             'https://localhost/api/chat/' . $this->lab->getUuid() . '/room',
             [],
@@ -99,8 +99,8 @@ class ChatControllerTest extends WebTestCase
 
         $this->assertResponseIsSuccessful();
 
-        $cookie = $this->client->getCookieJar()->get('mercureAuthorization', '/mercure');
-        $this->assertNotNull($cookie, 'The mercureAuthorization cookie must be set for the SSE subscription.');
+        $cookie = $this->client->getCookieJar()->get('__Secure-mercure_access_token', '/mercure');
+        $this->assertNotNull($cookie, 'The __Secure-mercure_access_token cookie must be set for the SSE subscription.');
         $this->assertTrue($cookie->isSecure());
         $this->assertTrue($cookie->isHttpOnly());
 

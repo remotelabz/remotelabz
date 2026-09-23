@@ -18,6 +18,17 @@ class ChatService
     public const TOPIC_PREFIX = 'chat/lab/';
 
     /**
+     * Must match the `issuer` name configured in the Mercure hub Caddyfile,
+     * otherwise the hub rejects the tokens with "untrusted issuer".
+     */
+    public const JWT_ISSUER = 'remotelabz';
+
+    /**
+     * RFC 9396 authorization detail type defined by the Mercure v1 protocol.
+     */
+    private const AUTHORIZATION_DETAIL_TYPE = 'https://mercure.rocks/authorization-detail';
+
+    /**
      * Lab instance states considered as "currently executing the lab".
      */
     public const ACTIVE_STATES = [
@@ -171,18 +182,22 @@ class ChatService
     }
 
     /**
-     * Creates the subscriber JWT sent to the browser (mercureAuthorization cookie).
+     * Creates the subscriber JWT sent to the browser (__Secure-mercure_access_token cookie).
      * It only allows subscribing to the given topic.
      */
     public function createSubscriberToken(string $topic): string
     {
         return $this->encodeToken([
-            'mercure' => [
-                'subscribe' => [
-                    ['match' => $topic],
+            'exp' => time() + self::SUBSCRIBER_TOKEN_TTL,
+            'authorization_details' => [
+                [
+                    'type' => self::AUTHORIZATION_DETAIL_TYPE,
+                    'actions' => ['subscribe'],
+                    'topics' => [
+                        ['match' => $topic],
+                    ],
                 ],
             ],
-            'exp' => time() + self::SUBSCRIBER_TOKEN_TTL,
         ], $this->subscriberJwtKey);
     }
 
@@ -195,12 +210,16 @@ class ChatService
     public function publish(string $topic, array $event): void
     {
         $token = $this->encodeToken([
-            'mercure' => [
-                'publish' => [
-                    ['match' => $topic],
+            'exp' => time() + self::PUBLISHER_TOKEN_TTL,
+            'authorization_details' => [
+                [
+                    'type' => self::AUTHORIZATION_DETAIL_TYPE,
+                    'actions' => ['publish'],
+                    'topics' => [
+                        ['match' => $topic],
+                    ],
                 ],
             ],
-            'exp' => time() + self::PUBLISHER_TOKEN_TTL,
         ], $this->publisherJwtKey);
 
         try {
@@ -228,11 +247,16 @@ class ChatService
      */
     private function encodeToken(array $claims, string $secret): string
     {
+        // Mercure hub v1 requirements: "iss" must match the hub issuer name,
+        // "aud" must be the hub URL, and the "typ" header must be "at+jwt".
+        $claims['iss'] = self::JWT_ISSUER;
+        $claims['aud'] = $this->hubInternalUrl;
+
         $base64Url = static function (string $data): string {
             return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
         };
 
-        $header = $base64Url((string) json_encode(['alg' => 'HS256', 'typ' => 'JWT'], JSON_UNESCAPED_SLASHES));
+        $header = $base64Url((string) json_encode(['alg' => 'HS256', 'typ' => 'at+jwt'], JSON_UNESCAPED_SLASHES));
         $payload = $base64Url((string) json_encode($claims, JSON_UNESCAPED_SLASHES));
         $signature = hash_hmac('sha256', $header . '.' . $payload, $secret, true);
 

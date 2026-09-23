@@ -12,7 +12,7 @@ const ROOM_REFRESH_INTERVAL = 50 * 60 * 1000;
  * Real-time chat window for the users of a group executing a lab.
  *
  * Subscribes to the Mercure hub (SSE, same origin on /mercure/) using the
- * mercureAuthorization cookie set by GET /api/chat/{labUuid}/room.
+ * __Secure-mercure_access_token cookie set by GET /api/chat/{labUuid}/room.
  */
 function ChatWindow({ show, onHide, lab, user }) {
     const [room, setRoom] = useState(null);

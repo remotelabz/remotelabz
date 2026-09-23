@@ -20,7 +20,11 @@ class ChatController extends AbstractController
 {
     private const MAX_MESSAGE_LENGTH = 2000;
     private const MAX_PAGE_SIZE = 100;
-    private const COOKIE_NAME = 'mercureAuthorization';
+    // Must match the Mercure hub's authorization cookie name. Since hub v1
+    // the default is "__Secure-mercure_access_token" (the pre-1.0 name
+    // "mercureAuthorization" is ignored unless the hub runs in compatibility
+    // mode), and the "__Secure-" prefix requires HTTPS.
+    private const COOKIE_NAME = '__Secure-mercure_access_token';
 
     #[Route('/api/chat/{labUuid}/room', name: 'api_chat_room', methods: ['GET'])]
     public function room(
