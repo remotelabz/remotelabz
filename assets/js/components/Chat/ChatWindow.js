@@ -225,9 +225,9 @@ function ChatWindow({ show, onHide, lab, user, variant = 'modal' }) {
         error
             ?
             <div className="text-danger py-5 text-center">{error}</div>
-            :
-            <div className="d-flex" style={{ height }}>
-                {/* Participants */}
+        :
+        <div className="d-flex" style={{ height, width: '100%', minWidth: 0 }}>
+            {/* Participants */}
                 <div className="border-right pr-3" style={{ width: 220 }}>
                     <div className="text-muted small mb-2">
                         Participants ({onlineCount} online / {members.length})
@@ -261,7 +261,7 @@ function ChatWindow({ show, onHide, lab, user, variant = 'modal' }) {
                 </div>
 
                 {/* Messages */}
-                <div className="d-flex flex-column pl-3 flex-grow-1">
+                <div className="d-flex flex-column pl-3 flex-grow-1" style={{ minWidth: 0 }}>
                     <div className="flex-grow-1 overflow-auto pr-1" style={{ minHeight: 320 }}>
                         {messages.length === 0
                             ?
