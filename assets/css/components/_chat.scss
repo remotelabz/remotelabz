@@ -1,0 +1,66 @@
+// Chat panels (detachable floating panel + standalone chat window).
+// Colors are explicit for both themes: the panels must not inherit the body
+// text color (light in dark mode) on their own background.
+.rlz-chat-panel {
+    background-color: #fff;
+    color: rgba($black, 0.85);
+    border-color: #ced4da;
+
+    .rlz-chat-panel-header {
+        background-color: #f8f9fa;
+        border-bottom-color: #dee2e6;
+    }
+
+    .border-right {
+        border-right-color: #dee2e6;
+    }
+}
+
+// Small window-control buttons (open in window, detach, re-attach,
+// minimize, close): transparent background, themed icon color.
+.rlz-chat-ctl-btn {
+    color: rgba($black, 0.65);
+    fill: currentColor;
+    text-decoration: none;
+
+    &:hover,
+    &:focus {
+        color: $black;
+        text-decoration: none;
+    }
+}
+
+[theme="dark"] {
+    .rlz-chat-panel {
+        background-color: map-get($theme-colors, dark-lighter);
+        color: map-get($theme-colors, light);
+        border-color: lighten(map-get($theme-colors, dark-lighter), 7.5%);
+
+        .rlz-chat-panel-header {
+            background-color: darken(map-get($theme-colors, dark-lighter), 5%);
+            border-bottom-color: lighten(map-get($theme-colors, dark-lighter), 7.5%);
+        }
+
+        .border-right {
+            border-right-color: lighten(map-get($theme-colors, dark-lighter), 7.5%);
+        }
+
+        .form-control {
+            background-color: map-get($theme-colors, dark-lightest);
+            border-color: lighten(map-get($theme-colors, dark-lighter), 10%);
+            color: map-get($theme-colors, light);
+        }
+    }
+
+    .rlz-chat-ctl-btn {
+        color: map-get($theme-colors, light);
+        fill: currentColor;
+        text-decoration: none;
+
+        &:hover,
+        &:focus {
+            color: $white;
+            text-decoration: none;
+        }
+    }
+}

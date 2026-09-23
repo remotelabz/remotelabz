@@ -301,14 +301,14 @@ function ChatWindow({ show, onHide, lab, user, variant = 'modal' }) {
 
     if (variant === 'standalone') {
         return (
-            <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
-                <div style={{ padding: '8px 12px', background: '#f8f9fa', borderBottom: '1px solid #dee2e6', display: 'flex', alignItems: 'center' }}>
+            <div className="rlz-chat-panel" style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
+                <div className="rlz-chat-panel-header" style={{ padding: '8px 12px', borderBottom: '1px solid', display: 'flex', alignItems: 'center' }}>
                     <SVG name="comment" className="v-sub image-sm"></SVG>
                     <strong className="ml-2">Chat { room && <span className="text-muted">— {room.group.name}</span> }</strong>
                     {statusBadge}
-                    <Button size="sm" variant="light" className="ml-auto" title="Close this window" onClick={onHide}>
+                    <button type="button" className="btn btn-sm btn-link rlz-chat-ctl-btn ml-auto" title="Close this window" onClick={onHide}>
                         <SVG name="close" className="v-sub image-sm"></SVG>
-                    </Button>
+                    </button>
                 </div>
                 <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>{renderBody('100%')}</div>
             </div>
@@ -323,12 +323,12 @@ function ChatWindow({ show, onHide, lab, user, variant = 'modal' }) {
                         <SVG name="comment" className="v-sub image-sm"></SVG>
                         <span className="ml-2">Chat { room && <span className="text-muted">— {room.group.name}</span> }</span>
                         {statusBadge}
-                        <Button variant="light" size="sm" className="ml-3" title="Open in a separate window" onClick={openInWindow}>
+                        <button type="button" className="btn btn-sm btn-link rlz-chat-ctl-btn ml-3" title="Open in a separate window" onClick={openInWindow}>
                             <SVG name="external-link" className="v-sub image-sm"></SVG>
-                        </Button>
-                        <Button variant="light" size="sm" title="Detach from the modal" onClick={() => setDetached(true)}>
+                        </button>
+                        <button type="button" className="btn btn-sm btn-link rlz-chat-ctl-btn" title="Detach from the modal" onClick={() => setDetached(true)}>
                             <SVG name="expand" className="v-sub image-sm"></SVG>
-                        </Button>
+                        </button>
                     </Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
@@ -364,18 +364,19 @@ function ChatWindow({ show, onHide, lab, user, variant = 'modal' }) {
                         </Button>
                     </div>
                     :
-                    <div style={{
+                    <div className="rlz-chat-panel" style={{
                         position: 'fixed', left: pos.x, top: pos.y,
                         width: size.w, height: size.h, zIndex: 1060,
-                        background: '#fff', border: '1px solid #ced4da', borderRadius: 8,
+                        borderWidth: 1, borderStyle: 'solid', borderRadius: 8,
                         boxShadow: '0 8px 24px rgba(0,0,0,.25)',
                         display: 'flex', flexDirection: 'column', overflow: 'hidden',
                     }}>
                         <div
+                            className="rlz-chat-panel-header"
                             onMouseDown={(e) => startDrag(e, 'move', pos, setPos)}
                             style={{
                                 cursor: 'move', userSelect: 'none', padding: '6px 10px',
-                                background: '#f8f9fa', borderBottom: '1px solid #dee2e6',
+                                borderBottom: '1px solid',
                                 display: 'flex', alignItems: 'center',
                             }}
                         >
@@ -383,18 +384,18 @@ function ChatWindow({ show, onHide, lab, user, variant = 'modal' }) {
                             <strong className="small ml-2">Chat { room && <span className="text-muted">— {room.group.name}</span> }</strong>
                             {statusBadge}
                             <div className="ml-auto d-flex" onMouseDown={(e) => e.stopPropagation()}>
-                                <Button size="sm" variant="light" title="Open in a separate window" onClick={openInWindow}>
+                                <button type="button" className="btn btn-sm btn-link rlz-chat-ctl-btn" title="Open in a separate window" onClick={openInWindow}>
                                     <SVG name="external-link" className="v-sub image-sm"></SVG>
-                                </Button>
-                                <Button size="sm" variant="light" title="Re-attach to the page" onClick={() => setDetached(false)}>
+                                </button>
+                                <button type="button" className="btn btn-sm btn-link rlz-chat-ctl-btn" title="Re-attach to the page" onClick={() => setDetached(false)}>
                                     <SVG name="collapse" className="v-sub image-sm"></SVG>
-                                </Button>
-                                <Button size="sm" variant="light" title="Minimize" onClick={() => setMinimized(true)}>
+                                </button>
+                                <button type="button" className="btn btn-sm btn-link rlz-chat-ctl-btn" title="Minimize" onClick={() => setMinimized(true)}>
                                     <SVG name="dash" className="v-sub image-sm"></SVG>
-                                </Button>
-                                <Button size="sm" variant="light" title="Close" onClick={onHide}>
+                                </button>
+                                <button type="button" className="btn btn-sm btn-link rlz-chat-ctl-btn" title="Close" onClick={onHide}>
                                     <SVG name="close" className="v-sub image-sm"></SVG>
-                                </Button>
+                                </button>
                             </div>
                         </div>
                         <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>{renderBody('100%')}</div>
