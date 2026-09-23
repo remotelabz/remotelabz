@@ -84,6 +84,16 @@ class ChatService
         return null;
     }
 
+    /**
+     * Whether the given user can open a chat room for the lab. Used to decide
+     * whether the chat UI should be offered at all (avoids a 403 when the lab
+     * has no accessible room).
+     */
+    public function canChat(Lab $lab, UserInterface $user): bool
+    {
+        return null !== $this->resolveRoom($lab, $user);
+    }
+
     private function isLabManager(User $user, Lab $lab): bool
     {
         return $user->isAdministrator() || (null !== $lab->getAuthor() && $lab->getAuthor() === $user);

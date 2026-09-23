@@ -12,10 +12,10 @@ http://127.0.0.1:3000 {
 	mercure {
 		issuer "remotelabz" {
 			publisher {
-				jwt {b26b41685669e1a308e9992ea3462cd8d722362e66fdb8fed79f2080c1e78af2} HS256
+				jwt {$MERCURE_PUBLISHER_JWT_KEY} HS256
 			}
 			subscriber {
-				jwt {7653022cb6b4d4fc13214962da4c8ed406f656fbb0e862ee58bb8a64ded86727} HS256
+				jwt {$MERCURE_SUBSCRIBER_JWT_KEY} HS256
 			}
 		}
 
@@ -27,7 +27,6 @@ http://127.0.0.1:3000 {
 			path /var/lib/remotelabz-mercure/mercure.db
 		}
 	}
-	}
-
+	
 	respond "Not Found" 404
 }

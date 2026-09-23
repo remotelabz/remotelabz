@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Lab;
 use App\Entity\Device;
+use App\Service\ChatService;
 
 use App\Repository\LabRepository;
 use App\Repository\DeviceRepository;
@@ -31,12 +32,15 @@ class DeviceSandboxController extends Controller
 
     private $serializer;
 
-    public function __construct(LoggerInterface $logger, LabRepository $labRepository, DeviceRepository $deviceRepository, SerializerInterface $serializerInterface)
+    private $chatService;
+
+    public function __construct(LoggerInterface $logger, LabRepository $labRepository, DeviceRepository $deviceRepository, SerializerInterface $serializerInterface, ChatService $chatService)
     {
         $this->logger = $logger;
         $this->labRepository = $labRepository;
         $this->serializer = $serializerInterface;
         $this->deviceRepository = $deviceRepository;
+        $this->chatService = $chatService;
     }
 
     #[Route(path: '/admin/sandbox', name: 'sandbox')]
@@ -129,6 +133,7 @@ class DeviceSandboxController extends Controller
             'lab' => $lab,
             'isSandbox' => true,
             'hasBooking' => false,
+            'chatAccessible' => $this->chatService->canChat($lab, $this->getUser()),
         ];
 
         preg_match("/^Sandbox_Lab.*$/", $lab->getName(), $result);

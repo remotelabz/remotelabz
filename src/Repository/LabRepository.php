@@ -70,7 +70,7 @@ class LabRepository extends ServiceEntityRepository
         $query = $entityManager->createQuery(
             'SELECT L.id as filename, L.uuid as id, L.name, L.shortDescription as description,
             L.description as body, CONCAT(A.firstName,\' \',A.lastName) as author, A.id as authorId, L.version,
-            L.scripttimeout, L.locked, L.banner, L.timer
+            L.scripttimeout, L.locked, L.banner, L.timer, L.chatEnabled, L.shared
             FROM App\Entity\Lab L
             LEFT JOIN L.author A
             WHERE L.id = :id'

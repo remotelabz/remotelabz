@@ -568,6 +568,18 @@ class Lab implements InstanciableInterface
         return $this;
     }
 
+    public function isShared(): bool
+    {
+        return $this->shared;
+    }
+
+    public function setShared(bool $shared): self
+    {
+        $this->shared = $shared;
+
+        return $this;
+    }
+
     /**
      * @return Collection|ChatMessage[]
      */

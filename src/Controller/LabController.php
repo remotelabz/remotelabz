@@ -40,6 +40,7 @@ use App\Repository\OperatingSystemRepository;
 use App\Repository\HypervisorRepository;
 use Symfony\Component\HttpFoundation\Request;
 use App\Repository\NetworkInterfaceRepository;
+use App\Service\ChatService;
 use App\Service\Lab\LabImporter;
 use App\Service\Lab\BannerManager;
 use App\Repository\FlavorRepository;
@@ -101,6 +102,7 @@ class LabController extends Controller
     private $configWorkerRepository;
     private $hypervisorRepository;
     private $entityManager;
+    private $chatService;
     /**
      * LabController constructor.
      *
@@ -129,8 +131,10 @@ class LabController extends Controller
         LabInstanceRepository $labInstanceRepository,
         BookingRepository $bookingRepository,
         ConfigWorkerRepository $configWorkerRepository,
-        EntityManagerInterface $entityManager)
+        EntityManagerInterface $entityManager,
+        ChatService $chatService)
     {
+        $this->chatService = $chatService;
         $this->workerServer = (string) getenv('WORKER_SERVER');
         $this->workerPort = (int) getenv('WORKER_PORT');
         $this->workerAddress = $this->workerServer . ":" . $this->workerPort;
@@ -375,7 +379,8 @@ class LabController extends Controller
             'lab' => $lab,
             'isJitsiCallEnabled' => (bool) $this->getParameter('app.enable_jitsi_call'),
             'isSandbox' => false,
-            'hasBooking' => $hasBooking
+            'hasBooking' => $hasBooking,
+            'chatAccessible' => $this->chatService->canChat($lab, $this->getUser())
         ];
 
         $props=$serializer->serialize(
@@ -436,7 +441,8 @@ class LabController extends Controller
             'lab' => $lab,
             'isJitsiCallEnabled' => (bool) $this->getParameter('app.enable_jitsi_call'),
             'isSandbox' => false,
-            'hasBooking' => false
+            'hasBooking' => false,
+            'chatAccessible' => $this->chatService->canChat($lab, $this->getUser())
         ];
 
         $props=$serializer->serialize(
@@ -480,7 +486,9 @@ class LabController extends Controller
             "scripttimeout"=>$labInfo["scripttimeout"],
             "lock"=>$labInfo["locked"],
             "banner"=>$labInfo["banner"],
-            "timer"=>$labInfo["timer"]
+            "timer"=>$labInfo["timer"],
+            "chatEnabled"=>$labInfo["chatEnabled"] ?? false,
+            "shared"=>$labInfo["shared"] ?? false
         ];
 
         $response = new Response();
@@ -1194,6 +1202,12 @@ class LabController extends Controller
         $lab->setVersion($data['version']);
         $lab->setShortDescription($data['description']);
         $lab->setScripttimeout($data['scripttimeout']);
+        if (array_key_exists('chatEnabled', $data)) {
+            $lab->setChatEnabled((bool) $data['chatEnabled']);
+        }
+        if (array_key_exists('shared', $data)) {
+            $lab->setShared((bool) $data['shared']);
+        }
         if ($lab->getVirtuality() == 1 && $data['timer'] !== "" && $data['timer'] != "0") {
             $lab->setHasTimer(true);
             $lab->setTimer($data['timer']);

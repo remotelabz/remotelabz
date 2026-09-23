@@ -10,7 +10,7 @@ import ChatWindow from '../Chat/ChatWindow';
 import { ListGroup, ListGroupItem, Button, Modal, Spinner } from 'react-bootstrap';
 import moment from 'moment/moment';
 
-function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCallEnabled: false, isSandbox: false, hasBooking: false}) {
+function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCallEnabled: false, isSandbox: false, hasBooking: false, chatAccessible: false}) {
     const [labInstance, setLabInstance] = useState(props.labInstance);
     const [showLeaveLabModal, setShowLeaveLabModal] = useState(false);
     const [showChatModal, setShowChatModal] = useState(false);
@@ -289,7 +289,7 @@ useEffect(() => {
                             <span className="ml-1">OpenVPN file</span>
                         </Button>
                     }
-                    {props.lab.chatEnabled === true && !props.user.code && labInstance.state === "created" &&
+                    {props.lab.chatEnabled === true && props.chatAccessible === true && !props.user.code && labInstance.state === "created" &&
                         <Button variant="primary" className="ml-2" onClick={() => setShowChatModal(true)}>
                             <SVG name="comment" className="v-sub image-sm"></SVG>
                             <span className="ml-1">Chat</span>
