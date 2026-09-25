@@ -564,6 +564,108 @@ export class RemotelabzAPI {
                 }
             }
             return response;
+        },
+
+        /**
+         * Get the practical subjects linked to a lab.
+         * Implements GET `/api/labs/{id}/practical-subjects`
+         * @param {int} id
+         * @returns {Promise<import('axios').AxiosResponse<PracticalSubject[]>>}
+         */
+        getPracticalSubjects(id) {
+            return axios.get(`/labs/${id}/practical-subjects`);
+        },
+
+        /**
+         * Link a practical subject to a lab.
+         * Implements POST `/api/labs/{id}/practical-subjects/{subjectId}`
+         * @param {int} id
+         * @param {int} subjectId
+         */
+        addPracticalSubject(id, subjectId) {
+            return axios.post(`/labs/${id}/practical-subjects/${subjectId}`);
+        },
+
+        /**
+         * Unlink a practical subject from a lab.
+         * Implements DELETE `/api/labs/{id}/practical-subjects/{subjectId}`
+         * @param {int} id
+         * @param {int} subjectId
+         */
+        removePracticalSubject(id, subjectId) {
+            return axios.delete(`/labs/${id}/practical-subjects/${subjectId}`);
+        }
+    }
+
+    /**
+     * Practical subjects endpoint.
+     */
+    practicalSubjects = {
+        /**
+         * Get all practical subjects.
+         * Implements GET `/api/practical-subjects`
+         * @returns {Promise<import('axios').AxiosResponse<PracticalSubject[]>>}
+         */
+        all() {
+            return axios.get('/practical-subjects');
+        },
+
+        /**
+         * Get a practical subject by ID.
+         * Implements GET `/api/practical-subjects/{id}`
+         * @param {int} id
+         * @returns {Promise<import('axios').AxiosResponse<PracticalSubject>>}
+         */
+        get(id) {
+            return axios.get(`/practical-subjects/${id}`);
+        },
+
+        /**
+         * Create a practical subject.
+         * Accepts either a JSON payload `{name, description}` (markdown)
+         * or a FormData with fields `name` and `file` (.md or .pdf).
+         * Implements POST `/api/practical-subjects`
+         */
+        create(payload) {
+            return axios.post('/practical-subjects', payload);
+        },
+
+        /**
+         * Update a practical subject.
+         * Accepts either a JSON payload `{name?, description?}`
+         * or a FormData with fields `name` and `file` (.md or .pdf).
+         * Implements PUT `/api/practical-subjects/{id}`
+         */
+        update(id, payload) {
+            return axios.put(`/practical-subjects/${id}`, payload);
+        },
+
+        /**
+         * Delete a practical subject.
+         * Implements DELETE `/api/practical-subjects/{id}`
+         * @param {int} id
+         */
+        remove(id) {
+            return axios.delete(`/practical-subjects/${id}`);
+        },
+
+        /**
+         * URL to open the subject (rendered markdown or pdf) in the lab context.
+         * @param {int} labId
+         * @param {int} subjectId
+         * @returns {string}
+         */
+        viewUrl(labId, subjectId) {
+            return `/labs/${labId}/subject/${subjectId}`;
+        },
+
+        /**
+         * URL of the subject PDF file.
+         * @param {int} id
+         * @returns {string}
+         */
+        pdfUrl(id) {
+            return `/api/practical-subjects/${id}/pdf`;
         }
     }
 

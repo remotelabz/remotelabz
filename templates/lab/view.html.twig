@@ -57,11 +57,24 @@
         <div class="col"><div {{ react_component('InstanceManager', props|json_decode(true)) }}></div></div>
     </div>
 </div>
-{% if lab.description is defined %}
+{% if lab.practicalSubjects|length > 0 %}
+    <div class="lab-practical-subjects mb-4">
+        <h4>{{ 'Practical subjects'|trans }}</h4>
+        {% for subject in lab.practicalSubjects %}
+            <div class="mb-2">
+                <a class="btn btn-outline-primary" target="_blank" rel="noopener"
+                   href="{{ path('view_practical_subject', {'id': lab.id, 'subjectId': subject.id}) }}">
+                    {{ svg('text-description') }} {{ subject.name }} — {{ 'Ouvrir le sujet'|trans }}
+                </a>
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+{% if lab.description is defined and lab.description is not empty %}
     {% apply markdown_to_html %}
         {{lab.description}}
     {% endapply %}
-{% else %}
+{% elseif lab.practicalSubjects|length == 0 %}
     <p class="text-muted">No description</p>
 {% endif %}
 {% endblock %}

@@ -26,16 +26,15 @@ import '../bootstrap/js/imageMapResizer.min';
 import '../bootstrap/js/bootstrap.min';
 import '../bootstrap/js/bootstrap-select.min';
 import './ejs';
-import { logger, getJsonMessage, newUIreturn, printPageAuthentication, getUserInfo, getLabInfo, getLabBody, closeLab, postBanner,
+import { logger, getJsonMessage, newUIreturn, printPageAuthentication, getUserInfo, getLabInfo, closeLab, postBanner,
          lockLab, printFormLab, unlockLab, printLabStatus, postLogin, getNodeInterfaces, deleteNode, form2Array, getVlan, getConnection, removeConnection, setNodeInterface,
          setNodesPosition, printLabTopology, printContextMenu, getNodes, start, recursive_start, stop, printFormNode, printFormNodeConfigs, 
-         printListNodes, setNodeData, printFormCustomShape, printFormText, printListTextobjects, printFormEditCustomShape,
-         printFormEditText, printFormSubjectLab, getTextObjects, createTextObject, 
+         printListNodes, setNodeData, printFormCustomShape, printFormText, printFormEditCustomShape,
+         printFormEditText, getTextObjects, createTextObject, 
          editTextObject, editTextObjects, deleteTextObject, textObjectDragStop, addMessage, addModal, addModalError, addModalWide,
          dirname, basename, hex2rgb, updateFreeSelect, getTopology, editConnection,initExtendedTimer,textObjectResize  } from'./functions.js';
 import {fromByteArray,TextEncoderLite} from './b64encoder';
 import { adjustZoom, resolveZoom, saveEditorLab } from './ebs/functions';
-import Showdown, { extension } from 'showdown';
 
 var KEY_CODES = {
     "tab": 9,
@@ -694,53 +693,6 @@ $(document).on('click', '.action-labadd', function (e) {
     printFormLab('add', values);
 });
 
-// Print lab body
-$(document).on('click', '.action-labbodyget', function (e) {
-    logger(1, 'DEBUG: action = labbodyget');
-    $.when(getLabInfo($('#lab-viewport').attr('data-path')), getLabBody()).done(function (info, body) {
-        var currentTime = performance.now();
-        var labId = $('#lab-viewport').attr('data-path');
-        var html =  '<div class="row"><div class="col-md-10"><h1>' + info['name'] + '</h1> </br><center><p><code>ID: ' + info['id'] + '</code></p>';
-        
-        if(info['description'] != null) {
-            html +='<p>' + info['description'] + '</p>';
-        }
-        html += '</center></div>';
-        html += '<div class="col-sm-2"><img src="/labs/'+labId+'/banner?'+currentTime+'" alt="banner" class="img-thumbnail" /></div></div>';
-        addModalWide(MESSAGES[64],html, '')
-    }).fail(function (message1, message2) {
-        if (message1 != null) {
-            addModalError(message1);
-        } else {
-            addModalError(message2)
-        }
-        ;
-    });
-});
-
-// Print lab body
-$(document).on('click', '.action-labsubjectget', function (e) {
-    logger(1, 'DEBUG: action = labbodyget');
-    $.when(getLabBody()).done(function (body) {
-        var html =  '';
-        if (body != null) {
-            var converter = new Showdown.Converter();
-            var htmlBody = converter.makeHtml(body);
-            html += htmlBody;
-        }
-        else {
-            html += '<center><p>This lab does not have any subject.</p></center>'
-        }
-        addModalWide('Practical subject',html, '')
-    }).fail(function (message1, message2) {
-        if (message1 != null) {
-            addModalError(message1);
-        } else {
-            addModalError(message2)
-        }
-        ;
-    });
-});
 
 // Edit/print lab network
 /*$(document).on('click', '.action-networkedit', function (e) {
@@ -1077,16 +1029,265 @@ $(document).on('click', '.action-labedit-inline', function (e) {
     $('#context-menu').remove();
 });
 
-// Edit practical subject
-$(document).on('click', '.action-subjectedit', function (e) {
-    logger(1, 'DEBUG: action = labedit');
-    $.when(getLabInfo($('#lab-viewport').attr('data-path'))).done(function (values) {
-        values['path'] = dirname($('#lab-viewport').attr('data-path'));
-        printFormSubjectLab('edit', values);
+// Clone the current lab
+$(document).on('click', '.action-labclone', function (e) {
+    logger(1, 'DEBUG: action = labclone');
+    var lab_filename = $('#lab-viewport').attr('data-path');
+    $.when(getLabInfo(lab_filename)).done(function (values) {
+        var name = prompt('Name of the new lab:', (values['name'] || 'lab') + ' (copy)');
+        if (!name) {
+            return;
+        }
+        $.ajax({
+            cache: false,
+            timeout: LONGTIMEOUT,
+            type: 'POST',
+            url: encodeURI('/api/labs/' + lab_filename + '/createcopy/'),
+            dataType: 'json',
+            contentType: 'application/json',
+            data: JSON.stringify({ name: name }),
+            success: function (data) {
+                if (data && data['id']) {
+                    addMessage('success', 'Lab "' + name + '" created (id ' + data['id'] + ').');
+                    window.location.href = '/labs/' + data['id'];
+                } else {
+                    addModalError('Clone failed.');
+                }
+            },
+            error: function (data) {
+                var message = getJsonMessage(data['responseText']);
+                addModal('ERROR', '<p>' + message + '</p>', '<button type="button" class="btn btn-aqua" data-dismiss="modal">Close</button>');
+            }
+        });
     }).fail(function (message) {
         addModalError(message);
     });
     $('#context-menu').remove();
+});
+
+// Manage the practical subjects linked to the current lab
+$(document).on('click', '.action-subjectsmgmt', function (e) {
+    logger(1, 'DEBUG: action = subjectsmgmt');
+    var lab_filename = $('#lab-viewport').attr('data-path');
+    printPracticalSubjectsModal(lab_filename);
+    $('#context-menu').remove();
+});
+
+function printPracticalSubjectsModal(labId) {
+    var html = ''
+        + '<div id="ps-list"><p class="text-muted">Loading...</p></div>'
+        + '<hr/>'
+        + '<h5>Link an existing subject</h5>'
+        + '<div class="form-group">'
+        + '    <select id="ps-existing" class="form-control"><option value="">-- choose a subject --</option></select>'
+        + '</div>'
+        + '<button type="button" id="ps-link" class="btn btn-primary btn-sm">Link</button>'
+        + '<hr/>'
+        + '<h5>Create a new subject</h5>'
+        + '<div class="form-group">'
+        + '    <input type="text" id="ps-name" class="form-control" placeholder="Subject name" />'
+        + '</div>'
+        + '<div class="form-group">'
+        + '    <select id="ps-mode" class="form-control">'
+        + '        <option value="markdown">Markdown</option>'
+        + '        <option value="file">File (.md / .pdf)</option>'
+        + '    </select>'
+        + '</div>'
+        + '<div class="form-group" id="ps-md">'
+        + '    <textarea id="ps-description" class="form-control" rows="8" placeholder="Write the subject in Markdown..."></textarea>'
+        + '</div>'
+        + '<div class="form-group" id="ps-file" style="display:none">'
+        + '    <input type="file" id="ps-file" accept=".md,.pdf" />'
+        + '</div>'
+        + '<button type="button" id="ps-create" class="btn btn-success">Create &amp; link</button>';
+
+    addModalWide('Practical subjects', html, '<button type="button" class="btn btn-aqua" data-dismiss="modal">Close</button>');
+
+    $('#ps-mode').on('change', function () {
+        if ($(this).val() == 'file') {
+            $('#ps-md').hide();
+            $('#ps-file').show();
+        } else {
+            $('#ps-md').show();
+            $('#ps-file').hide();
+        }
+    });
+
+    loadPracticalSubjects(labId);
+    loadExistingPracticalSubjects();
+}
+
+function loadPracticalSubjects(labId) {
+    $.ajax({
+        cache: false,
+        timeout: TIMEOUT,
+        type: 'GET',
+        url: encodeURI('/api/labs/' + labId + '/practical-subjects'),
+        dataType: 'json',
+        success: function (data) {
+            var html = '';
+            if (!data || data.length == 0) {
+                html = '<p class="text-muted">No practical subject linked to this lab.</p>';
+            } else {
+                $.each(data, function (index, subject) {
+                    var badge = (subject['contentType'] == 'pdf') ? 'label-danger' : 'label-default';
+                    html += '<div class="row" style="margin-bottom:8px">'
+                        + '<div class="col-md-6">' + subject['name'] + ' <span class="label ' + badge + '">' + subject['contentType'] + '</span></div>'
+                        + '<div class="col-md-6 text-right">'
+                        + '    <button type="button" class="btn btn-info btn-sm ps-open" data-id="' + subject['id'] + '">Open</button> '
+                        + '    <button type="button" class="btn btn-danger btn-sm ps-unlink" data-id="' + subject['id'] + '">Unlink</button>'
+                        + '</div>'
+                        + '</div>';
+                });
+            }
+            $('#ps-list').html(html);
+        },
+        error: function (data) {
+            $('#ps-list').html('<p class="text-danger">' + getJsonMessage(data['responseText']) + '</p>');
+        }
+    });
+}
+
+function loadExistingPracticalSubjects() {
+    $.ajax({
+        cache: false,
+        timeout: TIMEOUT,
+        type: 'GET',
+        url: '/api/practical-subjects',
+        dataType: 'json',
+        success: function (data) {
+            var html = '<option value="">-- choose a subject --</option>';
+            if (data) {
+                $.each(data, function (index, subject) {
+                    html += '<option value="' + subject['id'] + '">' + subject['name'] + '</option>';
+                });
+            }
+            $('#ps-existing').html(html);
+        }
+    });
+}
+
+// Open a practical subject in a new tab
+$(document).on('click', '.ps-open', function (e) {
+    var labId = $('#lab-viewport').attr('data-path');
+    var subjectId = $(this).attr('data-id');
+    window.open('/labs/' + labId + '/subject/' + subjectId, '_blank');
+});
+
+// Unlink a practical subject from the lab
+$(document).on('click', '.ps-unlink', function (e) {
+    var labId = $('#lab-viewport').attr('data-path');
+    var subjectId = $(this).attr('data-id');
+    $.ajax({
+        cache: false,
+        timeout: TIMEOUT,
+        type: 'DELETE',
+        url: encodeURI('/api/labs/' + labId + '/practical-subjects/' + subjectId),
+        dataType: 'json',
+        success: function () {
+            addMessage('success', 'Subject unlinked from the lab.');
+            loadPracticalSubjects(labId);
+        },
+        error: function (data) {
+            addModal('ERROR', '<p>' + getJsonMessage(data['responseText']) + '</p>', '<button type="button" class="btn btn-aqua" data-dismiss="modal">Close</button>');
+        }
+    });
+});
+
+// Link an existing practical subject to the lab
+$(document).on('click', '#ps-link', function (e) {
+    var labId = $('#lab-viewport').attr('data-path');
+    var subjectId = $('#ps-existing').val();
+    if (!subjectId) {
+        addModalError('Choose a subject to link.');
+        return;
+    }
+    $.ajax({
+        cache: false,
+        timeout: TIMEOUT,
+        type: 'POST',
+        url: encodeURI('/api/labs/' + labId + '/practical-subjects/' + subjectId),
+        dataType: 'json',
+        success: function () {
+            addMessage('success', 'Subject linked to the lab.');
+            loadPracticalSubjects(labId);
+            loadExistingPracticalSubjects();
+        },
+        error: function (data) {
+            addModal('ERROR', '<p>' + getJsonMessage(data['responseText']) + '</p>', '<button type="button" class="btn btn-aqua" data-dismiss="modal">Close</button>');
+        }
+    });
+});
+
+// Create a new practical subject (markdown or file) and link it to the lab
+$(document).on('click', '#ps-create', function (e) {
+    var labId = $('#lab-viewport').attr('data-path');
+    var name = $('#ps-name').val();
+    if (!name) {
+        addModalError('Subject name is required.');
+        return;
+    }
+    var mode = $('#ps-mode').val();
+    var success = function (data) {
+        if (data && data['id']) {
+            $.ajax({
+                cache: false,
+                timeout: TIMEOUT,
+                type: 'POST',
+                url: encodeURI('/api/labs/' + labId + '/practical-subjects/' + data['id']),
+                dataType: 'json',
+                success: function () {
+                    addMessage('success', 'Subject "' + name + '" created and linked to the lab.');
+                    $('#ps-name').val('');
+                    $('#ps-description').val('');
+                    $('#ps-file').val('');
+                    loadPracticalSubjects(labId);
+                    loadExistingPracticalSubjects();
+                },
+                error: function (err) {
+                    addModal('ERROR', '<p>' + getJsonMessage(err['responseText']) + '</p>', '<button type="button" class="btn btn-aqua" data-dismiss="modal">Close</button>');
+                }
+            });
+        }
+    };
+    if (mode == 'file') {
+        var file = $('#ps-file')[0].files[0];
+        if (!file) {
+            addModalError('Choose a .md or .pdf file.');
+            return;
+        }
+        var formData = new FormData();
+        formData.append('name', name);
+        formData.append('file', file);
+        $.ajax({
+            cache: false,
+            timeout: LONGTIMEOUT,
+            type: 'POST',
+            url: '/api/practical-subjects',
+            processData: false,
+            contentType: false,
+            data: formData,
+            dataType: 'json',
+            success: success,
+            error: function (data) {
+                addModal('ERROR', '<p>' + getJsonMessage(data['responseText']) + '</p>', '<button type="button" class="btn btn-aqua" data-dismiss="modal">Close</button>');
+            }
+        });
+    } else {
+        $.ajax({
+            cache: false,
+            timeout: TIMEOUT,
+            type: 'POST',
+            url: '/api/practical-subjects',
+            dataType: 'json',
+            contentType: 'application/json',
+            data: JSON.stringify({ name: name, description: $('#ps-description').val() }),
+            success: success,
+            error: function (data) {
+                addModal('ERROR', '<p>' + getJsonMessage(data['responseText']) + '</p>', '<button type="button" class="btn btn-aqua" data-dismiss="modal">Close</button>');
+            }
+        });
+    }
 });
 
 // List all labs
@@ -1137,7 +1338,8 @@ $(document).on('click', '.action-moreactions', function (e) {
     }
     
     if ((((ROLE == 'ROLE_TEACHER' || ROLE == 'ROLE_TEACHER_EDITOR') && AUTHOR == 1) || (ROLE == 'ROLE_ADMINISTRATOR' || ROLE == 'ROLE_SUPER_ADMINISTRATOR')) && EDITION ==1 && LOCK == 0 ) {
-        body += '<li><a class="action-subjectedit" href="javascript:void(0)"><i class="glyphicon glyphicon-pencil"></i>Edit practical subject</a></li>';
+        body += '<li><a class="action-subjectsmgmt" href="javascript:void(0)"><i class="glyphicon glyphicon-file"></i>Practical subjects</a></li>';
+        body += '<li><a class="action-labclone" href="javascript:void(0)"><i class="glyphicon glyphicon-copy"></i>Clone lab</a></li>';
         body += '<li><a class="action-labedit" href="javascript:void(0)"><i class="glyphicon glyphicon-pencil"></i> ' + MESSAGES[87] + '</a></li>';
     }
     if (body != '') {
@@ -1901,48 +2103,6 @@ $(document).on('submit', '#form-lab-edit', function (e) {
                 } else {
                     addMessage(data['status'], data['message']);
                 }
-            } else {
-                // Application error
-                logger(1, 'DEBUG: application error (' + data['status'] + ') on ' + type + ' ' + url + ' (' + data['message'] + ').');
-                addModal('ERROR', '<p>' + data['message'] + '</p>', '<button type="button" class="btn btn-aqua" data-dismiss="modal">Close</button>');
-            }
-        },
-        error: function (data) {
-            // Server error
-            var message = getJsonMessage(data['responseText']);
-            logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
-            logger(1, 'DEBUG: ' + message);
-            addModal('ERROR', '<p>' + message + '</p>', '<button type="button" class="btn btn-aqua" data-dismiss="modal">Close</button>');
-        }
-    });
-    return false;  // Stop to avoid POST
-});
-
-// Submit lab TP subject form
-$(document).on('submit', '#form-subject-lab', function (e) {
-    e.preventDefault();  // Prevent default behaviour
-    var lab_filename = $('#lab-viewport').attr('data-path');
-    var form_data = form2Array('lab');
-    logger(1, 'DEBUG: posting form-subject-lab form.');
-    var url = '/api/labs/subject/' + lab_filename;
-    var type = 'PUT';
-    form_data['count'] = 1;
-    form_data['postfix'] = 0;
-
-    $.ajax({
-        cache: false,
-        timeout: TIMEOUT,
-        type: type,
-        url: encodeURI(url),
-        dataType: 'json',
-        data: JSON.stringify(form_data),
-        success: function (data) {
-            if (data['status'] == 'success') {
-                logger(1, 'DEBUG: lab "' + form_data['name'] + '" saved.');
-                // Close the modal
-                $(e.target).parents('.modal').attr('skipRedraw', true);
-                $(e.target).parents('.modal').modal('hide');
-                addMessage(data['status'], data['message']);
             } else {
                 // Application error
                 logger(1, 'DEBUG: application error (' + data['status'] + ') on ' + type + ' ' + url + ' (' + data['message'] + ').');
@@ -3108,16 +3268,6 @@ $('body').on('click', '.edit-custom-shape-form-save', function (e) {
         addModalError(message);
     });
     $('.edit-custom-shape-form').remove();
-});
-
-// Print lab textobjects
-$(document).on('click', '.action-textobjectsget', function (e) {
-    logger(1, 'DEBUG: action = textobjectsget');
-    $.when(getTextObjects()).done(function (textobjects) {
-        printListTextobjects(textobjects);
-    }).fail(function (message) {
-        addModalError(message);
-    });
 });
 
 

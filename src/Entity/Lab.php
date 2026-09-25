@@ -140,6 +140,17 @@ class Lab implements InstanciableInterface
     #[ORM\OneToMany(targetEntity: 'App\Entity\InvitationCode', mappedBy: 'lab', cascade: ['persist', 'remove'])]
     #[Serializer\Groups([])]
     private $invitationCodes;
+
+    /**
+     * @var Collection|PracticalSubject[]
+     */
+    #[ORM\ManyToMany(targetEntity: 'App\Entity\PracticalSubject', inversedBy: 'labs')]
+    #[ORM\JoinTable(name: 'lab_practical_subject')]
+    #[ORM\JoinColumn(name: 'lab_id', referencedColumnName: 'id', onDelete: 'CASCADE')]
+    #[ORM\InverseJoinColumn(name: 'practical_subject_id', referencedColumnName: 'id', onDelete: 'CASCADE')]
+    #[Serializer\Groups(['api_get_lab', 'api_get_lab_template', 'api_get_lab_instance', 'sandbox'])]
+    private $practicalSubjects;
+
     private $connexions;
 
     public function __construct()
@@ -152,6 +163,7 @@ class Lab implements InstanciableInterface
         $this->lastUpdated = new \DateTime();
         $this->textobjects = new ArrayCollection();
         $this->pictures = new ArrayCollection();
+        $this->practicalSubjects = new ArrayCollection();
         $this->isTemplate = 0;
         $this->virtuality = 1;
     }
@@ -556,6 +568,34 @@ class Lab implements InstanciableInterface
             if ($invitationCode->getLab() === $this) {
                 $invitationCode->setLab(null);
             }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|PracticalSubject[]
+     */
+    public function getPracticalSubjects()
+    {
+        return $this->practicalSubjects;
+    }
+
+    public function addPracticalSubject(PracticalSubject $practicalSubject): self
+    {
+        if (!$this->practicalSubjects->contains($practicalSubject)) {
+            $this->practicalSubjects[] = $practicalSubject;
+            $practicalSubject->addLab($this);
+        }
+
+        return $this;
+    }
+
+    public function removePracticalSubject(PracticalSubject $practicalSubject): self
+    {
+        if ($this->practicalSubjects->contains($practicalSubject)) {
+            $this->practicalSubjects->removeElement($practicalSubject);
+            $practicalSubject->removeLab($this);
         }
 
         return $this;

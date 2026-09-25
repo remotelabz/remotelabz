@@ -31,7 +31,6 @@ Encore
     .addEntry('network-settings', './assets/js/network-settings.js')
     .addEntry('network-interface', './assets/js/network-interface.js')
     .addEntry('vnc', './assets/js/vnc.js')
-    .addEntry('editor-react', './assets/js/editor.jsx')
     .addEntry('timeago', './assets/js/timeago.js')
     .addEntry('users-select', './assets/js/SelectUser.jsx')
     .addEntry('groups', './assets/js/groups.js')

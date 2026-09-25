@@ -64,6 +64,69 @@ class LabControllerTest extends AuthenticatedWebTestCase
         $this->assertResponseIsSuccessful();
     }
 
+    public function testCloneLab()
+    {
+        $this->client->request('POST', '/api/labs');
+        $this->assertResponseIsSuccessful();
+        $source = json_decode($this->client->getResponse()->getContent(), true);
+        $sourceId = $source['id'];
+
+        $this->client->request('PUT', '/api/labs/'.$sourceId, [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+            'name' => 'Clone source lab',
+            'description' => "## Sujet d'origine",
+        ]));
+        $this->assertResponseIsSuccessful();
+
+        // Link a practical subject to the source lab
+        $this->client->request('POST', '/api/practical-subjects', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+            'name' => 'Sujet partagé',
+            'description' => 'Contenu partagé',
+        ]));
+        $this->assertResponseIsSuccessful();
+        $subjectId = json_decode($this->client->getResponse()->getContent(), true)['id'];
+        $this->client->request('POST', '/api/labs/'.$sourceId.'/practical-subjects/'.$subjectId);
+        $this->assertResponseIsSuccessful();
+
+        $this->client->request('POST', '/api/labs/'.$sourceId.'/createcopy/', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode(['name' => 'Clone dest lab']));
+        $this->assertResponseIsSuccessful();
+        $clone = json_decode($this->client->getResponse()->getContent(), true);
+        $cloneId = $clone['id'];
+
+        // The clone is a different lab with its own identity
+        $this->assertNotSame($sourceId, $cloneId);
+        $this->assertNotSame($source['uuid'], $clone['uuid']);
+
+        $this->client->request('GET', '/api/labs/'.$cloneId);
+        $this->assertResponseIsSuccessful();
+        $cloneData = json_decode($this->client->getResponse()->getContent(), true);
+        $this->assertSame('Clone dest lab', $cloneData['name']);
+        $this->assertSame("## Sujet d'origine", $cloneData['description']);
+        // The practical subject is shared between the two labs, not duplicated
+        $this->assertCount(1, $cloneData['practicalSubjects']);
+        $this->assertSame($subjectId, $cloneData['practicalSubjects'][0]['id']);
+
+        // The clone is independent from the original lab
+        $this->client->request('PUT', '/api/labs/'.$cloneId, [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+            'name' => 'Clone modifié',
+            'description' => 'Description du clone',
+        ]));
+        $this->assertResponseIsSuccessful();
+
+        $this->client->request('GET', '/api/labs/'.$sourceId);
+        $this->assertResponseIsSuccessful();
+        $sourceData = json_decode($this->client->getResponse()->getContent(), true);
+        $this->assertSame('Clone source lab', $sourceData['name']);
+        $this->assertSame("## Sujet d'origine", $sourceData['description']);
+
+        // Cleanup
+        $this->client->request('DELETE', '/api/labs/'.$cloneId);
+        $this->assertResponseIsSuccessful();
+        $this->client->request('DELETE', '/api/practical-subjects/'.$subjectId);
+        $this->assertResponseIsSuccessful();
+        $this->client->request('DELETE', '/api/labs/'.$sourceId);
+        $this->assertResponseIsSuccessful();
+    }
+
     /**
      * @depends testCreateLab
      */
