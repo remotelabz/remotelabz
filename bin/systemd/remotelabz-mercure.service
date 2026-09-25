@@ -1,0 +1,19 @@
+[Unit]
+Description=Remotelabz Mercure Hub (real-time chat)
+After=network.target
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=5
+# JWT secrets shared with the application (.env)
+EnvironmentFile=/opt/remotelabz/.env.mercure.local
+ExecStart=/usr/bin/mercure run --config /opt/remotelabz/config/mercure/Caddyfile
+StateDirectory=remotelabz-mercure
+RuntimeDirectory=remotelabz-mercure
+MemoryAccounting=true
+MemoryHigh=256M
+MemoryMax=512M
+
+[Install]
+WantedBy=multi-user.target

@@ -54,11 +54,16 @@ class ExceptionListener
                     $matchesGroup
                 );
                 preg_match(
-                    '/\/api\/instances\/lab\/[0-9a-fA-F]{8}[-][0-9a-fA-F]{4}[-][0-9a-fA-F]{4}[-][0-9a-fA-F]{4}[-][0-9a-fA-F]{12}\/by-guest\/[0-9a-fA-F]{8}[-][0-9a-fA-F]{4}[-][0-9a-fA-F]{4}[-][0-9a-fA-F]{4}[-][0-9a-fA-F]{12}/', 
+                    '/\/api\/instances\/lab\/[0-9a-fA-F]{8}[-][0-9a-fA-F]{4}[-][0-9a-fA-F]{4}[-][0-9a-fA-F]{4}[-][0-9a-fA-F]{12}\/by-guest\/[0-9a-fA-F]{8}[-][0-9a-fA-F]{4}[-][0-9a-fA-F]{4}[-][0-9a-fA-F]{4}[-][0-9a-fA-F]{12}/',
                     $event->getRequest()->getRequestUri(),
                     $matchesGuest
                 );
-                if ($matchesUser == null && $matchesGroup == null && $matchesGuest == null) {
+                preg_match(
+                    '/\/api\/chat\/[0-9a-fA-F]{8}[-][0-9a-fA-F]{4}[-][0-9a-fA-F]{4}[-][0-9a-fA-F]{4}[-][0-9a-fA-F]{12}\/(room|messages|presence)/',
+                    $event->getRequest()->getRequestUri(),
+                    $matchesChat
+                );
+                if ($matchesUser == null && $matchesGroup == null && $matchesGuest == null && $matchesChat == null) {
                     $response = new RedirectResponse('/');
                     // sends the modified response object to the event
                     $event->setResponse($response);
