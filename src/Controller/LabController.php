@@ -71,6 +71,7 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Symfony\Component\Security\Http\Attribute\Security;
 use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Filesystem\Filesystem;
@@ -1330,6 +1331,10 @@ class LabController extends Controller
 
 		if ($practicalSubject->isPdf()) {
 			return $this->redirectToRoute('get_practical_subject_pdf', ['id' => $id, 'subjectId' => $subjectId]);
+		}
+
+		if ($practicalSubject->isUrl()) {
+			return new RedirectResponse($practicalSubject->getUrl());
 		}
 
 		return $this->render('practical_subject/view.html.twig', [

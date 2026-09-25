@@ -241,6 +241,118 @@ class PracticalSubjectControllerTest extends AuthenticatedWebTestCase
         $this->assertStringContainsString('@media print', $content);
     }
 
+    public function testEditUrlSubject()
+    {
+        $this->client->request('POST', '/api/practical-subjects', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+            'name' => 'Sujet url à modifier',
+            'url' => 'https://example.org/tp/v1',
+        ]));
+        $this->assertResponseIsSuccessful();
+        $subjectId = json_decode($this->client->getResponse()->getContent(), true)['id'];
+        $this->createdSubjectIds[] = $subjectId;
+
+        $this->client->request('PUT', '/api/practical-subjects/'.$subjectId, [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+            'name' => 'Sujet url modifié',
+            'url' => 'https://example.org/tp/v2',
+        ]));
+        $this->assertResponseIsSuccessful();
+
+        $this->client->request('GET', '/api/practical-subjects/'.$subjectId);
+        $this->assertResponseIsSuccessful();
+        $data = json_decode($this->client->getResponse()->getContent(), true);
+        $this->assertSame('Sujet url modifié', $data['name']);
+        $this->assertSame('url', $data['contentType']);
+        $this->assertSame('https://example.org/tp/v2', $data['url']);
+    }
+
+    public function testDeleteSubjectUnlinksLab()
+    {
+        $labId = $this->createLab('Lab delete subject');
+        $subjectId = $this->createSubject('Sujet à supprimer');
+
+        $this->client->request('POST', '/api/labs/'.$labId.'/practical-subjects/'.$subjectId);
+        $this->assertResponseIsSuccessful();
+
+        $this->client->request('DELETE', '/api/practical-subjects/'.$subjectId);
+        $this->assertResponseIsSuccessful();
+        $this->createdSubjectIds = array_values(array_diff($this->createdSubjectIds, [$subjectId]));
+
+        $this->client->request('GET', '/api/labs/'.$labId.'/practical-subjects');
+        $this->assertResponseIsSuccessful();
+        $this->assertSame([], json_decode($this->client->getResponse()->getContent(), true));
+    }
+
+    public function testUrlSubjectCreation()
+    {
+        $this->client->request('POST', '/api/practical-subjects', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+            'name' => 'Sujet hébergé ailleurs',
+            'url' => 'https://example.org/tp/sujet-systemd',
+        ]));
+        $this->assertResponseIsSuccessful();
+        $subjectId = json_decode($this->client->getResponse()->getContent(), true)['id'];
+        $this->createdSubjectIds[] = $subjectId;
+
+        $this->client->request('GET', '/api/practical-subjects/'.$subjectId);
+        $this->assertResponseIsSuccessful();
+        $data = json_decode($this->client->getResponse()->getContent(), true);
+        $this->assertSame('url', $data['contentType']);
+        $this->assertSame('https://example.org/tp/sujet-systemd', $data['url']);
+    }
+
+    public function testListOnlyShowsOwnSubjects()
+    {
+        $ownSubjectId = $this->createSubject('Sujet du connecté');
+
+        // Create a subject authored by another user, directly via the repository
+        $entityManager = static::getContainer()->get('doctrine')->getManager();
+        $otherAuthor = $entityManager->getRepository(\App\Entity\User::class)->findOneBy(['email' => 'unittest@localhost']);
+        $this->assertNotNull($otherAuthor);
+        $otherSubject = new \App\Entity\PracticalSubject();
+        $otherSubject->setName("Sujet de {$otherAuthor->getEmail()}");
+        $otherSubject->setAuthor($otherAuthor);
+        $entityManager->persist($otherSubject);
+        $entityManager->flush();
+        $this->createdSubjectIds[] = $otherSubject->getId();
+
+        $this->client->request('GET', '/api/practical-subjects');
+        $this->assertResponseIsSuccessful();
+        $subjects = json_decode($this->client->getResponse()->getContent(), true);
+        $ids = array_map(fn ($subject) => $subject['id'], $subjects);
+
+        $this->assertContains($ownSubjectId, $ids);
+        $this->assertNotContains($otherSubject->getId(), $ids);
+    }
+
+    public function testInvalidUrlRejected()
+    {
+        $this->client->request('POST', '/api/practical-subjects', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+            'name' => 'Sujet url invalide',
+            'url' => 'javascript:alert(1)',
+        ]));
+        $this->assertResponseStatusCodeSame(400);
+    }
+
+    public function testViewUrlSubjectRedirectsToExternalUrl()
+    {
+        $labId = $this->createLab('Lab sujet url');
+
+        $this->client->request('POST', '/api/practical-subjects', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+            'name' => 'Sujet externe',
+            'url' => 'https://docs.example.org/apache2-tp',
+        ]));
+        $this->assertResponseIsSuccessful();
+        $subjectId = json_decode($this->client->getResponse()->getContent(), true)['id'];
+        $this->createdSubjectIds[] = $subjectId;
+
+        $this->client->request('POST', '/api/labs/'.$labId.'/practical-subjects/'.$subjectId);
+        $this->assertResponseIsSuccessful();
+
+        $this->client->followRedirects(false);
+        $this->client->request('GET', '/labs/'.$labId.'/subject/'.$subjectId);
+        $this->assertResponseRedirects('https://docs.example.org/apache2-tp');
+        $this->client->followRedirects(true);
+    }
+
     public function testViewPdfSubjectRedirectsToPdf()
     {
         $labId = $this->createLab('Lab pdf view');

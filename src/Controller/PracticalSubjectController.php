@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\PracticalSubject;
+use App\Entity\User;
 use App\Repository\PracticalSubjectRepository;
 use App\Service\PracticalSubjectFileUploader;
 use Psr\Log\LoggerInterface;
@@ -48,7 +49,11 @@ class PracticalSubjectController extends Controller
     #[Get('/api/practical-subjects', name: 'api_get_practical_subjects')]
     public function indexAction(Request $request)
     {
-        $practicalSubjects = $this->practicalSubjectRepository->findAll();
+        // Only list the subjects authored by the connected user: a lab and its
+        // subjects belong to the same author.
+        $practicalSubjects = ($this->getUser() instanceof User)
+            ? $this->practicalSubjectRepository->findByAuthor($this->getUser())
+            : [];
 
         if ('json' === $request->getRequestFormat()) {
             return $this->json($practicalSubjects, 200, [], ['api_get_practical_subjects']);
@@ -83,14 +88,7 @@ class PracticalSubjectController extends Controller
         if (null !== $uploadedFile) {
             $this->applyFile($practicalSubject, $uploadedFile, $request, $fileUploader);
         } else {
-            $data = json_decode($request->getContent(), true) ?: [];
-            if (empty($data['name'])) {
-                throw new BadRequestHttpException("Field 'name' is required.");
-            }
-            $practicalSubject->setName($data['name']);
-            if (isset($data['description'])) {
-                $practicalSubject->setDescription($data['description']);
-            }
+            $this->applyJson($practicalSubject, json_decode($request->getContent(), true) ?: [], true);
         }
 
         $entityManager = $this->entityManager;
@@ -117,13 +115,7 @@ class PracticalSubjectController extends Controller
         if (null !== $uploadedFile) {
             $this->applyFile($practicalSubject, $uploadedFile, $request, $fileUploader);
         } else {
-            $data = json_decode($request->getContent(), true) ?: [];
-            if (isset($data['name'])) {
-                $practicalSubject->setName($data['name']);
-            }
-            if (isset($data['description'])) {
-                $practicalSubject->setDescription($data['description']);
-            }
+            $this->applyJson($practicalSubject, json_decode($request->getContent(), true) ?: [], false);
         }
         $practicalSubject->setLastUpdated(new \DateTime());
 
@@ -191,6 +183,34 @@ class PracticalSubjectController extends Controller
         }
 
         return false;
+    }
+
+    private function applyJson(PracticalSubject $practicalSubject, array $data, bool $isNew): void
+    {
+        if ($isNew && empty($data['name'])) {
+            throw new BadRequestHttpException("Field 'name' is required.");
+        }
+        if (isset($data['name'])) {
+            $practicalSubject->setName($data['name']);
+        }
+        if (isset($data['url'])) {
+            $this->assertValidUrl($data['url']);
+            $practicalSubject->setUrl($data['url']);
+            $practicalSubject->setContentType(PracticalSubject::CONTENT_TYPE_URL);
+        } elseif (isset($data['description'])) {
+            $practicalSubject->setDescription($data['description']);
+            if ($isNew) {
+                $practicalSubject->setContentType(PracticalSubject::CONTENT_TYPE_MARKDOWN);
+            }
+        }
+    }
+
+    private function assertValidUrl(string $url): void
+    {
+        $scheme = parse_url($url, PHP_URL_SCHEME);
+        if (false === filter_var($url, FILTER_VALIDATE_URL) || !in_array(strtolower((string) $scheme), ['http', 'https'], true)) {
+            throw new BadRequestHttpException("Field 'url' must be a valid http(s) URL.");
+        }
     }
 
     private function applyFile(PracticalSubject $practicalSubject, $file, Request $request, PracticalSubjectFileUploader $fileUploader): void

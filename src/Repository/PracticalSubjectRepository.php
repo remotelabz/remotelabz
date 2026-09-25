@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\PracticalSubject;
+use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -32,5 +33,13 @@ class PracticalSubjectRepository extends ServiceEntityRepository
         if ($flush) {
             $this->getEntityManager()->flush();
         }
+    }
+
+    /**
+     * @return PracticalSubject[]
+     */
+    public function findByAuthor(User $author): array
+    {
+        return $this->findBy(['author' => $author]);
     }
 }

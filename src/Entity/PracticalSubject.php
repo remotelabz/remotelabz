@@ -15,6 +15,7 @@ class PracticalSubject
 {
     public const CONTENT_TYPE_MARKDOWN = 'markdown';
     public const CONTENT_TYPE_PDF = 'pdf';
+    public const CONTENT_TYPE_URL = 'url';
 
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -42,6 +43,10 @@ class PracticalSubject
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
     #[Serializer\Groups([])]
     private $pdfFilename;
+
+    #[ORM\Column(type: 'string', length: 512, nullable: true)]
+    #[Serializer\Groups(['api_get_practical_subject', 'api_get_practical_subjects', 'api_get_lab', 'api_get_lab_instance', 'api_get_lab_template', 'sandbox'])]
+    private $url;
 
     #[ORM\ManyToOne(targetEntity: 'App\Entity\User')]
     #[Serializer\Groups([])]
@@ -124,10 +129,23 @@ class PracticalSubject
 
     public function setContentType(string $contentType): self
     {
-        if (!in_array($contentType, [self::CONTENT_TYPE_MARKDOWN, self::CONTENT_TYPE_PDF], true)) {
+        if (!in_array($contentType, [self::CONTENT_TYPE_MARKDOWN, self::CONTENT_TYPE_PDF, self::CONTENT_TYPE_URL], true)) {
             throw new \InvalidArgumentException(sprintf('Invalid content type "%s".', $contentType));
         }
         $this->contentType = $contentType;
+        $this->lastUpdated = new \DateTime();
+
+        return $this;
+    }
+
+    public function getUrl(): ?string
+    {
+        return $this->url;
+    }
+
+    public function setUrl(?string $url): self
+    {
+        $this->url = $url;
         $this->lastUpdated = new \DateTime();
 
         return $this;
@@ -153,6 +171,11 @@ class PracticalSubject
     public function isMarkdown(): bool
     {
         return self::CONTENT_TYPE_MARKDOWN === $this->contentType;
+    }
+
+    public function isUrl(): bool
+    {
+        return self::CONTENT_TYPE_URL === $this->contentType;
     }
 
     public function getAuthor(): ?User

@@ -1073,98 +1073,152 @@ $(document).on('click', '.action-subjectsmgmt', function (e) {
     $('#context-menu').remove();
 });
 
+var psEditingId = null;
+var psMySubjects = [];
+
+function psEscape(value) {
+    return String(value == null ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function psBadge(contentType) {
+    var badge = (contentType == 'pdf') ? 'label-danger' : (contentType == 'url') ? 'label-info' : 'label-default';
+    return '<span class="label ' + badge + '">' + psEscape(contentType) + '</span>';
+}
+
 function printPracticalSubjectsModal(labId) {
     var html = ''
+        + '<h5>Subjects linked to this lab</h5>'
         + '<div id="ps-list"><p class="text-muted">Loading...</p></div>'
         + '<hr/>'
-        + '<h5>Link an existing subject</h5>'
-        + '<div class="form-group">'
-        + '    <select id="ps-existing" class="form-control"><option value="">-- choose a subject --</option></select>'
-        + '</div>'
-        + '<button type="button" id="ps-link" class="btn btn-primary btn-sm">Link</button>'
+        + '<h5>My subjects (link, edit, delete)</h5>'
+        + '<div id="ps-own"><p class="text-muted">Loading...</p></div>'
         + '<hr/>'
-        + '<h5>Create a new subject</h5>'
+        + '<h5 id="ps-form-title">Create a new subject</h5>'
         + '<div class="form-group">'
         + '    <input type="text" id="ps-name" class="form-control" placeholder="Subject name" />'
         + '</div>'
         + '<div class="form-group">'
         + '    <select id="ps-mode" class="form-control">'
         + '        <option value="markdown">Markdown</option>'
+        + '        <option value="url">URL (subject hosted elsewhere)</option>'
         + '        <option value="file">File (.md / .pdf)</option>'
         + '    </select>'
         + '</div>'
         + '<div class="form-group" id="ps-md">'
         + '    <textarea id="ps-description" class="form-control" rows="8" placeholder="Write the subject in Markdown..."></textarea>'
         + '</div>'
+        + '<div class="form-group" id="ps-url" style="display:none">'
+        + '    <input type="url" id="ps-url-input" class="form-control" placeholder="https://..." />'
+        + '</div>'
         + '<div class="form-group" id="ps-file" style="display:none">'
         + '    <input type="file" id="ps-file" accept=".md,.pdf" />'
         + '</div>'
-        + '<button type="button" id="ps-create" class="btn btn-success">Create &amp; link</button>';
+        + '<button type="button" id="ps-save" class="btn btn-success">Create &amp; link</button> '
+        + '<button type="button" id="ps-cancel-edit" class="btn btn-default" style="display:none">Cancel</button>';
 
-    addModalWide('Practical subjects', html, '<button type="button" class="btn btn-aqua" data-dismiss="modal">Close</button>');
+    addModalWide('Practical subjects', html, '<button type="button" class="btn btn-success" data-dismiss="modal">Close</button>');
 
     $('#ps-mode').on('change', function () {
-        if ($(this).val() == 'file') {
-            $('#ps-md').hide();
-            $('#ps-file').show();
-        } else {
-            $('#ps-md').show();
-            $('#ps-file').hide();
-        }
+        var mode = $(this).val();
+        $('#ps-md').toggle(mode == 'markdown');
+        $('#ps-url').toggle(mode == 'url');
+        $('#ps-file').toggle(mode == 'file');
     });
 
-    loadPracticalSubjects(labId);
-    loadExistingPracticalSubjects();
+    resetSubjectForm();
+    refreshSubjectsModal(labId);
 }
 
-function loadPracticalSubjects(labId) {
-    $.ajax({
-        cache: false,
-        timeout: TIMEOUT,
-        type: 'GET',
-        url: encodeURI('/api/labs/' + labId + '/practical-subjects'),
-        dataType: 'json',
-        success: function (data) {
-            var html = '';
-            if (!data || data.length == 0) {
-                html = '<p class="text-muted">No practical subject linked to this lab.</p>';
-            } else {
-                $.each(data, function (index, subject) {
-                    var badge = (subject['contentType'] == 'pdf') ? 'label-danger' : 'label-default';
-                    html += '<div class="row" style="margin-bottom:8px">'
-                        + '<div class="col-md-6">' + subject['name'] + ' <span class="label ' + badge + '">' + subject['contentType'] + '</span></div>'
-                        + '<div class="col-md-6 text-right">'
-                        + '    <button type="button" class="btn btn-info btn-sm ps-open" data-id="' + subject['id'] + '">Open</button> '
-                        + '    <button type="button" class="btn btn-danger btn-sm ps-unlink" data-id="' + subject['id'] + '">Unlink</button>'
-                        + '</div>'
-                        + '</div>';
-                });
-            }
-            $('#ps-list').html(html);
-        },
-        error: function (data) {
-            $('#ps-list').html('<p class="text-danger">' + getJsonMessage(data['responseText']) + '</p>');
-        }
+function refreshSubjectsModal(labId) {
+    $.when(
+        $.ajax({ cache: false, timeout: TIMEOUT, type: 'GET', url: encodeURI('/api/labs/' + labId + '/practical-subjects'), dataType: 'json' }),
+        $.ajax({ cache: false, timeout: TIMEOUT, type: 'GET', url: '/api/practical-subjects', dataType: 'json' })
+    ).done(function (linkedResult, ownResult) {
+        var linked = linkedResult[0] || [];
+        psMySubjects = ownResult[0] || [];
+        renderPsLinked(linked, labId);
+        renderPsOwn(psMySubjects, linked);
+    }).fail(function (data) {
+        $('#ps-list').html('<p class="text-danger">' + getJsonMessage(data.responseText) + '</p>');
     });
 }
 
-function loadExistingPracticalSubjects() {
-    $.ajax({
-        cache: false,
-        timeout: TIMEOUT,
-        type: 'GET',
-        url: '/api/practical-subjects',
-        dataType: 'json',
-        success: function (data) {
-            var html = '<option value="">-- choose a subject --</option>';
-            if (data) {
-                $.each(data, function (index, subject) {
-                    html += '<option value="' + subject['id'] + '">' + subject['name'] + '</option>';
-                });
-            }
-            $('#ps-existing').html(html);
-        }
+function renderPsLinked(subjects, labId) {
+    var html = '';
+    if (!subjects || subjects.length == 0) {
+        html = '<p class="text-muted">No practical subject linked to this lab.</p>';
+    } else {
+        $.each(subjects, function (index, subject) {
+            html += '<div class="row" style="margin-bottom:8px">'
+                + '<div class="col-md-6">' + psEscape(subject['name']) + ' ' + psBadge(subject['contentType']) + '</div>'
+                + '<div class="col-md-6 text-right">'
+                + '    <button type="button" class="btn btn-info btn-sm ps-open" data-id="' + subject['id'] + '">Open</button> '
+                + '    <button type="button" class="btn btn-default btn-sm ps-unlink" data-id="' + subject['id'] + '">Unlink</button>'
+                + '</div>'
+                + '</div>';
+        });
+    }
+    $('#ps-list').html(html);
+}
+
+function renderPsOwn(subjects, linked) {
+    var linkedIds = {};
+    $.each(linked || [], function (index, subject) {
+        linkedIds[subject['id']] = true;
     });
+    var html = '';
+    if (!subjects || subjects.length == 0) {
+        html = '<p class="text-muted">You have no practical subject yet. Create one below.</p>';
+    } else {
+        $.each(subjects, function (index, subject) {
+            var isLinked = (subject['id'] in linkedIds);
+            html += '<div class="row" style="margin-bottom:8px">'
+                + '<div class="col-md-6">' + psEscape(subject['name']) + ' ' + psBadge(subject['contentType']) + '</div>'
+                + '<div class="col-md-6 text-right">'
+                + (isLinked
+                    ? '<button type="button" class="btn btn-default btn-sm ps-unlink" data-id="' + subject['id'] + '">Unlink</button> '
+                    : '<button type="button" class="btn btn-primary btn-sm ps-link" data-id="' + subject['id'] + '">Link</button> ')
+                + '<button type="button" class="btn btn-warning btn-sm ps-edit" data-id="' + subject['id'] + '">Edit</button> '
+                + '<button type="button" class="btn btn-danger btn-sm ps-delete" data-id="' + subject['id'] + '">Delete</button>'
+                + '</div>'
+                + '</div>';
+        });
+    }
+    $('#ps-own').html(html);
+}
+
+function resetSubjectForm() {
+    psEditingId = null;
+    $('#ps-form-title').text('Create a new subject');
+    $('#ps-name').val('');
+    $('#ps-description').val('');
+    $('#ps-url-input').val('');
+    $('#ps-file').val('');
+    $('#ps-mode').val('markdown').trigger('change');
+    $('#ps-save').text('Create & link');
+    $('#ps-cancel-edit').hide();
+}
+
+function startEditSubject(subject) {
+    psEditingId = subject['id'];
+    $('#ps-form-title').text('Edit subject "' + subject['name'] + '"');
+    $('#ps-name').val(subject['name']);
+    if (subject['contentType'] == 'url') {
+        $('#ps-mode').val('url').trigger('change');
+        $('#ps-url-input').val(subject['url'] || '');
+    } else if (subject['contentType'] == 'pdf') {
+        $('#ps-mode').val('file').trigger('change');
+    } else {
+        $('#ps-mode').val('markdown').trigger('change');
+        $('#ps-description').val(subject['description'] || '');
+    }
+    $('#ps-save').text('Save changes');
+    $('#ps-cancel-edit').show();
 }
 
 // Open a practical subject in a new tab
@@ -1186,7 +1240,7 @@ $(document).on('click', '.ps-unlink', function (e) {
         dataType: 'json',
         success: function () {
             addMessage('success', 'Subject unlinked from the lab.');
-            loadPracticalSubjects(labId);
+            refreshSubjectsModal(labId);
         },
         error: function (data) {
             addModal('ERROR', '<p>' + getJsonMessage(data['responseText']) + '</p>', '<button type="button" class="btn btn-aqua" data-dismiss="modal">Close</button>');
@@ -1194,14 +1248,10 @@ $(document).on('click', '.ps-unlink', function (e) {
     });
 });
 
-// Link an existing practical subject to the lab
-$(document).on('click', '#ps-link', function (e) {
+// Link one of my subjects to the lab
+$(document).on('click', '.ps-link', function (e) {
     var labId = $('#lab-viewport').attr('data-path');
-    var subjectId = $('#ps-existing').val();
-    if (!subjectId) {
-        addModalError('Choose a subject to link.');
-        return;
-    }
+    var subjectId = $(this).attr('data-id');
     $.ajax({
         cache: false,
         timeout: TIMEOUT,
@@ -1210,8 +1260,7 @@ $(document).on('click', '#ps-link', function (e) {
         dataType: 'json',
         success: function () {
             addMessage('success', 'Subject linked to the lab.');
-            loadPracticalSubjects(labId);
-            loadExistingPracticalSubjects();
+            refreshSubjectsModal(labId);
         },
         error: function (data) {
             addModal('ERROR', '<p>' + getJsonMessage(data['responseText']) + '</p>', '<button type="button" class="btn btn-aqua" data-dismiss="modal">Close</button>');
@@ -1219,8 +1268,65 @@ $(document).on('click', '#ps-link', function (e) {
     });
 });
 
-// Create a new practical subject (markdown or file) and link it to the lab
-$(document).on('click', '#ps-create', function (e) {
+// Edit one of my subjects (fills the form below)
+$(document).on('click', '.ps-edit', function (e) {
+    var subjectId = $(this).attr('data-id');
+    var subject = null;
+    $.each(psMySubjects, function (index, s) {
+        if (s['id'] == subjectId) {
+            subject = s;
+            return false;
+        }
+    });
+    if (subject) {
+        startEditSubject(subject);
+    }
+});
+
+// Delete one of my subjects (labs using it are automatically unlinked)
+$(document).on('click', '.ps-delete', function (e) {
+    var subjectId = $(this).attr('data-id');
+    var subject = null;
+    $.each(psMySubjects, function (index, s) {
+        if (s['id'] == subjectId) {
+            subject = s;
+            return false;
+        }
+    });
+    var confirmation = 'Delete the subject "';
+    if (subject) {
+        confirmation += subject['name'] + '"';
+    }
+    confirmation += ' ? The labs using this subject will be unlinked from it.';
+    if (!confirm(confirmation)) {
+        return;
+    }
+    $.ajax({
+        cache: false,
+        timeout: TIMEOUT,
+        type: 'DELETE',
+        url: encodeURI('/api/practical-subjects/' + subjectId),
+        dataType: 'json',
+        success: function () {
+            addMessage('success', 'Subject deleted.');
+            if (psEditingId == subjectId) {
+                resetSubjectForm();
+            }
+            refreshSubjectsModal($('#lab-viewport').attr('data-path'));
+        },
+        error: function (data) {
+            addModal('ERROR', '<p>' + getJsonMessage(data['responseText']) + '</p>', '<button type="button" class="btn btn-aqua" data-dismiss="modal">Close</button>');
+        }
+    });
+});
+
+// Cancel editing a subject
+$(document).on('click', '#ps-cancel-edit', function (e) {
+    resetSubjectForm();
+});
+
+// Create a new subject (and link it to the lab) or save the subject being edited
+$(document).on('click', '#ps-save', function (e) {
     var labId = $('#lab-viewport').attr('data-path');
     var name = $('#ps-name').val();
     if (!name) {
@@ -1228,27 +1334,17 @@ $(document).on('click', '#ps-create', function (e) {
         return;
     }
     var mode = $('#ps-mode').val();
-    var success = function (data) {
-        if (data && data['id']) {
-            $.ajax({
-                cache: false,
-                timeout: TIMEOUT,
-                type: 'POST',
-                url: encodeURI('/api/labs/' + labId + '/practical-subjects/' + data['id']),
-                dataType: 'json',
-                success: function () {
-                    addMessage('success', 'Subject "' + name + '" created and linked to the lab.');
-                    $('#ps-name').val('');
-                    $('#ps-description').val('');
-                    $('#ps-file').val('');
-                    loadPracticalSubjects(labId);
-                    loadExistingPracticalSubjects();
-                },
-                error: function (err) {
-                    addModal('ERROR', '<p>' + getJsonMessage(err['responseText']) + '</p>', '<button type="button" class="btn btn-aqua" data-dismiss="modal">Close</button>');
-                }
-            });
-        }
+    if (mode == 'url' && !$('#ps-url-input').val()) {
+        addModalError('Subject URL is required.');
+        return;
+    }
+    var saved = function () {
+        addMessage('success', 'Subject "' + name + '" saved.');
+        resetSubjectForm();
+        refreshSubjectsModal(labId);
+    };
+    var requestError = function (data) {
+        addModal('ERROR', '<p>' + getJsonMessage(data['responseText']) + '</p>', '<button type="button" class="btn btn-aqua" data-dismiss="modal">Close</button>');
     };
     if (mode == 'file') {
         var file = $('#ps-file')[0].files[0];
@@ -1259,34 +1355,70 @@ $(document).on('click', '#ps-create', function (e) {
         var formData = new FormData();
         formData.append('name', name);
         formData.append('file', file);
-        $.ajax({
+        var fileRequest = {
             cache: false,
             timeout: LONGTIMEOUT,
-            type: 'POST',
-            url: '/api/practical-subjects',
+            url: psEditingId ? '/api/practical-subjects/' + psEditingId : '/api/practical-subjects',
             processData: false,
             contentType: false,
             data: formData,
             dataType: 'json',
-            success: success,
-            error: function (data) {
-                addModal('ERROR', '<p>' + getJsonMessage(data['responseText']) + '</p>', '<button type="button" class="btn btn-aqua" data-dismiss="modal">Close</button>');
-            }
-        });
+            success: psEditingId ? saved : function (data) {
+                if (data && data['id']) {
+                    $.ajax({
+                        cache: false,
+                        timeout: TIMEOUT,
+                        type: 'POST',
+                        url: encodeURI('/api/labs/' + labId + '/practical-subjects/' + data['id']),
+                        dataType: 'json',
+                        success: saved,
+                        error: requestError
+                    });
+                }
+            },
+            error: requestError
+        };
+        if (psEditingId) {
+            fileRequest['type'] = 'PUT';
+        } else {
+            fileRequest['type'] = 'POST';
+        }
+        $.ajax(fileRequest);
     } else {
-        $.ajax({
+        var payload = { name: name };
+        if (mode == 'url') {
+            payload['url'] = $('#ps-url-input').val();
+        } else {
+            payload['description'] = $('#ps-description').val();
+        }
+        var jsonRequest = {
             cache: false,
             timeout: TIMEOUT,
-            type: 'POST',
-            url: '/api/practical-subjects',
+            url: psEditingId ? '/api/practical-subjects/' + psEditingId : '/api/practical-subjects',
             dataType: 'json',
             contentType: 'application/json',
-            data: JSON.stringify({ name: name, description: $('#ps-description').val() }),
-            success: success,
-            error: function (data) {
-                addModal('ERROR', '<p>' + getJsonMessage(data['responseText']) + '</p>', '<button type="button" class="btn btn-aqua" data-dismiss="modal">Close</button>');
-            }
-        });
+            data: JSON.stringify(payload),
+            success: psEditingId ? saved : function (data) {
+                if (data && data['id']) {
+                    $.ajax({
+                        cache: false,
+                        timeout: TIMEOUT,
+                        type: 'POST',
+                        url: encodeURI('/api/labs/' + labId + '/practical-subjects/' + data['id']),
+                        dataType: 'json',
+                        success: saved,
+                        error: requestError
+                    });
+                }
+            },
+            error: requestError
+        };
+        if (psEditingId) {
+            jsonRequest['type'] = 'PUT';
+        } else {
+            jsonRequest['type'] = 'POST';
+        }
+        $.ajax(jsonRequest);
     }
 });
 
@@ -1338,8 +1470,8 @@ $(document).on('click', '.action-moreactions', function (e) {
     }
     
     if ((((ROLE == 'ROLE_TEACHER' || ROLE == 'ROLE_TEACHER_EDITOR') && AUTHOR == 1) || (ROLE == 'ROLE_ADMINISTRATOR' || ROLE == 'ROLE_SUPER_ADMINISTRATOR')) && EDITION ==1 && LOCK == 0 ) {
-        body += '<li><a class="action-subjectsmgmt" href="javascript:void(0)"><i class="glyphicon glyphicon-file"></i>Practical subjects</a></li>';
-        body += '<li><a class="action-labclone" href="javascript:void(0)"><i class="glyphicon glyphicon-copy"></i>Clone lab</a></li>';
+        body += '<li><a class="action-subjectsmgmt" href="javascript:void(0)"><i class="glyphicon glyphicon-file"></i> Practical subjects</a></li>';
+        body += '<li><a class="action-labclone" href="javascript:void(0)"><i class="glyphicon glyphicon-copy"></i> Clone lab</a></li>';
         body += '<li><a class="action-labedit" href="javascript:void(0)"><i class="glyphicon glyphicon-pencil"></i> ' + MESSAGES[87] + '</a></li>';
     }
     if (body != '') {
