@@ -24,28 +24,26 @@ final class Version20260925090000 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        $this->addSql('CREATE TABLE practical_subject (id INT AUTO_INCREMENT NOT NULL, 
-        author_id INT DEFAULT NULL, 
-        uuid VARCHAR(255) NOT NULL, 
-        name VARCHAR(255) NOT NULL, 
-        description LONGTEXT DEFAULT NULL, 
-        content_type VARCHAR(20) DEFAULT \'markdown\' NOT NULL, 
-        pdf_filename VARCHAR(255) DEFAULT NULL, 
-        created_at DATETIME NOT NULL, 
-        last_updated DATETIME DEFAULT NULL, 
+        $this->connection->executeStatement('CREATE TABLE practical_subject (id INT AUTO_INCREMENT NOT NULL,
+        author_id INT DEFAULT NULL,
+        uuid VARCHAR(255) NOT NULL,
+        name VARCHAR(255) NOT NULL,
+        description LONGTEXT DEFAULT NULL,
+        content_type VARCHAR(20) DEFAULT \'markdown\' NOT NULL, pdf_filename VARCHAR(255) DEFAULT NULL, created_at DATETIME NOT NULL,
+        last_updated DATETIME DEFAULT NULL,
         INDEX IDX_PR_SUBJ_AUTHOR (author_id), PRIMARY KEY(id)
         )
         DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
 
-        $this->addSql('CREATE TABLE lab_practical_subject (
-        lab_id INT NOT NULL, 
+        $this->connection->executeStatement('CREATE TABLE lab_practical_subject (
+        lab_id INT NOT NULL,
         practical_subject_id INT NOT NULL,
-        INDEX IDX_LP_SUBJ_LAB (lab_id), 
-        INDEX IDX_LP_SUBJ_SUBJECT (practical_subject_id), 
+        INDEX IDX_LP_SUBJ_LAB (lab_id),
+        INDEX IDX_LP_SUBJ_SUBJECT (practical_subject_id),
         PRIMARY KEY(lab_id, practical_subject_id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
-        $this->addSql('ALTER TABLE practical_subject ADD CONSTRAINT FK_PR_SUBJ_AUTHOR FOREIGN KEY (author_id) REFERENCES user (id) ON DELETE SET NULL');
-        $this->addSql('ALTER TABLE lab_practical_subject ADD CONSTRAINT FK_LP_SUBJ_LAB FOREIGN KEY (lab_id) REFERENCES lab (id) ON DELETE CASCADE');
-        $this->addSql('ALTER TABLE lab_practical_subject ADD CONSTRAINT FK_LP_SUBJ_SUBJECT FOREIGN KEY (practical_subject_id) REFERENCES practical_subject (id) ON DELETE CASCADE');
+        $this->connection->executeStatement('ALTER TABLE practical_subject ADD CONSTRAINT FK_PR_SUBJ_AUTHOR FOREIGN KEY (author_id) REFERENCES user (id) ON DELETE SET NULL');
+        $this->connection->executeStatement('ALTER TABLE lab_practical_subject ADD CONSTRAINT FK_LP_SUBJ_LAB FOREIGN KEY (lab_id) REFERENCES lab (id) ON DELETE CASCADE');
+        $this->connection->executeStatement('ALTER TABLE lab_practical_subject ADD CONSTRAINT FK_LP_SUBJ_SUBJECT FOREIGN KEY (practical_subject_id) REFERENCES practical_subject (id) ON DELETE CASCADE');
 
         // Migrate existing lab descriptions into practical subjects
         $rows = $this->connection->fetchAllAssociative(
