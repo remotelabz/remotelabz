@@ -43,6 +43,11 @@ parameters:
     app.jitsi_call_url: '%env(resolve:JITSI_CALL_URL)%'
     app.jitsi_call_secret: '%env(resolve:JITSI_CALL_SECRET)%'
 
+    app.mercure_hub_url: '%env(resolve:MERCURE_HUB_URL)%'
+    app.mercure_hub_internal_url: '%env(resolve:MERCURE_HUB_INTERNAL_URL)%'
+    app.mercure_publisher_jwt_key: '%env(resolve:MERCURE_PUBLISHER_JWT_KEY)%'
+    app.mercure_subscriber_jwt_key: '%env(resolve:MERCURE_SUBSCRIBER_JWT_KEY)%'
+
     app.general.public_address: '%env(resolve:PUBLIC_ADDRESS)%'
     app.general.contact_mail: '%env(resolve:CONTACT_MAIL)%'
     app.general.maintenance: '%env(bool:APP_MAINTENANCE)%'
@@ -244,6 +249,15 @@ services:
     App\Service\Worker\LabPlacementCache:
         arguments:
             $pool: '@lab_placement'
+
+    App\Service\ChatService:
+        arguments:
+            $labInstanceRepository: '@App\Repository\LabInstanceRepository'
+            $client: '@GuzzleHttp\Client'
+            $logger: '@monolog.logger'
+            $hubInternalUrl: '%app.mercure_hub_internal_url%'
+            $publisherJwtKey: '%app.mercure_publisher_jwt_key%'
+            $subscriberJwtKey: '%app.mercure_subscriber_jwt_key%'
 
     App\Service\Instance\ScheduledActionMailService:
         arguments:

@@ -141,6 +141,9 @@ class Lab implements InstanciableInterface
     #[Serializer\Groups([])]
     private $invitationCodes;
 
+    #[ORM\OneToMany(targetEntity: 'App\Entity\ChatMessage', mappedBy: 'lab')]
+    private $chatMessages;
+
     /**
      * @var Collection|PracticalSubject[]
      */
@@ -153,6 +156,10 @@ class Lab implements InstanciableInterface
 
     private $connexions;
 
+    #[ORM\Column(type: 'boolean', options: ['default' => 0])]
+    #[Serializer\Groups(['api_get_lab', 'api_get_lab_template', 'export_lab','sandbox'])]
+    private $chatEnabled = false;
+
     public function __construct()
     {
         $this->devices = new ArrayCollection();
@@ -163,6 +170,7 @@ class Lab implements InstanciableInterface
         $this->lastUpdated = new \DateTime();
         $this->textobjects = new ArrayCollection();
         $this->pictures = new ArrayCollection();
+        $this->chatMessages = new ArrayCollection();
         $this->practicalSubjects = new ArrayCollection();
         $this->isTemplate = 0;
         $this->virtuality = 1;
@@ -556,8 +564,40 @@ class Lab implements InstanciableInterface
     public function setHasTimer(bool $hasTimer): self
     {
         $this->hasTimer = $hasTimer;
-      
+
         return $this;
+    }
+
+    public function isChatEnabled(): bool
+    {
+        return $this->chatEnabled;
+    }
+
+    public function setChatEnabled(bool $chatEnabled): self
+    {
+        $this->chatEnabled = $chatEnabled;
+
+        return $this;
+    }
+
+    public function isShared(): bool
+    {
+        return $this->shared;
+    }
+
+    public function setShared(bool $shared): self
+    {
+        $this->shared = $shared;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|ChatMessage[]
+     */
+    public function getChatMessages()
+    {
+        return $this->chatMessages;
     }
   
     public function removeInvitationCode(InvitationCode $invitationCode): self

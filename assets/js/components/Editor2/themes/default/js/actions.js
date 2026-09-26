@@ -2180,6 +2180,8 @@ $(document).on('submit', '#form-lab-edit', function (e) {
     e.preventDefault();  // Prevent default behaviour
     var lab_filename = $('#lab-viewport').attr('data-path');
     var form_data = form2Array('lab');
+    form_data['chatEnabled'] = $('input[name="lab[chatEnabled]"]').is(':checked');
+    form_data['shared'] = $('input[name="lab[shared]"]').is(':checked');
     var path = form_data['path'].split(/(\d+)/)[1];
     logger(1, 'DEBUG: posting form-lab-edit form.');
     var url = '/api/labs/test/' + path;

@@ -1,0 +1,32 @@
+# Mercure hub v1 (Caddy build) - RemoteLabz real-time chat
+# Served on 127.0.0.1:3000 only, reached by browsers through HAProxy (/mercure/ -> /.well-known/mercure).
+#
+# Required environment variables:
+#   MERCURE_PUBLISHER_JWT_KEY   HS256 secret used by the backend to publish updates
+#   MERCURE_SUBSCRIBER_JWT_KEY  HS256 secret used to sign the browser subscription cookies
+{
+	admin off
+}
+
+http://127.0.0.1:3000 {
+	mercure {
+		issuer "remotelabz" {
+			publisher {
+				jwt {$MERCURE_PUBLISHER_JWT_KEY} HS256
+			}
+			subscriber {
+				jwt {$MERCURE_SUBSCRIBER_JWT_KEY} HS256
+			}
+		}
+
+		# SSE heartbeat keeps the connection alive through HAProxy
+		heartbeat 40s
+
+		# Replay history (Last-Event-ID)
+		transport bolt {
+			path /var/lib/remotelabz-mercure/mercure.db
+		}
+	}
+	
+	respond "Not Found" 404
+}

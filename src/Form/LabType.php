@@ -46,6 +46,7 @@ class LabType extends AbstractType
 
             ])
             ->add('hasTimer', CheckboxType::class)
+            ->add('chatEnabled', CheckboxType::class)
             ->add('timer')
             ->add('submit', SubmitType::class)
             ->add('reset', ResetType::class);

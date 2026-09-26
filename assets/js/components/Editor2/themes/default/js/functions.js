@@ -1299,6 +1299,8 @@ export function printFormLab(action, values) {
         body: (values['body'] != null) ? values['body'] : '',
         banner: (values['banner'] != null) ? values['banner'] : '',
         timer: (values['timer'] != null) ? values['timer'] : '0',
+        chatEnabled: (values['chatEnabled'] === true || values['chatEnabled'] === 'true' || values['chatEnabled'] === 1 || values['chatEnabled'] === '1'),
+        shared: (values['shared'] === true || values['shared'] === 'true' || values['shared'] === 1 || values['shared'] === '1'),
         virtuality: VIRTUALITY,
         srcBanner : '/labs/'+id+'/banner?'+ currentTime,
         title: title,
