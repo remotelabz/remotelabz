@@ -1056,7 +1056,7 @@ $(document).on('click', '.action-labclone', function (e) {
             },
             error: function (data) {
                 var message = getJsonMessage(data['responseText']);
-                addModal('ERROR', '<p>' + message + '</p>', '<button type="button" class="btn btn-aqua" data-dismiss="modal">Close</button>');
+                addModal('ERROR', '<p>' + message + '</p>', '<button type="button" class="btn btn-success" data-dismiss="modal">Close</button>');
             }
         });
     }).fail(function (message) {
@@ -1115,7 +1115,7 @@ function printPracticalSubjectsModal(labId) {
         + '<div class="form-group" id="ps-url" style="display:none">'
         + '    <input type="url" id="ps-url-input" class="form-control" placeholder="https://..." />'
         + '</div>'
-        + '<div class="form-group" id="ps-file" style="display:none">'
+        + '<div class="form-group" id="ps-file-group" style="display:none">'
         + '    <input type="file" id="ps-file" accept=".md,.pdf" />'
         + '</div>'
         + '<button type="button" id="ps-save" class="btn btn-success">Create &amp; link</button> '
@@ -1127,7 +1127,7 @@ function printPracticalSubjectsModal(labId) {
         var mode = $(this).val();
         $('#ps-md').toggle(mode == 'markdown');
         $('#ps-url').toggle(mode == 'url');
-        $('#ps-file').toggle(mode == 'file');
+        $('#ps-file-group').toggle(mode == 'file');
     });
 
     resetSubjectForm();
@@ -1243,7 +1243,7 @@ $(document).on('click', '.ps-unlink', function (e) {
             refreshSubjectsModal(labId);
         },
         error: function (data) {
-            addModal('ERROR', '<p>' + getJsonMessage(data['responseText']) + '</p>', '<button type="button" class="btn btn-aqua" data-dismiss="modal">Close</button>');
+            addModal('ERROR', '<p>' + getJsonMessage(data['responseText']) + '</p>', '<button type="button" class="btn btn-success" data-dismiss="modal">Close</button>');
         }
     });
 });
@@ -1263,7 +1263,7 @@ $(document).on('click', '.ps-link', function (e) {
             refreshSubjectsModal(labId);
         },
         error: function (data) {
-            addModal('ERROR', '<p>' + getJsonMessage(data['responseText']) + '</p>', '<button type="button" class="btn btn-aqua" data-dismiss="modal">Close</button>');
+            addModal('ERROR', '<p>' + getJsonMessage(data['responseText']) + '</p>', '<button type="button" class="btn btn-success" data-dismiss="modal">Close</button>');
         }
     });
 });
@@ -1315,7 +1315,7 @@ $(document).on('click', '.ps-delete', function (e) {
             refreshSubjectsModal($('#lab-viewport').attr('data-path'));
         },
         error: function (data) {
-            addModal('ERROR', '<p>' + getJsonMessage(data['responseText']) + '</p>', '<button type="button" class="btn btn-aqua" data-dismiss="modal">Close</button>');
+            addModal('ERROR', '<p>' + getJsonMessage(data['responseText']) + '</p>', '<button type="button" class="btn btn-success" data-dismiss="modal">Close</button>');
         }
     });
 });
@@ -1344,7 +1344,7 @@ $(document).on('click', '#ps-save', function (e) {
         refreshSubjectsModal(labId);
     };
     var requestError = function (data) {
-        addModal('ERROR', '<p>' + getJsonMessage(data['responseText']) + '</p>', '<button type="button" class="btn btn-aqua" data-dismiss="modal">Close</button>');
+        addModal('ERROR', '<p>' + getJsonMessage(data['responseText']) + '</p>', '<button type="button" class="btn btn-success" data-dismiss="modal">Close</button>');
     };
     if (mode == 'file') {
         var file = $('#ps-file')[0].files[0];
@@ -2238,7 +2238,7 @@ $(document).on('submit', '#form-lab-edit', function (e) {
             } else {
                 // Application error
                 logger(1, 'DEBUG: application error (' + data['status'] + ') on ' + type + ' ' + url + ' (' + data['message'] + ').');
-                addModal('ERROR', '<p>' + data['message'] + '</p>', '<button type="button" class="btn btn-aqua" data-dismiss="modal">Close</button>');
+                addModal('ERROR', '<p>' + data['message'] + '</p>', '<button type="button" class="btn btn-success" data-dismiss="modal">Close</button>');
             }
         },
         error: function (data) {
@@ -2246,7 +2246,7 @@ $(document).on('submit', '#form-lab-edit', function (e) {
             var message = getJsonMessage(data['responseText']);
             logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
             logger(1, 'DEBUG: ' + message);
-            addModal('ERROR', '<p>' + message + '</p>', '<button type="button" class="btn btn-aqua" data-dismiss="modal">Close</button>');
+            addModal('ERROR', '<p>' + message + '</p>', '<button type="button" class="btn btn-success" data-dismiss="modal">Close</button>');
         }
     });
     return false;  // Stop to avoid POST
@@ -2280,7 +2280,7 @@ $(document).on('submit', '#form-lab-edit', function (e) {
             } else {
                 // Application error
                 logger(1, 'DEBUG: application error (' + data['status'] + ') on ' + type + ' ' + url + ' (' + data['message'] + ').');
-                addModal('ERROR', '<p>' + data['message'] + '</p>', '<button type="button" class="btn btn-aqua" data-dismiss="modal">Close</button>');
+                addModal('ERROR', '<p>' + data['message'] + '</p>', '<button type="button" class="btn btn-success" data-dismiss="modal">Close</button>');
             }
         },
         error: function (data) {
@@ -2288,7 +2288,7 @@ $(document).on('submit', '#form-lab-edit', function (e) {
             var message = getJsonMessage(data['responseText']);
             logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
             logger(1, 'DEBUG: ' + message);
-            addModal('ERROR', '<p>' + message + '</p>', '<button type="button" class="btn btn-aqua" data-dismiss="modal">Close</button>');
+            addModal('ERROR', '<p>' + message + '</p>', '<button type="button" class="btn btn-success" data-dismiss="modal">Close</button>');
         }
     });
 });*/
@@ -2375,7 +2375,7 @@ $(document).on('submit', '#form-node-add, #form-node-edit', function (e) {
                 } else {
                     // Application error
                     logger(1, 'DEBUG: application error (' + data['status'] + ') on ' + type + ' ' + url + ' (' + data['message'] + ').');
-                    addModal('ERROR', '<p>' + data['message'] + '</p>', '<button type="button" class="btn btn-aqua" data-dismiss="modal">Close</button>');
+                    addModal('ERROR', '<p>' + data['message'] + '</p>', '<button type="button" class="btn btn-success" data-dismiss="modal">Close</button>');
                 }
             },
             error: function (data) {
@@ -2383,7 +2383,7 @@ $(document).on('submit', '#form-node-add, #form-node-edit', function (e) {
                 var message = getJsonMessage(data['responseText']);
                 logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
                 logger(1, 'DEBUG: ' + message);
-                addModal('ERROR', '<p>' + message + '</p>', '<button type="button" class="btn btn-aqua" data-dismiss="modal">Close</button>');
+                addModal('ERROR', '<p>' + message + '</p>', '<button type="button" class="btn btn-success" data-dismiss="modal">Close</button>');
             }
         });
     return false ;
