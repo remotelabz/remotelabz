@@ -5,6 +5,7 @@
 # https://symfony.com/doc/current/best_practices/configuration.html#application-related-configuration
 parameters:
     locale: 'en'
+    app.log_level: 'debug'
     launch_scripts_directory: '%kernel.project_dir%/public/uploads/launch_scripts'
     profile_picture_directory: '%kernel.project_dir%/public/uploads/user/avatar'
     group_image_directory: '%kernel.project_dir%/public/uploads/group/avatar'
@@ -361,7 +362,7 @@ services:
     App\Monolog\Handler\IgnoreSecurityEventsHandler:
         arguments:
             $stream: '%kernel.logs_dir%/%kernel.environment%_app.log'
-            $level: 'debug'
+            $level: '%app.log_level%'
 
     App\Twig\AppExtension:  
         arguments:
@@ -427,4 +428,9 @@ services:
     App\Security\AuthenticationSuccessHandler:
         arguments:
             $loginNotificationService: '@App\Service\LoginNotificationService'
+
+
+when@prod:
+    parameters:
+        app.log_level: 'info'
 
