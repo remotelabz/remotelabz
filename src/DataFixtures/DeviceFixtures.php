@@ -7,6 +7,7 @@ use App\Entity\Flavor;
 use App\Entity\OperatingSystem;
 use App\Entity\Hypervisor;
 use App\Entity\ControlProtocolType;
+use App\Entity\User;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 use Doctrine\Common\DataFixtures\DependentFixtureInterface;
@@ -35,6 +36,7 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
             ->addControlProtocolType($this->getReference('vnc', ControlProtocolType::class))
             ->setNetworkInterfaceTemplate("eth")
             ->setIcon("Server_Linux.png")
+            ->setAuthor($this->getReference('root', User::class))
         ;
 
         $manager->persist($device);
@@ -57,6 +59,7 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
             ->addControlProtocolType($this->getReference('login', ControlProtocolType::class))
             ->setNetworkInterfaceTemplate("eth")
             ->setIcon("Server_Linux.png")
+            ->setAuthor($this->getReference('root', User::class))
         ;
         $manager->persist($device);
         $this->addReference('Migration', $device);
@@ -78,6 +81,7 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
             ->addControlProtocolType($this->getReference('login', ControlProtocolType::class))
             ->setNetworkInterfaceTemplate("eth")
             ->setIcon("Server_Linux.png")
+            ->setAuthor($this->getReference('root', User::class))
         ;
         $manager->persist($device);
         $this->addReference('Ubuntu24LTS-cnt', $device);
@@ -99,6 +103,7 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
             ->addControlProtocolType($this->getReference('login', ControlProtocolType::class))
             ->setNetworkInterfaceTemplate("eth")
             ->setIcon("Server_Linux.png")
+            ->setAuthor($this->getReference('root', User::class))
         ;
         $manager->persist($device);
         $this->addReference('Alpine-stable-cnt', $device);
@@ -120,6 +125,7 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
             ->addControlProtocolType($this->getReference('login', ControlProtocolType::class))
             ->setNetworkInterfaceTemplate("eth")
             ->setIcon("Server_Linux.png")
+            ->setAuthor($this->getReference('root', User::class))
         ;
         $manager->persist($device);
         $this->addReference('Debian-cnt', $device);
@@ -140,6 +146,7 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
             ->setIcon("Switch.png")
             ->addControlProtocolType($this->getReference('login', ControlProtocolType::class))
             ->setNetworkInterfaceTemplate("eth")            
+            ->setAuthor($this->getReference('root', User::class))
         ;
         $manager->persist($device);
         $this->addReference('dev_natif', $device);
@@ -150,6 +157,7 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
     public function getDependencies(): array
     {
         return [
+            UserFixtures::class,
             FlavorFixtures::class,
             OperatingSystemFixtures::class,
             HypervisorFixtures::class,

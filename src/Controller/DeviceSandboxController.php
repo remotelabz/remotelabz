@@ -63,9 +63,13 @@ class DeviceSandboxController extends Controller
         $deviceArray = array();
         $labArray = array();
 
+        $user = $this->getUser();
         foreach ($devices as $device) {
             if (count($device->getLabs()) == 0) {
-                array_push($deviceArray, $device);
+                $author = $device->getAuthor();
+                if ($author === null || $author === $user || $author->isAdministrator()) {
+                    array_push($deviceArray, $device);
+                }
             }
         }
         foreach ($labs as $lab) {
@@ -88,7 +92,7 @@ class DeviceSandboxController extends Controller
         //$this->logger->debug("[DeviceSandboxController:indexAction]::Serialized props:\n" . $prettyProps);
 
         return $this->render('device_sandbox/index.html.twig', [
-            'devices' => $devices,
+            'devices' => $deviceArray,
             'labs' => $labs,
             'search' => $search,
             'props' => $props
