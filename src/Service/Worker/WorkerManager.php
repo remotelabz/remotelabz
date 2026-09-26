@@ -9,6 +9,7 @@ use Psr\Log\LoggerInterface;
 use App\Repository\ConfigWorkerRepository;
 use App\Entity\ConfigWorker;
 use App\Entity\Device;
+use App\Service\System\SystemdUnitClassifier;
 use Doctrine\Persistence\ManagerRegistry;
 
 class WorkerManager
@@ -21,6 +22,7 @@ class WorkerManager
     private $configWorkerRepository;
     private $doctrine;
     private LabPlacementCache $placementCache;
+    private SystemdUnitClassifier $systemdUnitClassifier;
 
     public function __construct(
         string $publicAddress,
@@ -30,7 +32,8 @@ class WorkerManager
         ClientInterface $client,
         ConfigWorkerRepository $configWorkerRepository,
         ManagerRegistry $doctrine,
-        LabPlacementCache $placementCache
+        LabPlacementCache $placementCache,
+        SystemdUnitClassifier $systemdUnitClassifier
     ) {
         $this->publicAddress = $publicAddress;
         $this->workerServer = $workerServer;
@@ -40,6 +43,7 @@ class WorkerManager
         $this->configWorkerRepository = $configWorkerRepository;
         $this->doctrine=$doctrine;
         $this->placementCache = $placementCache;
+        $this->systemdUnitClassifier = $systemdUnitClassifier;
     }
 
     public function checkWorkersAction($timeout = null)
@@ -101,12 +105,14 @@ class WorkerManager
         foreach($workers as $worker) {
             $status = [
                 'worker' => $worker->getIPv4(),
+                'label' => 'Worker ' . $worker->getIPv4(),
                 'available' => (bool) $worker->getAvailable(),
                 'reachable' => false,
                 'error' => null,
                 'generated_at' => null,
                 'total' => 0,
                 'running' => 0,
+                'has_error' => false,
                 'services' => [],
             ];
             if (!$status['available']) {
@@ -122,9 +128,17 @@ class WorkerManager
                 if (is_array($content) && isset($content['services'])) {
                     $status['reachable'] = true;
                     $status['generated_at'] = $content['generated_at'] ?? null;
-                    $status['total'] = $content['total'] ?? 0;
-                    $status['running'] = $content['running'] ?? 0;
-                    $status['services'] = $content['services'];
+                    $status['services'] = $this->systemdUnitClassifier->resolveOneshotPairs(array_map(
+                        fn (array $service) => $this->systemdUnitClassifier->classify($service),
+                        $content['services']
+                    ));
+                    // Recompute the counters with the correct unit semantics:
+                    // slices and oneshot services are not expected to stay
+                    // active (an empty slice means no lab is running).
+                    $summary = $this->systemdUnitClassifier->summarize($status['services']);
+                    $status['total'] = $summary['total'];
+                    $status['running'] = $summary['running'];
+                    $status['has_error'] = $summary['has_error'];
                 } else {
                     $status['error'] = 'Invalid response from systemd API';
                 }

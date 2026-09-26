@@ -17,21 +17,23 @@
 
 {% block wrapper %}
 <div class="container">
-    <h2>Workers services health</h2>
+    <h2>Services health</h2>
 
     {% if workersSystemdStatus is empty %}
         <div class="alert alert-warning">No worker configured.</div>
     {% endif %}
 
-    {% for status in workersSystemdStatus %}
+    {% for status in (frontStatus ? [frontStatus] : []) | merge(workersSystemdStatus) %}
         <div class="card m-4">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <span class="font-weight-bold">
-                    Worker {{ status.worker }}
+                    {{ status.label | default('Worker ' ~ status.worker) }}
                     {% if not status.available %}
                         <span class="badge badge-secondary">disabled</span>
                     {% elseif status.reachable %}
-                        {% if status.running == status.total %}
+                        {% if status.has_error %}
+                            <span class="badge badge-danger">{{ status.running }}/{{ status.total }} running</span>
+                        {% elseif status.running == status.total %}
                             <span class="badge badge-success">{{ status.running }}/{{ status.total }} running</span>
                         {% elseif status.running > 0 %}
                             <span class="badge badge-warning">{{ status.running }}/{{ status.total }} running</span>
@@ -59,12 +61,14 @@
                                     <th scope="row">Memory</th>
                                     <td>{% if usage.memory is null %}NA{% else %}{{ usage.memory }}%{% endif %}</td>
                                 </tr>
-                                <tr>
-                                    <th scope="row">LXCFS load</th>
-                                    <td>{% if usage.lxcfs is null %}NA{% else %}{{ usage.lxcfs }}%{% endif %}</td>
-                                    <th scope="row">Opened files</th>
-                                    <td>{{ usage.openedfiles | default('NA') }}</td>
-                                </tr>
+                                {% if usage.lxcfs is not null or usage.openedfiles is not null %}
+                                    <tr>
+                                        <th scope="row">LXCFS load</th>
+                                        <td>{% if usage.lxcfs is null %}NA{% else %}{{ usage.lxcfs }}%{% endif %}</td>
+                                        <th scope="row">Opened files</th>
+                                        <td>{{ usage.openedfiles | default('NA') }}</td>
+                                    </tr>
+                                {% endif %}
                                 {% for vg_name, vg_usage in usage.disk | default({}) %}
                                     <tr>
                                         <th scope="row">Disk {{ vg_name }}</th>
@@ -73,12 +77,14 @@
                                         <td></td>
                                     </tr>
                                 {% endfor %}
-                                <tr>
-                                    <th scope="row">LXC containers running</th>
-                                    <td>{{ usage.lxclsrun | default('NA') }}</td>
-                                    <th scope="row">QEMU VMs running</th>
-                                    <td>{{ usage.qemurun | default('NA') }}</td>
-                                </tr>
+                                {% if usage.lxclsrun is not null or usage.qemurun is not null %}
+                                    <tr>
+                                        <th scope="row">LXC containers running</th>
+                                        <td>{{ usage.lxclsrun | default('NA') }}</td>
+                                        <th scope="row">QEMU VMs running</th>
+                                        <td>{{ usage.qemurun | default('NA') }}</td>
+                                    </tr>
+                                {% endif %}
                             </tbody>
                         </table>
                     {% else %}
@@ -100,23 +106,41 @@
                     </thead>
                     <tbody>
                         {% for service in status.services %}
-                            {% set stateClass = service.is_running
+                            {# oneshot OK via its timer: armed timer + last run succeeded #}
+                            {% set pairOk = service.pair_ok | default(false) %}
+                            {% set stateClass = pairOk
                                 ? 'text-success font-weight-bold'
-                                : (service.active_state == 'failed' ? 'text-danger font-weight-bold'
-                                : (service.sub_state == 'waiting' ? 'text-success'
-                                : 'text-muted')) %}
+                                : (service.is_running
+                                    ? 'text-success font-weight-bold'
+                                    : (service.active_state == 'failed' ? 'text-danger font-weight-bold'
+                                    : (service.sub_state == 'waiting' ? 'text-success'
+                                    : 'text-muted'))) %}
+                            {% set since = service.active_since is not null ? service.active_since
+                                : (service.last_run | default(null) is not null ? service.last_run | default(null) : null) %}
                             <tr>
-                                <td class="{{ stateClass }}">{{ service.name }}</td>
+                                <td class="{{ stateClass }}">
+                                    {{ service.name }}
+                                    {% if service.kind_label is not null %}
+                                        <small class="text-muted">[{{ service.kind_label }}]</small>
+                                    {% endif %}
+                                </td>
                                 <td>{{ service.description }}</td>
                                 <td class="{{ stateClass }}">
-                                    {{ service.active_state }}
-                                    {% if service.sub_state is not empty and service.sub_state != service.active_state %}
-                                        ({{ service.sub_state }})
+                                    {% if pairOk %}
+                                        active (via timer)
+                                    {% else %}
+                                        {{ service.active_state }}
+                                        {% if service.sub_state is not empty and service.sub_state != service.active_state %}
+                                            ({{ service.sub_state }})
+                                        {% endif %}
+                                        {% if service.kind is defined and service.kind == 'slice' and service.active_state != 'active' %}
+                                            <br><small class="text-muted">empty: no lab in this slice</small>
+                                        {% endif %}
                                     {% endif %}
                                 </td>
                                 <td>{{ service.unit_file_state }}</td>
                                 <td>{{ service.main_pid is not null ? service.main_pid : '-' }}</td>
-                                <td>{{ service.active_since is not null ? service.active_since : '-' }}</td>
+                                <td>{{ since is not null ? since : '-' }}</td>
                             </tr>
                         {% endfor %}
                     </tbody>

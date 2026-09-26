@@ -1,2 +1,10 @@
-0 2 * * * root cd /opt/remotelabz && php bin/console app:notifications:clean
-* * * * * root cd /opt/remotelabz && php bin/console app:scheduled-actions:run >> /var/log/remotelabz/scheduled.log 2>&1
+# Fichier déprécié — ne plus ajouter de ligne de cron ici.
+#
+# Les deux jobs de ce fichier sont maintenant gérés par des timers systemd
+# (voir bin/systemd/), executes sous www-data comme l'application web :
+#
+#   0 2 * * * root ... app:notifications:clean   -> remotelabz-clean-notification.timer
+#   * * * * * root ... app:scheduled-actions:run -> remotelabz-scheduled-actions.timer
+#
+# Supprimer ce fichier sur le serveur :
+#   sudo rm /etc/cron.d/remotelabz-cron

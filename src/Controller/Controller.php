@@ -8,6 +8,7 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use FOS\RestBundle\Controller\AbstractFOSRestController;
 use App\Service\Network\NetworkManager;
+use App\Service\System\FrontendStatus;
 use App\Service\Worker\WorkerManager;
 
 /**
@@ -57,14 +58,15 @@ class Controller extends AbstractFOSRestController
     }
 
     #[Route(path: '/admin', name: 'admin')]
-    public function adminAction(WorkerManager $workerManager)
+    public function adminAction(WorkerManager $workerManager, FrontendStatus $frontendStatus)
     {
         $workersSystemdStatus = $workerManager->checkWorkersSystemdStatusAction();
-        $usages = [];
+        $usages = ['front' => $frontendStatus->getUsage()];
         foreach ($workerManager->checkWorkersAction(5) as $usage) {
             $usages[$usage['worker']] = $usage;
         }
         return $this->render('dashboard/admin.html.twig', [
+            'frontStatus' => $frontendStatus->getStatus(),
             'workersSystemdStatus' => $workersSystemdStatus,
             'usages' => $usages,
         ]);

@@ -240,11 +240,29 @@ services:
             $rootDirectory: '%kernel.project_dir%'
             $singleServer: '%app.general.single_srv%'
 
+    # Interprets systemd unit states using the front unit files
+    systemd_unit_classifier_front:
+        class: App\Service\System\SystemdUnitClassifier
+        arguments:
+            $unitFilesDir: '%kernel.project_dir%/bin/systemd'
+
+    # Interprets the worker systemd units (returned by the remote
+    # "api/systemd/status" endpoint) using the worker unit files
+    systemd_unit_classifier_worker:
+        class: App\Service\System\SystemdUnitClassifier
+        arguments:
+            $unitFilesDir: '%kernel.project_dir%/bin/worker-systemd'
+
+    App\Service\System\FrontendStatus:
+        arguments:
+            $systemdUnitClassifier: '@systemd_unit_classifier_front'
+
     App\Service\Worker\WorkerManager:
         arguments:
             $workerServer: '%app.worker_server%'
             $workerPort: '%app.worker_port%'
             $publicAddress: '%app.general.public_address%'
+            $systemdUnitClassifier: '@systemd_unit_classifier_worker'
 
     App\Service\Worker\LabPlacementCache:
         arguments:

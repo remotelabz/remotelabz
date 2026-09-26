@@ -15,8 +15,16 @@ et timers de RemoteLabz.
 | **Service** | `remotelabz-route-monitor.service` | Vérifie la disponibilité des endpoints | Déclenché par le timer |
 | **Timer** | `remotelabz-login-logs.timer` | Nettoyage des logs de connexion | Quotidien à 2h00 UTC |
 | **Service** | `remotelabz-login-logs.service` | Exécute `app:login-logs:clean` | Déclenché par le timer |
+| **Timer** | `remotelabz-scheduled-actions.timer` | Exécution des actions planifiées (démarrage/arrêt de groupes, etc.) | Toutes les minutes |
+| **Service** | `remotelabz-scheduled-actions.service` | Exécute `app:scheduled-actions:run` | Déclenché par le timer |
 | **Daemon** | `remotelabz.service` | Consommateur de messages (messenger) | En continu (démarrage) |
 | **Daemon** | `remotelabz-proxy.service` | Proxy de redirection | En continu (démarrage) |
+
+> **Important** : toutes les unités qui lancent `bin/console` s'exécutent
+> sous l'utilisateur `www-data` (celui de l'application web). C'est
+> volontaire : un seul utilisateur écrit dans `var/cache/prod/`, ce qui
+> évite les erreurs `Failed to save key ... Permission denied` lorsque
+> root et www-data écrivent alternativement dans le même cache.
 
 ---
 
@@ -33,6 +41,8 @@ sudo cp remotelabz-route-monitor.service /etc/systemd/system/
 sudo cp remotelabz-route-monitor.timer /etc/systemd/system/
 sudo cp remotelabz-login-logs.service /etc/systemd/system/
 sudo cp remotelabz-login-logs.timer /etc/systemd/system/
+sudo cp remotelabz-scheduled-actions.service /etc/systemd/system/
+sudo cp remotelabz-scheduled-actions.timer /etc/systemd/system/
 sudo cp remotelabz.service /etc/systemd/system/
 sudo cp remotelabz-proxy.service /etc/systemd/system/
 ```
@@ -59,6 +69,7 @@ sudo systemctl enable --now remotelabz-clean-notification.timer
 sudo systemctl enable --now remotelabz-git-version-update.timer
 sudo systemctl enable --now remotelabz-route-monitor.timer
 sudo systemctl enable --now remotelabz-login-logs.timer
+sudo systemctl enable --now remotelabz-scheduled-actions.timer
 ```
 
 #### Service de monitoring des routes (avec timer)
@@ -92,6 +103,7 @@ sudo systemctl status remotelabz-clean-notification.timer
 sudo systemctl status remotelabz-git-version-update.timer
 sudo systemctl status remotelabz-route-monitor.timer
 sudo systemctl status remotelabz-login-logs.timer
+sudo systemctl status remotelabz-scheduled-actions.timer
 ```
 
 ### Voir les logs journalisés
@@ -112,6 +124,9 @@ sudo journalctl -u remotelabz-clean-notification.service --since yesterday
 # Logs du nettoyage des logs de connexion
 sudo journalctl -u remotelabz-login-logs.service --since yesterday
 
+# Logs des actions planifiées (exécutions de chaque minute)
+sudo journalctl -u remotelabz-scheduled-actions.service --since "1 hour ago"
+
 # Logs de la mise à jour de version
 sudo journalctl -u remotelabz-git-version-update.service --since yesterday
 ```
@@ -124,6 +139,9 @@ sudo systemctl start remotelabz-clean-notification.service
 
 # Nettoyage des logs de connexion
 sudo systemctl start remotelabz-login-logs.service
+
+# Actions planifiées (immédiat)
+sudo systemctl start remotelabz-scheduled-actions.service
 
 # Mise à jour de version (immédiat)
 sudo systemctl start remotelabz-git-version-update.service
@@ -151,6 +169,7 @@ sudo systemctl disable --now remotelabz-clean-notification.timer
 sudo systemctl disable --now remotelabz-git-version-update.timer
 sudo systemctl disable --now remotelabz-route-monitor.timer
 sudo systemctl disable --now remotelabz-login-logs.timer
+sudo systemctl disable --now remotelabz-scheduled-actions.timer
 
 # Pour un service avec timer
 sudo systemctl disable --now remotelabz-route-monitor.service
@@ -194,18 +213,19 @@ ExecStart=/usr/bin/env php /opt/remotelabz/bin/remotelabz-proxy
 Gère la redirection des requêtes vers les labs.
 - Redémarre instantanément en cas de crash (1s de délai)
 
-### 3. remotelabz-route-monitor.service — Monitoring des routes
+### 3. remotelabz-route-monitor.timer/service — Monitoring des routes
 
 ```ini
-Type=simple
-Restart=always
-RestartSec=300
+Type=oneshot
 ExecStart=/usr/bin/php /opt/remotelabz/bin/console app:route:monitor --no-interaction
 ```
 
 Vérifie la disponibilité des endpoints des labs.
-- Redémarre toutes les 5 minutes en cas de crash
-- Exécuté toutes les 5 minutes via le timer
+- La commande se termine après son exécution (oneshot) :
+  `inactive (dead)` est l'état normal entre deux exécutions
+- Relancé toutes les 5 minutes par le timer (`OnUnitActiveSec=5min`)
+- Sur la page admin, il est affiché « active (via timer) » quand le
+  timer est armé et que la dernière exécution a réussi
 
 ### 4. remotelabz-clean-notification.timer/service — Nettoyage des notifications
 
@@ -254,6 +274,45 @@ Supprime les logs de connexion de plus d'1 an.
 - Exécute la commande : `php bin/console app:login-logs:clean`
 - Déclenché quotidiennement à 2h00 UTC ± 10 min
 - Si le serveur était éteint, s'exécute au prochain démarrage
+
+### 8. remotelabz-scheduled-actions.timer/service — Actions planifiées
+
+```ini
+OnBootSec=30s
+OnUnitActiveSec=1min
+Persistent=false
+```
+
+Exécute les actions planifiées arrivées à échéance
+(`scheduled_at <= NOW()` et `status = pending`).
+- Exécute la commande : `php bin/console app:scheduled-actions:run --no-interaction`
+- 30 s après le boot, puis toutes les minutes
+- Si une exécution dure plus d'une minute, le déclenchement suivant est
+  ignoré (pas d'exécution en parallèle)
+- Pas de rattrapage après un arrêt : la commande retrouve de toute façon
+  les actions en attente au prochain passage
+- `TimeoutStartSec=30min` : sécurité pour un gros démarrage de groupe
+
+---
+
+## Migration depuis le cron
+
+Les anciens jobs de `/etc/cron.d/remotelabz-cron` (exécutés sous **root**,
+source d'erreurs `Permission denied` sur le cache) sont remplacés par ces
+timers, exécutés sous `www-data`. Sur un serveur existant :
+
+```bash
+# 1. Supprimer l'ancien cron
+sudo rm /etc/cron.d/remotelabz-cron
+
+# 2. Corriger la propriété du cache (les fichiers écrits par root)
+sudo chown -R www-data:www-data /opt/remotelabz/var/cache/prod
+
+# 3. Recharger et (re)démarrer les unités modifiées
+sudo systemctl daemon-reload
+sudo systemctl restart remotelabz.service remotelabz-route-monitor.service
+sudo systemctl enable --now remotelabz-scheduled-actions.timer
+```
 
 ---
 

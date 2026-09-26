@@ -1,0 +1,19 @@
+[Unit]
+Description=Run due RemoteLabz scheduled actions
+After=network.target mysql.service
+
+[Service]
+Type=oneshot
+# Même utilisateur que l'application web : seul www-data écrit dans
+# var/cache/prod/, sinon erreurs "Permission denied" sur le cache
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/remotelabz
+ExecStart=/usr/bin/php bin/console app:scheduled-actions:run --no-interaction
+StandardOutput=journal
+StandardError=journal
+TimeoutStartSec=30min
+
+# Security hardening
+PrivateTmp=yes
+NoNewPrivileges=yes

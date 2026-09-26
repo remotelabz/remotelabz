@@ -17,9 +17,11 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 /**
  * Generic runner for scheduled actions.
  *
- * This binary is the only one to configure in the server crontab:
+ * This command is run every minute by the systemd timer
+ * `remotelabz-scheduled-actions.timer` (unit files in bin/systemd/),
+ * as the www-data user:
  *
- *   * * * * * php /var/www/html/bin/console app:scheduled-actions:run >> /var/log/remotelabz/scheduled.log 2>&1
+ *   sudo systemctl enable --now remotelabz-scheduled-actions.timer
  *
  * It queries the scheduled_action table, selects all entries
  * where scheduledAt <= NOW and status = 'pending', and executes them one by one

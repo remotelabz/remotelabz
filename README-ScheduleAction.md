@@ -54,14 +54,29 @@ php bin/console doctrine:schema:update --force
 
 ---
 
-## 3. Crontab (une seule ligne, générique)
+## 3. Timer systemd (remplace le cron)
 
-```cron
-* * * * * php /var/www/html/bin/console app:scheduled-actions:run >> /var/log/remotelabz/scheduled.log 2>&1
+Le runner est déclenché par le timer `remotelabz-scheduled-actions.timer`
+(fichiers dans `bin/systemd/`), qui s'exécute sous `www-data` comme
+l'application web — indispensable pour éviter les erreurs
+`Failed to save key ... Permission denied` sur le cache
+(plusieurs utilisateurs écrivant dans `var/cache/prod/`).
+
+```bash
+sudo cp bin/systemd/remotelabz-scheduled-actions.service /etc/systemd/system/
+sudo cp bin/systemd/remotelabz-scheduled-actions.timer /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now remotelabz-scheduled-actions.timer
 ```
 
 Le runner s'exécute chaque minute, sélectionne les actions dont `scheduled_at <= NOW()` et `status = pending`,
 et les exécute. La granularité est donc d'une minute.
+
+Les logs se consultent avec :
+
+```bash
+sudo journalctl -u remotelabz-scheduled-actions.service --since "1 hour ago"
+```
 
 ---
 

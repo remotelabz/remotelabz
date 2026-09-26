@@ -1,0 +1,14 @@
+[Unit]
+Description=Run RemoteLabz scheduled actions every minute
+Requires=remotelabz-scheduled-actions.service
+
+[Timer]
+# 30s après le boot, puis toutes les minutes
+OnBootSec=30s
+OnUnitActiveSec=1min
+# Pas de rattrapage : la commande récupère de toute façon
+# toutes les actions dont l'heure est arrivée
+Persistent=false
+
+[Install]
+WantedBy=timers.target

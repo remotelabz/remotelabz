@@ -3,19 +3,18 @@ Description=RemoteLabz Lab Routes Monitor Service
 After=network.target
 
 [Service]
-Type=simple
-User=root
-Group=root
+# La commande se termine après son exécution : c'est le timer
+# (remotelabz-route-monitor.timer) qui relance la périodicité
+Type=oneshot
+User=www-data
+Group=www-data
 WorkingDirectory=/opt/remotelabz
 ExecStart=/usr/bin/php /opt/remotelabz/bin/console app:route:monitor --no-interaction
-Restart=always
-RestartSec=300
 StandardOutput=journal
 StandardError=journal
+TimeoutStartSec=10min
 
-# Security hardening (optionnel)
-NoNewPrivileges=true
+# NB: pas de NoNewPrivileges — la commande utilise `sudo /usr/sbin/ip`
+# (autorisé sans mot de passe pour www-data dans config/sudo/remotelabz)
+# et sudo a besoin de changer d'uid.
 PrivateTmp=true
-
-[Install]
-WantedBy=multi-user.target

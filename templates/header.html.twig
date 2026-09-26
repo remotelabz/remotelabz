@@ -48,7 +48,7 @@
             {{ svg('settings', 's16') }}
           </a>
           {% elseif is_granted('ROLE_TEACHER_EDITOR') and not is_granted('ROLE_ADMINISTRATOR') %}
-          <a class="nav-link ml-2" href="{{ path('devices') }}" data-toggle="tooltip" data-placement="bottom" title="Editor area">
+          <a class="nav-link ml-2" href="{{ path('sandbox') }}" data-toggle="tooltip" data-placement="bottom" title="Editor area">
             {{ svg('settings', 's16') }}
           </a>
           {% else %}

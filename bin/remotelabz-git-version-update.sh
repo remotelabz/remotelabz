@@ -58,6 +58,11 @@ fi
 # Générer l'URL du commit
 COMMIT_URL="${GITHUB_REPO}/commit/${COMMIT_SHORT}"
 
+# Le fichier est potentiellement possédé par un autre utilisateur (modèle
+# remotelabz:www-data) : le chmod serait refusé, on règle l'umask pour que
+# la création donne bien 644
+umask 022
+
 # Créer le fichier JSON
 cat > "$OUTPUT_FILE" << EOF
 {
@@ -70,5 +75,3 @@ cat > "$OUTPUT_FILE" << EOF
     "updated_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 }
 EOF
-
-chmod 644 "$OUTPUT_FILE"
