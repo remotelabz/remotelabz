@@ -13,6 +13,7 @@ parameters:
     directory.public.upload: '%directory.public%/uploads'
     directory.public.upload.lab: '%directory.public.upload%/lab'
     directory.public.upload.lab.banner: '%directory.public.upload.lab%/banner'
+    directory.public.upload.practical_subjects: '%directory.public.upload%/practical_subjects'
     iso_directory: '%directory.public.upload%/iso'
     image_directory: '%directory.public.upload%/images'
     image_default_profile: 'Circle-icons-profile.png'
@@ -167,6 +168,10 @@ services:
     App\Service\LabBannerFileUploader:
         arguments:
             $targetDirectory: '%directory.public.upload.lab.banner%'
+
+    App\Service\PracticalSubjectFileUploader:
+        arguments:
+            $targetDirectory: '%directory.public.upload.practical_subjects%'
 
     App\Service\ProfilePictureFileUploader:
         arguments:

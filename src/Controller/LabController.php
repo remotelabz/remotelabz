@@ -45,6 +45,8 @@ use App\Service\Lab\LabImporter;
 use App\Service\Lab\BannerManager;
 use App\Repository\FlavorRepository;
 use App\Service\LabBannerFileUploader;
+use App\Repository\PracticalSubjectRepository;
+use App\Entity\TextObject;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use FOS\RestBundle\Controller\Annotations\QueryParam;
@@ -71,6 +73,7 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Symfony\Component\Security\Http\Attribute\Security;
 use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Filesystem\Filesystem;
@@ -909,43 +912,6 @@ class LabController extends Controller
         $this->logger->debug("[LabController:adddeviceinlab]::Add device ".$new_device->getName()." in lab ".$lab->getName()." is done");
     }
 
-    /* #[Route(path: '/admin/labs/{id<\d+>}/edit2', name: 'edit2_lab')]
-    public function editAction(Request $request, int $id)
-    {
-
-        $lab = $this->labRepository->find($id);
-        $this->logger->debug("[LabController:editAction]Lab '".$lab->getName()."' is edited by : ".$this->getUser()->getUserIdentifier());
-
-        if ( !is_null($lab) and (($lab->getAuthor()->getId() == $this->getUser()->getId() ) or $this->getUser()->isAdministrator()) )
-        {
-            $this->logger->info("Lab '".$lab->getName()."' is edited by : ".$this->getUser()->getUserIdentifier());
-        
-
-        if (!$lab) {
-            throw new NotFoundHttpException("Lab " . $id . " does not exist.");
-        }
-
-        $labForm = $this->createForm(LabType::class, $lab);
-        $labForm->handleRequest($request);
-
-        if ($request->getContentTypeFormat() === 'json') {
-            $lab = json_decode($request->getContent(), true);
-            $labForm->submit($lab, false);
-        }
-
-        return $this->render('lab/editor.html.twig', ['lab' => $lab]);
-    }
-    else
-        { 
-            if (!is_null($lab))
-                $this->logger->warning("User ".$this->getUser()->getUserIdentifier()." has tried to edit the lab".$lab->getName());
-            else 
-                $this->logger->warning("User ".$this->getUser()->getUserIdentifier()." has tried to edit a lab");
-            return $this->redirectToRoute('index');
-        }
-    }
-    */
-
     #[Route(path: '/admin/labs/{id<\d+>}/edit', name: 'edit_lab')]
     #[Route(path: '/admin/labs_template/{id<\d+>}/edit', name: 'edit_lab_template')]
     public function edit2Action(Request $request, int $id)
@@ -1164,14 +1130,57 @@ class LabController extends Controller
 
         $this->logger->debug("[LabController:createcopyLab]::Lab id ".$id." is copied to create a new lab ".$lab_name." by " . $this->getUser()->getUserIdentifier() . " is created");
         $this->logger->info("Lab ".$lab->getName()." is copied to create a new lab ".$lab_name." by " . $this->getUser()->getUserIdentifier());
-        
+
         //Find all devices of the lab $id
         $devices = $lab->getDevices();
         if ($devices == null || count($devices) == 0) {
             $this->logger->debug("[LabController:createcopyLab]::No devices found in lab ".$lab_name);
         }
         $entityManager->flush();
-        
+
+        //Copy the lab configuration so the new lab is independent from the original one
+        $new_lab->setShortDescription($lab->getShortDescription());
+        $new_lab->setDescription($lab->getDescription());
+        $new_lab->setTasks($lab->getTasks());
+        $new_lab->setVersion($lab->getVersion());
+        $new_lab->setScripttimeout($lab->getScripttimeout());
+        $new_lab->setIsInternetAuthorized($lab->isInternetAuthorized());
+        $new_lab->setHasTimer($lab->getHasTimer());
+        $new_lab->setTimer($lab->getTimer());
+
+        //Copy the text objects (independent copies)
+        foreach ($lab->getTextobjects() as $textobject) {
+            $new_textobject = new TextObject();
+            $new_textobject->setName($textobject->getName());
+            if (null !== $textobject->getType()) {
+                $new_textobject->setType($textobject->getType());
+            }
+            if (null !== $textobject->getData()) {
+                $new_textobject->setData($textobject->getData());
+            }
+            $new_lab->addTextobject($new_textobject);
+        }
+
+        //Link the same practical subjects (shared content, not duplicated)
+        foreach ($lab->getPracticalSubjects() as $practicalSubject) {
+            $new_lab->addPracticalSubject($practicalSubject);
+        }
+
+        //Copy the banner file
+        if (null !== $lab->getBanner()) {
+            $bannerSource = $this->getParameter('directory.public.upload.lab.banner').'/'.$lab->getId().'/'.$lab->getBanner();
+            if (is_file($bannerSource)) {
+                $bannerTargetDirectory = $this->getParameter('directory.public.upload.lab.banner').'/'.$new_lab->getId();
+                $filesystem = new Filesystem();
+                if (!$filesystem->exists($bannerTargetDirectory)) {
+                    $filesystem->mkdir($bannerTargetDirectory);
+                }
+                $filesystem->copy($bannerSource, $bannerTargetDirectory.'/'.$lab->getBanner());
+                $new_lab->setBanner($lab->getBanner());
+            }
+        }
+        $entityManager->flush();
+
         try {
             foreach ($devices as $device) {
                 $this->logger->debug("[LabController:createcopyLab]::Device ".$device->getName()." is a sandbox device, copying it.");
@@ -1278,18 +1287,131 @@ class LabController extends Controller
         $entityManager->persist($lab);
         $entityManager->flush();
 
-        $this->logger->info("Lab named" . $lab->getName() . " modified");
+		$this->logger->info("Lab named" . $lab->getName() . " modified");
 
-        $response = new Response();
-        $response->setContent(json_encode([
-            'code' => 201,
-            'status'=> 'success',
-            'message' => 'Lab has been saved (60023).']));
-        $response->headers->set('Content-Type', 'application/json');
-        return $response;
-    }
+		$response = new Response();
+		$response->setContent(json_encode([
+			'code' => 201,
+			'status'=> 'success',
+			'message' => 'Lab has been saved (60023).']));
+		$response->headers->set('Content-Type', 'application/json');
+		return $response;
+	}
 
-    
+	#[Get('/api/labs/{id<\d+>}/practical-subjects', name: 'api_get_lab_practical_subjects')]
+	public function getPracticalSubjectsAction(Request $request, int $id)
+	{
+		$lab = $this->labRepository->find($id);
+		if (!$lab) {
+			throw new NotFoundHttpException("Lab " . $id . " does not exist.");
+		}
+		$this->denyAccessUnlessGranted(LabVoter::SEE, $lab);
+
+		return $this->json($lab->getPracticalSubjects(), 200, [], ['api_get_practical_subjects']);
+	}
+
+	#[Post('/api/labs/{id<\d+>}/practical-subjects/{subjectId<\d+>}', name: 'api_add_practical_subject_to_lab')]
+	public function addPracticalSubjectAction(int $id, int $subjectId, PracticalSubjectRepository $practicalSubjectRepository)
+	{
+		$lab = $this->labRepository->find($id);
+		if (!$lab) {
+			throw new NotFoundHttpException("Lab " . $id . " does not exist.");
+		}
+		$this->denyAccessUnlessGranted(LabVoter::EDIT, $lab);
+
+		$practicalSubject = $practicalSubjectRepository->find($subjectId);
+		if (!$practicalSubject) {
+			throw new NotFoundHttpException("Practical subject " . $subjectId . " does not exist.");
+		}
+
+		$lab->addPracticalSubject($practicalSubject);
+
+		$entityManager = $this->entityManager;
+		$entityManager->persist($lab);
+		$entityManager->flush();
+
+		$this->logger->info("Practical subject " . $practicalSubject->getName() . " (" . $subjectId . ") linked to lab " . $lab->getName() . " by " . $this->getUser()->getUserIdentifier());
+
+		return new JsonResponse(['code' => 201, 'status' => 'success'], 201);
+	}
+
+	#[Delete('/api/labs/{id<\d+>}/practical-subjects/{subjectId<\d+>}', name: 'api_remove_practical_subject_from_lab')]
+	public function removePracticalSubjectAction(int $id, int $subjectId, PracticalSubjectRepository $practicalSubjectRepository)
+	{
+		$lab = $this->labRepository->find($id);
+		if (!$lab) {
+			throw new NotFoundHttpException("Lab " . $id . " does not exist.");
+		}
+		$this->denyAccessUnlessGranted(LabVoter::EDIT, $lab);
+
+		$practicalSubject = $practicalSubjectRepository->find($subjectId);
+		if (!$practicalSubject || !$lab->getPracticalSubjects()->contains($practicalSubject)) {
+			throw new NotFoundHttpException("Practical subject " . $subjectId . " is not linked to lab " . $id . ".");
+		}
+
+		$lab->removePracticalSubject($practicalSubject);
+
+		$entityManager = $this->entityManager;
+		$entityManager->persist($lab);
+		$entityManager->flush();
+
+		$this->logger->info("Practical subject " . $practicalSubject->getName() . " (" . $subjectId . ") unlinked from lab " . $lab->getName() . " by " . $this->getUser()->getUserIdentifier());
+
+		return new JsonResponse(['code' => 200, 'status' => 'success'], 200);
+	}
+
+	#[Route(path: '/labs/{id<\d+>}/subject/{subjectId<\d+>}', name: 'view_practical_subject', methods: 'GET')]
+	public function viewPracticalSubjectAction(int $id, int $subjectId, PracticalSubjectRepository $practicalSubjectRepository)
+	{
+		$lab = $this->labRepository->find($id);
+		if (!$lab) {
+			throw new NotFoundHttpException("Lab " . $id . " does not exist.");
+		}
+		$this->denyAccessUnlessGranted(LabVoter::SEE, $lab);
+
+		$practicalSubject = $practicalSubjectRepository->find($subjectId);
+		if (!$practicalSubject || !$lab->getPracticalSubjects()->contains($practicalSubject)) {
+			throw new NotFoundHttpException("Practical subject " . $subjectId . " is not linked to lab " . $id . ".");
+		}
+
+		if ($practicalSubject->isPdf()) {
+			return $this->redirectToRoute('get_practical_subject_pdf', ['id' => $id, 'subjectId' => $subjectId]);
+		}
+
+		if ($practicalSubject->isUrl()) {
+			return new RedirectResponse($practicalSubject->getUrl());
+		}
+
+		return $this->render('practical_subject/view.html.twig', [
+			'lab' => $lab,
+			'subject' => $practicalSubject,
+		]);
+	}
+
+	#[Route(path: '/labs/{id<\d+>}/subject/{subjectId<\d+>}/pdf', name: 'get_practical_subject_pdf', methods: 'GET')]
+	public function getPracticalSubjectPdfAction(int $id, int $subjectId, PracticalSubjectRepository $practicalSubjectRepository)
+	{
+		$lab = $this->labRepository->find($id);
+		if (!$lab) {
+			throw new NotFoundHttpException("Lab " . $id . " does not exist.");
+		}
+		$this->denyAccessUnlessGranted(LabVoter::SEE, $lab);
+
+		$practicalSubject = $practicalSubjectRepository->find($subjectId);
+		if (!$practicalSubject || !$practicalSubject->isPdf() || !$lab->getPracticalSubjects()->contains($practicalSubject)) {
+			throw new NotFoundHttpException("Practical subject PDF does not exist.");
+		}
+
+		$directory = $this->getParameter('directory.public.upload.practical_subjects').'/'.$practicalSubject->getId();
+		$file = $directory.'/'.$practicalSubject->getPdfFilename();
+		if (!is_file($file)) {
+			throw new NotFoundHttpException("Practical subject PDF file does not exist.");
+		}
+
+		return $this->file($file, $practicalSubject->getId(), ResponseHeaderBag::DISPOSITION_INLINE);
+	}
+
+
 	#[Delete('/api/labs/{id<\d+>}', name: 'api_delete_lab')]
     #[Route(path: '/admin/labs/{id<\d+>}/delete', name: 'delete_lab', methods: 'GET')]
     public function deleteAction(Request $request, int $id, UserInterface $user,LabInstanceRepository $labInstanceRepository)

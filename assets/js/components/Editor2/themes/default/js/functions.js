@@ -1414,30 +1414,6 @@ export function postBanner(banner, attachments) {
     });
 }
 
-// Edit pratical subject
-export function printFormSubjectLab(action, values) {
-    var title = 'Edit practical subject' ;
-
-    var html = new EJS({
-        url: '/build/editor/ejs/form_subject_lab.ejs'
-    }).render({
-        name: (values['name'] != null) ? values['name'] : '',
-        version: (values['version'] != null) ? values['version'] : '',
-        scripttimeout: (values['scripttimeout'] != null) ? values['scripttimeout'] : '300',
-        author: (values['author'] != null) ? values['author'] : '',
-        description: (values['description'] != null) ? values['description'] : '',
-        body: (values['body'] != null) ? values['body'] : '',
-        title: title,
-        action: action,
-        MESSAGES: MESSAGES,
-    })
-
-    logger(1, 'DEBUG: printFormSubjectLab popping up the lab-add form.');
-    addModalWide(title, html, '');
-    var subjectEditor = new EasyMDE({ element: $("#editor")[0] });
-    validateLabInfo();
-}
-
 // Node form
 export function printFormNode(action, values, fromNodeList) {
     logger(1, 'action2 = ' + action);
@@ -2620,51 +2596,6 @@ export function printListNodes(nodes) {
     })
 }
 
-// Display all text objects in a table
-export function printListTextobjects(textobjects) {
-    logger(1, 'DEBUG: printing text objects list');
-    var text
-        , body = '<div class="table-responsive">' +
-            '<table class="table">' +
-            '<thead>' +
-            '<tr>' +
-            '<th>' + MESSAGES[92] + '</th>' +
-            '<th>' + MESSAGES[19] + '</th>' +
-            '<th>' + MESSAGES[95] + '</th>' +
-            '<th style="width:69%">' + MESSAGES[146] + '</th>';
-            if ((((ROLE == 'ROLE_TEACHER' || ROLE == 'ROLE_TEACHER_EDITOR' ) && AUTHOR == 1) || (ROLE == 'ROLE_ADMINISTRATOR' || ROLE == 'ROLE_SUPER_ADMINISTRATOR')) && EDITION ==1 && LOCK == 0 ) {
-                body += '<th style="width:9%">' + MESSAGES[99] + '</th>';
-            }
-            body +='</tr>' +
-            '</thead>' +
-            '<tbody>'
-        ;
-
-    $.each(textobjects, function (key, value) {
-        var textClass = '',
-            text = '';
-        if (value['type'] == 'text') {
-            text = $('#customText' + value['id'] + ' p').html();
-            textClass ='customText'
-        }
-
-        body +=
-            '<tr class="textObject' + value['id'] + '">' +
-            '<td>' + value['id'] + '</td>' +
-            '<td>' + value['name'] + '</td>' +
-            '<td>' + value['type'] + '</td>' +
-            '<td>' + text + '</td>';
-        if ((((ROLE == 'ROLE_TEACHER' || ROLE == 'ROLE_TEACHER_EDITOR') && AUTHOR == 1) || (ROLE == 'ROLE_ADMINISTRATOR' || ROLE == 'ROLE_SUPER_ADMINISTRATOR')) && EDITION ==1 && LOCK == 0 ) {
-             body += '<td><a class="action-textobjectdelete '+ textClass +'" data-path="' + value['id'] + '" data-name="' + value['name'] + '" href="javascript:void(0)" title="' + MESSAGES[65] + '">' +
-                '<i class="glyphicon glyphicon-trash" style="margin-left:20px;"></i>' +
-                '</a></td>'
-        }
-        body += '</tr>';
-    });
-    body += '</tbody></table></div>';
-    addModalWide(MESSAGES[150], body, '');
-}
-
 // Print Authentication Page
 export function printPageAuthentication() {
     location.href = "/" ;
@@ -2682,15 +2613,10 @@ function printPageLabOpen(lab) {
          }
          //$('#lab-sidebar ul').append('<li class="action-nodesget-li"><a class="action-nodesget" href="javascript:void(0)" title="' + MESSAGES[62] + '"><i class="glyphicon glyphicon-hdd"></i></a></li>');
          //$('#lab-sidebar ul').append('<li><a class="action-configsget"  href="javascript:void(0)" title="' + MESSAGES[58] + '"><i class="glyphicon glyphicon-align-left"></i></a></li>');
-         if ((((ROLE == 'ROLE_TEACHER' || ROLE == 'ROLE_TEACHER_EDITOR') && AUTHOR == 1) || (ROLE == 'ROLE_ADMINISTRATOR' || ROLE == 'ROLE_SUPER_ADMINISTRATOR')) && EDITION ==1 && LOCK == 0 ) {
-         $('#lab-sidebar ul').append('<li><a class="action-textobjectsget" href="javascript:void(0)" title="' + MESSAGES[150] + '"><i class="glyphicon glyphicon-text-background"></i></a></li>');
-         }
          $('#lab-sidebar ul').append('<li><a class="action-moreactions" href="javascript:void(0)" title="' + MESSAGES[125] + '"><i class="glyphicon glyphicon-th"></i></a></li>');
          $('#lab-sidebar ul').append('<li><a class="action-labtopologyrefresh" href="javascript:void(0)" title="' + MESSAGES[57] + '"><i class="glyphicon glyphicon-refresh"></i></a></li>');
          $('#lab-sidebar ul').append('<li class="plus-minus-slider"><i class="fa fa-minus"></i><div class="col-md-2 glyphicon glyphicon-zoom-in sidemenu-zoom"></div><div id="zoomslide" class="col-md-5"></div><div class="col-md-5"></div><i class="fa fa-plus"></i><br></li>');
          $('#zoomslide').slider({value:100,min:10,max:200,step:10,slide:zoomlab});
-         $('#lab-sidebar ul').append('<li><a class="action-labbodyget" href="javascript:void(0)" title="' + MESSAGES[64] + '"><i class="glyphicon glyphicon-list-alt"></i></a></li>');
-         $('#lab-sidebar ul').append('<li><a class="action-labsubjectget" href="javascript:void(0)" title="Practical subject"><i class="glyphicon glyphicon-tasks"></i></a></li>');
          if ((((ROLE == 'ROLE_TEACHER' || ROLE == 'ROLE_TEACHER_EDITOR') && AUTHOR == 1) || (ROLE == 'ROLE_ADMINISTRATOR' || ROLE == 'ROLE_SUPER_ADMINISTRATOR')) && EDITION ==1 && LOCK == 0 ) {
             $('#lab-sidebar ul').append('<li><a class="action-lock-lab" href="javascript:void(0)" title="' + MESSAGES[166] + '"><i class="glyphicon glyphicon-ok-circle"></i></a></li>');
          }
