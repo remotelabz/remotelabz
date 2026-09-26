@@ -411,15 +411,15 @@ install_requirements() {
     systemctl restart rabbitmq-server
     
     print_info "Installation de Mercure Hub"
-    wget https://github.com/dunglas/mercure/releases/download/v1.0.0/mercure_1.0.0_linux_amd64.deb
-    wget https://github.com/dunglas/mercure/releases/download/v1.0.0/checksums.txt
+    wget https://github.com/dunglas/mercure/releases/download/v1.0.2/mercure_1.0.2_linux_amd64.deb
+    wget https://github.com/dunglas/mercure/releases/download/v1.0.2/checksums.txt
     sha256sum -c checksums.txt --ignore-missing 
 
-    apt install ./mercure_1.0.0_linux_amd64.deb
+    apt install ./mercure_1.0.2_linux_amd64.deb
     cp /opt/remotelabz/bin/systemd/remotelabz-mercure.service /etc/systemd/system
     systemctl daemon-reload
     systemctl enable --now remotelabz-mercure
-    rm mercure_1.0.0_linux_amd64.deb checksums.txt
+    rm mercure_1.0.2_linux_amd64.deb checksums.txt
 
     print_info "System requirements installation completed! ✅"
 }

@@ -228,10 +228,11 @@ function ChatWindow({ show, onHide, lab, user, variant = 'modal' }) {
         :
         <div className="d-flex" style={{ height, width: '100%', minWidth: 0 }}>
             {/* Participants */}
-                <div className="border-right pr-3" style={{ width: 220 }}>
+                <div className="border-right pr-3 d-flex flex-column" style={{ width: 220, minHeight: 0 }}>
                     <div className="text-muted small mb-2">
                         Participants ({onlineCount} online / {members.length})
                     </div>
+                    <div className="overflow-auto" style={{ flex: 1, minHeight: 0 }}>
                     {loading
                         ?
                         <Spinner animation="border" size="sm" className="my-3" />
@@ -258,6 +259,7 @@ function ChatWindow({ show, onHide, lab, user, variant = 'modal' }) {
                                 </div>
                             ))
                     }
+                    </div>
                 </div>
 
                 {/* Messages */}
