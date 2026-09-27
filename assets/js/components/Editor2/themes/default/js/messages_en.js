@@ -193,5 +193,8 @@ MESSAGES[206] = 'Circular Align' ;
 MESSAGES[207] = 'Auto Align' ;
 MESSAGES[235] = 'Dark Mode';
 MESSAGES[236] = 'Light Mode';
+MESSAGES[237] = 'Edit description';
+MESSAGES[238] = 'Short description';
+MESSAGES[239] = 'Description saved.';
 
 export {MESSAGES};

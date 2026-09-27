@@ -36,10 +36,8 @@
         {% endfor %}
     </div>
 {% endif %}
-{% if lab.description is defined and lab.description is not empty %}
-    {% apply markdown_to_html %}
-        {{lab.description}}
-    {% endapply %}
+{% if lab.description is not empty %}
+    {{ lab.description|markdown_to_html }}
 {% elseif lab.practicalSubjects|length == 0 %}
     <p class="text-muted">No description</p>
 {% endif %}

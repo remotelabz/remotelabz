@@ -27,7 +27,7 @@ import '../bootstrap/js/bootstrap.min';
 import '../bootstrap/js/bootstrap-select.min';
 import './ejs';
 import { logger, getJsonMessage, newUIreturn, printPageAuthentication, getUserInfo, getLabInfo, closeLab, postBanner,
-         lockLab, printFormLab, unlockLab, printLabStatus, postLogin, getNodeInterfaces, deleteNode, form2Array, getVlan, getConnection, removeConnection, setNodeInterface,
+          lockLab, printFormLab, printFormLabDescription, unlockLab, printLabStatus, postLogin, getNodeInterfaces, deleteNode, form2Array, getVlan, getConnection, removeConnection, setNodeInterface,
          setNodesPosition, printLabTopology, printContextMenu, getNodes, start, recursive_start, stop, printFormNode, printFormNodeConfigs, 
          printListNodes, setNodeData, printFormCustomShape, printFormText, printFormEditCustomShape,
          printFormEditText, getTextObjects, createTextObject, 
@@ -1029,6 +1029,17 @@ $(document).on('click', '.action-labedit-inline', function (e) {
     $('#context-menu').remove();
 });
 
+// Edit the lab description (Markdown, displayed when the lab is instantiated)
+$(document).on('click', '.action-labdescription', function (e) {
+    logger(1, 'DEBUG: action = labdescription');
+    $.when(getLabInfo($('#lab-viewport').attr('data-path'))).done(function (values) {
+        printFormLabDescription($('#lab-viewport').attr('data-path'), (values['body'] != null) ? values['body'] : '');
+    }).fail(function (message) {
+        addModalError(message);
+    });
+    $('#context-menu').remove();
+});
+
 // Clone the current lab
 $(document).on('click', '.action-labclone', function (e) {
     logger(1, 'DEBUG: action = labclone');
@@ -1471,6 +1482,7 @@ $(document).on('click', '.action-moreactions', function (e) {
     
     if ((((ROLE == 'ROLE_TEACHER' || ROLE == 'ROLE_TEACHER_EDITOR') && AUTHOR == 1) || (ROLE == 'ROLE_ADMINISTRATOR' || ROLE == 'ROLE_SUPER_ADMINISTRATOR')) && EDITION ==1 && LOCK == 0 ) {
         body += '<li><a class="action-subjectsmgmt" href="javascript:void(0)"><i class="glyphicon glyphicon-file"></i> Practical subjects</a></li>';
+        body += '<li><a class="action-labdescription" href="javascript:void(0)"><i class="glyphicon glyphicon-edit"></i> ' + MESSAGES[237] + '</a></li>';
         body += '<li><a class="action-labclone" href="javascript:void(0)"><i class="glyphicon glyphicon-copy"></i> Clone lab</a></li>';
         body += '<li><a class="action-labedit" href="javascript:void(0)"><i class="glyphicon glyphicon-pencil"></i> ' + MESSAGES[87] + '</a></li>';
     }

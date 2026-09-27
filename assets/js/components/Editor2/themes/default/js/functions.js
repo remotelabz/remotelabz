@@ -9,8 +9,8 @@
  * @copyright 2014-2016 Andrea Dainese
  * @license BSD-3-Clause https://github.com/dainok/unetlab/blob/master/LICENSE
  * @copyright 2018-2020 Julien Hubert <https://github.com/Atlanta>
- * @copyright 2018-2025 Florent Nolot <https://github.com/florent-n>
  * @copyright 2024-2025 Noemie P. <https://github.com/Noemie-P>
+ * @copyright 2018- Florent Nolot <https://github.com/florent-n>
  * @author Florent Nolot
  * @author Julien Hubert
  * @author Noemie P.
@@ -1393,6 +1393,49 @@ export function printFormLab(action, values) {
     });
  
     validateLabInfo();
+}
+
+// Open the lab description (Markdown) editor. The description is the text
+// displayed when the lab is instantiated.
+export function printFormLabDescription(labId, body) {
+    var html = '<div class="form-group">'
+        + '<textarea id="lab-description-editor"></textarea>'
+        + '</div>';
+    addModalWide(MESSAGES[237], html,
+        '<button type="button" id="lab-description-save" class="btn btn-success">' + MESSAGES[47] + '</button> '
+        + '<button type="button" class="btn btn-flat" data-dismiss="modal">' + MESSAGES[18] + '</button>');
+
+    // EasyMDE takes its initial value from the textarea content
+    $('#lab-description-editor').text((body != null) ? body : '');
+    var easyMDE = new EasyMDE({
+        element: document.getElementById('lab-description-editor'),
+        minHeight: "300px",
+        status: false,
+        autosave: { enabled: false }
+    });
+
+    $('#lab-description-save').on('click', function () {
+        $.ajax({
+            cache: false,
+            timeout: TIMEOUT,
+            type: 'PUT',
+            url: encodeURI('/api/labs/subject/' + labId),
+            contentType: 'application/json',
+            data: JSON.stringify({ body: easyMDE.value() }),
+            dataType: 'json',
+            success: function (data) {
+                if (data['status'] == 'success') {
+                    addMessage('success', MESSAGES[239]);
+                    $('#lab-description-editor').closest('.modal').modal('hide');
+                } else {
+                    addModalError(data['message']);
+                }
+            },
+            error: function (data) {
+                addModalError(getJsonMessage(data['responseText']));
+            }
+        });
+    });
 }
 
 export function postBanner(banner, attachments) {

@@ -98,9 +98,7 @@
     <div class="subject-content">
         <h1>{{ subject.name }}</h1>
         {% if subject.description is not empty %}
-            {% apply markdown_to_html %}
-                {{ subject.description }}
-            {% endapply %}
+            {{ subject.description|markdown_to_html }}
         {% else %}
             <p>{{ 'No content'|trans }}</p>
         {% endif %}
