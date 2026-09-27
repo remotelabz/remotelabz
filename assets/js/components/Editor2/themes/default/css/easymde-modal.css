@@ -1,0 +1,21 @@
+/* Compact EasyMDE toolbar for the in-modal markdown editors
+   ("Edit description" and "Practical subjects") so that all buttons
+   stay on a single line even on narrow screens. */
+.md-editor-modal .editor-toolbar {
+  padding-left: 6px;
+  padding-right: 6px;
+}
+
+.md-editor-modal .editor-toolbar button {
+  min-width: 24px;
+  padding: 0 3px;
+  /* The "table" toolbar button carries the "table" class, which Bootstrap
+     styles as width:100%/margin-bottom:20px (table element) - neutralize it */
+  width: auto;
+  max-width: none;
+  margin-bottom: 0;
+}
+
+.md-editor-modal .editor-toolbar i.separator {
+  margin: 0 2px;
+}

@@ -1395,6 +1395,22 @@ export function printFormLab(action, values) {
     validateLabInfo();
 }
 
+// Shared EasyMDE configuration for the in-modal Markdown editors.
+// EasyMDE's fullscreen mode uses a z-index below the Bootstrap modal's, so it
+// cannot work inside a modal: the toolbar offers side-by-side instead.
+export function createEasyMDEEditor(element) {
+    return new EasyMDE({
+        element: element,
+        minHeight: "300px",
+        status: false,
+        autosave: { enabled: false },
+        sideBySideFullscreen: false,
+        toolbar: ['bold', 'italic', 'strikethrough', 'heading', '|', 'code', 'quote', '|',
+                  'unordered-list', 'ordered-list', 'clean-block', '|', 'link', 'image',
+                  'table', '|', 'preview', 'side-by-side']
+    });
+}
+
 // Open the lab description (Markdown) editor. The description is the text
 // displayed when the lab is instantiated.
 export function printFormLabDescription(labId, body) {
@@ -1403,16 +1419,12 @@ export function printFormLabDescription(labId, body) {
         + '</div>';
     addModalWide(MESSAGES[237], html,
         '<button type="button" id="lab-description-save" class="btn btn-success">' + MESSAGES[47] + '</button> '
-        + '<button type="button" class="btn btn-flat" data-dismiss="modal">' + MESSAGES[18] + '</button>');
+        + '<button type="button" class="btn btn-flat" data-dismiss="modal">' + MESSAGES[18] + '</button>', 'md-editor-modal');
 
     // EasyMDE takes its initial value from the textarea content
-    $('#lab-description-editor').text((body != null) ? body : '');
-    var easyMDE = new EasyMDE({
-        element: document.getElementById('lab-description-editor'),
-        minHeight: "300px",
-        status: false,
-        autosave: { enabled: false }
-    });
+    var initialBody = (body != null) ? body : '';
+    $('#lab-description-editor').text(initialBody);
+    var easyMDE = createEasyMDEEditor(document.getElementById('lab-description-editor'));
 
     $('#lab-description-save').on('click', function () {
         $.ajax({
@@ -1425,6 +1437,7 @@ export function printFormLabDescription(labId, body) {
             dataType: 'json',
             success: function (data) {
                 if (data['status'] == 'success') {
+                    initialBody = easyMDE.value();
                     addMessage('success', MESSAGES[239]);
                     $('#lab-description-editor').closest('.modal').modal('hide');
                 } else {
@@ -1435,6 +1448,13 @@ export function printFormLabDescription(labId, body) {
                 addModalError(getJsonMessage(data['responseText']));
             }
         });
+    });
+
+    // Do not silently discard unsaved changes (ESC, backdrop click, close button)
+    $('#lab-description-editor').closest('.modal').on('hide.bs.modal', function (e) {
+        if (easyMDE.value() !== initialBody && !confirm('Unsaved changes will be lost. Close anyway?')) {
+            e.preventDefault();
+        }
     });
 }
 

@@ -9,13 +9,16 @@ use Symfony\Component\Asset\Package;
 use Twig\Extension\AbstractExtension;
 use Doctrine\ORM\PersistentCollection;
 use Symfony\Component\Asset\VersionStrategy\EmptyVersionStrategy;
+use League\CommonMark\GithubFlavoredMarkdownConverter;
 
 class AppExtension extends AbstractExtension
 {
     private $rootDirectory;
+    private $gfmConverter;
     public function __construct(string $rootDirectory)
     {
         $this->rootDirectory = $rootDirectory;
+        $this->gfmConverter = new GithubFlavoredMarkdownConverter();
     }
 
     public function getFilters(): array
@@ -25,7 +28,18 @@ class AppExtension extends AbstractExtension
             new TwigFilter('firstLetter', [$this, 'firstLetterFilter']),
             new TwigFilter('truncate', [$this, 'truncate']),
             new TwigFilter('json_decode', [$this, 'jsonDecode']),
+            // GFM (tables, strikethrough, autolinks, task lists) so the
+            // server-side rendering matches the EasyMDE preview
+            new TwigFilter('markdown_gfm_to_html', [$this, 'markdownGfmToHtml'], ['is_safe' => ['html']]),
         ];
+    }
+
+    public function markdownGfmToHtml(?string $text): string
+    {
+        if ($text === null || trim($text) === '') {
+            return '';
+        }
+        return (string) $this->gfmConverter->convert($text);
     }
 
     public function getFunctions(): array

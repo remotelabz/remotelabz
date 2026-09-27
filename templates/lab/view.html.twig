@@ -59,7 +59,7 @@
 </div>
 {% if lab.description is not empty %}
 <h4>General descripton</h4>
-    {{ lab.description|markdown_to_html }}
+    {{ lab.description|markdown_gfm_to_html }}
 {% elseif lab.practicalSubjects|length == 0 %}
     <p class="text-muted">No description</p>
 {% endif %}

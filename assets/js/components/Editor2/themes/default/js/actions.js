@@ -27,7 +27,7 @@ import '../bootstrap/js/bootstrap.min';
 import '../bootstrap/js/bootstrap-select.min';
 import './ejs';
 import { logger, getJsonMessage, newUIreturn, printPageAuthentication, getUserInfo, getLabInfo, closeLab, postBanner,
-          lockLab, printFormLab, printFormLabDescription, unlockLab, printLabStatus, postLogin, getNodeInterfaces, deleteNode, form2Array, getVlan, getConnection, removeConnection, setNodeInterface,
+          lockLab, printFormLab, printFormLabDescription, createEasyMDEEditor, unlockLab, printLabStatus, postLogin, getNodeInterfaces, deleteNode, form2Array, getVlan, getConnection, removeConnection, setNodeInterface,
          setNodesPosition, printLabTopology, printContextMenu, getNodes, start, recursive_start, stop, printFormNode, printFormNodeConfigs, 
          printListNodes, setNodeData, printFormCustomShape, printFormText, printFormEditCustomShape,
          printFormEditText, getTextObjects, createTextObject, 
@@ -1086,6 +1086,7 @@ $(document).on('click', '.action-subjectsmgmt', function (e) {
 
 var psEditingId = null;
 var psMySubjects = [];
+var psDescriptionEditor = null;
 
 function psEscape(value) {
     return String(value == null ? '' : value)
@@ -1128,21 +1129,42 @@ function printPracticalSubjectsModal(labId) {
         + '</div>'
         + '<div class="form-group" id="ps-file-group" style="display:none">'
         + '    <input type="file" id="ps-file" accept=".md,.pdf" />'
-        + '</div>'
-        + '<button type="button" id="ps-save" class="btn btn-success">Create &amp; link</button> '
-        + '<button type="button" id="ps-cancel-edit" class="btn btn-default" style="display:none">Cancel</button>';
+        + '</div>';
 
-    addModalWide('Practical subjects', html, '<button type="button" class="btn btn-success" data-dismiss="modal">Close</button>');
+    addModalWide('Practical subjects', html,
+        '<button type="button" id="ps-save" class="btn btn-success">Create &amp; link</button> '
+        + '<button type="button" id="ps-cancel-edit" class="btn btn-default" style="display:none">Cancel</button> '
+        + '<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>', 'md-editor-modal');
 
     $('#ps-mode').on('change', function () {
         var mode = $(this).val();
         $('#ps-md').toggle(mode == 'markdown');
         $('#ps-url').toggle(mode == 'url');
         $('#ps-file-group').toggle(mode == 'file');
+        if (mode == 'markdown' && psDescriptionEditor) {
+            psDescriptionEditor.codemirror.refresh();
+        }
     });
+
+    psDescriptionEditor = createEasyMDEEditor(document.getElementById('ps-description'));
 
     resetSubjectForm();
     refreshSubjectsModal(labId);
+
+    // Do not silently discard unsaved changes (ESC, backdrop click, close button)
+    $('#ps-save').closest('.modal').on('hide.bs.modal', function (e) {
+        if (psFormDirty() && !confirm('Unsaved changes will be lost. Close anyway?')) {
+            e.preventDefault();
+        }
+    });
+}
+
+function psFormDirty() {
+    if ($('#ps-name').val()) return true;
+    if ($('#ps-url-input').val()) return true;
+    if ($('#ps-file')[0] && $('#ps-file')[0].files.length) return true;
+    if (psDescriptionEditor && psDescriptionEditor.value()) return true;
+    return false;
 }
 
 function refreshSubjectsModal(labId) {
@@ -1207,7 +1229,9 @@ function resetSubjectForm() {
     psEditingId = null;
     $('#ps-form-title').text('Create a new subject');
     $('#ps-name').val('');
-    $('#ps-description').val('');
+    if (psDescriptionEditor) {
+        psDescriptionEditor.value('');
+    }
     $('#ps-url-input').val('');
     $('#ps-file').val('');
     $('#ps-mode').val('markdown').trigger('change');
@@ -1219,6 +1243,9 @@ function startEditSubject(subject) {
     psEditingId = subject['id'];
     $('#ps-form-title').text('Edit subject "' + subject['name'] + '"');
     $('#ps-name').val(subject['name']);
+    if (psDescriptionEditor) {
+        psDescriptionEditor.value('');
+    }
     if (subject['contentType'] == 'url') {
         $('#ps-mode').val('url').trigger('change');
         $('#ps-url-input').val(subject['url'] || '');
@@ -1226,7 +1253,9 @@ function startEditSubject(subject) {
         $('#ps-mode').val('file').trigger('change');
     } else {
         $('#ps-mode').val('markdown').trigger('change');
-        $('#ps-description').val(subject['description'] || '');
+        if (psDescriptionEditor) {
+            psDescriptionEditor.value(subject['description'] || '');
+        }
     }
     $('#ps-save').text('Save changes');
     $('#ps-cancel-edit').show();
@@ -1400,7 +1429,7 @@ $(document).on('click', '#ps-save', function (e) {
         if (mode == 'url') {
             payload['url'] = $('#ps-url-input').val();
         } else {
-            payload['description'] = $('#ps-description').val();
+            payload['description'] = (psDescriptionEditor) ? psDescriptionEditor.value() : $('#ps-description').val();
         }
         var jsonRequest = {
             cache: false,
