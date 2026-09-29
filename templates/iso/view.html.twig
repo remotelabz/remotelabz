@@ -29,7 +29,7 @@
     </div>
     <p>Are you sure you want to delete the ISO <strong>{{ iso.Name }}</strong>?</p>
     <div class="d-flex justify-content-between mt-3">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
         <form method="post" action="{{ path('app_iso_delete', {'id': iso.id}) }}" class="d-inline">
             <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ iso.id) }}">
             <input type="hidden" name="_method" value="DELETE">
@@ -146,7 +146,7 @@
                         <i class="fas fa-edit me-2"></i> Edit ISO
                     </a>
                     <hr class="my-2">
-                    <button class="btn btn-danger" data-toggle="modal" data-target=".delete-modal">
+                    <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target=".delete-modal">
                         <i class="fas fa-trash me-2"></i> Delete ISO
                     </button>
                 </div>

@@ -479,8 +479,8 @@ const DetailsModal = ({ selectedInstance, onClose, sharedStates, onStateUpdate, 
                                       href={"/instances/" + deviceInstance.uuid + "/view/admin"}
                                       className="btn btn-primary ml-3"
                                       title="Open admin console"
-                                      data-toggle="tooltip"
-                                      data-placement="top"
+                                      data-bs-toggle="tooltip"
+                                      data-bs-placement="top"
                                   >
                                       <SVG name="incognito" />
                                   </a>

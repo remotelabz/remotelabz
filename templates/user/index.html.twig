@@ -24,7 +24,7 @@
         <div class="quick-actions">
             {% if is_granted('ROLE_ADMINISTRATOR') %}
                 <a href="{{ path('new_user') }}" class="btn btn-success">{{ 'New user'|trans }}</a>
-                <button class="btn btn-info" data-target=".import-user-modal" data-toggle="modal" type="button">
+                <button class="btn btn-info" data-bs-target=".import-user-modal" data-bs-toggle="modal" type="button">
                     <i class="fa fa-upload"></i> {{ 'Import from file'|trans }}
                 </button>
             {% endif %}
@@ -92,7 +92,7 @@
     </div>
     <div class="multipleUsersActions d-flex justify-content-end align-items-center mt-3 mr-3" data-user="{{ currentUser }}">
         <input type="checkbox" name="selectAll" id="selectAll" value="selectAll" onClick="checkAll()" class="mr-1"/>
-        <a class="btn btn-default" href="#" id="dropdownUserSettings" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        <a class="btn btn-default" href="#" id="dropdownUserSettings" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
             <i class="fa fa-user-cog"></i>
             <i class="fa fa-caret-down"></i>
         </a>
@@ -100,7 +100,7 @@
             <button class="btn btn-warning" onClick="toggleUsers('block')" type="button">Block</button>
             <button class="btn btn-warning" onClick="toggleUsers('unblock')" type="button">Unblock</button>
             <div class="dropdown-divider"></div>
-            <button class="btn btn-danger" data-toggle="modal" onClick="deleteUsers()" type="button">
+            <button class="btn btn-danger" data-bs-toggle="modal" onClick="deleteUsers()" type="button">
                 {{ 'Delete'|trans }}
             </button>                         
         </div>
@@ -208,11 +208,11 @@
                             </div>
                         </td>
                         <td>
-                            <span class="timeago" datetime="{{ user.createdAt|date }}" data-toggle="tooltip" data-placement="top" title="{{ user.createdAt|date('M d, Y h:ia') }}"></span>
+                            <span class="timeago" datetime="{{ user.createdAt|date }}" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ user.createdAt|date('M d, Y h:ia') }}"></span>
                         </td>
                         <td>
                             {% if user.lastActivity is not null %}
-                                <span class="timeago" datetime="{{ user.lastActivity|date }}" data-toggle="tooltip" data-placement="top" title="{{ user.lastActivity|date('M d, Y h:ia') }}"></span>
+                                <span class="timeago" datetime="{{ user.lastActivity|date }}" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ user.lastActivity|date('M d, Y h:ia') }}"></span>
                             {% else %}
                                 Never
                             {% endif %}
@@ -228,7 +228,7 @@
                             
                             {% if 'ROLE_SUPER_ADMINISTRATOR' not in user.roles %}
 
-                            <a class="btn btn-default" href="#" id="dropdownUserSettings" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <a class="btn btn-default" href="#" id="dropdownUserSettings" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <i class="fa fa-user-cog"></i>
                                 <i class="fa fa-caret-down"></i>
                             </a>
@@ -244,7 +244,7 @@
                                 <i class="fa fa-user-secret"></i> Impersonate
                             </a>
                             <div class="dropdown-divider"></div>
-                            <button class="dropdown-item text-danger" data-target="{{'.delete-user-modal'~loop.index}}" data-toggle="modal" type="button">
+                            <button class="dropdown-item text-danger" data-bs-target="{{'.delete-user-modal'~loop.index}}" data-bs-toggle="modal" type="button">
                                 <i class="fa fa-trash"></i> Delete
                             </button>
                             </div>

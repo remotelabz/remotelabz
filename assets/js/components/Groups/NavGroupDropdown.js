@@ -47,12 +47,12 @@ class GroupNode extends Component {
                                 <a href={Routing.generate('dashboard_show_group', {slug: group.path})} className="fw600 title mr-2" onClick={(e) => e.stopPropagation()}>{ group.name }</a>
                                 <div className="text-muted mr-2">
                                     {group.visibility === 0 &&
-                                        <div data-toggle="tooltip" data-placement="bottom" title="Private - The group and its activities can only be viewed by yourself.">
+                                        <div data-bs-toggle="tooltip" data-bs-placement="bottom" title="Private - The group and its activities can only be viewed by yourself.">
                                             <SVG name="lock"></SVG>
                                         </div>
                                     }
                                     {group.visibility === 1 &&
-                                        <div data-toggle="tooltip" data-placement="bottom" title="Internal - The group and any internal activities can be viewed by members.">
+                                        <div data-bs-toggle="tooltip" data-bs-placement="bottom" title="Internal - The group and any internal activities can be viewed by members.">
                                             <SVG name="shield"></SVG>
                                         </div>
                                     }

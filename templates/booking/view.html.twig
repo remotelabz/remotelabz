@@ -21,7 +21,7 @@
         {% if canEdit == true %}
         <div class="content-title-actions">
             <a href="{{ path('edit_booking', {'id': booking.id}) }}" class="btn btn-secondary" role="button"><i class="fa fa-edit"></i> Edit</a>
-            <button class="btn btn-danger" data-target={{'.delete-modal'}} data-toggle="modal" type="button">
+            <button class="btn btn-danger" data-bs-target={{'.delete-modal'}} data-bs-toggle="modal" type="button">
                 {{ 'Delete'|trans }}
              </button>
         </div>

@@ -1,14 +1,18 @@
 import React, { Component } from 'react';
+import { Modal as BsModal } from 'bootstrap';
 
 class Modal extends Component {
     componentDidMount() {
         const parent = this;
         var modalName = this.props.id;
-        $('#' + modalName).modal('toggle');
+        const element = document.getElementById(modalName);
+        const instance = new BsModal(element);
 
-        $('#' + modalName).on('hidden.bs.modal', function (e) {
+        element.addEventListener('hidden.bs.modal', function (e) {
             parent.props.onClose();
-        })
+        });
+
+        instance.show();
     }
 
     render() {
@@ -18,7 +22,7 @@ class Modal extends Component {
                     <div className="modal-content">
                         <div className="modal-header">
                             <h5 className="modal-title">{this.props.title}</h5>
-                            <button type="button" className="close" data-dismiss="modal">
+                            <button type="button" className="close" data-bs-dismiss="modal">
                                 <span aria-hidden="true">&times;</span>
                             </button>
                         </div>

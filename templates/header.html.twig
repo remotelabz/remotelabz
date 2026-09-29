@@ -1,9 +1,9 @@
 {% import "dashboard.base.html.twig" as dashboard %}
-
 {% macro navlink(name, link, expandable, c, variables) %}
-  <li class="nav-item ml-2">
+
+     <li class="nav-item me-2 me-lg-0 me-start">
     <a class="nav-link d-flex align-items-center {%- if c == variables.category %} active{%endif%}" href="{{ path(link) }}">
-      <span class="menu-title mr-1">{{name}}</span>
+      <span class="menu-title me-1">{{name}}</span>
       {%- if expandable == true %}{{- svg('angle-down', 's11') -}}{% endif -%}
     </a>
   </li>
@@ -11,48 +11,48 @@
 
 {% block header %}
     {% set category = category|default('dashboard') %}
-  <nav class="navbar">
+  <nav class="navbar navbar-expand">
     <div class="navbar-menu-wrapper">
       <div class="navbar-menu-element">
         <a class="nav-link" href="/"><img src="{{ asset('build/images/RemoteLabz_logo_white.png') }}" /></a>
       </div>
       <div class="navbar-menu-element">
-        <ul class="navbar-nav navbar-expand mr-1">
+        <ul class="navbar-nav">
           {#{{ _self.navlink("Labs", 'labs', false, 'labs', _context) }}#}
           {% if (is_granted('ROLE_ADMINISTRATOR') or is_granted('ROLE_TEACHER')) %}
-          <a class="nav-link ml-2 {% if '/labs' in app.request.uri %}active{% endif %}" href="{{ path('labs') }}" data-toggle="tooltip" data-placement="bottom" title="Labs">
+          <a class="nav-link ms-2 {% if '/labs' in app.request.uri %}active{% endif %}" href="{{ path('labs') }}" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Labs">
             {{ svg('project', 's16') }}
           </a>
           {% endif %}
           {# {{ _self.navlink("Groups", 'dashboard_groups', false, 'dashboard_groups', _context) }} #}
-          <a class="nav-link ml-2 {% if '/groups' in app.request.uri %}active{% endif %}" href="{{ path('dashboard_groups') }}" data-toggle="tooltip" data-placement="bottom" title="Groups">
+          <a class="nav-link ms-2 {% if '/groups' in app.request.uri %}active{% endif %}" href="{{ path('dashboard_groups') }}" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Groups">
             {{ svg('users', 's16') }}
           </a>
-          <a class="nav-link ml-2 {% if '/bookings' in app.request.uri %}active{% endif %}" href="{{ path('bookings') }}" data-toggle="tooltip" data-placement="bottom" title="Bookings">
+          <a class="nav-link ms-2 {% if '/bookings' in app.request.uri %}active{% endif %}" href="{{ path('bookings') }}" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Bookings">
             {{ svg('calendar', 's16') }}
           </a>
         </ul>
         {% if is_granted('ROLE_TEACHER') and not is_granted('ROLE_TEACHER_EDITOR') %}
-          <a class="nav-link ml-2 {% if '/sandbox' in app.request.uri %}active{% endif %}" href="{{ path('sandbox') }}" data-toggle="tooltip" data-placement="bottom" title="Sandbox">
+          <a class="nav-link ms-2 {% if '/sandbox' in app.request.uri %}active{% endif %}" href="{{ path('sandbox') }}" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Sandbox">
             {{ svg('documents', 's16') }}
           </a>
-          <a class="nav-link ml-2 {% if '/resources' in app.request.uri %}active{% endif %}" href="{{ path('resources') }}" data-toggle="tooltip" data-placement="bottom" title="Usage">
+          <a class="nav-link ms-2 {% if '/resources' in app.request.uri %}active{% endif %}" href="{{ path('resources') }}" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Usage">
             {{ svg('tachometer', 's16') }}
           </a>
-          <a class="nav-link ml-2 {% if '/scheduled-actions/new' in app.request.uri %}active{% endif %}" href="{{ path('scheduled_actions_new') }}" data-toggle="tooltip" data-placement="bottom" title="Scheduled actions">
+          <a class="nav-link ms-2 {% if '/scheduled-actions/new' in app.request.uri %}active{% endif %}" href="{{ path('scheduled_actions_new') }}" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Scheduled actions">
             {{ svg('clock', 's16') }}
           </a>
           {% endif %}
         {% if is_granted('ROLE_ADMINISTRATOR') %}
-          <a class="nav-link ml-2" href="{{ path('admin') }}" data-toggle="tooltip" data-placement="bottom" title="Admin area">
+          <a class="nav-link ms-2" href="{{ path('admin') }}" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Admin area">
             {{ svg('settings', 's16') }}
           </a>
           {% elseif is_granted('ROLE_TEACHER_EDITOR') and not is_granted('ROLE_ADMINISTRATOR') %}
-          <a class="nav-link ml-2" href="{{ path('sandbox') }}" data-toggle="tooltip" data-placement="bottom" title="Editor area">
+          <a class="nav-link ms-2" href="{{ path('sandbox') }}" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Editor area">
             {{ svg('settings', 's16') }}
           </a>
           {% else %}
-          <a class="nav-link ml-2" href="{{ path('instances') }}" data-toggle="tooltip" data-placement="bottom" title="Instances list">
+          <a class="nav-link ms-2" href="{{ path('instances') }}" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Instances list">
             {{ svg('monitor', 's16') }}
           </a>
         {% endif %}
@@ -60,16 +60,16 @@
       <div class="separator flex-grow-1"></div>
       <div class="navbar-menu-element">
         {% if is_granted('IS_IMPERSONATOR') %}
-          <a class="nav-link ml-2" href="{{ impersonation_exit_path(path('index') ) }}">Exit impersonation</a>
+          <a class="nav-link ms-2" href="{{ impersonation_exit_path(path('index') ) }}">Exit impersonation</a>
         {% endif %}
         {{ app.user.firstname }}
-        <ul class="navbar-nav ml-lg-auto">
+        <ul class="navbar-nav ms-lg-auto">
           <li class="nav-item d-sm-block profile-img dropdown">
-            <a class="nav-link profile-image" href="#" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-              <img src="/profile/picture?size=24" alt="profile-img" class="rounded-circle mr-1">
+            <a class="nav-link profile-image" href="#" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              <img src="/profile/picture?size=24" alt="profile-img" class="rounded-circle me-1">
               {{ svg('angle-down', 'image-sm') }}
             </a>
-            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenuLink" style="position: absolute;will-change: transform;">
+            <div class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuLink" style="position: absolute;will-change: transform;">
               <div class="dropdown-header">
                 <div class="user-name">{{ app.user.name }}</div>
                 {{ app.user.email }}

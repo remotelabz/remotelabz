@@ -235,7 +235,7 @@ class SandboxListItem extends Component {
 
         if(this.state.isLoading) {
             button = (
-                <Button className="ml-3" variant="dark" title="Starting your instance" data-toggle="tooltip" data-placement="top" disabled>
+                <Button className="ml-3" variant="dark" title="Starting your instance" data-bs-toggle="tooltip" data-bs-placement="top" disabled>
                     <Spinner animation="border" size="sm" />
                 </Button>
                 )
@@ -294,8 +294,8 @@ class SandboxListItem extends Component {
                             href={"/admin/sandbox/" + this.state.lab.id}
                             className="btn btn-primary ml-3 mr-2 mt-2"
                             title="Open Sandbox"
-                            data-toggle="tooltip"
-                            data-placement="top"
+                            data-bs-toggle="tooltip"
+                            data-bs-placement="top"
                         >
                             <SVG name="external-link" />
                         </a>
@@ -339,8 +339,8 @@ class SandboxListItem extends Component {
                             href={"/admin/sandbox/" + this.state.lab.id}
                             className="btn btn-primary ml-3 mr-2 mt-2"
                             title="Open Sandbox"
-                            data-toggle="tooltip"
-                            data-placement="top"
+                            data-bs-toggle="tooltip"
+                            data-bs-placement="top"
                         >
                             <SVG name="external-link" />
                         </a>

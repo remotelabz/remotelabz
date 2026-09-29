@@ -21,7 +21,7 @@
 
     <div class="labs-panel">
         <h4 class="p-3 border-bottom">Lab instances
-        <span data-toggle="tooltip" data-placement="right" title="All laboratories started by you, your groups and members of your groups.">
+        <span data-bs-toggle="tooltip" data-bs-placement="right" title="All laboratories started by you, your groups and members of your groups.">
             {{ svg('question') }} </span></h4>
 
         {% if is_granted('ROLE_ADMINISTRATOR') or is_granted('ROLE_TEACHER')%}
