@@ -32,6 +32,7 @@ import { Tooltip, Collapse } from 'bootstrap';
 
 // Expose the Bootstrap namespace for inline template scripts (UMD parity)
 window.bootstrap = bootstrap;
+import './datatables-compat';
 import 'datatables.net-bs5';
 import 'datatables.net-buttons-bs5';
 import 'datatables.net-select-bs5';
