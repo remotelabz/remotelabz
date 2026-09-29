@@ -23,9 +23,7 @@
                         {% for label, messages in app.flashes %}
                             {% for message in messages %}
                             <div class="flash-notice alert alert-{{ label }} alert-dismissible fade show">
-                                <button aria-label="Close" class="close" data-bs-dismiss="alert" type="dismiss">
-                                    <span aria-hidden="true">&times;</span>
-                                </button>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                                 {{ message }}
                             </div>
                             {% endfor %}

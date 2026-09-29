@@ -22,9 +22,7 @@ class Modal extends Component {
                     <div className="modal-content">
                         <div className="modal-header">
                             <h5 className="modal-title">{this.props.title}</h5>
-                            <button type="button" className="close" data-bs-dismiss="modal">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
+                            <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div className="modal-body">
                             {this.props.children}
