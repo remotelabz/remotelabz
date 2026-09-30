@@ -41,6 +41,7 @@ import {ObjectPosUpdate} from './actions';
 import { node } from 'prop-types';
 import EasyMDE from 'easymde';
 import 'easymde/dist/easymde.min.css';
+import {emojiShortcodeToUnicode} from './emoji';
 import Dropzone from 'dropzone';
 import Remotelabz from '../../../../API';
 
@@ -1407,7 +1408,13 @@ export function createEasyMDEEditor(element) {
         sideBySideFullscreen: false,
         toolbar: ['bold', 'italic', 'strikethrough', 'heading', '|', 'code', 'quote', '|',
                   'unordered-list', 'ordered-list', 'clean-block', '|', 'link', 'image',
-                  'table', '|', 'preview', 'side-by-side']
+                  'table', '|', 'preview', 'side-by-side'],
+        // Interpret :emoji: shortcodes (GitHub style) in the preview. The
+        // conversion happens on the raw markdown, outside code blocks, before
+        // the usual EasyMDE/marked rendering.
+        previewRender: function (text, previewElement) {
+            return this.parent.markdown(emojiShortcodeToUnicode(text));
+        }
     });
 }
 
