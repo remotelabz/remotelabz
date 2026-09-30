@@ -14,6 +14,10 @@ framework:
         # APCu (not recommended with heavy random-write workloads as memory fragmentation can cause perf issues)
         #app: cache.adapter.apcu
 
+        # Redis backend for the pools that use "cache.adapter.redis"
+        default_redis_provider: '%env(REDIS_DSN)%'
+
         # Namespaced pools use the above "app" backend by default
         pools:
-            lab_placement: null
+            lab_placement:
+                adapter: cache.adapter.redis

@@ -2,6 +2,7 @@
 
 namespace App\Service\Worker;
 
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Cache\Adapter\AdapterInterface;
 
 /**
@@ -32,10 +33,12 @@ class LabPlacementCache
     private const TTL = 3600;
 
     private AdapterInterface $pool;
+    private LoggerInterface $logger;
 
-    public function __construct(AdapterInterface $pool)
+    public function __construct(AdapterInterface $pool, LoggerInterface $logger)
     {
         $this->pool = $pool;
+        $this->logger = $logger;
     }
 
     /**
@@ -43,12 +46,7 @@ class LabPlacementCache
      */
     public function getPending(): array
     {
-        $item = $this->pool->getItem(self::KEY);
-        if (!$item->isHit()) {
-            return [];
-        }
-
-        return is_array($item->get()) ? $item->get() : [];
+        return $this->fetchPending() ?? [];
     }
 
     /**
@@ -57,8 +55,8 @@ class LabPlacementCache
      */
     public function add(string $labInstanceUuid, int $memory): void
     {
-        $pending = $this->getPending();
-        if (isset($pending[$labInstanceUuid])) {
+        $pending = $this->fetchPending();
+        if (null === $pending || isset($pending[$labInstanceUuid])) {
             return;
         }
 
@@ -75,8 +73,8 @@ class LabPlacementCache
      */
     public function assign(string $labInstanceUuid, string $workerIp): void
     {
-        $pending = $this->getPending();
-        if (!isset($pending[$labInstanceUuid])) {
+        $pending = $this->fetchPending();
+        if (null === $pending || !isset($pending[$labInstanceUuid])) {
             return;
         }
 
@@ -89,8 +87,8 @@ class LabPlacementCache
      */
     public function remove(string $labInstanceUuid): void
     {
-        $pending = $this->getPending();
-        if (!isset($pending[$labInstanceUuid])) {
+        $pending = $this->fetchPending();
+        if (null === $pending || !isset($pending[$labInstanceUuid])) {
             return;
         }
 
@@ -114,11 +112,37 @@ class LabPlacementCache
         return $total;
     }
 
+    /**
+     * @return array<string, array{memory: int, workerIp: ?string, createdAt: int}>|null
+     *         null when the cache backend is unavailable, in which case the
+     *         caller must skip the write to avoid overwriting the real
+     *         reservations with a partial array
+     */
+    private function fetchPending(): ?array
+    {
+        try {
+            $item = $this->pool->getItem(self::KEY);
+            if (!$item->isHit()) {
+                return [];
+            }
+
+            return is_array($item->get()) ? $item->get() : [];
+        } catch (\Throwable $e) {
+            $this->logger->warning('[LabPlacementCache]::Pending placements cache unavailable (best-effort cache, continuing without reservations): ' . $e->getMessage());
+
+            return null;
+        }
+    }
+
     private function save(array $pending): void
     {
-        $item = $this->pool->getItem(self::KEY);
-        $item->set($pending);
-        $item->expiresAfter(self::TTL);
-        $this->pool->save($item);
+        try {
+            $item = $this->pool->getItem(self::KEY);
+            $item->set($pending);
+            $item->expiresAfter(self::TTL);
+            $this->pool->save($item);
+        } catch (\Throwable $e) {
+            $this->logger->warning('[LabPlacementCache]::Failed to save pending placements (best-effort cache, launch is not blocked): ' . $e->getMessage());
+        }
     }
 }
