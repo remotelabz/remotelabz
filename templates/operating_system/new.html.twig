@@ -67,9 +67,9 @@
                         
                         <!-- Architecture Selection -->
                         <div class="mb-4">
-                            <div class="form-floating">
+                            <div>
                                 <label class="form-label fw-bold">{{ 'Architecture'|trans }}</label>
-                                {{ form_widget(operatingSystemForm.arch, {'attr': {'class': 'form-control'}}) }}
+                                {{ form_widget(operatingSystemForm.arch, {'attr': {'class': 'form-select'}}) }}
                             </div>
                             {{ form_errors(operatingSystemForm.arch) }}
                             <div class="form-text">
@@ -79,9 +79,9 @@
                         
                         <!-- Disk Flavor Selection -->
                         <div class="mb-4">
-                            <div class="form-floating">
+                            <div>
                                 <label class="form-label fw-bold">{{ 'Disk Flavor'|trans }}</label>
-                                {{ form_widget(operatingSystemForm.flavorDisk, {'attr': {'class': 'form-control'}}) }}
+                                {{ form_widget(operatingSystemForm.flavorDisk, {'attr': {'class': 'form-select'}}) }}
                             </div>
                             {{ form_errors(operatingSystemForm.flavorDisk) }}
                             <div class="form-text">
@@ -91,9 +91,9 @@
 
                         <!-- Directory Selection -->
                         <div class="mb-4">
-                            <div class="form-floating">
+                            <div>
                                 <label class="form-label fw-bold">{{ 'Directory'|trans }}</label>
-                                {{ form_widget(operatingSystemForm.directory, {'attr': {'class': 'form-control'}}) }}
+                                {{ form_widget(operatingSystemForm.directory, {'attr': {'class': 'form-select'}}) }}
                             </div>
                             {{ form_errors(operatingSystemForm.directory) }}
                             <div class="form-text">
@@ -107,9 +107,9 @@
 
                             <!-- Hypervisor Selection -->
                             <div class="mb-4">
-                                <div class="form-floating">
+                                <div>
                                     <label class="form-label fw-bold">{{ 'Hypervisor'|trans }}</label>
-                                    {{ form_widget(operatingSystemForm.hypervisor, {'id': 'hypervisor-select', 'attr': {'class': 'form-control'}}) }}
+                                    {{ form_widget(operatingSystemForm.hypervisor, {'id': 'hypervisor-select', 'attr': {'class': 'form-select'}}) }}
                                 </div>
                                 {{ form_errors(operatingSystemForm.hypervisor) }}
                                 <div class="form-text">
