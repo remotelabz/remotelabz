@@ -328,11 +328,11 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
         case 'error':
             controls = (
                 <Button 
-                    className="ml-3" 
+                    className="ms-3" 
                     variant="success" 
                     title="Start device" 
-                    data-toggle="tooltip" 
-                    data-placement="top" 
+                    data-bs-toggle="tooltip" 
+                    data-bs-placement="top" 
                     onClick={() => startDevice(instance)} 
                     disabled={isComputingState(instance) || (instance.ownedBy === 'group' && !canControlInstances())}
                 >
@@ -344,7 +344,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
         case 'stopped':
             controls = (
                 <Button 
-                    className="ml-3" 
+                    className="ms-3" 
                     variant="success" 
                     title="Start device" 
                     onClick={() => startDevice(instance)}
@@ -358,7 +358,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
         case 'reset':
             controls = (
                 <Button 
-                    className="ml-3" 
+                    className="ms-3" 
                     variant="success" 
                     title="Start device" 
                     onClick={() => startDevice(instance)}
@@ -370,25 +370,25 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
             break;
 
         case 'starting':
-            controls = (<Button className="ml-3" variant="dark" title="Start device" data-toggle="tooltip" data-placement="top" disabled>
+            controls = (<Button className="ms-3" variant="dark" title="Start device" data-bs-toggle="tooltip" data-bs-placement="top" disabled>
                 <Spinner animation="border" size="sm" />
             </Button>);
             break;
 
         case 'stopping':
-            controls = (<Button className="ml-3" variant="dark" title="Stop device" data-toggle="tooltip" data-placement="top" disabled>
+            controls = (<Button className="ms-3" variant="dark" title="Stop device" data-bs-toggle="tooltip" data-bs-placement="top" disabled>
                 <Spinner animation="border" size="sm" />
             </Button>);
             break;
 
         case 'exporting':
-            controls = (<Button className="ml-3" variant="dark" title="Export device" data-toggle="tooltip" data-placement="top" disabled>
+            controls = (<Button className="ms-3" variant="dark" title="Export device" data-bs-toggle="tooltip" data-bs-placement="top" disabled>
                 <Spinner animation="border" size="sm" />
             </Button>);
             break;
         
         case 'resetting':
-            controls = (<Button className="ml-3" variant="dark" title="Reset device" data-toggle="tooltip" data-placement="top" disabled>
+            controls = (<Button className="ms-3" variant="dark" title="Reset device" data-bs-toggle="tooltip" data-bs-placement="top" disabled>
                 <Spinner animation="border" size="sm" />
             </Button>);
             break;
@@ -396,7 +396,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
         case 'started':
             controls = (
                 <Button 
-                    className="ml-3" 
+                    className="ms-3" 
                     variant="danger" 
                     title="Stop device" 
                     onClick={() => stopDevice(instance)}
@@ -416,7 +416,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
                     <div className="m-3">
                         <div className="dot-bricks"></div>
                     </div>
-                    <div className="ml-2">
+                    <div className="ms-2">
                         Loading...
                     </div>
                 </div>
@@ -425,7 +425,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
                 <div className="d-flex justify-content-between">
                     <div className="d-flex flex-column">
                         <div>
-                            {device.name} <InstanceStateBadge state={displayState} className="ml-1" />
+                            {device.name} <InstanceStateBadge state={displayState} className="ms-1" />
                         </div>
                         <div className="text-muted small">
                             {instance.uuid}
@@ -487,7 +487,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
                         )
                         &&
                             <Button 
-                                className="ml-3" 
+                                className="ms-3" 
                                 variant="danger" 
                                 title="Reset device" 
                                 onClick={() => setShowResetDeviceModel(true)}
@@ -505,9 +505,9 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
                             <Button 
                                 variant="warning" 
                                 title="Reset device" 
-                                data-toggle="tooltip" 
-                                data-placement="top" 
-                                className="ml-3" 
+                                data-bs-toggle="tooltip" 
+                                data-bs-placement="top" 
+                                className="ms-3" 
                                 onClick={() => setShowResetDeviceModel(true)}
                                 //disabled={isComputingState(instance)}
                             >
@@ -526,10 +526,10 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 href={"/instances/" + instance.uuid + "/view/admin"}
-                                className="btn btn-primary ml-3"
+                                className="btn btn-primary ms-3"
                                 title="Open VNC console"
-                                data-toggle="tooltip"
-                                data-placement="top"
+                                data-bs-toggle="tooltip"
+                                data-bs-placement="top"
                             >
                                 <SVG name="incognito" />
                             </a>
@@ -542,10 +542,10 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 href={"/instances/" + instance.uuid + "/view/vnc"}
-                                className="btn btn-primary ml-3"
+                                className="btn btn-primary ms-3"
                                 title="Open VNC console"
-                                data-toggle="tooltip"
-                                data-placement="top"
+                                data-bs-toggle="tooltip"
+                                data-bs-placement="top"
                             >
                                 <SVG name="external-link" />
                             </a>
@@ -557,10 +557,10 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 href={"/instances/" + instance.uuid + "/view/login"}
-                                className="btn btn-primary ml-3"
+                                className="btn btn-primary ms-3"
                                 title="Open Login console"
-                                data-toggle="tooltip"
-                                data-placement="top"
+                                data-bs-toggle="tooltip"
+                                data-bs-placement="top"
                             >
                                 <SVG name="terminal" />
                             </a>
@@ -572,10 +572,10 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 href={"/instances/" + instance.uuid + "/view/serial"}
-                                className="btn btn-primary ml-3"
+                                className="btn btn-primary ms-3"
                                 title="Open Serial console"
-                                data-toggle="tooltip"
-                                data-placement="top"
+                                data-bs-toggle="tooltip"
+                                data-bs-placement="top"
                             >
                                 <SVG name="admin" />
                             </a>
@@ -593,7 +593,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
                             (user.roles.includes("ROLE_ADMINISTRATOR") || user.roles.includes("ROLE_SUPER_ADMINISTRATOR") || (user.roles.includes("ROLE_TEACHER") || user.roles.includes("ROLE_TEACHER_EDITOR"))) &&
                             <Button 
                                 variant="danger" 
-                                className="ml-3" 
+                                className="ms-3" 
                                 onClick={() => setShowStopDeviceModel(true)}
                                 disabled={isComputingState(instance)}
                             >
@@ -609,7 +609,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
                         &&
                             <Button 
                                 variant="danger" 
-                                className="ml-3" 
+                                className="ms-3" 
                                 onClick={() => setShowStopDeviceModel(true)}
                                 disabled={isComputingState(instance)}
                             >

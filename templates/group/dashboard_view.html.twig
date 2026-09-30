@@ -31,30 +31,30 @@
     <div class="content-body">
         <div class="row mb-4">
             <div class="col d-flex align-items-center">
-                <!-- <div class="avatar identicon bg-{{ group.id % 8 + 1 }} s60 rounded-lg mr-2"> -->
+                <!-- <div class="avatar identicon bg-{{ group.id % 8 + 1 }} s60 rounded-lg me-2"> -->
                     {% if group.pictureFilename is defined and group.pictureFilename %}
-                        <img src="{{ path('get_group_picture', {slug: group.path, size: 60}) }}" alt="profile-img" class="rounded-lg mr-1" />
+                        <img src="{{ path('get_group_picture', {slug: group.path, size: 60}) }}" alt="profile-img" class="rounded-lg me-1" />
                     {% else %}
-                        <div class="avatar identicon bg-{{ group.id % 8 + 1 }} s60 rounded-lg mr-2">
+                        <div class="avatar identicon bg-{{ group.id % 8 + 1 }} s60 rounded-lg me-2">
                             {{- group.name|firstLetter|upper -}}
                         </div>
                     {% endif %}
                 <!-- </div> -->
-                <div class="ml-2">
+                <div class="ms-2">
                     <div class="d-flex">
-                        <h5 class="font-weight-bold mb-1 mr-2">{{ group.name }}</h5>
+                        <h5 class="font-weight-bold mb-1 me-2">{{ group.name }}</h5>
                         <span class="text-muted">
                             {% if group.visibility is defined %}
                                 {% if group.visibility == '0' %}
-                                    <div data-toggle="tooltip" data-placement="bottom" title="Private - The group and its activities can only be viewed by yourself.">
+                                    <div data-bs-toggle="tooltip" data-bs-placement="bottom" title="Private - The group and its activities can only be viewed by yourself.">
                                         {{ svg('lock') }}
                                     </div>
                                 {% elseif group.visibility == '1' %}
-                                    <div data-toggle="tooltip" data-placement="bottom" title="Internal - The group and any internal activities can be viewed by members.">
+                                    <div data-bs-toggle="tooltip" data-bs-placement="bottom" title="Internal - The group and any internal activities can be viewed by members.">
                                         {{ svg('shield') }}
                                     </div>
                                 {% elseif group.visibility == '2' %}
-                                    <div data-toggle="tooltip" data-placement="bottom" title="Public - The group and any internal projects can be viewed by any logged in user.">
+                                    <div data-bs-toggle="tooltip" data-bs-placement="bottom" title="Public - The group and any internal projects can be viewed by any logged in user.">
                                         {{ svg('earth') }}
                                     </div>
                                 {% endif %}
@@ -78,12 +78,12 @@
         <div class="top-panel">
             <ul class="nav-links nav nav-tabs" id="tab" role="tablist">
                 <li class="nav-item">
-                    <a class="active" href="#subs" id="subs-tab" data-toggle="tab" role="tab" aria-controls="subs" aria-selected="true">
+                    <a class="active" href="#subs" id="subs-tab" data-bs-toggle="tab" role="tab" aria-controls="subs" aria-selected="true">
                         <span>Subgroups</span> <span class="badge badge-pill">{{ group.children|length }}</span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="" href="#labs" id="labs-tab" data-toggle="tab" role="tab" aria-controls="labs" aria-selected="false">
+                    <a class="" href="#labs" id="labs-tab" data-bs-toggle="tab" role="tab" aria-controls="labs" aria-selected="false">
                         <span>Labs</span> <span class="badge badge-pill">{{ group.labs|length }}</span>
                     </a>
                 </li>
@@ -124,7 +124,7 @@
                             <!-- <a href="{{ path('show_lab', {'id': lab.id}) }}" class="btn btn-primary lab-display-more">Go to lab</a> -->
                         </div>
                         <div class="card-footer text-muted">
-                            Last updated <span class="timeago" datetime="{{ lab.lastUpdated|date('m/d/Y H:i:s') }}" data-toggle="tooltip" data-placement="bottom" title="{{ lab.lastUpdated|date('M d, Y h:ia') }}"></span>
+                            Last updated <span class="timeago" datetime="{{ lab.lastUpdated|date('m/d/Y H:i:s') }}" data-bs-toggle="tooltip" data-bs-placement="bottom" title="{{ lab.lastUpdated|date('M d, Y h:ia') }}"></span>
                         </div>
                     </div>
                     {% endfor %} 

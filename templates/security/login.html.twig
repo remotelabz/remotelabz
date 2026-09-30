@@ -23,9 +23,7 @@
                         {% for label, messages in app.flashes %}
                             {% for message in messages %}
                             <div class="flash-notice alert alert-{{ label }} alert-dismissible fade show">
-                                <button aria-label="Close" class="close" data-dismiss="alert" type="dismiss">
-                                    <span aria-hidden="true">&times;</span>
-                                </button>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                                 {{ message }}
                             </div>
                             {% endfor %}
@@ -46,25 +44,21 @@
                         <form role="form" method="POST">
                             <div class="form-group">
                                 <div class="input-group">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text">{{ svg('mail', 'image-sm') }}</span>
-                                    </div>
+                                    <span class="input-group-text">{{ svg('mail', 'image-sm') }}</span>
                                     <input class="form-control" placeholder="user@domain.com" name="email" type="email" value="{{ last_username }}" required autofocus>
                                 </div>
                             </div>
                             <div class="form-group">
                                 <div class="input-group">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text">{{ svg('key', 'image-sm') }}</span>
-                                    </div>
+                                    <span class="input-group-text">{{ svg('key', 'image-sm') }}</span>
                                     <input type="password" class="form-control" placeholder="*********" name="password" value="" required autofocus>
                                 </div>
                             </div>
 
                             <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
 
-                            <div class="form-group">
-                                <button class="btn btn-success submit-btn btn-block" name="submit">
+                            <div class="form-group mt-4">
+                                <button class="btn btn-success submit-btn w-100" name="submit">
                                     {% if enable_shibboleth %}
                                         Local sign in
                                     {% else %}
@@ -72,8 +66,8 @@
                                     {% endif %}
                                 </button>
                                 {% if ( maintenance == 0) %}
-                                    <p class="footer-text text-right mt-2"><a href="{{ path('reset_password') }}" class="text-muted">Lost your password ?</a></p>
-                                    <p class="footer-text text-right mt-2"><a href="{{ path('code_login') }}" class="text-muted">Login with code</a></p>
+                                    <p class="footer-text text-end mt-2"><a href="{{ path('reset_password') }}" class="text-muted">Lost your password ?</a></p>
+                                    <p class="footer-text text-end mt-2"><a href="{{ path('code_login') }}" class="text-muted">Login with code</a></p>
                                 {% endif %}
 
                             </div>
@@ -81,7 +75,7 @@
                 
                         {% if enable_shibboleth and maintenance == 0%}
                             <hr>
-                            <a class="btn btn-info btn-block" href="{{ path('shib_login') }}">Education Federation - Research sign in</a>
+                            <a class="btn btn-info w-100" href="{{ path('shib_login') }}">Education Federation - Research sign in</a>
                         {% endif %}
                 </div>
                 <hr>

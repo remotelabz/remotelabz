@@ -39,7 +39,6 @@ git pull
 mv ~/messenger.yaml /opt/remotelabz/config/packages/messenger.yaml
 mv ~/web_profiler.yaml /opt/remotelabz/config/packages/dev/web_profiler.yaml
 composer update
-yarn
 yarn encore prod
 php bin/console doctrine:migrations:migrate -n
 #npx browserslist@latest --update-db

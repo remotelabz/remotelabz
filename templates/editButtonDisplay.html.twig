@@ -12,7 +12,7 @@
 {% endif %}
 
 {% if (is_granted("ROLE_ADMINISTRATOR") or lab.author == user) and labInstance is null %}
-    <button class="btn btn-danger" data-target={{'.delete-lab-modal'}} data-toggle="modal" type="button">
+    <button class="btn btn-danger" data-bs-target={{'.delete-lab-modal'}} data-bs-toggle="modal" type="button">
         {{ 'Delete'|trans }}
     </button>
 {% endif %}

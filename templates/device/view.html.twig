@@ -22,7 +22,7 @@
     <p>Are you sure you want to delete the device <strong>{{ device.name }}</strong>?</p>
     
     <div class="d-flex justify-content-between mt-3">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
         <form method="post" action="{{ path('delete_device', {'id': device.id}) }}" class="d-inline">
             <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ device.id) }}">
             <input type="hidden" name="_method" value="DELETE">
@@ -302,7 +302,7 @@
                     
                     <hr class="my-2">
                     
-                    <button class="btn btn-danger" data-toggle="modal" data-target={{'.delete-modal'}}>
+                    <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target={{'.delete-modal'}}>
                         <i class="fas fa-trash me-2"></i> Delete Device
                     </button>
                     {% endif %}

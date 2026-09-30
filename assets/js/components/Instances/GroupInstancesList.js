@@ -53,7 +53,7 @@ export default function GroupInstancesList(props = {instances, group, user}) {
                 <div className="wrapper align-items-center p-3 border-bottom lab-item" key={labInstance.id} >
                     <div>
                         <div>
-                            <a href={`/labs/${labInstance.id}`} className="lab-item-name" title={labInstance.lab.name} data-toggle="tooltip" data-placement="top">
+                            <a href={`/labs/${labInstance.id}`} className="lab-item-name" title={labInstance.lab.name} data-bs-toggle="tooltip" data-bs-placement="top">
                             </a>
                             Lab&nbsp; {labInstance.lab.name}&nbsp;started by
                             {labInstance !=  null && (labInstance.ownedBy == "user" ? `user ${labInstance.owner.name}` : `group ${labInstance.owner.name}` )}<br/>
@@ -112,7 +112,7 @@ export default function GroupInstancesList(props = {instances, group, user}) {
                 <div className="wrapper align-items-center p-3 border-bottom lab-item" key={labInstance.id} >
                     <div>
                         <div>
-                            <a href={`/labs/${labInstance.id}`} className="lab-item-name" title={labInstance.lab.name} data-toggle="tooltip" data-placement="top">
+                            <a href={`/labs/${labInstance.id}`} className="lab-item-name" title={labInstance.lab.name} data-bs-toggle="tooltip" data-bs-placement="top">
                             </a>
                             Lab&nbsp; {labInstance.lab.name}&nbsp;started by
                             {labInstance !=  null && (labInstance.ownedBy == "user" ? `user ${labInstance.owner.name}` : `group ${labInstance.owner.name}` )}<br/>
@@ -296,12 +296,12 @@ export default function GroupInstancesList(props = {instances, group, user}) {
             <div className="d-flex justify-content-end mb-2">
                 {instances !== "" &&
                     <>
-                    <Button variant="danger" className="ml-2" onClick={() => setShowForceStopModal(true)}>Stop labs</Button>
-                    <Button variant="danger" className="ml-2" onClick={() => setShowLeaveLabModal(true)}>Leave labs</Button>
+                    <Button variant="danger" className="ms-2" onClick={() => setShowForceStopModal(true)}>Stop labs</Button>
+                    <Button variant="danger" className="ms-2" onClick={() => setShowLeaveLabModal(true)}>Leave labs</Button>
                     </>
                 }
                 {instances !== "" &&
-                    <input type="checkbox" value="leaveAll" name="checkAll" id="checkAll" class="ml-4" onClick={checkAll}></input>
+                    <input type="checkbox" value="leaveAll" name="checkAll" id="checkAll" class="ms-4" onClick={checkAll}></input>
                 }
             </div>
             {instancesList}

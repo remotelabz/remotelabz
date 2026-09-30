@@ -24,7 +24,7 @@
         <div class="quick-actions">
             {% if is_granted('ROLE_ADMINISTRATOR') %}
                 <a href="{{ path('new_user') }}" class="btn btn-success">{{ 'New user'|trans }}</a>
-                <button class="btn btn-info" data-target=".import-user-modal" data-toggle="modal" type="button">
+                <button class="btn btn-info" data-bs-target=".import-user-modal" data-bs-toggle="modal" type="button">
                     <i class="fa fa-upload"></i> {{ 'Import from file'|trans }}
                 </button>
             {% endif %}
@@ -61,11 +61,11 @@
 
     <div class="search-panel">
         <form action="{{ path('users') }}" method="GET" class="d-flex align-items-center">
-            <div class="search-field flex-grow-1 mr-3">
+            <div class="search-field flex-grow-1 me-3">
                 <i class="fa fa-search"></i>
                 <input type="search" class="form-control input-sm" name="search" placeholder="Search by name or email" spellcheck="false" value="{{ search|default('') }}" type="search" />
             </div>
-            <div class="mr-2">
+            <div class="me-2">
                 {% set selectedGroup = app.request.query.get('group') %}
                 <select name="group" class="form-control">
                     <option value="">All groups</option>
@@ -76,7 +76,7 @@
                     {% endfor %}
                 </select>
             </div>
-            <div class="mr-2">
+            <div class="me-2">
                 {% set searchLimit = app.request.query.get("limit") %}
                 <select name="limit" class="form-control">
                     <option value="10" {% if searchLimit != 30 and searchLimit != 50 %}selected{% endif %}>10</option>
@@ -84,15 +84,15 @@
                     <option value="50" {% if searchLimit is defined and searchLimit == 50 %}selected{% endif %}>50</option>
                 </select>
             </div>
-            <div class="mr-3">
+            <div class="me-3">
                 users per page
             </div>
             <button class="btn btn-primary" type="submit">{{ svg('search') }}</button>
         </form>
     </div>
-    <div class="multipleUsersActions d-flex justify-content-end align-items-center mt-3 mr-3" data-user="{{ currentUser }}">
-        <input type="checkbox" name="selectAll" id="selectAll" value="selectAll" onClick="checkAll()" class="mr-1"/>
-        <a class="btn btn-default" href="#" id="dropdownUserSettings" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+    <div class="multipleUsersActions d-flex justify-content-end align-items-center mt-3 me-3" data-user="{{ currentUser }}">
+        <input type="checkbox" name="selectAll" id="selectAll" value="selectAll" onClick="checkAll()" class="me-1"/>
+        <a class="btn btn-default" href="#" id="dropdownUserSettings" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
             <i class="fa fa-user-cog"></i>
             <i class="fa fa-caret-down"></i>
         </a>
@@ -100,7 +100,7 @@
             <button class="btn btn-warning" onClick="toggleUsers('block')" type="button">Block</button>
             <button class="btn btn-warning" onClick="toggleUsers('unblock')" type="button">Unblock</button>
             <div class="dropdown-divider"></div>
-            <button class="btn btn-danger" data-toggle="modal" onClick="deleteUsers()" type="button">
+            <button class="btn btn-danger" data-bs-toggle="modal" onClick="deleteUsers()" type="button">
                 {{ 'Delete'|trans }}
             </button>                         
         </div>
@@ -173,7 +173,7 @@
                     <tr>
                         <td>
                             <div class="wrapper d-flex align-items-center item">
-                                <div class="item-user-avatar mr-2">
+                                <div class="item-user-avatar me-2">
                                     <img src="/users/{{user.id}}/picture?size=64" alt="{{user.name}}" class="rounded-circle" />
                                 </div>
                                 <div class="item-left d-flex flex-column">
@@ -182,16 +182,16 @@
                                             {{- user.name -}}
                                         </a>
                                         {% if 'ROLE_ADMINISTRATOR' in user.roles or 'ROLE_SUPER_ADMINISTRATOR' in user.roles %}
-                                            <label class="badge badge-success">Admin</label>
+                                            <label class="badge text-bg-success">Admin</label>
                                         {% elseif 'ROLE_TEACHER_EDITOR' in user.roles %}
-                                            <label class="badge badge-secondary">Editor</label>
+                                            <label class="badge text-bg-secondary">Editor</label>
                                         {% elseif 'ROLE_TEACHER' in user.roles %}
-                                            <label class="badge badge-info">Teacher</label>
+                                            <label class="badge text-bg-info">Teacher</label>
                                         {% elseif 'ROLE_USER' in user.roles %}
                                             <label class="badge badge-light">Student</label>
                                         {% endif %}
                                         {% if not user.enabled %}
-                                            <label class="badge badge-warning">Blocked</label>
+                                            <label class="badge text-bg-warning">Blocked</label>
                                         {% endif %}
                                         {# {% if user.email == app.user.email %}It's you!{% endif %} #}
                                     </div>
@@ -208,11 +208,11 @@
                             </div>
                         </td>
                         <td>
-                            <span class="timeago" datetime="{{ user.createdAt|date }}" data-toggle="tooltip" data-placement="top" title="{{ user.createdAt|date('M d, Y h:ia') }}"></span>
+                            <span class="timeago" datetime="{{ user.createdAt|date }}" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ user.createdAt|date('M d, Y h:ia') }}"></span>
                         </td>
                         <td>
                             {% if user.lastActivity is not null %}
-                                <span class="timeago" datetime="{{ user.lastActivity|date }}" data-toggle="tooltip" data-placement="top" title="{{ user.lastActivity|date('M d, Y h:ia') }}"></span>
+                                <span class="timeago" datetime="{{ user.lastActivity|date }}" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ user.lastActivity|date('M d, Y h:ia') }}"></span>
                             {% else %}
                                 Never
                             {% endif %}
@@ -228,7 +228,7 @@
                             
                             {% if 'ROLE_SUPER_ADMINISTRATOR' not in user.roles %}
 
-                            <a class="btn btn-default" href="#" id="dropdownUserSettings" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <a class="btn btn-default" href="#" id="dropdownUserSettings" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <i class="fa fa-user-cog"></i>
                                 <i class="fa fa-caret-down"></i>
                             </a>
@@ -244,7 +244,7 @@
                                 <i class="fa fa-user-secret"></i> Impersonate
                             </a>
                             <div class="dropdown-divider"></div>
-                            <button class="dropdown-item text-danger" data-target="{{'.delete-user-modal'~loop.index}}" data-toggle="modal" type="button">
+                            <button class="dropdown-item text-danger" data-bs-target="{{'.delete-user-modal'~loop.index}}" data-bs-toggle="modal" type="button">
                                 <i class="fa fa-trash"></i> Delete
                             </button>
                             </div>
@@ -255,11 +255,11 @@
                         <td>
                             {% for group in user.groupsInfo %}
                                 {% if group.visibility == 2 %}
-                                    <label class="badge badge-success">{{group.name}}</label>
+                                    <label class="badge text-bg-success">{{group.name}}</label>
                                 {% elseif group.visibility == 1 %}
-                                    <label class="badge badge-info">{{group.name}}</label>
+                                    <label class="badge text-bg-info">{{group.name}}</label>
                                 {% elseif group.visibility == 0 %}
-                                    <label class="badge badge-warning">{{group.name}}</label>
+                                    <label class="badge text-bg-warning">{{group.name}}</label>
                                 {% endif %}
                             {% endfor %}
                         </td>

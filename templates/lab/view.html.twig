@@ -19,7 +19,7 @@
 
 <div class="content-title">
     <div class="content-title-infos">
-        Created <span class="timeago" datetime="{{ lab.createdAt|date('m/d/Y H:i:s') }}" data-toggle="tooltip" data-placement="bottom" title="{{ lab.createdAt|date('M d, Y h:ia') }}"></span> by <img src="/users/{{lab.author.id}}/picture?size=24&hash=author" class="rounded-circle ml-1 mr-1 d-inline-block" /> <strong>{{lab.author.name}}</strong>
+        Created <span class="timeago" datetime="{{ lab.createdAt|date('m/d/Y H:i:s') }}" data-bs-toggle="tooltip" data-bs-placement="bottom" title="{{ lab.createdAt|date('M d, Y h:ia') }}"></span> by <img src="/users/{{lab.author.id}}/picture?size=24&hash=author" class="rounded-circle ms-1 me-1 d-inline-block" /> <strong>{{lab.author.name}}</strong>
     </div>
     <div class="content-title-actions" id="instanceButtons">
         {% if (is_granted("ROLE_ADMINISTRATOR") or lab.author == app.user) %}
@@ -40,7 +40,7 @@
 
         {% if (is_granted("ROLE_ADMINISTRATOR") or lab.author == app.user) and labInstance is null %}
 
-        <button class="btn btn-danger" data-target={{'.delete-lab-modal'}} data-toggle="modal" type="button">
+        <button class="btn btn-danger" data-bs-target={{'.delete-lab-modal'}} data-bs-toggle="modal" type="button">
                 {{ 'Delete'|trans }}
              </button>
         
@@ -58,15 +58,17 @@
     </div>
 </div>
 {% if lab.description is not empty %}
-<h4>General descripton</h4>
+<div class="lab-practical-subjects mb-4">
+<h4 class="card-footer">General description</h4>
     {{ lab.description|markdown_gfm_to_html }}
+    </div>
 {% elseif lab.practicalSubjects|length == 0 %}
-    <p class="text-muted">No description</p>
+    {# <p class="text-muted">No description</p>#}
 {% endif %}
 
 {% if lab.practicalSubjects|length > 0 %}
     <div class="lab-practical-subjects mb-4">
-        <h4>{{ 'Practical subjects'|trans }}</h4>
+        <h4 class="card-footer">{{ 'Practical subjects'|trans }}</h4>
         {% for subject in lab.practicalSubjects %}
             <div class="mb-2">
                 <a class="btn btn-outline-primary" target="_blank" rel="noopener"

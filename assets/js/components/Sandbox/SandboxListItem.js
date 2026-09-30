@@ -235,7 +235,7 @@ class SandboxListItem extends Component {
 
         if(this.state.isLoading) {
             button = (
-                <Button className="ml-3" variant="dark" title="Starting your instance" data-toggle="tooltip" data-placement="top" disabled>
+                <Button className="ms-3" variant="dark" title="Starting your instance" data-bs-toggle="tooltip" data-bs-placement="top" disabled>
                     <Spinner animation="border" size="sm" />
                 </Button>
                 )
@@ -244,7 +244,7 @@ class SandboxListItem extends Component {
             button = (
                 <Button
                     variant="primary"
-                    className="mr-2 mt-2"
+                    className="me-2 mt-2"
                     onClick={() => this.onModifyClick(this.props.item)}
                     disabled={this.props.isAnyLoading}
                 >
@@ -280,22 +280,22 @@ class SandboxListItem extends Component {
                                     )
                             ) 
                         && <>
-                        <a className="btn btn-secondary mr-2 mt-2" role="button" href={"/admin/labs_template/"+this.props.item.id+"/edit"}>Edit</a>
-                        <a className="btn btn-danger mr-2 mt-2" role="button" onClick={()=>this.setState({showDeleteLabModal: true})}>Delete</a>
+                        <a className="btn btn-secondary me-2 mt-2" role="button" href={"/admin/labs_template/"+this.props.item.id+"/edit"}>Edit</a>
+                        <a className="btn btn-danger me-2 mt-2" role="button" onClick={()=>this.setState({showDeleteLabModal: true})}>Delete</a>
                         </>
                     }
 
                     {//this.props.itemType == "device" && this.props.item.author && this.props.item.author.id == this.props.user.id && (this.props.item.author.roles.includes("ROLE_TEACHER") || this.props.item.author.roles.includes("ROLE_TEACHER_EDITOR")) && (!this.state.exist) &&
-                     //   <a className="btn btn-danger mr-2 mt-2" role="button" onClick={()=>this.setState({showDeleteDeviceModal: true})}>Delete</a>
+                     //   <a className="btn btn-danger me-2 mt-2" role="button" onClick={()=>this.setState({showDeleteDeviceModal: true})}>Delete</a>
                     }
                     
                     { this.state.exist && this.state.lab != null ?
                         <a 
                             href={"/admin/sandbox/" + this.state.lab.id}
-                            className="btn btn-primary ml-3 mr-2 mt-2"
+                            className="btn btn-primary ms-3 me-2 mt-2"
                             title="Open Sandbox"
-                            data-toggle="tooltip"
-                            data-placement="top"
+                            data-bs-toggle="tooltip"
+                            data-bs-placement="top"
                         >
                             <SVG name="external-link" />
                         </a>
@@ -326,21 +326,21 @@ class SandboxListItem extends Component {
                     <div>
                     {this.props.itemType == "lab" && (this.props.user.roles.includes("ROLE_ADMINISTRATOR") || this.props.user.roles.includes("ROLE_SUPER_ADMINISTRATOR") || ((this.props.item.author.roles.includes("ROLE_TEACHER") || this.props.item.author.roles.includes("ROLE_TEACHER_EDITOR")) && this.props.item.author.id == this.props.user.id)) &&
                         <>
-                        <a className="btn btn-secondary mr-2 mt-2" role="button" href={"/admin/labs_template/"+this.props.item.id+"/edit"}>Edit</a>
-                        <a className="btn btn-danger mr-2 mt-2" role="button" onClick={()=>this.setState({showDeleteLabModal: true})}>Delete</a>
+                        <a className="btn btn-secondary me-2 mt-2" role="button" href={"/admin/labs_template/"+this.props.item.id+"/edit"}>Edit</a>
+                        <a className="btn btn-danger me-2 mt-2" role="button" onClick={()=>this.setState({showDeleteLabModal: true})}>Delete</a>
                         </>
                     }
 
                     {//this.props.itemType == "device" && this.props.item.author && this.props.item.author.id == this.props.user.id && (this.props.item.author.roles.includes("ROLE_TEACHER") || this.props.item.author.roles.includes("ROLE_TEACHER_EDITOR")) && (!this.state.exist) &&
-                      //  <a className="btn btn-danger mr-2 mt-2" role="button" onClick={()=>this.setState({showDeleteDeviceModal: true})}>Delete</a>
+                      //  <a className="btn btn-danger me-2 mt-2" role="button" onClick={()=>this.setState({showDeleteDeviceModal: true})}>Delete</a>
                     }
                     { this.state.exist && this.state.lab != null ?
                         <a 
                             href={"/admin/sandbox/" + this.state.lab.id}
-                            className="btn btn-primary ml-3 mr-2 mt-2"
+                            className="btn btn-primary ms-3 me-2 mt-2"
                             title="Open Sandbox"
-                            data-toggle="tooltip"
-                            data-placement="top"
+                            data-bs-toggle="tooltip"
+                            data-bs-placement="top"
                         >
                             <SVG name="external-link" />
                         </a>

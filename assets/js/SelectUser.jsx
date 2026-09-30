@@ -14,7 +14,7 @@ const Option = props => {
     return (
         <components.Option {...props}>
             <div className="d-flex">
-                <div className="mr-2">
+                <div className="me-2">
                     <img src={"/users/" + props.data.id + "/picture?size=32"} className="rounded-circle"></img>
                 </div>
                 <div className="d-flex flex-column">

@@ -47,11 +47,11 @@
                     <div class="item-left d-flex flex-column">
                         <div class="d-flex">
                             {% if group.pictureFilename is defined and group.pictureFilename %}
-                                <div class="mr-2">
+                                <div class="me-2">
                                     <img src="{{ path('get_group_picture', {slug: group.path}) }}" class="avatar identicon bg-{{ group.id % 8 + 1 }} s40 rounded" />
                                 </div>
                             {% else %}
-                                <div class="avatar identicon bg-{{ group.id % 8 + 1 }} s40 rounded mr-2">
+                                <div class="avatar identicon bg-{{ group.id % 8 + 1 }} s40 rounded me-2">
                                     {{- group.name|firstLetter|upper -}}
                                 </div>
                             {% endif %}
@@ -64,19 +64,19 @@
                         </div>
                     </div>
                     <div class="item-right item-margin text-muted">
-                        <span class="mr-3">{{ svg('group') }} {{ group.users|length }}</span>
-                        <span class="mr-3">
+                        <span class="me-3">{{ svg('group') }} {{ group.users|length }}</span>
+                        <span class="me-3">
                             {% if group.visibility is defined %}
                                 {% if group.visibility == '0' %}
-                                    <div data-toggle="tooltip" data-placement="bottom" title="Private - The group and its activities can only be viewed by yourself.">
+                                    <div data-bs-toggle="tooltip" data-bs-placement="bottom" title="Private - The group and its activities can only be viewed by yourself.">
                                         {{ svg('lock') }}
                                     </div>
                                 {% elseif group.visibility == '1' %}
-                                    <div data-toggle="tooltip" data-placement="bottom" title="Internal - The group and any internal activities can be viewed by members.">
+                                    <div data-bs-toggle="tooltip" data-bs-placement="bottom" title="Internal - The group and any internal activities can be viewed by members.">
                                         {{ svg('shield') }}
                                     </div>
                                 {% elseif group.visibility == '2' %}
-                                    <div data-toggle="tooltip" data-placement="bottom" title="Public - The group and any internal projects can be viewed by any logged in user.">
+                                    <div data-bs-toggle="tooltip" data-bs-placement="bottom" title="Public - The group and any internal projects can be viewed by any logged in user.">
                                         {{ svg('earth') }}
                                     </div>
                                 {% endif %}

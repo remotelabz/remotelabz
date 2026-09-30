@@ -68,7 +68,7 @@
                     <!-- <a href="{{ path('show_lab', {'id': lab.id}) }}" class="btn btn-primary lab-display-more">Go to lab</a> -->
                 </div>
                 <div class="card-footer text-muted">
-                    Last update <span class="timeago" datetime="{{ lab.lastUpdated|date('m/d/Y H:i:s') }}" data-toggle="tooltip" data-placement="bottom" title="{{ lab.lastUpdated|date('M d, Y h:ia') }}"></span>
+                    Last update <span class="timeago" datetime="{{ lab.lastUpdated|date('m/d/Y H:i:s') }}" data-bs-toggle="tooltip" data-bs-placement="bottom" title="{{ lab.lastUpdated|date('M d, Y h:ia') }}"></span>
                 </div>
             </div>
             {% endfor %}

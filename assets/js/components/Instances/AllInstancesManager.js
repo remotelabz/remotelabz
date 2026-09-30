@@ -83,16 +83,16 @@ function AllInstancesManager(props) {
                     <div>
                     {
                         (!props.props.lab.name.startsWith('Sandbox_')) && 
-                        <Button variant="danger" className="ml-2" href={`/labs/${props.props.lab.id}/see/${props.props.id}`}>See Lab</Button>
+                        <Button variant="danger" className="ms-2" href={`/labs/${props.props.lab.id}/see/${props.props.id}`}>See Lab</Button>
                     }
                     {(props.user.roles.includes("ROLE_TEACHER") || props.user.roles.includes("ROLE_TEACHER_EDITOR") || props.user.roles.includes("ROLE_ADMINISTRATOR") || props.user.roles.includes("ROLE_SUPER_ADMINISTRATOR")) &&
-                        <Button variant="danger" className="ml-2" onClick={() => setShowStopLabModal(true)}>Stop lab</Button>
+                        <Button variant="danger" className="ms-2" onClick={() => setShowStopLabModal(true)}>Stop lab</Button>
                     }
                     {
-                        <Button variant="danger" className="ml-2" onClick={() => setShowLeaveLabModal(true)} >Leave lab</Button>
+                        <Button variant="danger" className="ms-2" onClick={() => setShowLeaveLabModal(true)} >Leave lab</Button>
                     }
                     {(props.user.roles.includes("ROLE_TEACHER") || props.user.roles.includes("ROLE_TEACHER_EDITOR") || props.user.roles.includes("ROLE_ADMINISTRATOR") || props.user.roles.includes("ROLE_SUPER_ADMINISTRATOR")) &&
-                        <input type="checkbox" value={props.props.uuid} name="checkLab" class="ml-4 checkLab"></input>
+                        <input type="checkbox" value={props.props.uuid} name="checkLab" class="ms-4 checkLab"></input>
                     }
                     </div>
                 </ListGroupItem>

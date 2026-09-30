@@ -11,10 +11,12 @@
 
 {% block jumbotron %}
 <div class="container">
-    <div class="float-left"><img src="/profile/picture?size=96" width="96px" alt="profile-img" class="rounded-circle mr-4"></div>
-    <div>
-        <h1 class="display-4">Hello, {{ app.user.firstname }}.</h1>
-        <p class="lead">Welcome to RemoteLabz!</p>
+    <div class="d-flex align-items-center">
+        <img src="/profile/picture?size=96" width="96px" alt="profile-img" class="rounded-circle me-4">
+        <div>
+            <h1 class="display-4">Hello, {{ app.user.firstname }}.</h1>
+            <p class="lead mb-0">Welcome to RemoteLabz!</p>
+        </div>
     </div>
 </div>
 {% endblock %}
@@ -41,12 +43,12 @@
 
 <div class="row">
     <div class="col-xl-8 col-lg-12 border-right">
-        <h1 class="ml-3">Your labs</h1>
+        <h1 class="ms-3">Your labs</h1>
         {% for group in groups %}
                 {% set labs = [] %}
                 {% set labs = labs|merge(group.labs) %}
                 {# {% set labs = labs|sort((a, b) => a.lastUpdated < b.lastUpdated) %} #}
-                <h6 class="ml-3 card-footer text-muted">In group {{group.name}}</h6>
+                <h6 class="ms-3 card-footer text-muted">In group {{group.name}}</h6>
                 {% if labs|length > 0 %}           
                     <div class="grid-xs-1 grid-sm-2 grid-md-3 grid-lg-3 grid-xl-3 grid-xxl-4">
                         {% for lab in group.labs %}
@@ -72,7 +74,7 @@
                                     <!-- <a href="{{ path('show_lab', {'id': lab.id}) }}" class="btn btn-primary lab-display-more">Go to lab</a> -->
                                 </div>
                                 <div class="card-footer text-muted d-flex justify-content-between align-items-center">
-                                    <span>Last updated <span class="timeago" datetime="{{ lab.lastUpdated|date('m/d/Y H:i:s') }}" data-toggle="tooltip" data-placement="bottom" title="{{ lab.lastUpdated|date('M d, Y h:ia') }}"></span></span>
+                                    <span>Last updated <span class="timeago" datetime="{{ lab.lastUpdated|date('m/d/Y H:i:s') }}" data-bs-toggle="tooltip" data-bs-placement="bottom" title="{{ lab.lastUpdated|date('M d, Y h:ia') }}"></span></span>
                                     <span>{% if lab.id in started_instances %}&#128994;{% else %}&#128308;{% endif %}</span>
                                 </div>
                             </div>
@@ -85,7 +87,7 @@
                 {% endif %}
         {% endfor %}
         {% if bookingLabs is not empty %}
-            <h1 class="ml-3">Your bookings</h1>
+            <h1 class="ms-3">Your bookings</h1>
             <div class="grid-xs-1 grid-sm-2 grid-md-3 grid-lg-3 grid-xl-3 grid-xxl-4">
                 {% for lab in bookingLabs %}
                     <div class="card m-4">
@@ -105,7 +107,7 @@
                             </p>
                         </div>
                         <div class="card-footer text-muted">
-                            Last updated <span class="timeago" datetime="{{ lab.lastUpdated|date('m/d/Y H:i:s') }}" data-toggle="tooltip" data-placement="bottom" title="{{ lab.lastUpdated|date('M d, Y h:ia') }}"></span>
+                            Last updated <span class="timeago" datetime="{{ lab.lastUpdated|date('m/d/Y H:i:s') }}" data-bs-toggle="tooltip" data-bs-placement="bottom" title="{{ lab.lastUpdated|date('M d, Y h:ia') }}"></span>
                             {% if lab.id in started_instances %}
                             &#128994;
                             {% else %}
@@ -118,7 +120,7 @@
         {% endif %}            
     </div>
     <div class="col-xl-4 col-lg-12">
-        <h1 class="ml-3">Your groups</h1>
+        <h1 class="ms-3">Your groups</h1>
         <div {{ react_component('GroupExplorer', {"endpoint": path('api_groups'), "user": user.email}) }}></div>
     </div>
 </div>

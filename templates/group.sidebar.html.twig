@@ -6,16 +6,16 @@
         {% block sidebar_header %}
             <div class="context-header">
                 <a href="{{ path('dashboard_show_group', {slug: group.path}) }}" title="{{ group.name }}">
-                    <div class="s40 mr-2 d-flex">
+                    <div class="s40 me-2 d-flex">
                         {% if group.pictureFilename is defined and group.pictureFilename %}
-                            <img src="{{ path('get_group_picture', {slug: group.path, size: 40}) }}" alt="profile-img" class="rounded-lg mr-1" />
+                            <img src="{{ path('get_group_picture', {slug: group.path, size: 40}) }}" alt="profile-img" class="rounded-lg me-1" />
                         {% else %}
                             <div class="avatar identicon bg-{{ group.id % 8 + 1 }} s40 rounded-lg">
                                 {{- group.name|firstLetter|upper -}}
                             </div>
                         {% endif %}
                     </div>
-                    <div class="sidebar-context-title ml-2">{{ group.name }}</div>
+                    <div class="sidebar-context-title ms-2">{{ group.name }}</div>
                 </a>
             </div>
         {% endblock %}

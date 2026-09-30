@@ -27,7 +27,7 @@ class GroupNode extends Component {
         return (
             <li onClick={this.expand}>
                 <div className="d-flex align-items-center group-row-contents">
-                    <div className="text-muted mr-3"><span className="mr-3">
+                    <div className="text-muted me-3"><span className="me-3">
                         {group.children.length > 0 ?
                             <SVG name={this.state.expanded ? "angle-down" : "angle-right"} className="s10"></SVG>
                             :
@@ -37,22 +37,22 @@ class GroupNode extends Component {
                         <SVG name={this.state.expanded ? "folder-open" : "folder-o"}></SVG>
                     </div>
 
-                    <div className={"avatar identicon bg-" + (group.id % 8 + 1) + " s40 rounded-lg mr-3"}>
+                    <div className={"avatar identicon bg-" + (group.id % 8 + 1) + " s40 rounded-lg me-3"}>
                         {group.name.charAt(0).toUpperCase()}
                     </div>
 
                     <div className="d-flex flex-grow-1 flex-basis-0">
                         <div className="fw600 flex-grow-1 flex-basis-0 d-flex flex-column">
                             <div className="d-inline-flex">
-                                <a href={Routing.generate('dashboard_show_group', {slug: group.path})} className="fw600 title mr-2" onClick={(e) => e.stopPropagation()}>{ group.name }</a>
-                                <div className="text-muted mr-2">
+                                <a href={Routing.generate('dashboard_show_group', {slug: group.path})} className="fw600 title me-2" onClick={(e) => e.stopPropagation()}>{ group.name }</a>
+                                <div className="text-muted me-2">
                                     {group.visibility === 0 &&
-                                        <div data-toggle="tooltip" data-placement="bottom" title="Private - The group and its activities can only be viewed by yourself.">
+                                        <div data-bs-toggle="tooltip" data-bs-placement="bottom" title="Private - The group and its activities can only be viewed by yourself.">
                                             <SVG name="lock"></SVG>
                                         </div>
                                     }
                                     {group.visibility === 1 &&
-                                        <div data-toggle="tooltip" data-placement="bottom" title="Internal - The group and any internal activities can be viewed by members.">
+                                        <div data-bs-toggle="tooltip" data-bs-placement="bottom" title="Internal - The group and any internal activities can be viewed by members.">
                                             <SVG name="shield"></SVG>
                                         </div>
                                     }
@@ -81,19 +81,19 @@ class GroupNode extends Component {
                         </div>
 
                         <div className="d-flex flex-grow-0 align-items-center text-muted">
-                            <span className="d-inline-flex align-items-center mr-3">
+                            <span className="d-inline-flex align-items-center me-3">
                                 <SVG name="folder-o" className="s16"></SVG>
-                                <span className="ml-1">{ group.children.length }</span>
+                                <span className="ms-1">{ group.children.length }</span>
                             </span>
 
-                            <span className="d-inline-flex align-items-center mr-3">
+                            <span className="d-inline-flex align-items-center me-3">
                                 <SVG name="bookmark" className="s16"></SVG>
-                                <span className="ml-1">{ group.activities.length }</span>
+                                <span className="ms-1">{ group.activities.length }</span>
                             </span>
 
-                            <span className="d-inline-flex align-items-center mr-3">
+                            <span className="d-inline-flex align-items-center me-3">
                                 <SVG name="users" className="s16"></SVG>
-                                <span className="ml-1">{ group.users.length }</span>
+                                <span className="ms-1">{ group.users.length }</span>
                             </span>
                         </div>
                     </div>
@@ -133,7 +133,7 @@ export default class GroupDropdown extends Component {
                 <ul className="labs-panel content-list p-0 list-unstyled group-list-tree">
                     {this.state.loading ?
                         <div className="d-flex align-items-center justify-content-center py-4">
-                            <div className="mr-2">
+                            <div className="me-2">
                                 <i className="fas fa-circle-notch fa-spin"></i>
                             </div>
                             Loading...

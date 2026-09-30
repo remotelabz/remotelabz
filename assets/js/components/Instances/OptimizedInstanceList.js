@@ -47,7 +47,7 @@ const VirtualizedInstanceRow = React.memo((props) => {
         <div className="instance-uuid">{instance.uuid}</div>
         <div className="instance-meta">
           <span>Owner: {labInfo.ownerName || 'N/A'}</span>
-          <span className="ml-2">Worker: {labInfo.workerIp || 'N/A'}</span>
+          <span className="ms-2">Worker: {labInfo.workerIp || 'N/A'}</span>
         </div>
       </div>
 
@@ -300,7 +300,7 @@ const DetailsModal = ({ selectedInstance, onClose, sharedStates, onStateUpdate, 
                   <h4 style={{ marginBottom: 0 }}>
                     {labInfo.name || 'Lab'}
                     &nbsp;
-                    <span className={`badge badge-${selectedInstance.state === 'created' ? 'success' : selectedInstance.state === 'creating' ? 'warning' : 'secondary'}`}>
+                    <span className={`badge text-bg-${selectedInstance.state === 'created' ? 'success' : selectedInstance.state === 'creating' ? 'warning' : 'secondary'}`}>
                       {selectedInstance.state}
                     </span>
                   </h4>
@@ -477,10 +477,10 @@ const DetailsModal = ({ selectedInstance, onClose, sharedStates, onStateUpdate, 
                                       target="_blank"
                                       rel="noopener noreferrer"
                                       href={"/instances/" + deviceInstance.uuid + "/view/admin"}
-                                      className="btn btn-primary ml-3"
+                                      className="btn btn-primary ms-3"
                                       title="Open admin console"
-                                      data-toggle="tooltip"
-                                      data-placement="top"
+                                      data-bs-toggle="tooltip"
+                                      data-bs-placement="top"
                                   >
                                       <SVG name="incognito" />
                                   </a>

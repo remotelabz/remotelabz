@@ -18,19 +18,19 @@
 </div>
 <div class="content-body">
     <form method="get" action="{{ path('login_logs') }}" class="form-inline mb-3">
-        <div class="form-group mr-2">
+        <div class="form-group me-2">
             <label for="log_start">From</label>
             <input type="date" class="form-control" id="log_start" name="start" value="{{ start|date('Y-m-d') }}">
         </div>
-        <div class="form-group mr-2">
+        <div class="form-group me-2">
             <label for="log_end">To</label>
             <input type="date" class="form-control" id="log_end" name="end" value="{{ end|date('Y-m-d') }}">
         </div>
-        <div class="form-group mr-2">
+        <div class="form-group me-2">
             <label for="log_user">User</label>
             <input type="text" class="form-control" id="log_user" name="user" value="{{ userFilter }}" placeholder="Name or email">
         </div>
-        <button type="submit" class="btn btn-primary mr-2">Filter</button>
+        <button type="submit" class="btn btn-primary me-2">Filter</button>
         <a href="{{ path('login_logs') }}" class="btn btn-secondary">Last 7 days</a>
     </form>
 

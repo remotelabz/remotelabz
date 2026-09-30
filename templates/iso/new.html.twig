@@ -50,9 +50,9 @@
                         </div>
 
                         <div class="mb-4">
-                            <div class="form-floating">
+                            <div>
                                 <label class="form-label fw-bold">{{ 'Architecture'|trans }}</label>
-                                {{ form_widget(form.arch, {'attr': {'class': 'form-control', 'placeholder': 'Architecture'|trans}}) }}
+                                {{ form_widget(form.arch, {'attr': {'class': 'form-select'}}) }}
                             </div>
                             {{ form_errors(form.arch) }}
                             <div class="form-text">
@@ -61,9 +61,9 @@
                         </div>
 
                         <div class="mb-4">
-                            <div class="form-floating">
+                            <div>
                                 <label class="form-label fw-bold">{{ 'Directory'|trans }}</label>
-                                {{ form_widget(form.directory, {'attr': {'class': 'form-control'}}) }}
+                                {{ form_widget(form.directory, {'attr': {'class': 'form-select'}}) }}
                             </div>
                             {{ form_errors(form.directory) }}
                             <div class="form-text">

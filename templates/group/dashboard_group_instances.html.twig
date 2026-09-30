@@ -27,13 +27,13 @@
         {#- Lab instances -#}
 
         <h4 class="p-3 border-bottom">Lab instances of {{group.name}}
-        <span data-toggle="tooltip" data-placement="right" title="All laboratories started by you, your groups and members of your groups.">
+        <span data-bs-toggle="tooltip" data-bs-placement="right" title="All laboratories started by you, your groups and members of your groups.">
             {{ svg('question') }} </span></h4>
             <div>
                 {{ form_start(groupInstanceForm, {"action": path('dashboard_group_instances', {"slug":group.slug}), "method":"GET"}) }}
                  
                 <div class="d-flex align-items-center mb-2">
-                    <select name="{{ field_name(groupInstanceForm.filter) }}" id="group_instance_filter" class="mr-3 instancesFilter form-control"> 
+                    <select name="{{ field_name(groupInstanceForm.filter) }}" id="group_instance_filter" class="me-3 instancesFilter form-control"> 
 
                     {% for label, value in field_choices(groupInstanceForm.filter) %}
                         <option {% if value == field_value(groupInstanceForm.filter) %}selected="selected"{% endif %} value="{{ value }}">{{ label }}</option>

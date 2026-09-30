@@ -25,7 +25,7 @@
         <div class="content-title-actions">
             {% if is_granted("ROLE_TEACHER_EDITOR") %}
                 <a href="{{ path('edit_pdu', {'id': pdu.id}) }}" class="btn btn-secondary" role="button"><i class="fa fa-edit"></i> {{ 'Edit'|trans }}</a>
-                <button class="btn btn-danger" data-target={{'.delete-modal'}} data-toggle="modal" type="button">
+                <button class="btn btn-danger" data-bs-target={{'.delete-modal'}} data-bs-toggle="modal" type="button">
                     {{ 'Delete'|trans }}
                  </button>
             {% endif %}
@@ -50,7 +50,7 @@
                     {% endif %}
                     </td>
                     <td><a href="{{ path('edit_pdu_outlet', {'id': outlet.id}) }}" class="btn btn-secondary" role="button">{{ 'Edit'|trans }}</a>
-                 <button class="btn btn-danger" data-target={{'.delete-outlet-modal'~loop.index}} data-toggle="modal" type="button">
+                 <button class="btn btn-danger" data-bs-target={{'.delete-outlet-modal'~loop.index}} data-bs-toggle="modal" type="button">
                     {{ 'Delete'|trans }}
                  </button>
                  {% embed 'modal.html.twig' with {'title': 'Delete the outlet'|trans, 'class': 'delete-outlet-modal'~loop.index} %}

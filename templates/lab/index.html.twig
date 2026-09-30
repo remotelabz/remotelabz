@@ -23,7 +23,7 @@
     <div class="top-panel">
         <div class="quick-actions">
             {% if (is_granted('ROLE_ADMINISTRATOR') or is_granted('ROLE_TEACHER')) %}
-                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#importLabModal">
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#importLabModal">
                     {{ svg('upload') }} {{ 'Import Lab'|trans }}
                 </button>
                 <a class="btn btn-success" role="button" href="{{
@@ -57,11 +57,11 @@
     <div class="search-panel">
         {% set orderBy = app.request.query.get('orderBy')|default('lastUpdated') %}
         <form action="{{ path('labs', app.request.query|merge(app.request.query)) }}" method="GET" class="d-flex align-items-center">
-            <div class="search-field flex-grow-1 mr-3">
+            <div class="search-field flex-grow-1 me-3">
                 <i class="fa fa-search"></i>
                 <input type="search" class="form-control input-sm" name="search" placeholder="Filter by name" spellcheck="false" value="{{ search|default('') }}" type="search" />
             </div>
-            <div class="mr-2">
+            <div class="me-2">
                 {% set searchLimit = app.request.query.get("limit") %}
                 <select name="limit" class="form-control">
                     <option value="10" {% if searchLimit != 30 and searchLimit != 50 %}selected{% endif %}>10</option>
@@ -69,7 +69,7 @@
                     <option value="50" {% if searchLimit is defined and searchLimit == 50 %}selected{% endif %}>50</option>
                 </select>
             </div>
-            <div class="mr-3">
+            <div class="me-3">
                 labs per page
             </div>
             <button class="btn btn-primary" type="submit">{{ svg('search') }}</button>
@@ -98,7 +98,7 @@
                         {%- endif -%}
                     </p>
                     <div class="mt-2">
-                        <div class="d-inline" data-toggle="tooltip" data-placement="top" title="Devices">
+                        <div class="d-inline" data-bs-toggle="tooltip" data-bs-placement="top" title="Devices">
                             <span {% if lab.devices|length == 0 %}class="text-muted"{% endif -%}>
                                 <span>{{ svg('monitor-o', 'image-sm v-sub') }}</span> {{ lab.devices|length }} device{{ lab.devices|length > 1 ? 's' : '' }}
                             </span>
@@ -109,7 +109,7 @@
                     <div class="d-flex justify-content-between">
                         <div>
                             <div class="mt-2">Author: {{lab.author.name}}</div>
-                            <div>Last updated <span class="timeago" datetime="{{ lab.lastUpdated|date('m/d/Y H:i:s') }}" data-toggle="tooltip" data-placement="bottom" title="{{ lab.lastUpdated|date('M d, Y h:ia') }}"></span></div>
+                            <div>Last updated <span class="timeago" datetime="{{ lab.lastUpdated|date('m/d/Y H:i:s') }}" data-bs-toggle="tooltip" data-bs-placement="bottom" title="{{ lab.lastUpdated|date('M d, Y h:ia') }}"></span></div>
                         </div>
                         <div class="d-flex align-items-center">
                             <span>{% if lab.id in started_instances %}&#128994;{% else %}&#128308;{% endif %}</span>
@@ -141,9 +141,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="importLabModalLabel">Import a Lab</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
+                    <button type="button" class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <p>
