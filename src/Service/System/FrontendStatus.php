@@ -24,6 +24,7 @@ class FrontendStatus
     private const SYSTEM_UNITS = [
         'apache2',
         'mysql',
+        'redis-server',
     ];
 
     private const CPU_SAMPLE_DELAY_MICROSECONDS = 200000;

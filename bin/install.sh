@@ -282,6 +282,12 @@ install_requirements() {
     print_info "Installing HAProxy..."
     apt install -y haproxy
     
+    # Install REDIS
+    print_info "Installing Redis..."
+    apt install -y redis-server php8.5-redis
+    systemctl start redis-server
+    systemctl enable redis-server
+
     # Install Apache modules
     print_info "Configuring Apache..."
     apt install -y libapache2-mod-shib libapache2-mod-php8.5
