@@ -11,10 +11,12 @@
 
 {% block jumbotron %}
 <div class="container">
-    <div class="float-left"><img src="/profile/picture?size=96" width="96px" alt="profile-img" class="rounded-circle mr-4"></div>
-    <div>
-        <h1 class="display-4">Hello, {{ app.user.firstname }}.</h1>
-        <p class="lead">Welcome to RemoteLabz!</p>
+    <div class="d-flex align-items-center">
+        <img src="/profile/picture?size=96" width="96px" alt="profile-img" class="rounded-circle me-4">
+        <div>
+            <h1 class="display-4">Hello, {{ app.user.firstname }}.</h1>
+            <p class="lead mb-0">Welcome to RemoteLabz!</p>
+        </div>
     </div>
 </div>
 {% endblock %}

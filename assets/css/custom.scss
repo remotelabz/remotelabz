@@ -133,8 +133,8 @@ h1 {
 
 .navbar {
   min-height: 52px;
-  background-color: var(--bs-body-bg);
-  color: var(--bs-body-color);
+  background-color: #382b71;
+  color: #d1d1f0;
   min-height: 40px;
   list-style: none;
   
@@ -439,6 +439,10 @@ img {
 }
 
 // ========== AUTH LANDING PAGE ==========
+
+.auto-form-wrapper .form-group {
+  margin-bottom: 1rem;
+}
 
 .auth.theme-one .auto-form-wrapper .form-group .input-group .form-control {
   border-radius: 6px;
