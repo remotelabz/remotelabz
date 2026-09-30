@@ -49,9 +49,9 @@ const Option = props => {
                 <div className="d-flex flex-column">
                     <div style={{ lineHeight: 16 + 'px' }}>{props.data.fullyQualifiedName} <span className="fw600">{props.data.name}
                         {(props.data.type && props.data.type == 'group') &&
-                            <Badge variant="default" className="ms-2">{GroupRoleLabel[props.data.role]}</Badge>
+                            <Badge bg="default" className="ms-2">{GroupRoleLabel[props.data.role]}</Badge>
                         }
-                    </span>{ props.data.hasLabInstance && <Badge variant="success" className="ms-2">Joined</Badge> }</div>
+                    </span>{ props.data.hasLabInstance && <Badge bg="success" text="white" className="ms-2">Joined</Badge> }</div>
 
                 </div>
                 <div className="d-flex flex-grow-1"></div>
