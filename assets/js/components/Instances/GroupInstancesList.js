@@ -296,12 +296,12 @@ export default function GroupInstancesList(props = {instances, group, user}) {
             <div className="d-flex justify-content-end mb-2">
                 {instances !== "" &&
                     <>
-                    <Button variant="danger" className="ml-2" onClick={() => setShowForceStopModal(true)}>Stop labs</Button>
-                    <Button variant="danger" className="ml-2" onClick={() => setShowLeaveLabModal(true)}>Leave labs</Button>
+                    <Button variant="danger" className="ms-2" onClick={() => setShowForceStopModal(true)}>Stop labs</Button>
+                    <Button variant="danger" className="ms-2" onClick={() => setShowLeaveLabModal(true)}>Leave labs</Button>
                     </>
                 }
                 {instances !== "" &&
-                    <input type="checkbox" value="leaveAll" name="checkAll" id="checkAll" class="ml-4" onClick={checkAll}></input>
+                    <input type="checkbox" value="leaveAll" name="checkAll" id="checkAll" class="ms-4" onClick={checkAll}></input>
                 }
             </div>
             {instancesList}

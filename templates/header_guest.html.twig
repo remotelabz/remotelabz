@@ -1,9 +1,9 @@
 {% import "dashboard.base.html.twig" as dashboard %}
 
 {% macro navlink(name, link, expandable, c, variables) %}
-  <li class="nav-item ml-2">
+  <li class="nav-item ms-2">
     <a class="nav-link d-flex align-items-center {%- if c == variables.category %} active{%endif%}" href="{{ path(link) }}">
-      <span class="menu-title mr-1">{{name}}</span>
+      <span class="menu-title me-1">{{name}}</span>
       {%- if expandable == true %}{{- svg('angle-down', 's11') -}}{% endif -%}
     </a>
   </li>
@@ -21,7 +21,7 @@
       <div class="separator flex-grow-1"></div>
       <div class="navbar-menu-element">
         {{ app.user.mail }}
-        <ul class="navbar-nav ml-lg-auto">
+        <ul class="navbar-nav ms-lg-auto">
           <li class="nav-item d-sm-block profile-img dropdown">
             <a class="nav-link profile-image" href="#" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
               {{ svg('angle-down', 'image-sm') }}

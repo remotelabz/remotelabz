@@ -17,8 +17,8 @@ const Option = props => {
     return (
         <components.Option {...props}>
             <div className="d-flex">
-                <div className="mr-2">
-                    <div className={"avatar identicon bg-" + (props.data.value % 8 + 1) + " s36 rounded mr-2"}>{props.data.label.charAt(0).toUpperCase()}</div>
+                <div className="me-2">
+                    <div className={"avatar identicon bg-" + (props.data.value % 8 + 1) + " s36 rounded me-2"}>{props.data.label.charAt(0).toUpperCase()}</div>
                 </div>
                 <div className="d-flex flex-column">
                     <div style={{lineHeight: 16 + 'px'}}>{props.data.fullyQualifiedName} <span className="fw600">{props.data.label}</span></div>
@@ -30,7 +30,7 @@ const Option = props => {
                 {(props.data.children && props.data.users) &&
                     <div className="d-flex align-items-center">
                         <OverlayTrigger placement="bottom" overlay={<Tooltip>Subgroups</Tooltip>}>
-                            <div className="mr-2"><SVG name="folder-o"></SVG> {props.data.children.length}</div>
+                            <div className="me-2"><SVG name="folder-o"></SVG> {props.data.children.length}</div>
                         </OverlayTrigger>
                         <OverlayTrigger placement="bottom" overlay={<Tooltip>Members</Tooltip>}>
                             <div><SVG name="users"></SVG> {props.data.users.length}</div>
@@ -44,7 +44,7 @@ const Option = props => {
 
 const SingleValue = ({ children, ...props }) => (
     <components.SingleValue {...props} className="d-flex align-items-center">
-        <div className={"avatar identicon bg-" + (props.data.value % 8 + 1) + " s24 rounded mr-2"} style={{fontSize: 12 + 'px'}}>{props.data.label.charAt(0).toUpperCase()}</div>
+        <div className={"avatar identicon bg-" + (props.data.value % 8 + 1) + " s24 rounded me-2"} style={{fontSize: 12 + 'px'}}>{props.data.label.charAt(0).toUpperCase()}</div>
         <div>
             {props.data.fullyQualifiedName} <span className="fw600">{props.data.label}</span>
         </div>

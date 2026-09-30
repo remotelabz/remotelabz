@@ -255,7 +255,7 @@ useEffect(() => {
         {!isSandbox && props.user.name && 
             <div className="d-flex align-items-center mb-2">
                 <div>View as : </div>
-                <div className="flex-grow-1 ml-2">
+                <div className="flex-grow-1 ms-2">
                     <InstanceOwnerSelect
                     user={props.user.id}
                     onChange={onViewAsChange}
@@ -286,18 +286,18 @@ useEffect(() => {
                     {labInstance.state === "created" &&
                         <Button href="/profile/vpn" variant="primary">
                             <SVG name="download" className="v-sub image-sm"></SVG>
-                            <span className="ml-1">OpenVPN file</span>
+                            <span className="ms-1">OpenVPN file</span>
                         </Button>
                     }
                     {props.lab.chatEnabled === true && props.chatAccessible === true && !props.user.code && labInstance.state === "created" &&
-                        <Button variant="primary" className="ml-2" onClick={() => setShowChatModal(true)}>
+                        <Button variant="primary" className="ms-2" onClick={() => setShowChatModal(true)}>
                             <SVG name="comment" className="v-sub image-sm"></SVG>
-                            <span className="ml-1">Chat</span>
+                            <span className="ms-1">Chat</span>
                         </Button>
                     }
                     {(props.isJitsiCallEnabled && isOwnedByGroup()) &&
                         <JitsiCallButton
-                            className="mr-2"
+                            className="me-2"
                             isOwnedByGroup={isOwnedByGroup()}
                             isCurrentUserGroupAdmin={isCurrentUserGroupAdmin(viewAs)}
                             onStartCall={onJitsiCallStarted}
@@ -305,14 +305,14 @@ useEffect(() => {
                     }
                     {
                         (!props.lab.name.startsWith('Sandbox_Device')) && labInstance.state === "created" && (viewAs.type === "user" || viewAs.type === "group") &&
-                        <Button variant="danger" className="ml-2" href={`/labs/${props.lab.id}/see/${labInstance.id}`}>See Lab</Button>
+                        <Button variant="danger" className="ms-2" href={`/labs/${props.lab.id}/see/${labInstance.id}`}>See Lab</Button>
                     }
                     {
                         (!props.lab.name.startsWith('Sandbox_Device')) && labInstance.state === "created" && viewAs.type === "guest" &&
-                        <Button variant="danger" className="ml-2" href={`/labs/guest/${props.lab.id}/see/${labInstance.id}`}>See Lab</Button>
+                        <Button variant="danger" className="ms-2" href={`/labs/guest/${props.lab.id}/see/${labInstance.id}`}>See Lab</Button>
                     }
                     {isCurrentUserGroupAdmin(viewAs) &&
-                        <Button variant="danger" className="ml-2" onClick={() => setShowLeaveLabModal(true)} disabled={hasInstancesStillRunning() || labInstance.state === "creating" || labInstance.state === "deleting"}>Leave lab</Button>
+                        <Button variant="danger" className="ms-2" onClick={() => setShowLeaveLabModal(true)} disabled={hasInstancesStillRunning() || labInstance.state === "creating" || labInstance.state === "deleting"}>Leave lab</Button>
                     }
                     </div>
                 </ListGroupItem>

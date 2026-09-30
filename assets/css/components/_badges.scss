@@ -6,6 +6,36 @@
         background-color: rgb(0, 229, 255);
         color: black;
     }
+
+    // Bootstrap 4 compatibility (renamed to text-bg-* in BS5)
+    &.badge-primary {
+        color: #fff;
+        background-color: map-get($theme-colors, primary);
+    }
+    &.badge-secondary {
+        color: #fff;
+        background-color: map-get($theme-colors, secondary);
+    }
+    &.badge-success {
+        color: #fff;
+        background-color: map-get($theme-colors, success);
+    }
+    &.badge-danger {
+        color: #fff;
+        background-color: map-get($theme-colors, danger);
+    }
+    &.badge-warning {
+        color: #fff;
+        background-color: map-get($theme-colors, warning);
+    }
+    &.badge-info {
+        color: #fff;
+        background-color: map-get($theme-colors, info);
+    }
+    &.badge-dark {
+        color: #fff;
+        background-color: map-get($theme-colors, dark);
+    }
 }
 
 [theme="dark"] {

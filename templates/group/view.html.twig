@@ -27,7 +27,7 @@
                         {% block header %}Group info{% endblock %}
                         {% block list %}
                             <li class="list-group-item">
-                                <div class="avatar identicon bg-{{ group.id % 8 + 1 }} s60 rounded-lg mr-2">
+                                <div class="avatar identicon bg-{{ group.id % 8 + 1 }} s60 rounded-lg me-2">
                                     {% if group.pictureFilename is defined and group.pictureFilename %}
                                         image
                                     {% else %}
@@ -86,14 +86,14 @@
                         {% for user in group.users %}
                             <li class="list-group-item">
                                 <div class="d-flex">
-                                    <img src="/users/{{user.id}}/picture?size=32" alt="{{user.name}}" class="rounded-circle s40 mr-3" />
+                                    <img src="/users/{{user.id}}/picture?size=32" alt="{{user.name}}" class="rounded-circle s40 me-3" />
 
                                     <div class="d-flex flex-column">
                                         <div>
                                             <span class="fw600">{{ user.name }}</span>
                                             <span class="text-muted">{{ user.email }}</span>
                                             {% if user.id == app.user.id %}
-                                                <label class="badge badge-success ml-2 mb-0">It's you!</label>
+                                                <label class="badge text-bg-success ms-2 mb-0">It's you!</label>
                                             {% endif %}
                                         </div>
                                         <div>

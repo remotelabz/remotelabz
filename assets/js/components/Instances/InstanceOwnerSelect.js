@@ -37,21 +37,21 @@ const Option = props => {
     return (
         <components.Option {...props}>
             <div className="d-flex">
-                <div className="mr-2">
+                <div className="me-2">
                     {props.data.type && props.data.type == 'user' ?
-                        <div className="s36 mr-2">
+                        <div className="s36 me-2">
                             <img src={"/users/" + props.data.id + "/picture?size=36"} className="rounded-circle"></img>
                         </div>
                         :
-                        <div className={`avatar identicon s36 rounded mr-2 ${getGroupIdenticonClass(props.data)}`}>{props.data.name.charAt(0).toUpperCase()}</div>
+                        <div className={`avatar identicon s36 rounded me-2 ${getGroupIdenticonClass(props.data)}`}>{props.data.name.charAt(0).toUpperCase()}</div>
                     }
                 </div>
                 <div className="d-flex flex-column">
                     <div style={{ lineHeight: 16 + 'px' }}>{props.data.fullyQualifiedName} <span className="fw600">{props.data.name}
                         {(props.data.type && props.data.type == 'group') &&
-                            <Badge variant="default" className="ml-2">{GroupRoleLabel[props.data.role]}</Badge>
+                            <Badge variant="default" className="ms-2">{GroupRoleLabel[props.data.role]}</Badge>
                         }
-                    </span>{ props.data.hasLabInstance && <Badge variant="success" className="ml-2">Joined</Badge> }</div>
+                    </span>{ props.data.hasLabInstance && <Badge variant="success" className="ms-2">Joined</Badge> }</div>
 
                 </div>
                 <div className="d-flex flex-grow-1"></div>
@@ -68,11 +68,11 @@ const Option = props => {
 const SingleValue = ({ ...props }) => (
     <components.SingleValue {...props} className="d-flex align-items-center">
         {props.data.type && props.data.type == 'user' ?
-            <div className="s24 mr-2">
+            <div className="s24 me-2">
                 <img src={"/users/" + props.data.value + "/picture?size=24"} className="rounded-circle"></img>
             </div>
             :
-            <div className={"avatar identicon bg-" + (props.data.value % 8 + 1) + " s24 rounded mr-2"} style={{fontSize: 12 + 'px'}}>{props.data.label.charAt(0).toUpperCase()}</div>
+            <div className={"avatar identicon bg-" + (props.data.value % 8 + 1) + " s24 rounded me-2"} style={{fontSize: 12 + 'px'}}>{props.data.label.charAt(0).toUpperCase()}</div>
         }
         <div>
             {getPath(props.data)} <span className="fw600">{ props.data.label }</span>

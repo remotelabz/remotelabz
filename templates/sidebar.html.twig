@@ -1,6 +1,6 @@
 {% macro header(link, icon) %}
     <a href="{{ path(link) }}" title="Admin Area">
-        <div class="s40 mr-2 d-flex">
+        <div class="s40 me-2 d-flex">
             {%- if icon is not null -%}
                 {{ svg(icon, 's24 m-auto') }}
             {%- endif -%}
@@ -11,7 +11,7 @@
 
 {% macro contextual_header(title, link, image) %}
     <a href="{{ path(link) }}" title="{{ title }}">
-        <div class="s40 mr-2 d-flex">
+        <div class="s40 me-2 d-flex">
             {% if image is defined %}
                 {{ image }}
             {% endif %}

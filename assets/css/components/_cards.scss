@@ -12,6 +12,11 @@
     font-weight: 600;
 }
 
+.card-footer {
+    padding: 0.75rem 1.25rem;
+    background-color: theme-color("light-darker");    
+}
+
 [theme="dark"] {
     .card {
         background-color: theme-color("dark");

@@ -125,7 +125,7 @@
                                                 </td>
                                                 <td>
                                                     {% if result.passwordGenerated %}
-                                                        <span class="badge badge-info password-source-badge generated">
+                                                        <span class="badge text-bg-info password-source-badge generated">
                                                             <i class="fa fa-robot"></i> Generated
                                                         </span>
                                                         {% if result.passwordError %}
@@ -135,18 +135,18 @@
                                                             </small>
                                                         {% endif %}
                                                     {% else %}
-                                                        <span class="badge badge-success password-source-badge from-csv">
+                                                        <span class="badge text-bg-success password-source-badge from-csv">
                                                             <i class="fa fa-file-csv"></i> From CSV
                                                         </span>
                                                     {% endif %}
                                                 </td>
                                                 <td class="text-center">
                                                     {% if result.emailSent %}
-                                                        <span class="badge badge-success email-status sent">
+                                                        <span class="badge text-bg-success email-status sent">
                                                             <i class="fa fa-check"></i> Yes
                                                         </span>
                                                     {% else %}
-                                                        <span class="badge badge-secondary email-status not-sent">
+                                                        <span class="badge text-bg-secondary email-status not-sent">
                                                             <i class="fa fa-times"></i> No
                                                         </span>
                                                     {% endif %}
@@ -193,7 +193,7 @@
                                                 <td>{{ result.firstName }}</td>
                                                 <td>{{ result.email }}</td>
                                                 <td>
-                                                    <span class="badge badge-danger failure-reason">
+                                                    <span class="badge text-bg-danger failure-reason">
                                                         {{ result.error }}
                                                     </span>
                                                 </td>

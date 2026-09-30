@@ -43,12 +43,12 @@
 
 <div class="row">
     <div class="col-xl-8 col-lg-12 border-right">
-        <h1 class="ml-3">Your labs</h1>
+        <h1 class="ms-3">Your labs</h1>
         {% for group in groups %}
                 {% set labs = [] %}
                 {% set labs = labs|merge(group.labs) %}
                 {# {% set labs = labs|sort((a, b) => a.lastUpdated < b.lastUpdated) %} #}
-                <h6 class="ml-3 card-footer text-muted">In group {{group.name}}</h6>
+                <h6 class="ms-3 card-footer text-muted">In group {{group.name}}</h6>
                 {% if labs|length > 0 %}           
                     <div class="grid-xs-1 grid-sm-2 grid-md-3 grid-lg-3 grid-xl-3 grid-xxl-4">
                         {% for lab in group.labs %}
@@ -87,7 +87,7 @@
                 {% endif %}
         {% endfor %}
         {% if bookingLabs is not empty %}
-            <h1 class="ml-3">Your bookings</h1>
+            <h1 class="ms-3">Your bookings</h1>
             <div class="grid-xs-1 grid-sm-2 grid-md-3 grid-lg-3 grid-xl-3 grid-xxl-4">
                 {% for lab in bookingLabs %}
                     <div class="card m-4">
@@ -120,7 +120,7 @@
         {% endif %}            
     </div>
     <div class="col-xl-4 col-lg-12">
-        <h1 class="ml-3">Your groups</h1>
+        <h1 class="ms-3">Your groups</h1>
         <div {{ react_component('GroupExplorer', {"endpoint": path('api_groups'), "user": user.email}) }}></div>
     </div>
 </div>

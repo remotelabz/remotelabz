@@ -65,7 +65,7 @@
                         </select>
                         <div id="labs-loading" class="d-none mt-1">
                             <span class="spinner-border spinner-border-sm text-secondary" role="status"></span>
-                            <small class="text-muted ml-1">Loading labs...</small>
+                            <small class="text-muted ms-1">Loading labs...</small>
                         </div>
                         <div id="labs-empty" class="d-none mt-1">
                             <small class="text-warning">No lab is associated with this group.</small>
@@ -160,7 +160,7 @@
                 <div class="card-header font-weight-bold d-flex justify-content-between align-items-center">
                     <span>{{ svg('list-bulleted') }} My scheduled actions</span>
                     <div class="d-flex align-items-center" style="gap: 8px;">
-                        <span class="badge badge-pill badge-secondary" id="scheduled-count">
+                        <span class="badge badge-pill text-bg-secondary" id="scheduled-count">
                             {{ scheduledActions|length }}
                         </span>
                         {# Clear history: removes all done/failed entries #}
@@ -187,11 +187,11 @@
                                     <div>
                                         <span class="font-weight-bold">{{ sa.lab.name }}</span>
                                         {% if sa.group is not null %}
-                                            <span class="badge badge-pill badge-light border ml-1">
+                                            <span class="badge badge-pill badge-light border ms-1">
                                                 {{ sa.group.name }}
                                             </span>
                                         {% else %}
-                                            <span class="badge badge-pill badge-light border ml-1">All users</span>
+                                            <span class="badge badge-pill badge-light border ms-1">All users</span>
                                         {% endif %}
                                         <br />
                                         <small class="text-muted">
@@ -203,22 +203,22 @@
                                     <div class="d-flex align-items-center" style="gap: 6px;">
                                         {# Status badge #}
                                         {% if sa.status == 'pending' %}
-                                            <span class="badge badge-warning">pending</span>
+                                            <span class="badge text-bg-warning">pending</span>
                                         {% elseif sa.status == 'running' %}
-                                            <span class="badge badge-info">running</span>
+                                            <span class="badge text-bg-info">running</span>
                                         {% elseif sa.status == 'done' %}
-                                            <span class="badge badge-success">done</span>
+                                            <span class="badge text-bg-success">done</span>
                                          {% elseif sa.status == 'failed' %}
                                              {% if sa.executionReport is not null %}
                                                  <button type="button"
-                                                         class="badge badge-danger border-0"
+                                                         class="badge text-bg-danger border-0"
                                                          style="cursor: pointer;"
                                                          data-bs-toggle="tooltip"
                                                          title="{{ sa.errorMessage }} — click for details"
                                                          data-toggle-report
                                                          data-report="{{ sa.executionReport|json_encode|e }}">failed</button>
                                              {% else %}
-                                                 <span class="badge badge-danger"
+                                                 <span class="badge text-bg-danger"
                                                        data-bs-toggle="tooltip"
                                                        title="{{ sa.errorMessage }}">failed</span>
                                              {% endif %}
@@ -567,7 +567,7 @@
                     .then(data => {
                         // Remove all done/failed rows from the DOM
                         document.querySelectorAll('.list-group-item[id^="sa-row-"]').forEach(row => {
-                            const badge = row.querySelector('.badge-success, .badge-danger');
+                            const badge = row.querySelector('.text-bg-success, .text-bg-danger');
                             if (badge) {
                                 updateCount(-1);
                                 row.remove();
@@ -588,7 +588,7 @@
             const btn = document.getElementById('btn-clear-history');
             if (!btn) return;
             const hasDoneOrFailed = document.querySelector(
-                '.list-group-item .badge-success, .list-group-item .badge-danger'
+                '.list-group-item .text-bg-success, .list-group-item .text-bg-danger'
             );
             if (!hasDoneOrFailed) btn.remove();
         }
@@ -618,8 +618,8 @@
             });
 
             const groupBadge = sa.group
-                ? `<span class="badge badge-pill badge-light border ml-1">${escHtml(sa.group.name)}</span>`
-                : `<span class="badge badge-pill badge-light border ml-1">All users</span>`;
+                ? `<span class="badge badge-pill badge-light border ms-1">${escHtml(sa.group.name)}</span>`
+                : `<span class="badge badge-pill badge-light border ms-1">All users</span>`;
 
             const li = document.createElement('li');
             li.className = 'list-group-item';
@@ -637,7 +637,7 @@
                         </small>
                     </div>
                     <div class="d-flex align-items-center" style="gap: 6px;">
-                        <span class="badge badge-warning">pending</span>
+                        <span class="badge text-bg-warning">pending</span>
                         <button type="button"
                                 class="btn btn-sm btn-outline-danger btn-cancel"
                                 data-uuid="${sa.uuid}"

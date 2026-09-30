@@ -216,7 +216,7 @@ function ChatWindow({ show, onHide, lab, user, variant = 'modal' }) {
     const onlineCount = members.filter(m => isOnline(m.uuid)).length;
 
     const statusBadge = (
-        <span className={`ml-2 small ${connected ? 'text-success' : 'text-danger'}`}>
+        <span className={`ms-2 small ${connected ? 'text-success' : 'text-danger'}`}>
             {connected ? 'Connected' : 'Reconnecting...'}
         </span>
     );
@@ -228,7 +228,7 @@ function ChatWindow({ show, onHide, lab, user, variant = 'modal' }) {
         :
         <div className="d-flex" style={{ height, width: '100%', minWidth: 0 }}>
             {/* Participants */}
-                <div className="border-right pr-3 d-flex flex-column" style={{ width: 220, minHeight: 0 }}>
+                <div className="border-right pe-3 d-flex flex-column" style={{ width: 220, minHeight: 0 }}>
                     <div className="text-muted small mb-2">
                         Participants ({onlineCount} online / {members.length})
                     </div>
@@ -263,8 +263,8 @@ function ChatWindow({ show, onHide, lab, user, variant = 'modal' }) {
                 </div>
 
                 {/* Messages */}
-                <div className="d-flex flex-column pl-3 flex-grow-1" style={{ minWidth: 0 }}>
-                    <div className="flex-grow-1 overflow-auto pr-1" style={{ minHeight: 320 }}>
+                <div className="d-flex flex-column ps-3 flex-grow-1" style={{ minWidth: 0 }}>
+                    <div className="flex-grow-1 overflow-auto pe-1" style={{ minHeight: 320 }}>
                         {messages.length === 0
                             ?
                             <div className="text-muted text-center mt-5">
@@ -274,7 +274,7 @@ function ChatWindow({ show, onHide, lab, user, variant = 'modal' }) {
                             messages.map(message => (
                                 <div key={message.id} className="mb-3">
                                     <strong className="small">{message.name}</strong>
-                                    <span className="text-muted small ml-2">
+                                    <span className="text-muted small ms-2">
                                         {new Date(message.createdAt).toLocaleTimeString()}
                                     </span>
                                     <div className="small" style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{message.message}</div>
@@ -293,7 +293,7 @@ function ChatWindow({ show, onHide, lab, user, variant = 'modal' }) {
                             onChange={e => setInputValue(e.target.value)}
                             disabled={!connected}
                         />
-                        <Button type="submit" variant="primary" className="ml-2" disabled={!connected || inputValue.trim() === ''}>
+                        <Button type="submit" variant="primary" className="ms-2" disabled={!connected || inputValue.trim() === ''}>
                             Send
                         </Button>
                     </form>
@@ -306,9 +306,9 @@ function ChatWindow({ show, onHide, lab, user, variant = 'modal' }) {
             <div className="rlz-chat-panel" style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
                 <div className="rlz-chat-panel-header" style={{ padding: '8px 12px', borderBottom: '1px solid', display: 'flex', alignItems: 'center' }}>
                     <SVG name="comment" className="v-sub image-sm"></SVG>
-                    <strong className="ml-2">Chat { room && <span className="text-muted">— {room.group.name}</span> }</strong>
+                    <strong className="ms-2">Chat { room && <span className="text-muted">— {room.group.name}</span> }</strong>
                     {statusBadge}
-                    <button type="button" className="btn btn-sm btn-link rlz-chat-ctl-btn ml-auto" title="Close this window" onClick={onHide}>
+                    <button type="button" className="btn btn-sm btn-link rlz-chat-ctl-btn ms-auto" title="Close this window" onClick={onHide}>
                         <SVG name="close" className="v-sub image-sm"></SVG>
                     </button>
                 </div>
@@ -323,9 +323,9 @@ function ChatWindow({ show, onHide, lab, user, variant = 'modal' }) {
                 <Modal.Header closeButton>
                     <Modal.Title>
                         <SVG name="comment" className="v-sub image-sm"></SVG>
-                        <span className="ml-2">Chat { room && <span className="text-muted">— {room.group.name}</span> }</span>
+                        <span className="ms-2">Chat { room && <span className="text-muted">— {room.group.name}</span> }</span>
                         {statusBadge}
-                        <button type="button" className="btn btn-sm btn-link rlz-chat-ctl-btn ml-3" title="Open in a separate window" onClick={openInWindow}>
+                        <button type="button" className="btn btn-sm btn-link rlz-chat-ctl-btn ms-3" title="Open in a separate window" onClick={openInWindow}>
                             <SVG name="external-link" className="v-sub image-sm"></SVG>
                         </button>
                         <button type="button" className="btn btn-sm btn-link rlz-chat-ctl-btn" title="Detach from the modal" onClick={() => setDetached(true)}>
@@ -352,13 +352,13 @@ function ChatWindow({ show, onHide, lab, user, variant = 'modal' }) {
                         }}
                     >
                         <SVG name="comment" className="image-sm" style={{ color: '#fff' }}></SVG>
-                        <span className="small ml-2">Chat { room && room.group.name }</span>
+                        <span className="small ms-2">Chat { room && room.group.name }</span>
                         {unread > 0 && (
                             <span style={{ background: '#dc3545', borderRadius: 10, padding: '0 8px', fontSize: 12, marginLeft: 6 }}>
                                 {unread}
                             </span>
                         )}
-                        <Button size="sm" variant="light" className="ml-2" title="Restore" onClick={restoreFromMinimized}>
+                        <Button size="sm" variant="light" className="ms-2" title="Restore" onClick={restoreFromMinimized}>
                             <SVG name="expand" className="v-sub image-sm"></SVG>
                         </Button>
                         <Button size="sm" variant="light" title="Close" onClick={onHide}>
@@ -383,9 +383,9 @@ function ChatWindow({ show, onHide, lab, user, variant = 'modal' }) {
                             }}
                         >
                             <SVG name="comment" className="v-sub image-sm"></SVG>
-                            <strong className="small ml-2">Chat { room && <span className="text-muted">— {room.group.name}</span> }</strong>
+                            <strong className="small ms-2">Chat { room && <span className="text-muted">— {room.group.name}</span> }</strong>
                             {statusBadge}
-                            <div className="ml-auto d-flex" onMouseDown={(e) => e.stopPropagation()}>
+                            <div className="ms-auto d-flex" onMouseDown={(e) => e.stopPropagation()}>
                                 <button type="button" className="btn btn-sm btn-link rlz-chat-ctl-btn" title="Open in a separate window" onClick={openInWindow}>
                                     <SVG name="external-link" className="v-sub image-sm"></SVG>
                                 </button>

@@ -109,9 +109,9 @@ function WorkerConfig(props = {workers, nbWorkers}) {
                                 <input type="text" id={worker.id} className="form-control mb-2" name="workers" defaultValue={worker.IPv4} readOnly={!worker.available}/>
                             </div>
                             <div className="col-2">
-                                    {worker.available == true ? <button type="button" className='btn btn-warning mr-2' 
+                                    {worker.available == true ? <button type="button" className='btn btn-warning me-2' 
                                     onClick={() => changeAvailable(worker.id, 0)} >Disable</button> : 
-                                    <button type="button" className='btn btn-success mr-2' onClick={() => changeAvailable(worker.id, 1)} >Enable</button>}
+                                    <button type="button" className='btn btn-success me-2' onClick={() => changeAvailable(worker.id, 1)} >Enable</button>}
                                     <button type="button" className='btn btn-danger' onClick={() => deleteWorker(worker.id)}>Delete</button>
                                 
                             </div>
@@ -180,7 +180,7 @@ function WorkerConfig(props = {workers, nbWorkers}) {
                 {form}
                 <div id="newWorkers">{newWorkers}</div>
                 <button type="button" className='btn btn-info mt-2' onClick={addField}><SVG name="plus" /></button>
-                <input type="submit" className='btn btn-success mt-2 ml-3' value="Submit"/>
+                <input type="submit" className='btn btn-success mt-2 ms-3' value="Submit"/>
             </form>
         </>
     )
