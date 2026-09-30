@@ -39,7 +39,46 @@ class AppExtension extends AbstractExtension
         if ($text === null || trim($text) === '') {
             return '';
         }
-        return (string) $this->gfmConverter->convert($text);
+        return (string) $this->gfmConverter->convert($this->emojiShortcodeToUnicode($text));
+    }
+
+    private static ?array $emojiShortcodes = null;
+
+    private static function getEmojiShortcodes(): array
+    {
+        if (self::$emojiShortcodes === null) {
+            self::$emojiShortcodes = require __DIR__ . '/emoji-shortcodes.php';
+        }
+        return self::$emojiShortcodes;
+    }
+
+    /**
+     * Replace :shortcodes: (GitHub style) by emoji characters, leaving code
+     * blocks and inline code untouched. Mirrors the EasyMDE preview so the
+     * server-side rendering matches the editor.
+     */
+    private function emojiShortcodeToUnicode(string $text): string
+    {
+        if (!str_contains($text, ':')) {
+            return $text;
+        }
+        $map = self::getEmojiShortcodes();
+        $segments = preg_split('/(```[\\s\\S]*?```|~~~[\\s\\S]*?~~~|`[^`\\n]*`)/u', $text, -1, PREG_SPLIT_DELIM_CAPTURE);
+        if ($segments === false) {
+            return $text;
+        }
+        foreach ($segments as $i => $segment) {
+            if ($i % 2 === 0) {
+                $segments[$i] = preg_replace_callback(
+                    '/:([a-z0-9_+-]+):/i',
+                    static function (array $m) use ($map): string {
+                        return $map[strtolower($m[1])] ?? $m[0];
+                    },
+                    $segment
+                );
+            }
+        }
+        return implode('', $segments);
     }
 
     public function getFunctions(): array

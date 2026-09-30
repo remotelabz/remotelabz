@@ -1,3 +1,4 @@
+const webpack = require('webpack');
 const Encore = require('@symfony/webpack-encore');
 const path = require('path');
 
@@ -63,6 +64,13 @@ Encore
     })
 
     .enableReactPreset()
+    // Legacy editor scripts (tinytools, jquery-ui, bootstrap, actions.js...)
+    // reference the free variables $ / jQuery; inject the jquery module for them.
+    .addPlugin(new webpack.ProvidePlugin({
+        $: 'jquery',
+        jQuery: 'jquery',
+        'window.jQuery': 'jquery'
+    }))
 
     .copyFiles({
         from: './assets/images',
