@@ -410,16 +410,10 @@ install_requirements() {
     rabbitmq-plugins enable rabbitmq_management
     systemctl restart rabbitmq-server
     
-    print_info "Installation de Mercure Hub"
+	    print_info "Installation de Mercure Hub"
     wget https://github.com/dunglas/mercure/releases/download/v1.0.2/mercure_1.0.2_linux_amd64.deb
     wget https://github.com/dunglas/mercure/releases/download/v1.0.2/checksums.txt
-    sha256sum -c checksums.txt --ignore-missing 
-
-    apt install ./mercure_1.0.2_linux_amd64.deb
-    cp /opt/remotelabz/bin/systemd/remotelabz-mercure.service /etc/systemd/system
-    systemctl daemon-reload
-    systemctl enable --now remotelabz-mercure
-    rm mercure_1.0.2_linux_amd64.deb checksums.txt
+    sha256sum -c checksums.txt --ignore-missing
 
     print_info "System requirements installation completed! ✅"
 }
@@ -893,7 +887,7 @@ install_remotelabz_app() {
     if [ ! -d "$SCRIPT_DIR/lib/remotelabz-message-bundle" ]; then
         git clone https://github.com/remotelabz/remotelabz-message-bundle.git "$SCRIPT_DIR/lib/remotelabz-message-bundle"
         git -C "$SCRIPT_DIR/lib/remotelabz-message-bundle" fetch --tags
-        git -C "$SCRIPT_DIR/lib/remotelabz-message-bundle" checkout 1.0.6
+        git -C "$SCRIPT_DIR/lib/remotelabz-message-bundle" checkout 1.0.8
     fi
 
     # Build install command
@@ -922,6 +916,13 @@ install_remotelabz_app() {
 final_configuration() {
     print_step "STEP 6: Final Configuration"
     
+    print_info "Configuration de Mercure Hub"
+    apt install ./mercure_1.0.2_linux_amd64.deb
+    cp /opt/remotelabz/bin/systemd/remotelabz-mercure.service /etc/systemd/system
+    systemctl daemon-reload
+    systemctl enable --now remotelabz-mercure
+    rm mercure_1.0.2_linux_amd64.deb checksums.txt
+
     # Configure HAProxy and Apache symlinks if not already done
     if [ -f $REMOTELABZ_PATH/config/haproxy/haproxy.cfg ]; then
         print_info "Configuring HAProxy..."
