@@ -287,10 +287,35 @@ img {
   color: #4f4f4f;
   text-align: center;
   font-size: 16px;
-  
+
   &.s60 {
     font-size: 32px;
     line-height: 58px;
+  }
+
+  // Light theme (default): pastel backgrounds
+  &.bg-1 { background-color: hsl(77, 50%, 85%); }
+  &.bg-2 { background-color: hsl(154, 50%, 85%); }
+  &.bg-3 { background-color: hsl(231, 50%, 85%); }
+  &.bg-4 { background-color: hsl(308, 50%, 85%); }
+  &.bg-5 { background-color: hsl(25, 50%, 85%); }
+  &.bg-6 { background-color: hsl(102, 50%, 85%); }
+  &.bg-7 { background-color: hsl(179, 50%, 85%); }
+  &.bg-8 { background-color: hsl(256, 50%, 85%); }
+}
+
+[theme="dark"] {
+  .identicon {
+    color: #ffffff;
+
+    &.bg-1 { background-color: hsl(77, 50%, 15%); }
+    &.bg-2 { background-color: hsl(154, 50%, 15%); }
+    &.bg-3 { background-color: hsl(231, 50%, 15%); }
+    &.bg-4 { background-color: hsl(308, 50%, 15%); }
+    &.bg-5 { background-color: hsl(25, 50%, 15%); }
+    &.bg-6 { background-color: hsl(102, 50%, 15%); }
+    &.bg-7 { background-color: hsl(179, 50%, 15%); }
+    &.bg-8 { background-color: hsl(256, 50%, 15%); }
   }
 }
 
