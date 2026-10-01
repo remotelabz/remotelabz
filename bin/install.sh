@@ -238,6 +238,60 @@ setup_env_file() {
     fi
 }
 
+
+# ============================================================================
+# Set env mercure
+# ============================================================================
+
+
+setup_mercure_env_file() {
+    local MERCURE_ENV_FILE="${SCRIPT_DIR}/.env.mercure"
+
+    print_info "Your .env.mercure used is ${MERCURE_ENV_FILE}"
+
+    # Le fichier existe déjà : on le charge simplement
+    if [ -f "$MERCURE_ENV_FILE" ]; then
+        print_info "Environment file .env.mercure already exists, loading it"
+        source "$MERCURE_ENV_FILE"
+        return 0
+    fi
+
+    print_info "Environment file .env.mercure not found, creating it..."
+
+    # Réutiliser la clé de .env.local si elle existe, sinon en générer une
+    local JWT_KEY=""
+    if [ -f "$ENV_FILE" ]; then
+        JWT_KEY=$(grep -E '^MERCURE_JWT_SECRET=' "$ENV_FILE" | head -n1 | cut -d= -f2- | tr -d '"')
+    fi
+    if [ -z "$JWT_KEY" ] || [ "$JWT_KEY" == "!ChangeThisMercureHubJWTSecretKey!" ]; then
+        JWT_KEY=$(openssl rand -hex 32)
+        print_info "✅ New JWT key generated"
+    fi
+
+    # Création du fichier avec uniquement les deux clés
+    cat > "$MERCURE_ENV_FILE" <<EOF
+MERCURE_PUBLISHER_JWT_KEY="${JWT_KEY}"
+MERCURE_SUBSCRIBER_JWT_KEY="${JWT_KEY}"
+EOF
+    chmod 600 "$MERCURE_ENV_FILE"
+    print_info "✅ $MERCURE_ENV_FILE created"
+
+    # Synchroniser MERCURE_JWT_SECRET dans .env.local pour Symfony
+    if [ -f "$ENV_FILE" ]; then
+        if grep -q "^MERCURE_JWT_SECRET=" "$ENV_FILE"; then
+            sed -i "s|^MERCURE_JWT_SECRET=.*|MERCURE_JWT_SECRET=\"${JWT_KEY}\"|" "$ENV_FILE"
+        else
+            echo "MERCURE_JWT_SECRET=\"${JWT_KEY}\"" >> "$ENV_FILE"
+        fi
+        print_info "✅ MERCURE_JWT_SECRET synchronized in $ENV_FILE"
+    fi
+
+    source "$MERCURE_ENV_FILE"
+}
+
+
+
+
 # ============================================================================
 # Set sysctl parameter helper function
 # ============================================================================
@@ -1108,6 +1162,7 @@ full_installation() {
     sleep 2
     
     setup_env_file
+    setup_mercure_env_file
     install_requirements
     setup_openvpn
     configure_system
