@@ -253,10 +253,10 @@
                         
                         <!-- Boutons d'action -->
                         <div class="d-flex gap-3 justify-content-end mt-4 pt-3 border-top">
-                            <a href="{{ path('app_iso_index') }}" class="btn btn-danger btn-lg px-3">
+                            <a href="{{ path('app_iso_index') }}" class="btn btn-danger px-3">
                                 <i class="fa fa-times me-1"></i> {{ 'Cancel'|trans }}
                             </a>
-                            {{ form_widget(form.submit, {'attr': {'class': 'btn btn-primary btn-lg px-4', 'id': 'submit-button'}}) }}
+                            {{ form_widget(form.submit, {'attr': {'class': 'btn btn-primary px-4', 'id': 'submit-button'}}) }}
                         </div>
                     </div>
                 </div>

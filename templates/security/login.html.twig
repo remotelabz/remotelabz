@@ -32,7 +32,7 @@
                     {% if ( general_message != "") %}
                     <div class="flashbag-container col-lg-12">
                         <div class="general-message alert alert-warning">
-                            {{ general_message|nl2br }}
+                            {{ general_message|site_message_to_html }}
                         </div>
                     </div>
                     {% endif %}

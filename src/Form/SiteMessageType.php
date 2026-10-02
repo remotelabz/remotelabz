@@ -39,6 +39,7 @@ class SiteMessageType extends AbstractType
             ->add('message', TextareaType::class, [
                 'label' => 'Message',
                 'required' => true,
+                'help' => 'Written in Markdown. You can use :emoji: shortcodes (e.g. :smile:).',
                 'attr' => [
                     'rows' => 4,
                 ],

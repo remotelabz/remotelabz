@@ -97,9 +97,9 @@
                   <div>
                     <small class="text-muted">{{ 'Published on'|trans }} <span class="site-message-date" data-date="{{ site_message.createdAt|date('c') }}">{{ site_message.createdAt|date('d/m/Y H:i') }}</span></small><br>
                     {% if site_message.title is not empty %}
-                      <strong>{{ site_message.title }}</strong><br>
+                      <strong>{{ site_message.title|emoji_shortcodes }}</strong><br>
                     {% endif %}
-                    {{ site_message.message|nl2br }}
+                    {{ site_message.message|site_message_to_html }}
                   </div>
                 </div>
               </div>

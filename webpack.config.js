@@ -35,6 +35,7 @@ Encore
     .addEntry('iso-form-handler', './assets/js/components/Iso/form-handler.js')
     .addEntry('os-form-handler', './assets/js/components/OperatingSystem/form-handler.js')
     .addEntry('device-form-handler', './assets/js/components/device/device-form.js')
+    .addEntry('site-message-form', './assets/js/site-message-form.js')
 
     .splitEntryChunks()
     .enableStimulusBridge('./assets/controllers.json')
