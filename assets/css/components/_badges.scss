@@ -38,6 +38,11 @@
         color: #fff;
         background-color: map-get($theme-colors, dark);
     }
+
+    // bg-* utilities only set a background color, so force a readable text color
+    &.bg-dark {
+        color: #fff;
+    }
 }
 
 [theme="dark"] {
@@ -53,6 +58,12 @@
         &.badge-warning,
         &.badge-secondary,
         &.badge-primary {
+            color: #fff;
+        }
+
+        // Pure dark is indistinguishable from the page background in dark mode
+        &.bg-dark {
+            background-color: map-get($theme-colors, dark-lightest);
             color: #fff;
         }
     }

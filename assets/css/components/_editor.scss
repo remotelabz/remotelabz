@@ -299,4 +299,16 @@
     .editor-title-input {
         background-color: transparent !important;
     }
+
+    .editor-toolbar {
+        button {
+            color: theme-color("light");
+        }
+
+        button.active,
+        button:hover {
+            background-color: lighten(map-get($theme-colors, "dark-lighter"), 7.5%);
+            border-color: lighten(map-get($theme-colors, "dark-lighter"), 10%);
+        }
+    }
 }
