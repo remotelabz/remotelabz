@@ -239,6 +239,52 @@ setup_env_file() {
 }
 
 # ============================================================================
+# Set env mercure
+# ============================================================================
+
+
+setup_mercure_env_file() {
+    local MERCURE_ENV_FILE="${SCRIPT_DIR}/.env.mercure"
+
+    print_info "Your .env.mercure used is ${MERCURE_ENV_FILE}"
+
+    if [ -f "$MERCURE_ENV_FILE" ]; then
+        print_info "Environment file .env.mercure already exists, loading it"
+        source "$MERCURE_ENV_FILE"
+        return 0
+    fi
+
+    print_info "Environment file .env.mercure not found, creating it..."
+
+    local JWT_KEY=""
+    if [ -f "$ENV_FILE" ]; then
+        JWT_KEY=$(grep -E '^MERCURE_JWT_SECRET=' "$ENV_FILE" | head -n1 | cut -d= -f2- | tr -d '"')
+    fi
+    if [ -z "$JWT_KEY" ] || [ "$JWT_KEY" == "!ChangeThisMercureHubJWTSecretKey!" ]; then
+        JWT_KEY=$(openssl rand -hex 32)
+        print_info "✅ New JWT key generated"
+    fi
+
+    cat > "$MERCURE_ENV_FILE" <<EOF
+MERCURE_PUBLISHER_JWT_KEY="${JWT_KEY}"
+MERCURE_SUBSCRIBER_JWT_KEY="${JWT_KEY}"
+EOF
+    chmod 600 "$MERCURE_ENV_FILE"
+    print_info "✅ $MERCURE_ENV_FILE created"
+
+    if [ -f "$ENV_FILE" ]; then
+        if grep -q "^MERCURE_JWT_SECRET=" "$ENV_FILE"; then
+            sed -i "s|^MERCURE_JWT_SECRET=.*|MERCURE_JWT_SECRET=\"${JWT_KEY}\"|" "$ENV_FILE"
+        else
+            echo "MERCURE_JWT_SECRET=\"${JWT_KEY}\"" >> "$ENV_FILE"
+        fi
+        print_info "✅ MERCURE_JWT_SECRET synchronized in $ENV_FILE"
+    fi
+
+    source "$MERCURE_ENV_FILE"
+}
+
+# ============================================================================
 # Set sysctl parameter helper function
 # ============================================================================
 set_sysctl_param() {
@@ -420,12 +466,6 @@ install_requirements() {
     wget https://github.com/dunglas/mercure/releases/download/v1.0.2/mercure_1.0.2_linux_amd64.deb
     wget https://github.com/dunglas/mercure/releases/download/v1.0.2/checksums.txt
     sha256sum -c checksums.txt --ignore-missing 
-
-    apt install ./mercure_1.0.2_linux_amd64.deb
-    cp /opt/remotelabz/bin/systemd/remotelabz-mercure.service /etc/systemd/system
-    systemctl daemon-reload
-    systemctl enable --now remotelabz-mercure
-    rm mercure_1.0.2_linux_amd64.deb checksums.txt
 
     print_info "System requirements installation completed! ✅"
 }
@@ -899,7 +939,7 @@ install_remotelabz_app() {
     if [ ! -d "$SCRIPT_DIR/lib/remotelabz-message-bundle" ]; then
         git clone https://github.com/remotelabz/remotelabz-message-bundle.git "$SCRIPT_DIR/lib/remotelabz-message-bundle"
         git -C "$SCRIPT_DIR/lib/remotelabz-message-bundle" fetch --tags
-        git -C "$SCRIPT_DIR/lib/remotelabz-message-bundle" checkout 1.0.6
+        git -C "$SCRIPT_DIR/lib/remotelabz-message-bundle" checkout 1.0.8
     fi
 
     # Build install command
@@ -928,6 +968,14 @@ install_remotelabz_app() {
 final_configuration() {
     print_step "STEP 6: Final Configuration"
     
+	#Configure Mercure Hub
+    print_info "Configuration de Mercure Hub"
+    apt install ./mercure_1.0.2_linux_amd64.deb
+    cp /opt/remotelabz/bin/systemd/remotelabz-mercure.service /etc/systemd/system
+    systemctl daemon-reload
+    systemctl enable --now remotelabz-mercure
+    rm mercure_1.0.2_linux_amd64.deb checksums.txt
+
     # Configure HAProxy and Apache symlinks if not already done
     if [ -f $REMOTELABZ_PATH/config/haproxy/haproxy.cfg ]; then
         print_info "Configuring HAProxy..."
@@ -1113,6 +1161,7 @@ full_installation() {
     sleep 2
     
     setup_env_file
+	setup_mercure_env_file
     install_requirements
     setup_openvpn
     configure_system
