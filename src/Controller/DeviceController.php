@@ -58,6 +58,7 @@ use App\Service\DirectoryService;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Common\Collections\Order;
+use Knp\Component\Pager\PaginatorInterface;
 
 
 class DeviceController extends Controller
@@ -76,6 +77,7 @@ class DeviceController extends Controller
     private EntityManagerInterface $entityManager;
     private IsoRepository $isoRepository;
     private FlavorDiskRepository $flavorDiskRepository;   
+    private PaginatorInterface $paginator;
 
     /** @var LoggerInterface $logger */
     private $logger;
@@ -95,7 +97,8 @@ class DeviceController extends Controller
         ManagerRegistry $managerRegistry,
         EntityManagerInterface $entityManager,
         IsoRepository $isoRepository,
-        FlavorDiskRepository $flavorDiskRepository)
+        FlavorDiskRepository $flavorDiskRepository,
+        PaginatorInterface $paginator)
     {
         $this->deviceRepository = $deviceRepository;
         $this->deviceInstanceRepository = $deviceInstanceRepository;
@@ -112,6 +115,7 @@ class DeviceController extends Controller
         $this->entityManager = $entityManager;
         $this->isoRepository = $isoRepository;
         $this->flavorDiskRepository = $flavorDiskRepository;
+        $this->paginator = $paginator;
     }
 
     
@@ -179,8 +183,23 @@ class DeviceController extends Controller
             return $this->json($devices->getValues(), 200, [], ['api_get_device']);
         }
 
+        $page = $request->query->getInt('page', 1);
+        $limit = $request->query->getInt('limit', 10);
+
+        $osFilterOptions = [];
+        foreach ($devices as $device) {
+            $operatingSystem = $device->getOperatingSystem();
+            if ($operatingSystem !== null && !in_array($operatingSystem->getName(), $osFilterOptions, true)) {
+                $osFilterOptions[] = $operatingSystem->getName();
+            }
+        }
+
+        $pagination = $this->paginator->paginate($devices->getValues(), $page, $limit);
+
         return $this->render('device/index.html.twig', [
-            'devices' => $devices,
+            'devices' => $pagination->getItems(),
+            'pagination' => $pagination,
+            'osFilterOptions' => $osFilterOptions,
             'count' => [
                 'total' => $count,
                 'vms' => $vmCount,

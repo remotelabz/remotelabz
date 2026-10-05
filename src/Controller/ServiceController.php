@@ -194,8 +194,14 @@ class ServiceController extends Controller
             }
 
             if ($type === 'distant') {
-                $workers = $this->configWorkerRepository->findBy(['available' => true]);
+                $workers = $this->configWorkerRepository->findAll();
                 foreach($workers as $worker) {
+                    if (!$worker->getAvailable()) { // Disabled worker: no test, display a disabled badge
+                        if ($worker->getIPv4()) {
+                            $serviceStatus[$registeredService::getServiceName()][$worker->getIPv4()] = 'disabled';
+                        }
+                        continue;
+                    }
                     /** @var ServiceMonitorInterface */
                     $service = new $registeredService(
                         $this->workerPort,
@@ -228,10 +234,13 @@ class ServiceController extends Controller
                 if ($registeredService::getServiceName() == "ssh-connection-check") {
                     $ssh_result = $this->sshMonitor->isStarted();
                     
-                    // Calculate overall status
+                    // Calculate overall status (disabled workers are not tested and don't count)
                     $allSshOk = true;
                     foreach ($ssh_result as $ip => $status) {
-                        if (is_array($status) && isset($status['status']) && !$status['status']) {
+                        if (!is_array($status) || (isset($status['disabled']) && $status['disabled'])) {
+                            continue;
+                        }
+                        if (isset($status['status']) && !$status['status']) {
                             $allSshOk = false;
                             break;
                         }
@@ -430,7 +439,9 @@ class ServiceController extends Controller
                 foreach ($result as $ip => $status) {
 
                     if (is_array($status)) {
-                        if ($status['status']) {
+                        if (isset($status['disabled']) && $status['disabled']) {
+                            $details[] = "{$ip}: Disabled (not tested)";
+                        } elseif ($status['status']) {
                             $details[] = "{$ip}: Connected via {$status['method']}";
                         } else {
                             $details[] = "{$ip}: Failed - {$status['error']}";

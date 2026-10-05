@@ -108,7 +108,9 @@
                                 {% for ip, status in serviceStatus['ssh-connection-check'] %}
                                     {% if ip != 'overall_status' %}
                                         {{ ip }}: 
-                                        {% if status.status %}
+                                        {% if status.disabled is defined and status.disabled %}
+                                            <span class="badge text-bg-secondary">{{ 'Disabled'|trans }}</span>
+                                        {% elseif status.status %}
                                             <span class="text-success">✓ {{ status.method }}</span>
                                         {% else %}
                                             <span class="text-danger">✗ {{ status.error }}</span>
@@ -189,6 +191,8 @@
                                         <i aria-hidden="true" data-hidden="true" class="fa fa-circle" style="color: rgb(255, 0, 0)"></i>
                                 {% elseif status is same as('error') %}
                                         Not available
+                                {% elseif status is same as('disabled') %}
+                                        <span class="badge text-bg-secondary">{{ 'Disabled'|trans }}</span>
                                 {% endif %}<br/>
                                 <i class="fa fa-info-circle text-info"></i> {{ 'Start all labs'|trans }}
                                 </span>              
@@ -198,6 +202,8 @@
                                     <a href="{{ path('stop_service', {'service': 'remotelabz-worker','ip':key }) }}" class="btn btn-danger">Stop</a>
                                 {% elseif status is same as(false) %}
                                     <a href="{{ path('start_service', {'service': 'remotelabz-worker','ip':key}) }}" class="btn btn-success">Start</a>
+                                {% elseif status is same as('disabled') %}
+                                    <span class="badge text-bg-secondary">{{ 'Disabled'|trans }}</span>
                                 {% else %}
                                     Not available
                                 {% endif %}

@@ -39,8 +39,8 @@
                         {{ form_widget(form.uploaded_filename, {'attr': {'id': 'uploaded_filename'}}) }}
                         <!-- Nom de l'ISO -->
                         <div class="mb-4">
-                            <div class="form-floating">
-                                {{ form_label(form.name, null, {'label_attr': {'class': 'form-label'}}) }}
+                            <div>
+                                <label class="form-label fw-bold">{{ 'Name'|trans }}</label>
                                 {{ form_widget(form.name, {'attr': {'class': 'form-control', 'placeholder': 'ISO name'|trans}}) }}
                             </div>
                             {{ form_errors(form.name) }}

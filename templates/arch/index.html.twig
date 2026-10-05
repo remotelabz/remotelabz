@@ -15,7 +15,7 @@
 {% block wrapper %}
 <div class="top-panel">
     <div class="d-flex justify-content-between align-items-center">
-        <h1 class="h3 mb-0">{{ 'New Architecture'|trans }}</h1>
+        <h1 class="fa fa-microchip"> {{ 'Architecture'|trans }}</h1>
         <div class="quick-actions">
             <a class="btn btn-success" role="button" href="{{ path('arch_new') }}">
                 <i class="fas fa-plus me-2"></i> {{ 'New Architecture'|trans }}
@@ -24,7 +24,7 @@
     </div>
 </div>
 
-<div class="card">
+<div class="labs-panel">
     <div class="card-body">
         {% if archs is empty %}
             <div class="alert alert-info">No architectures found.</div>
@@ -43,7 +43,7 @@
                             <td>
                                 <a href="{{ path('arch_edit', {'id': arch.id}) }}" class="btn btn-sm btn-primary">
                                     <i class="fas fa-edit"></i> Edit
-                                </a><br/><br/>
+                                </a>
                                 <a href="{{ path('arch_delete', {'id': arch.id}) }}" class="btn btn-sm btn-danger">
                                     <i class="fas fa-edit"></i> Delete
                                 </a>

@@ -86,6 +86,7 @@ class OperatingSystemFixtures extends Fixture implements DependentFixtureInterfa
     public function getDependencies(): array
     {
         return [
+            ArchFixtures::class,
             HypervisorFixtures::class
         ];
     }

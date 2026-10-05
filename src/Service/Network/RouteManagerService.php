@@ -61,6 +61,16 @@ class RouteManagerService
         $network = $labInstance->getNetwork();
         $labName = $labInstance->getLab()->getName();
 
+        // No worker assigned to this lab instance (no active worker yet)
+        if ($workerIP === null || $workerIP === '') {
+            $this->logger->info(sprintf(
+                'Lab %s network %s has no worker assigned, skipping route sync',
+                $labName,
+                $network
+            ));
+            return 'worker_unavailable';
+        }
+
         // Check worker availability
         if (!$this->checkWorkerAvailable($workerIP, $this->workerPort)) {
             $this->logger->info(sprintf(

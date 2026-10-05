@@ -425,6 +425,11 @@ services:
         arguments:
             $apiKey: '%env(resolve:ABUSEIPDB_API_KEY)%'
             $ttl: '%env(int:ABUSEIPDB_CHECK_TTL)%'
+            $contactMail: '%app.general.contact_mail%'
+            $mailSubject: '%env(resolve:MAIL_SUBJECT)%'
+            $alertThreshold: '%env(int:ABUSEIPDB_ALERT_THRESHOLD)%'
+            $alertCooldown: '%env(int:ABUSEIPDB_ALERT_COOLDOWN)%'
+            $httpClient: null
 
     App\Security\AuthenticationSuccessHandler:
         arguments:

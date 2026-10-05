@@ -16,7 +16,7 @@
 {% block wrapper %}
 <div class="top-panel">
     <div class="d-flex justify-content-between align-items-center">
-        <h1 class="h3 mb-0">Device Templates</h1>
+        <h1 class="fa">Device Templates</h1>
         <div class="quick-actions d-flex gap-2">
             <a class="btn btn-success" role="button" href="{{ path('new_device') }}">
                 <i class="fas fa-plus me-2"></i> New Virtual Device
@@ -30,28 +30,28 @@
     <ul class="nav-links nav nav-tabs mt-3">
         <li class="nav-item">
             <a class="nav-link {% if app.request.query.get('type') is null %}active{% endif %}" 
-               href="{{ path('devices', app.request.query|merge({type: null})) }}">
+               href="{{ path('devices', app.request.query|merge({type: null, page: null})) }}">
                 <span>All</span> 
                 <span class="badge bg-primary ms-1">{{ count.total }}</span>
             </a>
         </li>
         <li class="nav-item">
             <a class="nav-link {% if app.request.query.get('type') == 'vm' %}active{% endif %}" 
-               href="{{ path('devices', app.request.query|merge({type: 'vm'})) }}">
+               href="{{ path('devices', app.request.query|merge({type: 'vm', page: null})) }}">
                 <span>Virtual Machines</span> 
                 <span class="badge bg-info ms-1">{{ count.vms }}</span>
             </a>
         </li>
         <li class="nav-item">
             <a class="nav-link {% if app.request.query.get('type') == 'container' %}active{% endif %}" 
-               href="{{ path('devices', app.request.query|merge({type: 'container'})) }}">
+               href="{{ path('devices', app.request.query|merge({type: 'container', page: null})) }}">
                 <span>Containers</span> 
                 <span class="badge bg-success ms-1">{{ count.containers }}</span>
             </a>
         </li>
         <li class="nav-item">
             <a class="nav-link {% if app.request.query.get('type') == 'physical' %}active{% endif %}" 
-               href="{{ path('devices', app.request.query|merge({type: 'physical'})) }}">
+               href="{{ path('devices', app.request.query|merge({type: 'physical', page: null})) }}">
                 <span>Physical Devices</span> 
                 <span class="badge bg-warning ms-1">{{ count.physical }}</span>
             </a>
@@ -80,12 +80,8 @@
             <div class="d-flex">
                 <select class="form-select" style="width: auto;" id="osFilter">
                     <option value="">All Operating Systems</option>
-                    {% set unique_os = [] %}
-                    {% for device in devices %}
-                        {% if device.operatingSystem and device.operatingSystem.name not in unique_os %}
-                            {% set unique_os = unique_os|merge([device.operatingSystem.name]) %}
-                            <option value="{{ device.operatingSystem.name|lower }}">{{ device.operatingSystem.name }}</option>
-                        {% endif %}
+                    {% for osName in osFilterOptions|default([]) %}
+                        <option value="{{ osName|lower }}">{{ osName }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -255,9 +251,31 @@
         {{ dir.batch_bar(path('device_move'), app.request.uri, 'devices', directoryOptions|default({})) }}
         {{ dir.move_modal(path('device_move'), 'device', directoryOptions|default({})) }}        {% endif %}
 
-        <div class="text-muted mt-3">
-            Showing {{ devices|length }} device template{% if devices|length > 1 %}s{% endif %}
+        {# Pagination #}
+        {% if pagination.pageCount > 1 %}
+        <div class="row align-items-center mt-4">
+            <div class="col-md-6">
+                <div class="text-muted">
+                    {% set start = (pagination.currentPageNumber - 1) * pagination.itemNumberPerPage + 1 %}
+                    {% set end = pagination.currentPageNumber == pagination.pageCount ? pagination.totalItemCount : pagination.currentPageNumber * pagination.itemNumberPerPage %}
+
+                    Showing <strong>{{ start }}</strong> to <strong>{{ end }}</strong>
+                    of <strong>{{ pagination.totalItemCount }}</strong> device templates
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="d-flex justify-content-end">
+                    {{ knp_pagination_render(pagination,'pagination/my_pagination.html.twig') }}
+                </div>
+            </div>
         </div>
+        {% endif %}
+
+        {% if pagination.pageCount == 1 and pagination.totalItemCount > 0 %}
+        <div class="text-muted mt-3">
+            Showing all {{ pagination.totalItemCount }} device templates
+        </div>
+        {% endif %}
     {% endif %}
 </div>
 
