@@ -893,7 +893,7 @@ install_remotelabz_app() {
     if [ ! -d "$SCRIPT_DIR/lib/network-bundle" ]; then
         git clone https://github.com/remotelabz/network-bundle.git "$SCRIPT_DIR/lib/network-bundle"
         git -C "$SCRIPT_DIR/lib/network-bundle" fetch --tags
-        git -C "$SCRIPT_DIR/lib/network-bundle" checkout 1.0.4
+        git -C "$SCRIPT_DIR/lib/network-bundle" checkout 1.0.8
     fi
 
     if [ ! -d "$SCRIPT_DIR/lib/remotelabz-message-bundle" ]; then
