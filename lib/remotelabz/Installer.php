@@ -225,7 +225,7 @@ class Installer
         // Step 10: Configure sudoers
         echo "👮 Configuring sudoers file... ";
         try {
-            copy("config/system/sudoers", "/etc/sudoers.d/remotelabz");
+            copy("config/sudo/remotelabz", "/etc/sudoers.d/remotelabz");
             echo "OK ✔️\n";
         } catch (Exception $e) {
             throw new Exception("Error configuring sudoers: " . $e->getMessage());
