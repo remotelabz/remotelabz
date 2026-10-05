@@ -1161,6 +1161,7 @@ full_installation() {
     sleep 2
     
     setup_env_file
+	setup_mercure_env_file
     install_requirements
     setup_openvpn
     configure_system
