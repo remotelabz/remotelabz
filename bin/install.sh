@@ -975,7 +975,7 @@ final_configuration() {
     cp /opt/remotelabz/bin/systemd/remotelabz-mercure.service /etc/systemd/system
     systemctl daemon-reload
     systemctl enable --now remotelabz-mercure
-    rm mercure_1.0.2_linux_amd64.deb checksums.txt
+    rm -f "${SCRIPT_DIR}/mercure_1.0.2_linux_amd64.deb" "${SCRIPT_DIR}/checksums.txt"
 
     # Configure HAProxy and Apache symlinks if not already done
     if [ -f $REMOTELABZ_PATH/config/haproxy/haproxy.cfg ]; then
