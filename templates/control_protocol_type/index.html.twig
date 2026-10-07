@@ -13,8 +13,7 @@
 {% block wrapper %}
 <div class="top-panel">
     <div class="d-flex justify-content-between align-items-center">
-        <h1 class="fa fa-network-wired"> {{'Control protocol'|trans}}</h1>
-
+            <h3><span class="fa fa-network-wired"></span> {{ 'Control protocol'|trans }}</h3>
         <div class="quick-actions">
             <a class="btn btn-success" role="button" href="{{ path('new_controlProtocolType') }}">
                 New Control Protocol Type

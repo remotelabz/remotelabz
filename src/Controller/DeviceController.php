@@ -550,7 +550,9 @@ class DeviceController extends Controller
             "other_options"=>$device->getOtherOptions(),
             "isos" => $device->getIsos(),
             "cdrom_bus_type" => $device->getCdromBusType(),
-            "bios_type" => $device->getBiosType()
+            "bios_type" => $device->getBiosType(),
+            "network_card_type" => $device->getNetworkCardType(),
+            "minimum_network_interfaces" => $device->getMinimumNetworkInterfaces()
         ];
         if (!is_null($device->getOperatingSystem()->getArch()))
             $data["qemu_arch"]=$device->getOperatingSystem()->getArch()->getId();
@@ -676,7 +678,9 @@ class DeviceController extends Controller
                     "other_options"=>$device->getOtherOptions(),
                     "isos" => $isos,
                     "cdrom_bus_type" => $device->getCdromBusType(),
-                    "bios_type" => $device->getBiosType()
+                    "bios_type" => $device->getBiosType(),
+                    "network_card_type" => $device->getNetworkCardType(),
+                    "minimum_network_interfaces" => $device->getMinimumNetworkInterfaces()
                 ];
                 
                 if (!is_null($device->getOperatingSystem()->getArch())){
@@ -934,6 +938,14 @@ class DeviceController extends Controller
 
         if(isset($data['cdrom_bus_type'])) {
             $device->setCdromBusType($data['cdrom_bus_type']);
+        }
+
+        if(isset($data['network_card_type'])) {
+            $device->setNetworkCardType($data['network_card_type']);
+        }
+
+        if(isset($data['minimum_network_interfaces'])) {
+            $device->setMinimumNetworkInterfaces((int) $data['minimum_network_interfaces']);
         }
 
         
@@ -1347,6 +1359,8 @@ class DeviceController extends Controller
                 "virtuality"=> $device->getVirtuality(),
                 "other_options" => $device->getOtherOptions(),
                 "cdrom_bus_type" => $device->getCdromBusType(),
+                "network_card_type" => $device->getNetworkCardType(),
+                "minimum_network_interfaces" => $device->getMinimumNetworkInterfaces(),
                 "isos" => $isos
         ];
         
@@ -1419,6 +1433,14 @@ class DeviceController extends Controller
 
         if(isset($data['other_options'])) {
             $device->setOtherOptions($data['other_options']);
+        }
+
+        if(isset($data['network_card_type'])) {
+            $device->setNetworkCardType($data['network_card_type']);
+        }
+
+        if(isset($data['minimum_network_interfaces'])) {
+            $device->setMinimumNetworkInterfaces((int) $data['minimum_network_interfaces']);
         }
 
         if(isset($data['name'])) {

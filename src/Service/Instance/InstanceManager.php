@@ -880,6 +880,8 @@ class InstanceManager
         $newDevice->setNbSocket($device->getNbSocket());
         $newDevice->setNbCore($device->getNbCore());
         $newDevice->setNbThread($device->getNbThread());
+        $newDevice->setNetworkCardType($device->getNetworkCardType());
+        $newDevice->setMinimumNetworkInterfaces($device->getMinimumNetworkInterfaces());
         $newDevice->setIsTemplate(true);
 
         $i=0;

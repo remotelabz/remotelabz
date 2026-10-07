@@ -132,6 +132,7 @@ $(function () {
     const osSelect = document.querySelector('select[name*="[operatingSystem]"]');
     const protocolSelect = document.querySelector('select[name*="[controlProtocolTypes]"]');
     const isoFieldsContainer = document.getElementById('iso-fields-container');
+    const qemuNicFieldsContainer = document.getElementById('qemu-nic-fields-container');
     const isosSelect = document.querySelector('select[name*="[isos]"]');
     
     // Fonction pour mettre à jour les protocoles de contrôle
@@ -239,14 +240,26 @@ $(function () {
         }
     }
     
+    // Fonction pour gérer l'affichage des champs carte réseau QEMU
+    function toggleQemuNicFields() {
+        if (!osSelect || !qemuNicFieldsContainer) return;
+
+        const selectedOption = osSelect.options[osSelect.selectedIndex];
+        const hypervisor = selectedOption ? selectedOption.getAttribute('data-hypervisor') : '';
+
+        qemuNicFieldsContainer.style.display = (hypervisor === 'qemu') ? '' : 'none';
+    }
+
     // Événement au changement d'OS
     if (osSelect) {
         osSelect.addEventListener('change', function() {
             updateProtocols();
             toggleIsoFields();
+            toggleQemuNicFields();
         });
         
         // Appliquer au chargement de la page
         toggleIsoFields();
+        toggleQemuNicFields();
     }
 });

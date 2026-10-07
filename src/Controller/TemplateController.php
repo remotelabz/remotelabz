@@ -289,6 +289,34 @@ class TemplateController extends Controller
                 ]
             );          
 
+            // QEMU only : network card model and minimum number of interfaces at boot
+            $hypervisorName = $device->getHypervisor() ? $device->getHypervisor()->getName() : null;
+            if ($hypervisorName === null && $device->getOperatingSystem()) {
+                $hypervisorName = $device->getOperatingSystem()->getHypervisor()?->getName();
+            }
+
+            if ($hypervisorName === 'qemu') {
+                $data['options']['network_card_type'] = Array(
+                    'name' => 'Network card type',
+                    'type' => 'list',
+                    'multiple'=> false,
+                    'value' => $p['network_card_type'] ?? 'e1000',
+                    'list' => [
+                        'e1000' => 'e1000',
+                        'e1000e' => 'e1000e',
+                        'virtio-net-pci' => 'virtio-net-pci',
+                        'rtl8139' => 'rtl8139',
+                        'vmxnet3' => 'vmxnet3'
+                    ]
+                );
+
+                $data['options']['minimum_network_interfaces'] = Array(
+                    'name' => 'Minimum network interfaces',
+                    'type' => 'input',
+                    'value' => $p['minimum_network_interfaces'] ?? 0
+                );
+            }
+
             $data['options']['cpu'] = Array(
                 'name' => 'Number of cpu',
                 'type' => 'input',
@@ -486,6 +514,8 @@ class TemplateController extends Controller
         "virtuality" => $template->getVirtuality(),
         "other_options" => $template->getOtherOptions(),
         "cdrom_bus_type" => $template->getCdromBusType(),
+        "network_card_type" => $template->getNetworkCardType(),
+        "minimum_network_interfaces" => $template->getMinimumNetworkInterfaces(),
         "isos" => $isos
     ];
 
