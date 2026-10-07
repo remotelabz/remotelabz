@@ -61,6 +61,12 @@
             color: #fff;
         }
 
+        &.badge-info,
+        &.bg-info {
+            background-color: #065b72 !important;
+            color: #fff !important;
+        }
+
         // Pure dark is indistinguishable from the page background in dark mode
         &.bg-dark {
             background-color: map-get($theme-colors, dark-lightest);

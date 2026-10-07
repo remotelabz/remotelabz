@@ -9,7 +9,7 @@
 :root {
   // --bs-body-bg / --bs-body-text are managed by Bootstrap 5.3 per color mode
   // ($body-bg / $body-color / $body-bg-dark / $body-color-dark in _variables.scss)
-  --bs-body-bg-dark: #121212;
+  --bs-body-bg-dark: #111827;
   --bs-body-text-dark: #ffffff;
   --bs-color-primary: #0d6efd;
   --bs-color-secondary: #6c757d;
@@ -27,8 +27,8 @@
   --bs-bg-dark-lightest: #38383d;
   --bs-card-bg: #ffffff;
   --bs-card-bg-dark: #121212;
+  --bs-text-color: #111827;
   --bs-text-color-dark: #ffffff;
-  --bs-text-color: #121212;
   --bs-scrollbar-track-color-dark: #121212;
   --bs-scrollbar-thumb-color-dark: #565b62;
   --bs-scrollbar-thumb-border-color-dark: #5f6368;
@@ -52,14 +52,11 @@
   --bs-scrollbar-thumb-color: #c7c7ce;
   --bs-scrollbar-scrollbar-width: 8px;
   --bs-scrollbar-scrollbar-height: 100%;
-  --bs-scrollbar-scrollbar-margin: 2px 0px;
   --bs-scrollbar-scrollbar-margin: 4px 0px;
   --bs-scrollbar-scrollbar-padding-top: 8px;
   --bs-nav-link-hover-color: #3b82f6;
   --bs-btn-text-color: #fff;
   --bs-btn-text-color-dark: #fff;
-  --bs-text-color: #374151;
-  --bs-text-color-dark: #ffffff;
   --bs-bg: #f9fafb;
   --bs-bg-dark: #111827;
   --bs-border: #e5e7eb;
@@ -72,22 +69,10 @@
   --bs-bg-primary-dark-lightest: #374151;
   --bs-text: #111827;
   --bs-text-dark: #ffffff;
-  --bs-body-bg-dark: #111827;
-  --bs-body-text-dark: #ffffff;
-  --bs-text-color: #111827;
-  --bs-text-color-dark: #ffffff;
-  --bs-bg: #f9fafb;
-  --bs-bg-dark: #111827;
-  --bs-border: #e5e7eb;
-  --bs-border-dark: #4b5563;
-  --bs-border-dark-lighter: #6b7280;
-  --bs-border-dark-lightest: #9ca3af;
-  --bs-bg-primary: #ffffff;
-  --bs-bg-primary-dark: #111827;
-  --bs-bg-primary-dark-lighter: #1f2937;
-  --bs-bg-primary-dark-lightest: #374151;
-  --bs-text: #111827;
-  --bs-text-dark: #ffffff;
+}
+
+[data-bs-theme="dark"] {
+  --bs-border-color: #4b5563;
 }
 
 html, body {
