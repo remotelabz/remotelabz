@@ -248,6 +248,25 @@ class Device implements InstanciableInterface, DirectoryAwareInterface
     #[Serializer\Groups(['api_get_device','worker','sandbox'])]
     private $other_options;
 
+    /**
+     * QEMU network card model used for every NIC of this device (e1000, virtio-net-pci, ...)
+     * @var string
+     */
+    #[Assert\Choice(choices: ['e1000', 'e1000e', 'virtio-net-pci', 'rtl8139', 'vmxnet3'])]
+    #[ORM\Column(type: 'string', length: 32, options: ['default' => 'e1000'])]
+    #[Serializer\Groups(['api_get_device','worker','sandbox'])]
+    private $network_card_type = 'e1000';
+
+    /**
+     * Minimum number of network interfaces the device must expose at boot.
+     * Missing ones are added by the worker with user (dummy) netdevs.
+     * @var int
+     */
+    #[Assert\Range(min: 0, max: 64)]
+    #[ORM\Column(type: 'integer', options: ['default' => 0])]
+    #[Serializer\Groups(['api_get_device','worker','sandbox'])]
+    private $minimum_network_interfaces = 0;
+
     #[ORM\ManyToOne(targetEntity: Directory::class, inversedBy: 'devices')]
     #[ORM\JoinColumn(name: 'directory_id', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
     #[Serializer\Groups(['api_directory_aware'])]
@@ -881,6 +900,30 @@ class Device implements InstanciableInterface, DirectoryAwareInterface
     public function setOtherOptions(?string $other_options): self
     {
         $this->other_options = $other_options;
+
+        return $this;
+    }
+
+    public function getNetworkCardType(): ?string
+    {
+        return $this->network_card_type;
+    }
+
+    public function setNetworkCardType(?string $networkCardType): self
+    {
+        $this->network_card_type = $networkCardType ?? 'e1000';
+
+        return $this;
+    }
+
+    public function getMinimumNetworkInterfaces(): int
+    {
+        return $this->minimum_network_interfaces;
+    }
+
+    public function setMinimumNetworkInterfaces(?int $minimumNetworkInterfaces): self
+    {
+        $this->minimum_network_interfaces = $minimumNetworkInterfaces ?? 0;
 
         return $this;
     }

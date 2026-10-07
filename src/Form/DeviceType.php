@@ -113,7 +113,8 @@ class DeviceType extends AbstractType
                     $arch = $os->getArch();
                     return [
                         'data-has-flavor-disk' => $os->getFlavorDisk() !== null ? '1' : '0',
-                        'data-arch-id' => $arch ? $arch->getId() : ''
+                        'data-arch-id' => $arch ? $arch->getId() : '',
+                        'data-hypervisor' => $os->getHypervisor() ? $os->getHypervisor()->getName() : ''
                     ];
                 },
                 'help' => 'Image disk used for this device.',
@@ -148,6 +149,32 @@ class DeviceType extends AbstractType
                 'required' => false,
                 'placeholder' => 'Sélectionner le bus du CD-ROM',
                 'help' => 'Type de bus pour le CD-ROM',
+            ])
+
+            ->add('network_card_type', ChoiceType::class, [
+                'choices' => [
+                    'e1000' => 'e1000',
+                    'e1000e' => 'e1000e',
+                    'virtio-net-pci' => 'virtio-net-pci',
+                    'rtl8139' => 'rtl8139',
+                    'vmxnet3' => 'vmxnet3',
+                ],
+                'required' => false,
+                'empty_data' => 'e1000',
+                'placeholder' => 'e1000 (default)',
+                'label' => 'Network card type',
+                'help' => 'QEMU network card model (QEMU VM only)',
+            ])
+
+            ->add('minimum_network_interfaces', NumberType::class, [
+                'required' => false,
+                'scale' => 0,
+                'label' => 'Minimum network interfaces',
+                'help' => 'Minimum number of NICs required at boot, extra ones are added with dummy (user) netdevs',
+                'attr' => [
+                    'min' => 0,
+                    'max' => 64,
+                ],
             ]);
             
             // Ajout du champ isos avec toutes les options

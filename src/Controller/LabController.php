@@ -1039,6 +1039,8 @@ class LabController extends Controller
         $newDevice->setNbCore($device->getNbCore());
         $newDevice->setNbThread($device->getNbThread());
         $newDevice->setDelay($device->getDelay());
+        $newDevice->setNetworkCardType($device->getNetworkCardType());
+        $newDevice->setMinimumNetworkInterfaces($device->getMinimumNetworkInterfaces());
         $newDevice->setIsTemplate(true);
         $newDevice->setAuthor($this->getUser());
         

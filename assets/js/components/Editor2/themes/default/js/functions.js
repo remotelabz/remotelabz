@@ -1615,6 +1615,7 @@ export function printFormNode(action, values, fromNodeList) {
                                     widthClass = ' col-sm-4 ';
                                     if (action == 'add') value_set = '';
                                 }
+                                if (key == 'network_card_type') widthClass = ' col-sm-6 '
                                 if (key.startsWith('slot')) widthClass = ' col-sm-6 '
                                 
                                 html_data += '<div class="form-group ' + widthClass + '">' +
@@ -1674,6 +1675,8 @@ export function printFormNode(action, values, fromNodeList) {
                                     } else if (key == 'ram' || key == 'nvram') widthClass = ' col-sm-6 '
                                     
                                     if (bothConnTypes && (key == 'ethernet' || key == 'serial')) widthClass = ' col-sm-6 '
+
+                                    if (key == 'minimum_network_interfaces') widthClass = ' col-sm-6 '
                                     
                                     var tpl = '';
                                     if (key == 'other_options' && value_set == '') value_set = template_values['options'][key]['value'];
