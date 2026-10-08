@@ -377,7 +377,7 @@ class ShibbolethAuthenticator extends AbstractAuthenticator
             ]);
             if ($this->loginNotificationService) {
                 $this->loginNotificationService->logLogin($user, $user->getEmail(), $ip, $userAgent, 'shibboleth');
-                $this->loginNotificationService->sendNotificationEmail($user, $ip, $userAgent, 'shibboleth', new DateTime());
+                $this->loginNotificationService->sendNotificationEmail($user->getEmail(), $user->getFirstName(), $ip, $userAgent, 'shibboleth', new DateTime());
             }
 
             return $response;

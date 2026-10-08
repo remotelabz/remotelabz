@@ -106,11 +106,15 @@ class CodeLoginAuthenticator extends AbstractLoginFormAuthenticator
 
 public function authenticate(Request $request): Passport
 {
-    $code = $request->request->get('code', '');
+    $code = trim($request->request->get('code', ''));
     $invitedUser = $this->entityManager->getRepository(InvitationCode::class)->findOneBy(['code' => $code]);
 
     if (is_null($invitedUser)) {
-        throw new AccessDeniedException();
+        throw new CustomUserMessageAuthenticationException('Invalid invitation code.');
+    }
+
+    if (null !== $invitedUser->getExpiryDate() && $invitedUser->getExpiryDate() <= new DateTime()) {
+        throw new CustomUserMessageAuthenticationException('This invitation code has expired.');
     }
 
     return new Passport(
@@ -154,7 +158,7 @@ public function authenticate(Request $request): Passport
 
         $response->headers->setCookie($jwtTokenCookie);
 
-        $this->logger->debug('[CodeLoginAuthenticator:onAuthenticationSuccess]::Login of user: ' . $user->getEmail(), [
+        $this->logger->debug('[CodeLoginAuthenticator:onAuthenticationSuccess]::Login of user: ' . $user->getMail(), [
             'remote_addr' => $request->server->get('REMOTE_ADDR', 'unknown'),
             'x_forwarded_for' => $request->server->get('HTTP_X_FORWARDED_FOR', 'unknown'),
             'x_real_ip' => $request->server->get('HTTP_X_REAL_IP', 'unknown'),
@@ -169,8 +173,8 @@ public function authenticate(Request $request): Passport
         $this->logger->debug('[CodeLoginAuthenticator:onAuthenticationSuccess]::IP stored in login notification: ' . $ip, [
             'x_forwarded_for' => $request->server->get('HTTP_X_FORWARDED_FOR', 'unknown'),
         ]);
-        $this->loginNotificationService->logLogin($user, $user->getEmail(), $ip, $userAgent, 'code');
-        $this->loginNotificationService->sendNotificationEmail($user, $ip, $userAgent, 'code', new DateTime());
+        $this->loginNotificationService->logLogin(null, $user->getMail(), $ip, $userAgent, 'code');
+        $this->loginNotificationService->sendNotificationEmail($user->getMail(), null, $ip, $userAgent, 'code', new DateTime());
 
         $response->setTargetUrl($this->router->generate('show_lab_to_guest', ['id'=> $user->getLab()->getId()]));
         return $response;
@@ -182,15 +186,15 @@ public function authenticate(Request $request): Passport
      */
     public function onAuthenticationFailure(Request $request, AuthenticationException $exception):Response
     {
-        /*var_dump('failure'); exit;
-        if ($request->hasSession()) {
-            $request->getSession()->set(Security::AUTHENTICATION_ERROR, $exception);
+        if (self::LOGIN_ROUTE === $request->attributes->get('_route') && $request->hasSession()) {
+            $request->getSession()->getFlashBag()->add(
+                'danger',
+                strtr($exception->getMessageKey(), $exception->getMessageData())
+            );
+
+            return new RedirectResponse($this->urlGenerator->generate(self::LOGIN_ROUTE));
         }
 
-        $parameters = $request->query->has('ref_url') ? ['ref_url' => $request->query->get('ref_url')] : [];
-        $url = $this->getLoginUrl($parameters);
-
-        return new RedirectResponse($url);*/
         $data = [
             // you may want to customize or obfuscate the message first
             'message' => strtr($exception->getMessageKey(), $exception->getMessageData())

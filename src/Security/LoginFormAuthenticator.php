@@ -166,7 +166,7 @@ class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
                 'x_forwarded_for' => $request->server->get('HTTP_X_FORWARDED_FOR', 'unknown'),
             ]);
             $this->loginNotificationService->logLogin($user, $user->getEmail(), $ip, $userAgent, 'form');
-            $this->loginNotificationService->sendNotificationEmail($user, $ip, $userAgent, 'form', new DateTime());
+            $this->loginNotificationService->sendNotificationEmail($user->getEmail(), $user->getFirstName(), $ip, $userAgent, 'form', new DateTime());
 
             if ($request->query->has('ref_url')) {
                 $response->setTargetUrl(urldecode($request->query->get('ref_url')));

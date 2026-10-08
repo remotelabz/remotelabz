@@ -1,7 +1,7 @@
 <html>
     <body>
         <p>
-            Hello {{ firstName }},<br><br>
+            Hello {% if firstName %}{{ firstName }}{% else %}there{% endif %},<br><br>
             A login was detected on your RemoteLabz account:<br><br>
             <ul>
                 <li><strong>Email:</strong> {{ email }}</li>
