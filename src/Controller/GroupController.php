@@ -15,6 +15,8 @@ use App\Repository\LabInstanceRepository;
 use App\Repository\InstanceRepository;
 use App\Security\ACL\GroupVoter;
 use App\Service\GroupPictureFileUploader;
+use App\Service\LabShareManager;
+use App\Service\SharedLabSecurityManager;
 use App\Utils\Uuid;
 use Doctrine\Common\Collections\Criteria;
 use Doctrine\DBAL\Exception\ForeignKeyConstraintViolationException;
@@ -845,7 +847,13 @@ class GroupController extends Controller
     }
 
      #[Route(path: '/groups/{slug}/removelab/{id<\d+>}', name: 'rem_lab_group', methods: 'GET', requirements: ['slug' => '[\w\-\/]+'])]
-    public function removeLabAction(Request $request, string $slug, int $id, LabRepository $labRepository)
+    public function removeLabAction(
+        Request $request,
+        string $slug,
+        int $id,
+        LabRepository $labRepository,
+        LabShareManager $labShareManager,
+        SharedLabSecurityManager $securityManager)
     {
         if (!$group = $this->groupRepository->findOneBySlug($slug)) {
             throw new NotFoundHttpException('Group with URL '.$slug.' does not exist.');
@@ -858,13 +866,20 @@ class GroupController extends Controller
         $group->removeLab($lab[0]);
         $this->logger->info("Laboratory ".$lab[0]->getName()." remove from group ".$group->getPath()." by ".$this->getUser()->getName());
 
+        // The share rules of this lab inside this group are now meaningless
+        $labShareManager->purgeGroupShareRules($lab[0], $group);
+
         $this->addFlash('success', 'Laboratory '.$lab[0]->getName().' has been added to the group '.$group->getName().'.');
 
         $entityManager = $this->entityManager;
         $entityManager->persist($group);
         $entityManager->flush();
 
-        
+        try {
+            $securityManager->syncGroup($group);
+        } catch (\Throwable $e) {
+            $this->logger->error('Could not sync the shared lab topology of group '.$group->getPath().': '.$e->getMessage());
+        }
 
         return $this->redirectToRoute('dashboard_add_lab_group', [
             'slug' => $slug,

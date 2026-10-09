@@ -3,9 +3,11 @@
 namespace App\MessageHandler;
 
 use App\Bridge\Network\IPTools;
+use App\Entity\LabInstance;
 use App\Repository\LabInstanceRepository;
 use App\Service\Instance\InstanceManager;
 use App\Service\NotificationService;
+use App\Service\SharedLabSecurityManager;
 use App\Service\Worker\LabPlacementCache;
 use App\Service\Worker\WorkerManager;
 use Doctrine\ORM\EntityManagerInterface;
@@ -44,6 +46,7 @@ class LabLaunchRequestMessageHandler
     private EntityManagerInterface $entityManager;
     private LoggerInterface $logger;
     private NotificationService $notificationService;
+    private SharedLabSecurityManager $securityManager;
     private bool $singleServer;
     private array $workerSerializationGroups = [
         'worker'
@@ -59,6 +62,7 @@ class LabLaunchRequestMessageHandler
         EntityManagerInterface $entityManager,
         LoggerInterface $logger,
         NotificationService $notificationService,
+        SharedLabSecurityManager $securityManager,
         bool $singleServer
     ) {
         $this->labInstanceRepository = $labInstanceRepository;
@@ -70,6 +74,7 @@ class LabLaunchRequestMessageHandler
         $this->entityManager = $entityManager;
         $this->logger = $logger;
         $this->notificationService = $notificationService;
+        $this->securityManager = $securityManager;
         $this->singleServer = $singleServer;
     }
 
@@ -140,6 +145,8 @@ class LabLaunchRequestMessageHandler
 
         $this->logger->info('[LabLaunchRequestMessageHandler]::Lab instance ' . $uuid . ' launched on worker ' . $worker);
 
+        $this->syncSharedLabSecurity($labInstance);
+
         if ($message->isAutoStartDevices()) {
             foreach ($labInstance->getDeviceInstances() as $deviceInstance) {
                 if (
@@ -154,6 +161,24 @@ class LabLaunchRequestMessageHandler
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * Broadcasts the shared lab topology of the group of a placed instance.
+     * A user-owned instance (no group) has no shared lab topology.
+     */
+    private function syncSharedLabSecurity(LabInstance $labInstance): void
+    {
+        $group = $labInstance->getGroup();
+        if (is_null($group)) {
+            return;
+        }
+
+        try {
+            $this->securityManager->syncGroup($group);
+        } catch (\Throwable $e) {
+            $this->logger->error('[LabLaunchRequestMessageHandler]::Could not sync the shared lab topology of group '.$group->getPath().': '.$e->getMessage());
         }
     }
 

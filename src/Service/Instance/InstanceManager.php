@@ -35,6 +35,7 @@ use App\Repository\ControlProtocolTypeInstanceRepository;
 use App\Repository\OperatingSystemRepository;
 use App\Service\Network\NetworkManager;
 use App\Service\Proxy\ProxyManager;
+use App\Service\SharedLabSecurityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use GuzzleHttp\Client;
@@ -94,6 +95,7 @@ class InstanceManager
     ];
     protected $tokenStorage;
     protected $singleServer = true;
+    protected SharedLabSecurityManager $securityManager;
 
     public function __construct(
         LoggerInterface $logger,
@@ -120,7 +122,8 @@ class InstanceManager
         WorkerManager $workerManager,
         BannerManager $bannerManager,
         TokenStorageInterface $tokenStorage,
-        LabPlacementCache $placementCache
+        LabPlacementCache $placementCache,
+        SharedLabSecurityManager $securityManager
     ) {
         $this->bus = $bus;
         $this->logger = $logger;
@@ -147,6 +150,7 @@ class InstanceManager
         $this->tokenStorage = $tokenStorage;
         $this->singleServer = $singleServer;
         $this->placementCache = $placementCache;
+        $this->securityManager = $securityManager;
     }
 
     /**
@@ -415,6 +419,8 @@ class InstanceManager
                     ]
                 );
 
+                $this->syncSharedLabSecurity($deviceInstance->getLabInstance());
+
                 return $labJson;
             }
             else {
@@ -479,10 +485,30 @@ class InstanceManager
                     new AmqpStamp($workerIP, AMQP_NOPARAM, []),
                 ]
             );
+
+            $this->syncSharedLabSecurity($deviceInstance->getLabInstance());
         }
         else {
             $this->logger->error('Could not stop device instance '.$uuid.'. Worker '.$workerIP.' is suspended.');
             throw new BadRequestHttpException('Worker '.$workerIP.' is suspended');
+        }
+    }
+
+    /**
+     * Broadcasts the shared lab topology of the group of an instance.
+     * A user-owned instance (no group) has no shared lab topology.
+     */
+    private function syncSharedLabSecurity(?LabInstance $labInstance): void
+    {
+        $group = $labInstance?->getGroup();
+        if (is_null($group)) {
+            return;
+        }
+
+        try {
+            $this->securityManager->syncGroup($group);
+        } catch (\Throwable $e) {
+            $this->logger->error('[InstanceManager:syncSharedLabSecurity]::Could not sync the shared lab topology of group '.$group->getPath().': '.$e->getMessage());
         }
     }
 

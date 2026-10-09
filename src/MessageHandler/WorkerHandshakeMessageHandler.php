@@ -8,6 +8,7 @@ use Remotelabz\Message\Message\InstanceActionMessage;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Repository\DeviceInstanceRepository;
 use App\Repository\DeviceRepository;
+use App\Service\SharedLabSecurityManager;
 use JMS\Serializer\SerializationContext;
 use JMS\Serializer\SerializerInterface;
 use Remotelabz\Message\Message\WorkerHandshakeMessage;
@@ -24,6 +25,7 @@ class WorkerHandshakeMessageHandler
     private SerializerInterface $serializer;
     private LoggerInterface $logger;
     private MessageBusInterface $bus;
+    private SharedLabSecurityManager $securityManager;
 
     public function __construct(
         DeviceInstanceRepository $deviceInstanceRepository,
@@ -31,6 +33,7 @@ class WorkerHandshakeMessageHandler
         EntityManagerInterface $entityManager,
         SerializerInterface $serializer,
         MessageBusInterface $bus,
+        SharedLabSecurityManager $securityManager,
         LoggerInterface $logger
     ) {
         $this->deviceInstanceRepository = $deviceInstanceRepository;
@@ -39,6 +42,7 @@ class WorkerHandshakeMessageHandler
         $this->serializer = $serializer;
         $this->logger = $logger;
         $this->bus = $bus;
+        $this->securityManager = $securityManager;
     }
 
     public function __invoke(WorkerHandshakeMessage $message)
@@ -48,6 +52,10 @@ class WorkerHandshakeMessageHandler
         ]);
 
         $deviceInstances = $this->deviceInstanceRepository->findAllStartingOrStarted();
+
+        // Groups with instances placed on this worker: their shared lab topology
+        // must be re-applied (iptables, routes and local state are lost on reboot)
+        $groupsToSync = [];
 
         foreach ($deviceInstances as $deviceInstance) {
             $this->logger->debug('Device in started find');
@@ -60,7 +68,12 @@ class WorkerHandshakeMessageHandler
                 $this->logger->debug('Same IP detected for device instance '.$uuid);
                 $deviceInstance->setState(InstanceState::STARTING);
                 $this->entityManager->flush();
-                
+
+                $group = $deviceInstance->getLabInstance()->getGroup();
+                if (!is_null($group)) {
+                    $groupsToSync[$group->getId()] = $group;
+                }
+
                 $context = SerializationContext::create()->setGroups('worker');
                 $device = $deviceInstance->getDevice();
                 $deviceJson = $this->serializer->serialize($deviceInstance->getLabInstance(), 'json', $context);
@@ -96,6 +109,14 @@ class WorkerHandshakeMessageHandler
                         new AmqpStamp($workerIp, AMQP_NOPARAM, []),
                     ]
                 );
+            }
+        }
+
+        foreach ($groupsToSync as $group) {
+            try {
+                $this->securityManager->syncGroup($group);
+            } catch (\Throwable $e) {
+                $this->logger->error('[WorkerHandshakeMessageHandler]::Could not sync the shared lab topology of group '.$group->getPath().': '.$e->getMessage());
             }
         }
     }
