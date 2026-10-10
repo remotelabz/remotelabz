@@ -13,6 +13,7 @@ use App\Repository\DeviceRepository;
 use App\Repository\UserRepository;
 use App\Repository\OperatingSystemRepository;
 use App\Service\Instance\InstanceManager;
+use App\Service\SharedLabSecurityManager;
 use App\Service\Worker\LabPlacementCache;
 use App\Controller\OperatingSystemController;
 //To redirect to a route
@@ -38,6 +39,7 @@ class InstanceStateMessageHandler
     private ManagerRegistry $managerRegistry;
     private UserRepository $userRepository;
     private LabPlacementCache $placementCache;
+    private SharedLabSecurityManager $securityManager;
 
     public function __construct(
         DeviceInstanceRepository $deviceInstanceRepository,
@@ -51,7 +53,8 @@ class InstanceStateMessageHandler
         NotificationService $notificationService,
         ManagerRegistry $managerRegistry,
         UserRepository $userRepository,
-        LabPlacementCache $placementCache
+        LabPlacementCache $placementCache,
+        SharedLabSecurityManager $securityManager
     ) {
         $this->deviceInstanceRepository = $deviceInstanceRepository;
         $this->labInstanceRepository = $labInstanceRepository;
@@ -65,6 +68,7 @@ class InstanceStateMessageHandler
         $this->managerRegistry = $managerRegistry;
         $this->userRepository = $userRepository;
         $this->placementCache = $placementCache;
+        $this->securityManager = $securityManager;
     }
 
     /**
@@ -432,9 +436,20 @@ class InstanceStateMessageHandler
                         if ($message->getType() === InstanceStateMessage::TYPE_LAB) {
                             $this->logger->debug("[InstanceStateMessageHandler:__invoke]::\"Deleted\" Instance state message is type Lab");
                             $lab=$instance->getLab();
+                            $group=$instance->getGroup();
                             
                             $this->entityManager->remove($instance);
                             $this->entityManager->flush();
+
+                            if (!is_null($group)) {
+                                $group->removeLabInstance($instance);
+                            }
+
+                            try {
+                                $this->securityManager->syncLabInstance($instance);
+                            } catch (\Throwable $e) {
+                                $this->logger->error('[InstanceStateMessageHandler:__invoke]::Could not sync the shared lab topology of lab '.$lab->getName().': '.$e->getMessage());
+                            }
 
                             if (strstr($lab->getName(),"Sandbox_")) {
                                 $this->logger->debug("[InstanceStateMessageHandler:__invoke]::\"Deleted\" Instance state message from Sandbox: ".$lab->getName());

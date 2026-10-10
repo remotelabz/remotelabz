@@ -48,12 +48,6 @@
                     <input type="checkbox" name="lab[chatEnabled]" value="1" <%= chatEnabled ? 'checked="checked"' : '' %>/>
                 </div>
             </div>
-            <div class="form-group">
-                <label class="col-md-3 control-label">Shared lab</label>
-                <div class="col-md-9">
-                    <input type="checkbox" name="lab[shared]" value="1" <%= shared ? 'checked="checked"' : '' %>/>
-                </div>
-            </div>
             <% } %>
             <div class="row">
                 <div class="col-md-12 parent-required">
@@ -117,6 +111,17 @@
             </div>
 
             <%}%>
+            <% if (action == 'edit') { %>
+            <div class="form-group">
+                <label class="col-md-2 control-label"><%=MESSAGES[240]%></label>
+                <div class="col-md-10">
+                    <div id="lab-share-header"></div>
+                    <div id="lab-share-rules"></div>
+                    <div id="lab-share-buttons"></div>
+                    <p class="text-muted"><%=MESSAGES[241]%></p>
+                </div>
+            </div>
+            <% } %>
             <div style="height: 100px;"></div>
             <div class="row">
                 <div class="form-group">

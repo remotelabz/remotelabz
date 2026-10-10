@@ -35,6 +35,7 @@ use App\Repository\ControlProtocolTypeInstanceRepository;
 use App\Repository\OperatingSystemRepository;
 use App\Service\Network\NetworkManager;
 use App\Service\Proxy\ProxyManager;
+use App\Service\SharedLabSecurityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use GuzzleHttp\Client;
@@ -94,6 +95,7 @@ class InstanceManager
     ];
     protected $tokenStorage;
     protected $singleServer = true;
+    protected SharedLabSecurityManager $securityManager;
 
     public function __construct(
         LoggerInterface $logger,
@@ -120,7 +122,8 @@ class InstanceManager
         WorkerManager $workerManager,
         BannerManager $bannerManager,
         TokenStorageInterface $tokenStorage,
-        LabPlacementCache $placementCache
+        LabPlacementCache $placementCache,
+        SharedLabSecurityManager $securityManager
     ) {
         $this->bus = $bus;
         $this->logger = $logger;
@@ -147,6 +150,7 @@ class InstanceManager
         $this->tokenStorage = $tokenStorage;
         $this->singleServer = $singleServer;
         $this->placementCache = $placementCache;
+        $this->securityManager = $securityManager;
     }
 
     /**
@@ -414,6 +418,7 @@ class InstanceManager
                         new AmqpStamp($workerIP, AMQP_NOPARAM, []),
                     ]
                 );
+                $this->securityManager->syncLabInstance($deviceInstance->getLabInstance());
 
                 return $labJson;
             }
@@ -479,6 +484,8 @@ class InstanceManager
                     new AmqpStamp($workerIP, AMQP_NOPARAM, []),
                 ]
             );
+
+            $this->securityManager->syncLabInstance($deviceInstance->getLabInstance());
         }
         else {
             $this->logger->error('Could not stop device instance '.$uuid.'. Worker '.$workerIP.' is suspended.');

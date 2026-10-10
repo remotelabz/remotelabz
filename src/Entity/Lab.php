@@ -96,8 +96,14 @@ class Lab implements InstanciableInterface
     #[Serializer\Exclude]
     private $banner;
 
-    #[ORM\Column(type: 'boolean')]
-    private $shared = false;
+    /**
+     * Share rules of this lab (as source lab), see LabShare.
+     *
+     * @var Collection|LabShare[]
+     */
+    #[ORM\OneToMany(targetEntity: 'App\Entity\LabShare', mappedBy: 'lab', cascade: ['persist'], orphanRemoval: true)]
+    #[Serializer\Groups(['api_get_lab', 'api_get_lab_template', 'api_groups', 'api_get_group'])]
+    private $shares;
 
     /**
      *
@@ -165,6 +171,7 @@ class Lab implements InstanciableInterface
         $this->devices = new ArrayCollection();
         $this->connexions = new ArrayCollection();
         $this->groups = new ArrayCollection();
+        $this->shares = new ArrayCollection();
         $this->uuid = (string) new Uuid();
         $this->createdAt = new \DateTime();
         $this->lastUpdated = new \DateTime();
@@ -580,14 +587,32 @@ class Lab implements InstanciableInterface
         return $this;
     }
 
-    public function isShared(): bool
+    /**
+     * @return Collection|LabShare[]
+     */
+    public function getShares()
     {
-        return $this->shared;
+        return $this->shares;
     }
 
-    public function setShared(bool $shared): self
+    public function addShare(LabShare $share): self
     {
-        $this->shared = $shared;
+        if (!$this->shares->contains($share)) {
+            $this->shares[] = $share;
+            $share->setLab($this);
+        }
+
+        return $this;
+    }
+
+    public function removeShare(LabShare $share): self
+    {
+        if ($this->shares->removeElement($share)) {
+            // set the owning side to null (unless already changed)
+            if ($share->getLab() === $this) {
+                $share->setLab(null);
+            }
+        }
 
         return $this;
     }

@@ -43,6 +43,8 @@ use App\Repository\NetworkInterfaceRepository;
 use App\Service\ChatService;
 use App\Service\Lab\LabImporter;
 use App\Service\Lab\BannerManager;
+use App\Service\LabShareManager;
+use App\Service\SharedLabSecurityManager;
 use App\Repository\FlavorRepository;
 use App\Service\LabBannerFileUploader;
 use App\Repository\PracticalSubjectRepository;
@@ -509,6 +511,47 @@ class LabController extends Controller
         $this->denyAccessUnlessGranted(LabVoter::SEE, $lab);
 
         $labInfo = $labRepository->findLabInfoById($id);
+
+        $shares = [];
+        $shareChoices = [];
+        if (!is_null($lab)) {
+            foreach ($lab->getShares() as $share) {
+                $shares[] = [
+                    'id' => $share->getId(),
+                    'sharedWith' => $share->getSharedWith()?->getId(),
+                    'sharedWithUuid' => $share->getSharedWith()?->getUuid(),
+                    'sharedWithName' => $share->getSharedWith()?->getName(),
+                    'group' => $share->getGroup()?->getUuid(),
+                    'groupName' => $share->getGroup()?->getName()
+                ];
+            }
+
+            // Every group the current user belongs to is offered as a scope of a
+            // sharing rule, with the labs of that group as possible targets.
+            // The shared lab does not have to be available in that group: this
+            // is what allows it to stay hidden from the members of the group.
+            $userGroups = (method_exists($user, 'getGroupsInfo')) ? $user->getGroupsInfo() : [];
+            foreach ($userGroups as $userGroup) {
+                $targets = [];
+                foreach ($userGroup->getLabs() as $target) {
+                    if ($target->getId() === $lab->getId()) {
+                        continue;
+                    }
+                    $targets[] = ['id' => $target->getId(), 'name' => (string) $target->getName()];
+                }
+                usort($targets, fn (array $a, array $b) => strcasecmp($a['name'], $b['name']));
+
+                $shareChoices[] = [
+                    'group' => [
+                        'uuid' => $userGroup->getUuid(),
+                        'name' => (string) $userGroup->getName()
+                    ],
+                    'labs' => $targets
+                ];
+            }
+            usort($shareChoices, fn (array $a, array $b) => strcasecmp($a['group']['name'], $b['group']['name']));
+        }
+
         $data = [
             "id"=>$labInfo["id"],
             "name"=>$labInfo["name"],
@@ -522,7 +565,8 @@ class LabController extends Controller
             "banner"=>$labInfo["banner"],
             "timer"=>$labInfo["timer"],
             "chatEnabled"=>$labInfo["chatEnabled"] ?? false,
-            "shared"=>$labInfo["shared"] ?? false
+            "shares"=>$shares,
+            "shareChoices"=>$shareChoices
         ];
 
         $response = new Response();
@@ -1217,12 +1261,58 @@ class LabController extends Controller
 
     
 	#[Put('/api/labs/test/{id<\d+>}', name: 'api_edit_lab_test')]
-    public function updateActionTest(Request $request, int $id, LabBannerFileUploader $fileUploader, UserRepository $userRepository)
+    public function updateActionTest(
+        Request $request,
+        int $id,
+        LabBannerFileUploader $fileUploader,
+        UserRepository $userRepository,
+        LabShareManager $labShareManager,
+        SharedLabSecurityManager $securityManager)
     {
         $lab = $this->labRepository->find($id);
         $this->denyAccessUnlessGranted(LabVoter::EDIT, $lab);
 
         $data = json_decode($request->getContent(), true);
+
+        // Share rules are validated first: an invalid payload changes nothing
+        // (atomic replacement, see shared-labs-front-plan.md §2.5)
+        $impactedGroups = [];
+        if (array_key_exists('shares', $data)) {
+            foreach ($lab->getShares() as $share) {
+                if (!is_null($share->getGroup())) {
+                    $impactedGroups[$share->getGroup()->getId()] = $share->getGroup();
+                }
+            }
+
+            if (!is_array($data['shares'])) {
+                $response = new Response();
+                $response->setContent(json_encode([
+                    'code' => 400,
+                    'status' => 'error',
+                    'message' => 'The shares field must be an array.']));
+                $response->headers->set('Content-Type', 'application/json');
+                return $response;
+            }
+
+            $errors = $labShareManager->replaceShares($lab, $data['shares']);
+
+            if ($errors) {
+                $response = new Response();
+                $response->setContent(json_encode([
+                    'code' => 400,
+                    'status' => 'error',
+                    'message' => implode(' ', $errors),
+                    'errors' => $errors]));
+                $response->headers->set('Content-Type', 'application/json');
+                return $response;
+            }
+
+            foreach ($lab->getShares() as $share) {
+                if (!is_null($share->getGroup())) {
+                    $impactedGroups[$share->getGroup()->getId()] = $share->getGroup();
+                }
+            }
+        }
 
         if (isset($data['author']) && $data['author'] !== '' && $data['author'] !== null) {
             $newAuthor = $userRepository->find((int) $data['author']);
@@ -1247,9 +1337,6 @@ class LabController extends Controller
         if (array_key_exists('chatEnabled', $data)) {
             $lab->setChatEnabled((bool) $data['chatEnabled']);
         }
-        if (array_key_exists('shared', $data)) {
-            $lab->setShared((bool) $data['shared']);
-        }
         if ($lab->getVirtuality() == 1 && $data['timer'] !== "" && $data['timer'] != "0") {
             $lab->setHasTimer(true);
             $lab->setTimer($data['timer']);
@@ -1263,6 +1350,14 @@ class LabController extends Controller
         $entityManager = $this->entityManager;
         $entityManager->persist($lab);
         $entityManager->flush();
+
+        foreach ($impactedGroups as $impactedGroup) {
+            try {
+                $securityManager->syncGroup($impactedGroup);
+            } catch (\Throwable $e) {
+                $this->logger->error('Could not sync the shared lab topology of group '.$impactedGroup->getPath().': '.$e->getMessage());
+            }
+        }
 
         $this->logger->info("Lab named" . $lab->getName() . " modified");
 
