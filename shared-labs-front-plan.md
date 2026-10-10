@@ -90,12 +90,17 @@ Un lab `S` peut être partagé avec **plusieurs labs** dans un même groupe
 ### 2.3 Validations à l'écriture
 
 - `S ≠ L` ;
-- `S` et `L` doivent tous deux être **disponibles dans `G`** (`Lab::$groups` contient `G`)
+- `L` doit être **disponible dans `G`** (`Lab::$groups` contient `G`)
   — sinon la règle est sans effet et doit être rejetée (message d'erreur clair) ;
+- `S` **n'a pas besoin d'être disponible dans `G`** : c'est ce qui permet de
+  partager un lab avec un groupe tout en le cachant à ses membres (`S` n'est
+  simplement pas listé dans `G`, mais une instance de `S` peut quand même
+  appartenir à `G`) ;
 - unicité `(S, L, G)` ;
 - suppression **en cascade** : quand un lab est retiré d'un groupe
-  (`GroupController::removeLabAction`) → purger les règles `(lab, *, G)` ou
-  `(*, lab, G)` ; quand un lab est supprimé → cascade FK déjà prévue.
+  (`GroupController::removeLabAction`) → purger les règles `(*, lab, G)` où le
+  lab est la **cible** (les règles où il est la source sont conservées) ;
+  quand un lab est supprimé → cascade FK déjà prévue.
 
 ### 2.4 Migration & suppression du booléen `shared`
 
@@ -139,28 +144,34 @@ Un lab `S` peut être partagé avec **plusieurs labs** dans un même groupe
 Pour un groupe `G`, la topologie est calculée à partir des **règles `LabShare`
 dont `group == G`** :
 
-1. **Instances retenues** (pour chaque lab impliqué) — `G->getLabInstances()`
-   (`src/Entity/Group.php:509-513`) filtrées par :
+1. **Instances retenues** (pour chaque lab impliqué) — deux sources, filtrées par :
    - `workerIp != null` (instance placée sur un worker) ;
    - `lab.virtuality == 1` (labs virtuels uniquement — pas de bridge OVS pour le physique) ;
    - **au moins un device** en état `starting` ou `started`
      (une instance en cours d'arrêt/stoppée sort de la topologie ; elle y revient au lancement) ;
-   - instances **user-owned** exclues par construction (`_group` null) — dont les labs
-     *Sandbox*, préfixés `Sandbox_`.
+   - instances **groupées** : `G->getLabInstances()`
+     (`src/Entity/Group.php:509-513`) dont le groupe propriétaire est `G` — lab
+     lancé *par* le groupe (tous ses membres travaillent sur la même instance) ;
+   - instances **user (sandbox)** : celles dont le propriétaire est **membre de `G`**
+     (`LabInstanceRepository::findBy(['lab' => …, 'ownedBy' => 'user'])` +
+     `Group::hasUser`) — le contexte de groupe vient de l'**appartenance du user**
+     et de la présence d'une règle pour `G`, pas de l'instance ;
+   - instances **guest** exclues.
 2. **Liens** =, pour chaque règle `(S, L, G)` :
    `instances(S, G) × instances(L, G)` (produit cartésien des instances retenues),
    dédupliqués, sans lien vers soi-même.
-3. Aucune instance d'un **autre groupe** n'entre jamais dans la calcul : le lien est
-   borné à `G` par la règle elle-même.
+3. Aucune instance d'un **autre groupe** n'entre jamais dans le calcul : une instance
+   sandbox d'un user membre de `G1` **et** de `G2` entre dans les topologies de `G1`
+   et de `G2` **si et seulement si** chacun de ces groupes a une règle concernant son lab.
 
-Exemple :
+Exemple (le cas « lab caché ») :
 
 ```
-Règles : (S, L, G1)          // seul
-G1 :  S(shared)   L(not shared)   + autres labs du groupe
-      → liens : chaque instance de S(G1) ↔ chaque instance de L(G1)
-      → aucun lien vers les autres labs de G1 (pas de règle)
-G2 :  instances de L(G2)      → aucune règle (S, L, G2) → injoignable de S(G1)
+Règles : (S, L, G1)          // seul ; S n'est PAS listé dans G1
+G1 : membre m1 join L en sandbox → instance I_L(m1) ; l'auteur (membre de G1) join S → I_S(a)
+     → liens : I_S(a) ↔ I_L(m1)
+     → les autres membres de G1 n'ont aucune instance de L → rien pour eux
+G2 : (pas de règle) → I_L(m1) n'entre dans aucune topologie de G2, même si m1 en est membre
 ```
 
 > Comparaison avec l'idée initiale de l'issue #1128 (« shared lab ↔ tous les labs du
@@ -215,8 +226,9 @@ G2 :  instances de L(G2)      → aucune règle (S, L, G2) → injoignable de S(
 ```php
 final class SharedLabSecurityManager
 {
-    public function buildLinks(Group $group): array;   // topologie d'un groupe donné
-    public function syncGroup(Group $group): void;     // broadcast de cette topologie
+    public function buildLinks(Group $group): array;        // topologie d'un groupe donné
+    public function syncGroup(Group $group): void;          // broadcast de cette topologie
+    public function syncLabInstance(?LabInstance $i): void; // broadcast des groupes où le lab de $i est partagé
 }
 ```
 
@@ -231,17 +243,23 @@ final class SharedLabSecurityManager
 - Emplacement : `src/Service/…` selon les conventions du front (service Symfony,
   autoconfigure).
 
-### 5.3 Déclencheurs (`syncGroup()`)
+### 5.3 Déclencheurs (`syncLabInstance()` / `syncGroup()`)
+
+Les événements **d'instance** (1-4) appellent `syncLabInstance($instance)` : elle
+broadcast **tous les groupes où le lab de l'instance est partagé** (`LabShareRepository::findGroupsWithLab`)
++ le groupe propriétaire d'une instance groupée (couvre le lab retiré du groupe).
+Les événements **de règles / de composition de groupe** (5, 7) appellent directement
+`syncGroup($g)`.
 
 | # | Événement | Fichier / point | Quand |
 |---|---|---|---|
-| 1 | **Placement** d'un lab du groupe | `LabLaunchRequestMessageHandler` | après `setWorkerIp` + dispatch `ACTION_CREATE` |
+| 1 | **Placement** d'une instance | `LabLaunchRequestMessageHandler` | après `setWorkerIp` + dispatch `ACTION_CREATE` |
 | 2 | **Lancement** device | `InstanceManager::start()` (front) | couvre le restart après stop |
-| 3 | **Arrêt** device | `InstanceManager::stop()` (front) | l'instance sort de la topologie de **son** groupe |
+| 3 | **Arrêt** device | `InstanceManager::stop()` (front) | l'instance sort des topologies des groupes concernés |
 | 4 | **Suppression** lab | `InstanceStateMessageHandler` | réception `STATE_DELETED` (broadcast → pas besoin du `workerIp` de l'instance supprimée) |
 | 5 | **Création / suppression d'une règle** | `LabController::update` (§2.5) | après flush : `syncGroup()` pour le groupe de la règle ; si le lab retirait ses dernières instances partagées, message à liens vides → nettoyage |
 | 6 | **Handshake** worker | `WorkerHandshakeMessageHandler` | renvoi, **pour chaque groupe** ayant des instances placées sur ce worker (un message par groupe) |
-| 7 | **Retrait d'un lab d'un groupe** | `GroupController::removeLabAction` (`:848`) | purge des règles impactées + `syncGroup()` |
+| 7 | **Retrait d'un lab d'un groupe** | `GroupController::removeLabAction` (`:848`) | purge des règles cible + `syncGroup()` |
 
 Ces points couvrent les cas arbitrés : **lancement + arrêt/suppression + handshake**,
 plus les évolutions de configuration des règles. Le handshake est indispensable :

@@ -32,7 +32,8 @@ import { logger, getJsonMessage, newUIreturn, printPageAuthentication, getUserIn
          printListNodes, setNodeData, printFormCustomShape, printFormText, printFormEditCustomShape,
          printFormEditText, getTextObjects, createTextObject, 
          editTextObject, editTextObjects, deleteTextObject, textObjectDragStop, addMessage, addModal, addModalError, addModalWide,
-         dirname, basename, hex2rgb, updateFreeSelect, getTopology, editConnection,initExtendedTimer,textObjectResize  } from'./functions.js';
+         dirname, basename, hex2rgb, updateFreeSelect, getTopology, editConnection,initExtendedTimer,textObjectResize,
+         collectLabShareRules  } from'./functions.js';
 import {fromByteArray,TextEncoderLite} from './b64encoder';
 import { adjustZoom, resolveZoom, saveEditorLab } from './ebs/functions';
 
@@ -2222,6 +2223,12 @@ $(document).on('submit', '#form-lab-edit', function (e) {
     var lab_filename = $('#lab-viewport').attr('data-path');
     var form_data = form2Array('lab');
     form_data['chatEnabled'] = $('input[name="lab[chatEnabled]"]').is(':checked');
+    if ($(this).find('#lab-share-rules').length) {
+        // Sharing section is displayed: its rules replace the saved ones. When
+        // the section is absent (lab creation), the key is not sent at all and
+        // the rules are left untouched.
+        form_data['shares'] = collectLabShareRules(this);
+    }
     var path = form_data['path'].split(/(\d+)/)[1];
     logger(1, 'DEBUG: posting form-lab-edit form.');
     var url = '/api/labs/test/' + path;

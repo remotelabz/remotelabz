@@ -513,15 +513,43 @@ class LabController extends Controller
         $labInfo = $labRepository->findLabInfoById($id);
 
         $shares = [];
+        $shareChoices = [];
         if (!is_null($lab)) {
             foreach ($lab->getShares() as $share) {
                 $shares[] = [
                     'id' => $share->getId(),
                     'sharedWith' => $share->getSharedWith()?->getId(),
                     'sharedWithUuid' => $share->getSharedWith()?->getUuid(),
-                    'group' => $share->getGroup()?->getUuid()
+                    'sharedWithName' => $share->getSharedWith()?->getName(),
+                    'group' => $share->getGroup()?->getUuid(),
+                    'groupName' => $share->getGroup()?->getName()
                 ];
             }
+
+            // Every group the current user belongs to is offered as a scope of a
+            // sharing rule, with the labs of that group as possible targets.
+            // The shared lab does not have to be available in that group: this
+            // is what allows it to stay hidden from the members of the group.
+            $userGroups = (method_exists($user, 'getGroupsInfo')) ? $user->getGroupsInfo() : [];
+            foreach ($userGroups as $userGroup) {
+                $targets = [];
+                foreach ($userGroup->getLabs() as $target) {
+                    if ($target->getId() === $lab->getId()) {
+                        continue;
+                    }
+                    $targets[] = ['id' => $target->getId(), 'name' => (string) $target->getName()];
+                }
+                usort($targets, fn (array $a, array $b) => strcasecmp($a['name'], $b['name']));
+
+                $shareChoices[] = [
+                    'group' => [
+                        'uuid' => $userGroup->getUuid(),
+                        'name' => (string) $userGroup->getName()
+                    ],
+                    'labs' => $targets
+                ];
+            }
+            usort($shareChoices, fn (array $a, array $b) => strcasecmp($a['group']['name'], $b['group']['name']));
         }
 
         $data = [
@@ -537,7 +565,8 @@ class LabController extends Controller
             "banner"=>$labInfo["banner"],
             "timer"=>$labInfo["timer"],
             "chatEnabled"=>$labInfo["chatEnabled"] ?? false,
-            "shares"=>$shares
+            "shares"=>$shares,
+            "shareChoices"=>$shareChoices
         ];
 
         $response = new Response();

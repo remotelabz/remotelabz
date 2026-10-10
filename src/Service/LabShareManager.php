@@ -12,8 +12,10 @@ use Psr\Log\LoggerInterface;
 
 /**
  * Applies the share rules of a lab (see shared-labs-front-plan.md §2.3):
- * a rule is the triple (source lab S, target lab L, group G) and is only valid
- * when both S and L are available in G.
+ * a rule is the triple (source lab S, target lab L, group G). Only the target
+ * lab L has to be available in G: S does not, which is what allows a lab to be
+ * shared with a group while being hidden from its members (S is simply not
+ * listed in G, but an instance of S can still belong to G).
  */
 final class LabShareManager
 {
@@ -86,11 +88,9 @@ final class LabShareManager
                 continue;
             }
 
-            if (!$lab->getGroups()->contains($group)) {
-                $errors[] = 'Lab '.$lab->getName().' is not available in group '.$group->getPath().'.';
-                continue;
-            }
-
+            // The source lab is not required to be available in the group: this
+            // is what allows a lab to stay hidden from the members of the group
+            // it is shared with (the instance of the lab still belongs to G).
             if (!$target->getGroups()->contains($group)) {
                 $errors[] = 'Lab '.$target->getName().' is not available in group '.$group->getPath().'.';
                 continue;
@@ -129,8 +129,11 @@ final class LabShareManager
     }
 
     /**
-     * Drop every share rule of a group involving the given lab, either as source
-     * ((lab, *, group)) or as target ((*, lab, group)). Used when a lab leaves a group.
+     * Drop every share rule of a group where the given lab is the target
+     * ((*, lab, group)). Used when a lab leaves a group.
+     *
+     * The rules where the lab is the source ((lab, *, group)) are kept: a source
+     * lab is not required to be available in the group it is shared with.
      *
      * @return int the number of removed rules
      */
@@ -138,7 +141,7 @@ final class LabShareManager
     {
         $removed = 0;
 
-        foreach ($this->labShareRepository->findForLabInGroup($lab, $group) as $share) {
+        foreach ($this->labShareRepository->findAsTargetInGroup($lab, $group) as $share) {
             $owner = $share->getLab();
             if (!is_null($owner)) {
                 $owner->removeShare($share);
@@ -146,7 +149,7 @@ final class LabShareManager
             }
         }
 
-        $this->logger->info('[LabShareManager:purgeGroupShareRules]::'.count($lab->getShares()->toArray()).' share rule(s) remaining for lab '.$lab->getName().' in group '.$group->getPath());
+        $this->logger->info('[LabShareManager:purgeGroupShareRules]::'.$removed.' share rule(s) dropped for lab '.$lab->getName().' as target in group '.$group->getPath());
 
         return $removed;
     }

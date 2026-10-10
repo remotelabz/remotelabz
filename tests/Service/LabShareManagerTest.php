@@ -98,18 +98,23 @@ class LabShareManagerTest extends TestCase
         $this->assertCount(0, $this->lab->getShares());
     }
 
-    public function testSourceLabOutsideOfTheGroupIsRejected()
+    public function testSourceLabOutsideOfTheGroupIsAllowed()
     {
         $otherGroup = $this->createGroup(8, 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee');
-        // The target is available in the group, the source lab is not
+        // The target is available in the group, the source lab is not: the
+        // source lab stays hidden from the members of the group
         $this->target->addGroup($otherGroup);
 
         $errors = $this->manager->replaceShares($this->lab, [
             ['sharedWith' => 42, 'group' => $otherGroup->getUuid()],
         ]);
 
-        $this->assertNotEmpty($errors);
-        $this->assertStringContainsString('Shared lab is not available in group', $errors[0]);
+        $this->assertEquals([], $errors);
+        $this->assertCount(1, $this->lab->getShares());
+
+        $share = $this->lab->getShares()->first();
+        $this->assertSame($this->target, $share->getSharedWith());
+        $this->assertSame($otherGroup, $share->getGroup());
     }
 
     public function testUnknownGroupIsRejected()
@@ -181,7 +186,7 @@ class LabShareManagerTest extends TestCase
         $this->assertCount(0, $this->lab->getShares());
     }
 
-    public function testPurgeGroupShareRules()
+    public function testPurgeGroupShareRulesOnlyDropsTheRulesWhereTheLabIsTheTarget()
     {
         $ownShare = new LabShare();
         $ownShare->setLab($this->lab)->setSharedWith($this->target)->setGroup($this->group);
@@ -192,7 +197,7 @@ class LabShareManagerTest extends TestCase
         $this->target->addShare($incomingShare);
 
         $labShareRepository = $this->createMock(LabShareRepository::class);
-        $labShareRepository->method('findForLabInGroup')->willReturn([$ownShare, $incomingShare]);
+        $labShareRepository->method('findAsTargetInGroup')->willReturn([$incomingShare]);
 
         $manager = new LabShareManager(
             $this->createMock(LabRepository::class),
@@ -203,8 +208,10 @@ class LabShareManagerTest extends TestCase
 
         $removed = $manager->purgeGroupShareRules($this->lab, $this->group);
 
-        $this->assertEquals(2, $removed);
-        $this->assertCount(0, $this->lab->getShares());
+        $this->assertEquals(1, $removed);
+        // The rule where the lab is the source survives: a source lab is not
+        // required to be available in the group it is shared with
+        $this->assertSame([$ownShare], $this->lab->getShares()->toArray());
         $this->assertCount(0, $this->target->getShares());
     }
 

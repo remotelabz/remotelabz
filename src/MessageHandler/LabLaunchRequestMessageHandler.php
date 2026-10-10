@@ -145,7 +145,7 @@ class LabLaunchRequestMessageHandler
 
         $this->logger->info('[LabLaunchRequestMessageHandler]::Lab instance ' . $uuid . ' launched on worker ' . $worker);
 
-        $this->syncSharedLabSecurity($labInstance);
+        $this->securityManager->syncLabInstance($labInstance);
 
         if ($message->isAutoStartDevices()) {
             foreach ($labInstance->getDeviceInstances() as $deviceInstance) {
@@ -161,24 +161,6 @@ class LabLaunchRequestMessageHandler
                     }
                 }
             }
-        }
-    }
-
-    /**
-     * Broadcasts the shared lab topology of the group of a placed instance.
-     * A user-owned instance (no group) has no shared lab topology.
-     */
-    private function syncSharedLabSecurity(LabInstance $labInstance): void
-    {
-        $group = $labInstance->getGroup();
-        if (is_null($group)) {
-            return;
-        }
-
-        try {
-            $this->securityManager->syncGroup($group);
-        } catch (\Throwable $e) {
-            $this->logger->error('[LabLaunchRequestMessageHandler]::Could not sync the shared lab topology of group '.$group->getPath().': '.$e->getMessage());
         }
     }
 

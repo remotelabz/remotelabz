@@ -196,5 +196,14 @@ MESSAGES[236] = 'Light Mode';
 MESSAGES[237] = 'Edit description';
 MESSAGES[238] = 'Short description';
 MESSAGES[239] = 'Description saved.';
+MESSAGES[240] = 'Sharing';
+MESSAGES[241] = 'Each rule makes the instances of this lab and the instances of the target lab reachable each other, inside a group.';
+MESSAGES[242] = 'Add a sharing rule';
+MESSAGES[243] = 'You do not belong to any group, no sharing rule can be defined.';
+MESSAGES[244] = 'No sharing target: one of your groups must contain another lab than this one.';
+MESSAGES[245] = 'Group';
+MESSAGES[246] = 'Target lab';
+MESSAGES[247] = 'Invalid rule: the group or the target lab is no longer available.';
+MESSAGES[248] = 'Remove this rule.';
 
 export {MESSAGES};

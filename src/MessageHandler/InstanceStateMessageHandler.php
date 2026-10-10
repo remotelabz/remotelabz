@@ -443,12 +443,12 @@ class InstanceStateMessageHandler
 
                             if (!is_null($group)) {
                                 $group->removeLabInstance($instance);
+                            }
 
-                                try {
-                                    $this->securityManager->syncGroup($group);
-                                } catch (\Throwable $e) {
-                                    $this->logger->error('[InstanceStateMessageHandler:__invoke]::Could not sync the shared lab topology of group '.$group->getPath().': '.$e->getMessage());
-                                }
+                            try {
+                                $this->securityManager->syncLabInstance($instance);
+                            } catch (\Throwable $e) {
+                                $this->logger->error('[InstanceStateMessageHandler:__invoke]::Could not sync the shared lab topology of lab '.$lab->getName().': '.$e->getMessage());
                             }
 
                             if (strstr($lab->getName(),"Sandbox_")) {

@@ -1321,6 +1321,11 @@ export function printFormLab(action, values) {
         // Remember the author at the time the form was opened, so that the
         // submit handler can detect an author change.
         $('#form-lab-edit').attr('data-original-author', currentAuthorId);
+        // Sharing rules and their valid (group, target lab) pairs are kept as
+        // objects on the form, so that no JSON has to travel through the DOM.
+        var labShareForm = $('#form-lab-edit').last();
+        labShareForm.data('labShareChoices', (values['shareChoices'] != null) ? values['shareChoices'] : []);
+        labShareForm.data('labShareRules', (values['shares'] != null) ? values['shares'] : []);
         $.ajax({
             cache: false,
             timeout: TIMEOUT,
@@ -1352,6 +1357,9 @@ export function printFormLab(action, values) {
                 logger(1, 'DEBUG: server error on GET /api/users (' + message + ').');
             }
         });
+
+        // Fill the sharing rules section (plan §2.5)
+        initLabShareRules();
     }
 
     // ATTENDRE que la modal soit complètement affichée
@@ -1393,6 +1401,192 @@ export function printFormLab(action, values) {
     });
  
     validateLabInfo();
+}
+
+// ---------------------------------------------------------------------------
+// Sharing rules (shared-labs-front-plan.md §2.5)
+//
+// A rule is a (group, target lab) pair. The form offers every group of the
+// current user with the labs of that group (data.shareChoices). The shared lab
+// does not have to belong to the group: that is what allows it to stay hidden
+// from the members of the group (plan §2.3). A saved rule whose pair is not
+// valid anymore is displayed but flagged, so that the user can remove it.
+// ---------------------------------------------------------------------------
+
+// Groups of the current user:
+// [{group: {uuid, name}, labs: [{id, name}]}]
+function getLabShareChoices() {
+    var choices = $('#form-lab-edit').last().data('labShareChoices');
+    return (choices != null) ? choices : [];
+}
+
+function labShareLabsOfGroup(shareChoices, groupUuid) {
+    for (var i = 0; i < shareChoices.length; i++) {
+        if (String(shareChoices[i]['group']['uuid']) === String(groupUuid)) {
+            return shareChoices[i]['labs'];
+        }
+    }
+    return [];
+}
+
+// Refresh the target lab select of a row from its selected group.
+// rule != null when rendering a saved rule (keeps an invalid target visible).
+function refreshLabShareTargets(row, rule) {
+    var shareChoices = getLabShareChoices();
+    var targetSelect = row.find('.lab-share-target');
+    var preferred = targetSelect.val();
+    if (rule != null && rule['sharedWith'] != null) {
+        preferred = String(rule['sharedWith']);
+    }
+
+    var labs = labShareLabsOfGroup(shareChoices, row.find('.lab-share-group').val());
+    targetSelect.empty();
+    var found = false;
+    for (var i = 0; i < labs.length; i++) {
+        var option = $('<option></option>').val(String(labs[i]['id'])).text(labs[i]['name']);
+        if (preferred != null && String(labs[i]['id']) === String(preferred)) {
+            option.prop('selected', true);
+            found = true;
+        }
+        targetSelect.append(option);
+    }
+
+    if (!found && rule != null && preferred != null) {
+        var name = (rule['sharedWithName'] != null) ? rule['sharedWithName'] : preferred;
+        targetSelect.append($('<option></option>')
+            .val(String(preferred))
+            .text(name + ' - ' + MESSAGES[247])
+            .prop('selected', true));
+    }
+
+    var value = targetSelect.val();
+    targetSelect.prop('disabled', value == null || value === '');
+    return value;
+}
+
+function buildLabShareRow(shareChoices, rule) {
+    var row = $('<div class="row lab-share-rule" style="margin-bottom: 5px;"></div>');
+    var groupSelect = $('<select class="form-control lab-share-group"></select>');
+    var targetSelect = $('<select class="form-control lab-share-target"></select>');
+    var removeButton = $('<button type="button" class="btn btn-flat lab-share-remove" title="' + MESSAGES[248] + '">&times;</button>');
+
+    // Every group of the user is listed: the shared lab does not have to be
+    // available in the group (this is what allows it to stay hidden from its
+    // members), only the target lab does.
+    var selectedGroup = (rule != null && rule['group'] != null) ? String(rule['group']) : null;
+    var groupFound = false;
+    var defaultGroup = null;
+    for (var i = 0; i < shareChoices.length; i++) {
+        var choice = shareChoices[i];
+        var uuid = String(choice['group']['uuid']);
+        var option = $('<option></option>').val(uuid).text(choice['group']['name']);
+        if (selectedGroup != null && uuid === selectedGroup) {
+            option.prop('selected', true);
+            groupFound = true;
+        }
+        if (selectedGroup == null && defaultGroup == null &&
+                choice['labs'] != null && choice['labs'].length > 0) {
+            defaultGroup = uuid;
+        }
+        groupSelect.append(option);
+    }
+    if (!groupFound && selectedGroup != null) {
+        var groupName = (rule['groupName'] != null) ? rule['groupName'] : selectedGroup;
+        groupSelect.append($('<option></option>')
+            .val(selectedGroup)
+            .text(groupName + ' - ' + MESSAGES[247])
+            .prop('selected', true));
+    }
+    if (defaultGroup != null) {
+        groupSelect.val(defaultGroup);
+    }
+
+    row.append($('<div class="col-md-5"></div>').append(groupSelect));
+    row.append($('<div class="col-md-5"></div>').append(targetSelect));
+    row.append($('<div class="col-md-2"></div>').append(removeButton));
+
+    refreshLabShareTargets(row, rule);
+
+    groupSelect.on('change', function () {
+        refreshLabShareTargets(row, null);
+    });
+
+    return row;
+}
+
+// Build the sharing section of the lab edit form.
+export function initLabShareRules() {
+    var labShareForm = $('#form-lab-edit').last();
+    var container = labShareForm.find('#lab-share-rules');
+    if (!container.length) {
+        return;
+    }
+
+    var shareChoices = getLabShareChoices();
+    var rules = labShareForm.data('labShareRules') || [];
+
+    var header = labShareForm.find('#lab-share-header');
+    var buttons = labShareForm.find('#lab-share-buttons');
+    header.empty();
+    container.empty();
+    buttons.empty();
+
+    if (shareChoices.length > 0) {
+        header.append($('<div class="row"></div>')
+            .append($('<div class="col-md-5"></div>').append($('<label class="control-label"></label>').text(MESSAGES[245])))
+            .append($('<div class="col-md-5"></div>').append($('<label class="control-label"></label>').text(MESSAGES[246]))));
+    }
+
+    for (var i = 0; i < rules.length; i++) {
+        container.append(buildLabShareRow(shareChoices, rules[i]));
+    }
+
+    var hasTarget = false;
+    for (var j = 0; j < shareChoices.length; j++) {
+        if (shareChoices[j]['labs'] != null && shareChoices[j]['labs'].length > 0) {
+            hasTarget = true;
+            break;
+        }
+    }
+
+    if (shareChoices.length === 0) {
+        buttons.append($('<p class="text-muted"></p>').text(MESSAGES[243]));
+    } else if (!hasTarget) {
+        buttons.append($('<p class="text-muted"></p>').text(MESSAGES[244]));
+    }
+
+    if (hasTarget) {
+        var addButton = $('<button type="button" class="btn btn-flat" id="lab-share-add"></button>').text(MESSAGES[242]);
+        buttons.append(addButton);
+        addButton.on('click', function () {
+            container.append(buildLabShareRow(shareChoices, null));
+        });
+    }
+
+    container.off('click', '.lab-share-remove').on('click', '.lab-share-remove', function () {
+        $(this).closest('.lab-share-rule').remove();
+    });
+}
+
+// Sharing rules of the form, ready for the lab update API.
+export function collectLabShareRules(form) {
+    var scope = (form != null) ? $(form) : $(document);
+    var rules = [];
+    var seen = {};
+    scope.find('.lab-share-rule').each(function () {
+        var group = $(this).find('.lab-share-group').val();
+        var target = $(this).find('.lab-share-target').val();
+        if (!group || !target) {
+            return;
+        }
+        var key = group + '|' + target;
+        if (seen[key]) {
+            return;
+        }
+        seen[key] = true;
+        rules.push({ sharedWith: parseInt(target, 10), group: group });
+    });
+    return rules;
 }
 
 // Shared EasyMDE configuration for the in-modal Markdown editors.

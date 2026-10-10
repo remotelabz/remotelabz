@@ -7,6 +7,7 @@ use App\Entity\Lab;
 use App\Entity\LabInstance;
 use App\Instance\InstanceState;
 use App\Repository\ConfigWorkerRepository;
+use App\Repository\LabInstanceRepository;
 use App\Repository\LabShareRepository;
 use Psr\Log\LoggerInterface;
 use Remotelabz\Message\Message\SecurityMessage;
@@ -17,7 +18,11 @@ use Symfony\Component\Messenger\MessageBusInterface;
  * Computes and broadcasts the shared lab topology of a group.
  *
  * The topology is built from the LabShare rules of the group (see shared-labs-front-plan.md):
- * for each rule (S, L, G), every instance of S in G is linked to every instance of L in G.
+ * for each rule (S, L, G), every instance of S of G is linked to every instance of L of G.
+ * The group context of an instance is not only its owner: an instance launched by a user
+ * (sandbox) belongs to every group where its lab is shared and where its owner is a member,
+ * which is what allows a lab to be shared while staying hidden from the members of a group.
+ *
  * One message carries the whole topology of one group, which is also the state key used
  * by the workers: a group without any link is sent with an empty link list so that the
  * workers purge their rules for that group.
@@ -25,17 +30,20 @@ use Symfony\Component\Messenger\MessageBusInterface;
 final class SharedLabSecurityManager
 {
     private LabShareRepository $labShareRepository;
+    private LabInstanceRepository $labInstanceRepository;
     private ConfigWorkerRepository $configWorkerRepository;
     private MessageBusInterface $bus;
     private LoggerInterface $logger;
 
     public function __construct(
         LabShareRepository $labShareRepository,
+        LabInstanceRepository $labInstanceRepository,
         ConfigWorkerRepository $configWorkerRepository,
         MessageBusInterface $bus,
         LoggerInterface $logger
     ) {
         $this->labShareRepository = $labShareRepository;
+        $this->labInstanceRepository = $labInstanceRepository;
         $this->configWorkerRepository = $configWorkerRepository;
         $this->bus = $bus;
         $this->logger = $logger;
@@ -94,7 +102,8 @@ final class SharedLabSecurityManager
      */
     public function syncGroup(Group $group): void
     {
-        $payload = json_encode($this->buildLinks($group), JSON_UNESCAPED_SLASHES);
+        $topology = $this->buildLinks($group);
+        $payload = json_encode($topology, JSON_UNESCAPED_SLASHES);
 
         if (false === $payload) {
             $this->logger->error('[SharedLabSecurityManager:syncGroup]::Could not encode the topology of group '.$group->getPath());
@@ -103,6 +112,7 @@ final class SharedLabSecurityManager
         }
 
         $workers = $this->configWorkerRepository->findAll();
+        $notified = 0;
 
         foreach ($workers as $worker) {
             $workerIp = $worker->getIPv4();
@@ -116,9 +126,28 @@ final class SharedLabSecurityManager
                     new AmqpStamp($workerIp, AMQP_NOPARAM, []),
                 ]
             );
+
+            $notified++;
+            $this->logger->info(
+                '[SharedLabSecurityManager:syncGroup]::SecurityMessage sent to worker '.$workerIp
+                .' for group '.$group->getPath().' ('.$group->getUuid().') with '
+                .count($topology['links']).' link(s): '.$payload
+            );
         }
 
-        $this->logger->info('[SharedLabSecurityManager:syncGroup]::Shared lab topology of group '.$group->getPath().' sent to '.count($workers).' worker(s)');
+        if (0 === $notified) {
+            $this->logger->warning(
+                '[SharedLabSecurityManager:syncGroup]::No available worker, the shared lab topology of group '
+                .$group->getPath().' ('.count($topology['links']).' link(s)) has not been sent'
+            );
+
+            return;
+        }
+
+        $this->logger->info(
+            '[SharedLabSecurityManager:syncGroup]::Shared lab topology of group '.$group->getPath()
+            .' sent to '.$notified.' worker(s) ('.count($topology['links']).' link(s))'
+        );
     }
 
     /**
@@ -134,9 +163,67 @@ final class SharedLabSecurityManager
     }
 
     /**
-     * Instances of a lab taking part in the topology of a group:
-     * placed on a worker, virtual, group-owned and with at least one device
-     * starting or started.
+     * Broadcast the topology of every group concerned by the lab of an instance.
+     *
+     * The groups are the ones where the lab is available and shared: the group
+     * context of a sandbox instance comes from the membership of its owner, not
+     * from the instance itself. The owning group of a group-launched instance is
+     * synced as well, even when the lab has been removed from that group since
+     * (hidden lab).
+     */
+    public function syncLabInstance(?LabInstance $labInstance): void
+    {
+        if (is_null($labInstance)) {
+            return;
+        }
+
+        $lab = $labInstance->getLab();
+        if (is_null($lab)) {
+            return;
+        }
+
+        $groups = [];
+
+        $owningGroup = $labInstance->getGroup();
+        if (!is_null($owningGroup)) {
+            $groups[(string) $owningGroup->getUuid()] = $owningGroup;
+        }
+
+        try {
+            foreach ($this->labShareRepository->findGroupsWithLab($lab) as $group) {
+                $groups[(string) $group->getUuid()] = $group;
+            }
+        } catch (\Throwable $e) {
+            $this->logger->error('[SharedLabSecurityManager:syncLabInstance]::Could not load the groups sharing lab '.$lab->getName().': '.$e->getMessage());
+        }
+
+        if (!$groups) {
+            $this->logger->debug(
+                '[SharedLabSecurityManager:syncLabInstance]::Lab '.$lab->getName()
+                .' (instance '.$labInstance->getUuid().') is shared in no group: nothing to broadcast'
+            );
+
+            return;
+        }
+
+        foreach ($groups as $group) {
+            try {
+                $this->syncGroup($group);
+            } catch (\Throwable $e) {
+                $this->logger->error('[SharedLabSecurityManager:syncLabInstance]::Could not sync the shared lab topology of group '.$group->getPath().': '.$e->getMessage());
+            }
+        }
+    }
+
+    /**
+     * Instances of a lab taking part in the topology of a group: placed on a
+     * worker, virtual and with at least one device starting or started.
+     *
+     * Two kinds of instances are eligible:
+     *  - instances launched by the group itself;
+     *  - instances launched by a user (sandbox) whose owner is a member of the
+     *    group: the group context comes from the membership of the owner and
+     *    from the fact that the lab is shared in that group.
      *
      * @param array<int|string, LabInstance[]> $cache
      *
@@ -156,26 +243,54 @@ final class SharedLabSecurityManager
         }
 
         foreach ($group->getLabInstances() as $labInstance) {
-            if (!$this->sameLab($labInstance->getLab(), $lab)) {
-                continue;
+            if ($this->isEligibleInstance($group, $lab, $labInstance)) {
+                $instances[] = $labInstance;
             }
-            if ($labInstance->getOwnedBy() !== LabInstance::OWNED_BY_GROUP) {
-                continue;
-            }
-            if (empty($labInstance->getWorkerIp())) {
-                continue;
-            }
-            if (is_null($labInstance->getNetwork())) {
-                continue;
-            }
-            if (!$this->hasRunningDevice($labInstance)) {
-                continue;
-            }
+        }
 
-            $instances[] = $labInstance;
+        foreach ($this->labInstanceRepository->findBy(['lab' => $lab, 'ownedBy' => LabInstance::OWNED_BY_USER]) as $labInstance) {
+            if ($this->isEligibleInstance($group, $lab, $labInstance)) {
+                $instances[] = $labInstance;
+            }
         }
 
         return $cache[$key] = $instances;
+    }
+
+    private function isEligibleInstance(Group $group, Lab $lab, LabInstance $labInstance): bool
+    {
+        if (!$this->sameLab($labInstance->getLab(), $lab)) {
+            return false;
+        }
+
+        if (LabInstance::OWNED_BY_GROUP === $labInstance->getOwnedBy()) {
+            $owningGroup = $labInstance->getGroup();
+
+            if (is_null($owningGroup) || !is_null($owningGroup->getId()) && $owningGroup->getId() !== $group->getId()) {
+                return false;
+            }
+        } elseif (LabInstance::OWNED_BY_USER === $labInstance->getOwnedBy()) {
+            $user = $labInstance->getUser();
+
+            if (is_null($user) || !$group->hasUser($user)) {
+                return false;
+            }
+        } else {
+            // Guest instances never take part in a shared lab topology
+            return false;
+        }
+
+        if (empty($labInstance->getWorkerIp())) {
+            return false;
+        }
+        if (is_null($labInstance->getNetwork())) {
+            return false;
+        }
+        if (!$this->hasRunningDevice($labInstance)) {
+            return false;
+        }
+
+        return true;
     }
 
     private function hasRunningDevice(LabInstance $labInstance): bool

@@ -22,16 +22,18 @@ class LabShareRepository extends ServiceEntityRepository
     }
 
     /**
-     * All the share rules of a lab inside one group, whatever its side
-     * ((lab, *, group) and (*, lab, group)).
+     * The share rules of a group where the given lab is the target
+     * ((*, lab, group)). A source lab is not required to be available in the
+     * group it is shared with, so only the target side is purged when a lab
+     * leaves a group.
      *
      * @return LabShare[]
      */
-    public function findForLabInGroup(Lab $lab, Group $group): array
+    public function findAsTargetInGroup(Lab $lab, Group $group): array
     {
         return $this->createQueryBuilder('s')
             ->andWhere('s.group = :group')
-            ->andWhere('s.lab = :lab OR s.sharedWith = :lab')
+            ->andWhere('s.sharedWith = :lab')
             ->setParameter('group', $group)
             ->setParameter('lab', $lab)
             ->getQuery()
@@ -40,21 +42,22 @@ class LabShareRepository extends ServiceEntityRepository
     }
 
     /**
-     * The groups owning at least one share rule of the given lab.
+     * The groups where the given lab is shared, either as source or as target.
      *
      * @return Group[]
      */
     public function findGroupsWithLab(Lab $lab): array
     {
-        $groups = $this->createQueryBuilder('s')
-            ->select('DISTINCT g')
-            ->join('s.group', 'g')
-            ->andWhere('s.lab = :lab OR s.sharedWith = :lab')
-            ->setParameter('lab', $lab)
-            ->getQuery()
-            ->getResult()
-        ;
+        $groups = [];
 
-        return $groups;
+        foreach (array_merge($this->findBy(['lab' => $lab]), $this->findBy(['sharedWith' => $lab])) as $share) {
+            $group = $share->getGroup();
+            if (is_null($group)) {
+                continue;
+            }
+            $groups[(string) $group->getUuid()] = $group;
+        }
+
+        return array_values($groups);
     }
 }
