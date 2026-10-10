@@ -5,6 +5,7 @@ import SVG from '../Display/SVG';
 import { ListGroupItem, Button, Spinner, Modal } from 'react-bootstrap';
 import { toast } from 'react-toastify';
 import { is_vnc, is_login, is_serial, is_real, is_native } from './deviceProtocolHelpers';
+import { canViewAdmin } from './viewAdminPermissions';
 import InstanceStateBadge from './InstanceStateBadge';
 import { fetchDeviceLogs, startLogsPolling, stopLogsPolling, formatLogEntry, getLastLogs } from './deviceLogsHelpers';
 import DeviceLogs from './DeviceLogs';
@@ -467,11 +468,8 @@ const DetailsModal = ({ selectedInstance, onClose, sharedStates, onStateUpdate, 
                                 {deviceStates[deviceInstance.uuid] === 'start' ? <Spinner animation="border" size="sm" /> : <SVG name="play" />}
                               </button>
                             )}
-                            {(deviceInstance.state == 'started' && is_login(deviceInstance) && !is_real(deviceInstance) && !is_native(deviceInstance) && user.roles
-                              && ( user.roles.includes("ROLE_ADMINISTRATOR") || user.roles.includes("ROLE_SUPER_ADMINISTRATOR") || ((user.roles.includes("ROLE_TEACHER") || user.roles.includes("ROLE_TEACHER_EDITOR")
-                                ) 
-                              ))
-                              )
+                            {(deviceInstance.state == 'started' && is_login(deviceInstance) && !is_real(deviceInstance) && !is_native(deviceInstance)
+                              && canViewAdmin(user, selectedInstance?.lab))
                               &&
                                   <a
                                       target="_blank"

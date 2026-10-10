@@ -8,6 +8,7 @@ import InstanceStateBadge from './InstanceStateBadge';
 import InstanceExport from './InstanceExport';
 import { ListGroupItem, Button, Spinner, Modal, Form } from 'react-bootstrap';
 import { is_vnc, is_login, is_serial, is_real, is_native } from './deviceProtocolHelpers';
+import { canViewAdmin } from './viewAdminPermissions';
 import { fetchDeviceLogs, startLogsPolling, stopLogsPolling, formatLogEntry, getLastLogs } from './deviceLogsHelpers';
 import DeviceLogs from './DeviceLogs';
 import IsoSelector from './IsoSelector';
@@ -519,8 +520,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
                         && is_login(instance)
                         && !is_real(instance)
                         && !isSandbox
-                        && user.roles
-                        && (user.roles.includes("ROLE_ADMINISTRATOR") || user.roles.includes("ROLE_SUPER_ADMINISTRATOR") || ((user.roles.includes("ROLE_TEACHER") || user.roles.includes("ROLE_TEACHER_EDITOR")))))
+                        && canViewAdmin(user, lab))
                         &&
                             <a
                                 target="_blank"

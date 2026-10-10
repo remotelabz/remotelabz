@@ -35,7 +35,7 @@ class GroupUser
     private $permissions;
 
     #[ORM\Column(type: 'string', length: 255)]
-    #[Serializer\Groups(['group_users', 'group_tree', 'user', 'api_groups', 'api_get_group', 'api_get_user', 'api_users', 'api_get_lab'])]
+    #[Serializer\Groups(['group_users', 'group_tree', 'user', 'api_groups', 'api_get_group', 'api_get_user', 'api_users', 'api_get_lab', 'api_get_lab_instance'])]
     private ?string $role;
 
     #[ORM\Column(type: 'datetime', nullable: true)]

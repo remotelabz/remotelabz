@@ -90,6 +90,7 @@ class Lab implements InstanciableInterface
     private $isInternetAuthorized = false;
 
     #[ORM\ManyToMany(targetEntity: Group::class, inversedBy: 'labs')]
+    #[Serializer\Groups(['api_get_lab', 'api_get_lab_instance'])]
     private $groups;
 
     #[ORM\Column(type: 'string', nullable: true)]
