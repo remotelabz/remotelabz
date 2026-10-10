@@ -242,24 +242,22 @@ setup_env_file() {
 # Set env mercure
 # ============================================================================
 
-
 setup_mercure_env_file() {
-    local MERCURE_ENV_FILE="${SCRIPT_DIR}/.env.mercure"
+    local MERCURE_ENV_FILE="${REMOTELABZ_PATH}/.env.mercure.local"
+    local JWT_KEY=""
 
-    print_info "Your .env.mercure used is ${MERCURE_ENV_FILE}"
+    mkdir -p "$REMOTELABZ_PATH"
+    print_info "Your .env.mercure.local used is ${MERCURE_ENV_FILE}"
 
     if [ -f "$MERCURE_ENV_FILE" ]; then
-        print_info "Environment file .env.mercure already exists, loading it"
-        source "$MERCURE_ENV_FILE"
-        return 0
+        JWT_KEY=$(grep -E '^MERCURE_PUBLISHER_JWT_KEY=' "$MERCURE_ENV_FILE" | head -n1 | cut -d= -f2- | tr -d '"')
+        [ -n "$JWT_KEY" ] && print_info "Existing Mercure key found in $MERCURE_ENV_FILE"
     fi
 
-    print_info "Environment file .env.mercure not found, creating it..."
-
-    local JWT_KEY=""
-    if [ -f "$ENV_FILE" ]; then
+    if [ -z "$JWT_KEY" ] && [ -f "$ENV_FILE" ]; then
         JWT_KEY=$(grep -E '^MERCURE_JWT_SECRET=' "$ENV_FILE" | head -n1 | cut -d= -f2- | tr -d '"')
     fi
+
     if [ -z "$JWT_KEY" ] || [ "$JWT_KEY" == "!ChangeThisMercureHubJWTSecretKey!" ]; then
         JWT_KEY=$(openssl rand -hex 32)
         print_info "✅ New JWT key generated"
@@ -270,7 +268,7 @@ MERCURE_PUBLISHER_JWT_KEY="${JWT_KEY}"
 MERCURE_SUBSCRIBER_JWT_KEY="${JWT_KEY}"
 EOF
     chmod 600 "$MERCURE_ENV_FILE"
-    print_info "✅ $MERCURE_ENV_FILE created"
+    print_info "✅ $MERCURE_ENV_FILE ready"
 
     if [ -f "$ENV_FILE" ]; then
         if grep -q "^MERCURE_JWT_SECRET=" "$ENV_FILE"; then
@@ -279,11 +277,12 @@ EOF
             echo "MERCURE_JWT_SECRET=\"${JWT_KEY}\"" >> "$ENV_FILE"
         fi
         print_info "✅ MERCURE_JWT_SECRET synchronized in $ENV_FILE"
+    else
+        print_warning "$ENV_FILE not found: MERCURE_JWT_SECRET not synchronized"
     fi
 
     source "$MERCURE_ENV_FILE"
 }
-
 # ============================================================================
 # Set sysctl parameter helper function
 # ============================================================================
@@ -970,11 +969,13 @@ final_configuration() {
     
 	#Configure Mercure Hub
     print_info "Configuration de Mercure Hub"
-    apt install ./mercure_1.0.2_linux_amd64.deb
+    if ! dpkg -s mercure >/dev/null 2>&1; then
+    	dpkg -i "${SCRIPT_DIR}/mercure_1.0.2_linux_amd64.deb" || apt-get install -f -y
+    fi
     cp /opt/remotelabz/bin/systemd/remotelabz-mercure.service /etc/systemd/system
     systemctl daemon-reload
     systemctl enable --now remotelabz-mercure
-    rm mercure_1.0.2_linux_amd64.deb checksums.txt
+    rm -f "${SCRIPT_DIR}/mercure_1.0.2_linux_amd64.deb" "${SCRIPT_DIR}/checksums.txt"
 
     # Configure HAProxy and Apache symlinks if not already done
     if [ -f $REMOTELABZ_PATH/config/haproxy/haproxy.cfg ]; then
