@@ -5,13 +5,6 @@ Unreleased (2.5.0-dev)
 - Shared labs (#1128): a lab can now be shared with other labs of a same group through explicit rules `(source lab, target lab, group)`, stored in the new `lab_share` table. The rules are read and written with the new `shares` key of the lab API and their topology is broadcast to the workers as one message per group (`SecurityMessage`). Only the target lab has to belong to the group, so a lab can be shared with a group while staying hidden from its members. The topology covers both the instances launched by the group itself and the sandbox instances launched by its members.
 - Hidden devices (#1467): a device can now be marked as hidden through the new `hidden` boolean of the device API (`device` table). A hidden device is only visible to the lab author and to the system administrators: it is filtered out of the lab payload (`api_get_lab`) and of the lab instance payload (`api_get_lab_instance`) for every other user, from the network topology, from the device count of the lab page and from the editor of any user who is neither the author nor an admin (who, in turn, see an eye icon on the node and a toggle in the device form). Hidden devices are always started with the lab even when the option to start the devices is disabled, and they never block the "Leave lab" button for the users who cannot see them. They are stopped and deleted along with the lab instance like any other device, and the worker, sandbox and export serializations are never filtered so an exported lab keeps its hidden devices. Lab imports and lab copies preserve the flag for their new author. The state notifications of a hidden device instance are only sent to the lab author, and the instance API denies view, start, stop, reset and logs of a hidden device instance to every user but its lab author and the admins.
 
-### Updated
-- The workers receive the shared lab topology of a group on placement, start, stop, deletion of an instance, on rule changes, on lab removal from a group and on worker handshake.
-
-### Breaking changes
-- The `shared` boolean has been removed from the lab API (`GET /api/labs/info/{id}` and `PUT /api/labs/test/{id}`): it is replaced by the `shares` list. External clients reading or writing `shared` must be updated.
-
-
 2.1.0-beta
 ----------
 

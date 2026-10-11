@@ -195,6 +195,13 @@ class InstanceManager
 
         if (is_null($is_exist_labinstance)) {
 
+            // Refuse the join when no worker is flagged as available: the instance
+            // would only be created to fail in the async placement handler.
+            if (!$this->workerManager->hasAvailableWorker()) {
+                $this->logger->error('[InstanceManager:create]::Could not create instance. No worker available');
+                throw new BadRequestHttpException('No worker available');
+            }
+
             $labInstance = LabInstance::create()
                 ->setLab($lab)
                 ->setInternetConnected(false)

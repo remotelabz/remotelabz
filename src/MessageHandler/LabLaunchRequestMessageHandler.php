@@ -99,7 +99,13 @@ class LabLaunchRequestMessageHandler
         }
 
         // Best worker: real worker stats + memory reservations of the other pending instances
-        $worker = $this->workerManager->getFreeWorker($labInstance->getLab());
+        // Fail fast when no worker is flagged as available: getFreeWorker() would query
+        // the stats of every worker over HTTP for nothing.
+        if (!$this->workerManager->hasAvailableWorker()) {
+            $worker = '';
+        } else {
+            $worker = $this->workerManager->getFreeWorker($labInstance->getLab());
+        }
 
         if ('' === $worker) {
             $this->logger->error('[LabLaunchRequestMessageHandler]::No worker available for lab instance ' . $uuid . '. The instance is left in error state.');
