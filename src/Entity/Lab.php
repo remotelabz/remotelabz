@@ -298,6 +298,23 @@ class Lab implements InstanciableInterface
         return $this->devices;
     }
 
+    /**
+     * Replaces the device collection.
+     *
+     * Used by LabSerializationListener to temporarily hide the hidden devices
+     * while serializing a lab for a non-privileged user. The original
+     * collection is restored right after the serialization, so the owning side
+     * of the relation is never changed in database.
+     *
+     * @return Collection|Device[]
+     */
+    public function setDevices(Collection $devices): self
+    {
+        $this->devices = $devices;
+
+        return $this;
+    }
+
     public function addDevice(Device $device): self
     {
         if (!$this->devices->contains($device)) {

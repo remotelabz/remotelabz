@@ -158,6 +158,16 @@ class Device implements InstanciableInterface, DirectoryAwareInterface
     #[Serializer\Groups(['api_get_device'])]
     private $isTemplate;
 
+    /**
+     * Hidden devices are only visible to the lab author and system admins.
+     * They are never exposed to the other users of the lab (nodes, topology,
+     * instances) and only the lab author is notified of their state changes.
+     */
+    #[Assert\Type(type: 'boolean')]
+    #[ORM\Column(type: 'boolean', options: ['default' => 0])]
+    #[Serializer\Groups(['api_get_device', 'api_get_lab', 'api_get_lab_instance', 'api_get_lab_template', 'export_lab', 'sandbox'])]
+    private $hidden = false;
+
     #[ORM\Column(type: 'integer', options: ['default' => 0])]
     #[Serializer\Groups(['api_get_device'])]
     private $delay = 0;
@@ -695,6 +705,18 @@ class Device implements InstanciableInterface, DirectoryAwareInterface
     public function setIsTemplate(bool $isTemplate): self
     {
         $this->isTemplate = $isTemplate;
+
+        return $this;
+    }
+
+    public function getHidden(): bool
+    {
+        return (bool) $this->hidden;
+    }
+
+    public function setHidden(bool $hidden): self
+    {
+        $this->hidden = $hidden;
 
         return $this;
     }

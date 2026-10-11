@@ -65,48 +65,55 @@ class DeviceRepository extends ServiceEntityRepository
         ;
     }
 
-    public function findByLab($id)
+    /**
+     * Devices of a lab.
+     *
+     * @param int  $id            lab id
+     * @param bool $includeHidden also return hidden devices (lab author /
+     *                            system admins only)
+     */
+    public function findByLab($id, bool $includeHidden = false)
     {
-        /*return $this->createQueryBuilder('d')
-            ->leftjoin('App\Entity\lab l', 'l.id IN d.labs')
-            ->andWhere('l.id = :id')
-            ->setParameter('id', $id)
-            ->getQuery()
-            ->getResult()
-        ;*/
-
         $entityManager = $this->getEntityManager();
 
-        $query = $entityManager->createQuery(
-            'SELECT d
+        $dql = 'SELECT d
             FROM App\Entity\Device d
             LEFT JOIN d.labs l
-            WHERE l.id = :id'
-        )->setParameter('id', $id);
+            WHERE l.id = :id';
+
+        if (!$includeHidden) {
+            $dql .= ' AND d.hidden = 0';
+        }
+
+        $query = $entityManager->createQuery($dql)->setParameter('id', $id);
 
         return $query->getResult();
     }
 
-    public function findByLabInstance($lab)
+    /**
+     * Devices instantiated by a lab instance.
+     *
+     * @param object $lab           the lab instance
+     * @param bool   $includeHidden also return hidden devices (lab author /
+     *                              system admins only)
+     */
+    public function findByLabInstance($lab, bool $includeHidden = false)
     {
-
         $entityManager = $this->getEntityManager();
 
-        /*$query = $entityManager->createQuery(
-            'SELECT IDENTITY(di.device)
-            FROM App\Entity\DeviceInstance di
-            WHERE di.labInstance = :lab'
-        )->setParameter('lab', $lab);*/
-
-        $query = $entityManager->createQuery(
-            'SELECT d
+        $dql = 'SELECT d
             FROM App\Entity\Device d
             WHERE d IN (
                 SELECT IDENTITY(di.device)
             FROM App\Entity\DeviceInstance di
             WHERE di.labInstance = :lab
-            )'
-        )->setParameter('lab', $lab);
+            )';
+
+        if (!$includeHidden) {
+            $dql .= ' AND d.hidden = 0';
+        }
+
+        $query = $entityManager->createQuery($dql)->setParameter('lab', $lab);
 
         return $query->getResult();
     }

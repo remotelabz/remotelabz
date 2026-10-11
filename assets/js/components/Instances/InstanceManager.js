@@ -156,8 +156,14 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
         return labInstance.ownedBy === "group";
     }
 
+    function isHiddenDeviceInstance(instance) {
+        return instance.device && instance.device.hidden;
+    }
+
     function hasInstancesStillRunning() {
-        return labInstance.deviceInstances.some(i => (i.state !== 'stopped' && i.state !== 'exported' && i.state !== 'error' && i.state !== 'reset'));
+        // Hidden devices run in background and must not block the "Leave lab"
+        // button: the user cannot see them nor control them.
+        return labInstance.deviceInstances.some(i => !isHiddenDeviceInstance(i) && (i.state !== 'stopped' && i.state !== 'exported' && i.state !== 'error' && i.state !== 'reset'));
     }
 
     async function onInstanceStateUpdate() {

@@ -302,15 +302,35 @@ class NetworkInterfaceController extends Controller
     }
 
     
-	#[Get('/api/labs/{labId<\d+>}/topology', name: 'api_get_topology')]
+    #[Get('/api/labs/{labId<\d+>}/topology', name: 'api_get_topology')]
     public function getTopology(Request $request, int $labId)
     {
         $lab = $this->labRepository->find($labId);
         $this->denyAccessUnlessGranted(LabVoter::SEE_INTERFACE, $lab);
 
+        // Hidden devices are only visible to the lab author and system admins.
+        // Every connection touching a hidden device must be dropped, otherwise
+        // the dangling edge would reveal the hidden node.
+        $includeHidden = $this->isGranted(LabVoter::SEE_HIDDEN_DEVICE, $lab);
+        $hiddenDeviceIds = [];
+        if (!$includeHidden) {
+            foreach ($this->deviceRepository->findByLab($labId, true) as $labDevice) {
+                if ($labDevice->getHidden()) {
+                    $hiddenDeviceIds[] = $labDevice->getId();
+                }
+            }
+        }
+
         $topology = $this->networkInterfaceRepository->getTopology($labId);
         $data = [];
         foreach($topology as $line) {
+            if (!empty($hiddenDeviceIds)) {
+                $connectionDevices = explode(",", (string) $line['devices']);
+                if (array_intersect($connectionDevices, $hiddenDeviceIds)) {
+                    continue;
+                }
+            }
+
             if ($line['connectors'] == NULL) {
                 $connector = 'Straight';
             }

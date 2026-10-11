@@ -147,18 +147,25 @@ class LabLaunchRequestMessageHandler
 
         $this->securityManager->syncLabInstance($labInstance);
 
-        if ($message->isAutoStartDevices()) {
-            foreach ($labInstance->getDeviceInstances() as $deviceInstance) {
-                if (
-                    $deviceInstance->getState() === InstanceStateMessage::STATE_STOPPED ||
-                    $deviceInstance->getState() === InstanceStateMessage::STATE_ERROR
-                ) {
-                    try {
-                        $this->instanceManager->start($deviceInstance);
-                        $this->logger->info('[LabLaunchRequestMessageHandler]::Start requested for device ' . $deviceInstance->getUuid() . ' of lab instance ' . $uuid);
-                    } catch (\Throwable $e) {
-                        $this->logger->error('[LabLaunchRequestMessageHandler]::Error starting device ' . $deviceInstance->getUuid() . ' of lab instance ' . $uuid . ': ' . $e->getMessage());
-                    }
+        foreach ($labInstance->getDeviceInstances() as $deviceInstance) {
+            $device = $deviceInstance->getDevice();
+            $isHidden = null !== $device && $device->getHidden();
+
+            // Hidden devices are always started with the lab: the lab users
+            // cannot see them, so they could never start them themselves.
+            if (!$isHidden && !$message->isAutoStartDevices()) {
+                continue;
+            }
+
+            if (
+                $deviceInstance->getState() === InstanceStateMessage::STATE_STOPPED ||
+                $deviceInstance->getState() === InstanceStateMessage::STATE_ERROR
+            ) {
+                try {
+                    $this->instanceManager->start($deviceInstance);
+                    $this->logger->info('[LabLaunchRequestMessageHandler]::Start requested for device ' . $deviceInstance->getUuid() . ' of lab instance ' . $uuid);
+                } catch (\Throwable $e) {
+                    $this->logger->error('[LabLaunchRequestMessageHandler]::Error starting device ' . $deviceInstance->getUuid() . ' of lab instance ' . $uuid . ': ' . $e->getMessage());
                 }
             }
         }

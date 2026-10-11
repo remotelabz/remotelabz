@@ -197,6 +197,14 @@ services:
     App\EventListener\InstanceSerializationListener:
         tags:
             - { name: jms_serializer.event_subscriber }
+
+    App\EventListener\LabInstanceSerializationListener:
+        tags:
+            - { name: jms_serializer.event_subscriber }
+
+    App\EventListener\LabSerializationListener:
+        tags:
+            - { name: jms_serializer.event_subscriber }
     
     GuzzleHttp\Client: ~
 

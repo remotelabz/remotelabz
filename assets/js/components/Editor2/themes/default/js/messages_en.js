@@ -205,5 +205,7 @@ MESSAGES[245] = 'Group';
 MESSAGES[246] = 'Target lab';
 MESSAGES[247] = 'Invalid rule: the group or the target lab is no longer available.';
 MESSAGES[248] = 'Remove this rule.';
+MESSAGES[249] = 'Hidden device';
+MESSAGES[250] = 'Hidden devices are only visible to you (the lab author) and to the system administrators. They are started with the lab.';
 
 export {MESSAGES};

@@ -9,6 +9,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use App\Repository\LabInstanceRepository;
 use App\Repository\DeviceInstanceRepository;
+use App\Entity\DeviceInstance;
 use App\Repository\DeviceRepository;
 use App\Repository\UserRepository;
 use App\Repository\OperatingSystemRepository;
@@ -87,7 +88,18 @@ class InstanceStateMessageHandler
 
         try {
             $userIds = [];
-            
+
+            // Hidden device: only the lab author is notified. The other lab
+            // users must not even know that the device exists.
+            if ($instance instanceof DeviceInstance && $this->isHiddenDeviceInstance($instance)) {
+                $author = $instance->getLabInstance()?->getLab()?->getAuthor();
+                if ($author) {
+                    $this->logger->debug('[InstanceStateMessageHandler:getUserIdFromInstance]::Instance '.$instance->getUuid().' belongs to a hidden device; notifying only the lab author '.$author->getId());
+                    return [(string) $author->getId()];
+                }
+                return [];
+            }
+
             // Check if instance is owned by a group
             if (method_exists($instance, 'getGroup')) {
                 $group = $instance->getGroup();
@@ -144,6 +156,16 @@ class InstanceStateMessageHandler
         }
 
         return [];
+    }
+
+    /**
+     * A DeviceInstance is "hidden" when it runs a hidden device.
+     */
+    private function isHiddenDeviceInstance(DeviceInstance $deviceInstance): bool
+    {
+        $device = $deviceInstance->getDevice();
+
+        return null !== $device && $device->getHidden();
     }
 
 
@@ -219,6 +241,12 @@ class InstanceStateMessageHandler
                 $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Options received :', $options);
                 if (key_exists('user_id',$options))
                     $userIds=array($options['user_id']);
+            }
+
+            // The options may carry an explicit user_id: re-apply the hidden
+            // device rule so it cannot bypass the restriction above.
+            if (!is_null($instance) && $instance instanceof DeviceInstance && $this->isHiddenDeviceInstance($instance)) {
+                $userIds = $this->getUserIdFromInstance($instance);
             }
 
             // if an error happened, set device instance in its previous state
