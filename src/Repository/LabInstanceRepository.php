@@ -10,6 +10,7 @@ use App\Entity\Group;
 use App\Entity\GroupUser;
 use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Remotelabz\Message\Message\InstanceStateMessage;
 
 /**
  * @method LabInstance|null find($id, $lockMode = null, $lockVersion = null)
@@ -150,6 +151,32 @@ class LabInstanceRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult()
         ;
+    }
+
+    /**
+     * Whether the lab currently has at least one instance connected to the
+     * Internet. Instances being deleted, deleted or in error are ignored: they
+     * keep a stale isInternetConnected flag.
+     */
+    public function isLabInternetConnected(Lab $lab): bool
+    {
+        $count = $this->createQueryBuilder('l')
+            ->select('COUNT(l.id)')
+            ->andWhere('l.lab = :lab')
+            ->andWhere('l.isInternetConnected = :connected')
+            ->andWhere('l.state NOT IN (:excludedStates)')
+            ->setParameter('lab', $lab)
+            ->setParameter('connected', true)
+            ->setParameter('excludedStates', [
+                InstanceStateMessage::STATE_DELETING,
+                InstanceStateMessage::STATE_DELETED,
+                InstanceStateMessage::STATE_ERROR,
+            ])
+            ->getQuery()
+            ->getSingleScalarResult()
+        ;
+
+        return (int) $count > 0;
     }
 
     public function findByWorkerIP(string $workerIP) {

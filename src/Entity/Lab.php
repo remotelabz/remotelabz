@@ -85,9 +85,9 @@ class Lab implements InstanciableInterface
     #[Serializer\Groups(['api_get_lab'])]
     private $lastUpdated;
 
-    #[ORM\Column(type: 'boolean')]
-    #[Serializer\Groups([])]
-    private $isInternetAuthorized = false;
+    #[ORM\Column(type: 'boolean', options: ['default' => 1])]
+    #[Serializer\Groups(['api_get_lab', 'api_get_lab_template', 'export_lab', 'sandbox'])]
+    private $isInternetAuthorized = true;
 
     #[ORM\ManyToMany(targetEntity: Group::class, inversedBy: 'labs')]
     #[Serializer\Groups(['api_get_lab', 'api_get_lab_instance'])]

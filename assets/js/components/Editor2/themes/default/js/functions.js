@@ -19,7 +19,7 @@
 import {DEBUG, TIMEOUT, LAB, NAME, ROLE, AUTHOR, UPDATEID, LOCK, EDITION, TEMPLATE, ISGROUPOWNER, HASGROUPACCESS, VIRTUALITY,
        setLab, setLang, setLock, setUserName, setEmail, setRole, setTenant, setUpdateId, setTemplate, setIsGroupOwner, setHasGroupAccess,
        STATUSINTERVAL, ATTACHMENTS, isIE, setEditon, setAuthor,
-      setVirtuality} from './javascript';
+      setVirtuality, setIsInternetAuthorized, setIsInternetConnected} from './javascript';
 import {MESSAGES} from './messages_en';
 import 'jquery';
 import '../bootstrap/js/tinytools.toggleswitch.min';
@@ -403,6 +403,9 @@ export function getLabInfo(labId) {
         success: function (data) {
             if (data['status'] == 'success') {
                 //logger(1, 'DEBUG: lab "' + labId + '" found.');
+                setIsInternetAuthorized(!(data['data']['isInternetAuthorized'] === false || data['data']['isInternetAuthorized'] === 'false' || data['data']['isInternetAuthorized'] === 0 || data['data']['isInternetAuthorized'] === '0'));
+                // The connected state defaults to false: it is absent from old payloads.
+                setIsInternetConnected(data['data']['isInternetConnected'] === true || data['data']['isInternetConnected'] === 'true' || data['data']['isInternetConnected'] === 1 || data['data']['isInternetConnected'] === '1');
                 deferred.resolve(data['data']);
             } else {
                 // Application error
@@ -1307,6 +1310,7 @@ export function printFormLab(action, values) {
         banner: (values['banner'] != null) ? values['banner'] : '',
         timer: (values['timer'] != null) ? values['timer'] : '0',
         chatEnabled: (values['chatEnabled'] === true || values['chatEnabled'] === 'true' || values['chatEnabled'] === 1 || values['chatEnabled'] === '1'),
+        isInternetAuthorized: !(values['isInternetAuthorized'] === false || values['isInternetAuthorized'] === 'false' || values['isInternetAuthorized'] === 0 || values['isInternetAuthorized'] === '0'),
         virtuality: VIRTUALITY,
         srcBanner : '/labs/'+id+'/banner?'+ currentTime,
         title: title,
