@@ -14,6 +14,8 @@
 | Auto-connexion au lancement | `src/MessageHandler/LabLaunchRequestMessageHandler.php` |
 | Sérialisation du lab côté éditeur | `src/Repository/LabRepository.php` (`findLabInfoById`) |
 | Bouton Connect/Disconnect sur la page du lab | `templates/lab/view.html.twig` |
+| Bouton re-créé après rejoindre/quitter (AJAX) | `templates/editButtonDisplay.html.twig` + `InstanceController::displayEditButtonAction` |
+| Rafraîchissement de la barre sans rechargement | `assets/js/components/Instances/InstanceManager.js` (`refreshInstanceButtons`) |
 | Case « Enable Internet access » du formulaire (édition) | `assets/js/components/Editor2/themes/default/ejs/form_lab.ejs` |
 | Globals d'état de l'éditeur + setters | `assets/js/components/Editor2/themes/default/js/javascript.js` |
 | Lecture de l'état à l'ouverture du lab | `assets/js/components/Editor2/themes/default/js/functions.js` |
@@ -164,6 +166,8 @@ if ($labInstance->getLab()->isInternetAuthorized()) {
 | Où | Ligne | Condition d'affichage / libellé |
 |----|-------|----------------------------------|
 | Page du lab, bouton *Connect/Disconnect Internet* | `templates/lab/view.html.twig:30` | visible **seulement** si `lab.isInternetAuthorized` (dans le bloc déjà réservé à l'auteur et aux admins) ; libellé selon `internetConnected` (agrégat transmis par `showAction`) |
+| Barre `#instanceButtons` reconstruite après un join/leave | `templates/editButtonDisplay.html.twig` | **même condition et même libellé que la page** : `internetConnected` est recalculé par `InstanceController::displayEditButtonAction` via `LabInstanceRepository::isLabInternetConnected` (agrégat du lab, pas l'instance courante) |
+| Déclencheur du rafraîchissement (sans rechargement) | `assets/js/components/Instances/InstanceManager.js` (`refreshInstanceButtons`) | POST `/api/editButton/display` seulement quand la clé (existence/état de l'instance + `isInternetConnected`) change : join, leave, puis le relevé périodique (10 s) qui suit l'auto-connexion au lancement (§3) |
 | Éditeur, entrée du menu *More actions* | `assets/js/.../actions.js:1551` | visible **seulement** si `IS_INTERNET_AUTHORIZED`, et si teacher/teacher-editor avec `AUTHOR == 1` ou admin/superadmin — **sans** le verrou `EDITION`/`LOCK` (on peut couper Internet même lab verrouillé en lecture) ; libellé selon `IS_INTERNET_CONNECTED` |
 | Éditeur, handler AJAX | `assets/js/.../actions.js:1034` | classe `.action-labinternet` ; `connect = !IS_INTERNET_CONNECTED`, et la réponse `isInternetConnected` met à jour l'état |
 | Formulaire d'édition, case *Enable Internet access* | `assets/js/.../form_lab.ejs:54` | bloc `<% if (action == 'edit') %>` : **édition uniquement** (la création n'envoie pas la clé → défaut `true`); c'est elle qui écrit la permission |
