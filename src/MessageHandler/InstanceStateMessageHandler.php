@@ -418,7 +418,7 @@ class InstanceStateMessageHandler
                     case InstanceStateMessage::STATE_STARTED:
                         //$this->logger->debug("[InstanceStateMessageHandler:__invoke]::Options received ",$options);
 
-                        if (!array_key_exists("state",$options)) {
+                        if (!isset($options["state"])) {
                             //$this->logger->debug("[InstanceStateMessageHandler:__invoke]::Not already running");
                             $this->notificationService->success($userIds, 'Instance '.$uuid.' started successfully.', $uuid);
                         }

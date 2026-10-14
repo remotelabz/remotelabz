@@ -19,6 +19,7 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
     const [timerCountDown, setTimerCountDown] = useState("");
     const isSandbox = props.isSandbox;
     const timerRef = useRef(null);
+    const instanceButtonsKeyRef = useRef(instanceButtonsKey(props.labInstance));
 
     //console.log("InstanceManager props",props);
     //console.log("InstanceManager isSandbox",props.isSandbox);
@@ -125,11 +126,13 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
                 ...response.data,
                 deviceInstances: response.data.deviceInstances
             });
+            refreshInstanceButtons(response.data);
         }).catch(error => {
             if (error.response) {
                 if (error.response.status <= 500) {
                     setLabInstance(null);
                     setLoadingInstanceState(false);
+                    refreshInstanceButtons(null);
                 } else {
                     
                     toast.error('An error happened while fetching instance state. If this error persists, please contact an administrator.', {
@@ -142,6 +145,39 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
 
     function isGroupElevatedRole(role) {
         return role === GroupRoles.Owner || role === GroupRoles.Admin;
+    }
+
+    // The "#instanceButtons" header is rendered server side (lab/view.html.twig)
+    // and rebuilt through /api/editButton/display whenever the information it
+    // depends on changes: existence of the instance and its Internet state.
+    function instanceButtonsKey(instance) {
+        if (!instance || instance.state === 'deleting' || instance.state === 'deleted') {
+            return 'none';
+        }
+
+        return instance.isInternetConnected ? 'connected' : 'disconnected';
+    }
+
+    function refreshInstanceButtons(instance) {
+        if (isSandbox || !document.getElementById('instanceButtons')) {
+            return;
+        }
+
+        const key = instanceButtonsKey(instance);
+        if (instanceButtonsKeyRef.current === key) {
+            return;
+        }
+        instanceButtonsKeyRef.current = key;
+
+        $.ajax({
+            type: "POST",
+            url: `/api/editButton/display`,
+            data: JSON.stringify({ user: props.user, lab: props.lab, labInstance: instance }),
+            dataType: "json",
+            success: function (response) {
+                $("#instanceButtons").html(response.data.html);
+            }
+        });
     }
 
     function isCurrentUserGroupAdmin(group) {
@@ -180,17 +216,7 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
             const response = await Remotelabz.instances.lab.create(props.lab.uuid, viewAs.uuid, viewAs.type, false);
             setLabInstance(response.data);
             setLoadingInstanceState(false);
-            if (!isSandbox) {
-                $.ajax({
-                    type: "POST",
-                    url: `/api/editButton/display`,
-                    data: JSON.stringify({ user: props.user, lab: props.lab, labInstance: response.data }),
-                    dataType: "json",
-                    success: function (response) {
-                        $("#instanceButtons").html(response.data.html);
-                    }
-                });
-            }
+            refreshInstanceButtons(response.data);
         } catch (error) {
             setLoadingInstanceState(false); 
             if (error.response?.data?.message.includes("No worker available")) {
@@ -218,17 +244,7 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
         try {
             await Remotelabz.instances.lab.delete(labInstance.uuid);
             setLabInstance({ ...labInstance, state: "deleting" });
-            if (!isSandbox) {
-                $.ajax({
-                    type: "POST",
-                    url: `/api/editButton/display`,
-                    data: JSON.stringify({ user: props.user, lab: props.lab, labInstance: null }),
-                    dataType: "json",
-                    success: function (response) {
-                        $("#instanceButtons").html(response.data.html);
-                    }
-                });
-            }
+            refreshInstanceButtons(null);
             if (isSandbox) {
                 setTimeout(() => { window.location.href = "/admin/sandbox"; }, 1500);
             }
