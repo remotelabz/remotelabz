@@ -198,8 +198,11 @@ permissive (absent → `true`, défaut du modèle) tandis que celle de
 - Ordre `CREATE` → `CONNECT` : même file, consommateur unique.
 - Les périphériques `natif` (switchs internes, Services) et les interfaces de
   périphériques ne sont pas touchés : `connectToInternet`/`disconnectFromInternet`
-  ne modifient que le lien patch OVS entre le bridge du lab et l'interface
-  Internet, la table de routage 4 et la règle NAT `POSTROUTING`.
+  ne modifient que la table de routage 4, la règle NAT `POSTROUTING` (une par
+  lab, source = sous-réseau du lab) et — à la déconnexion — une règle `DROP`
+  en tête de `FORWARD` bloquant tout paquet sortant du lab. **Pas de lien OVS
+  patch** : `INTERNET_INTERFACE_ACCESS` est une interface physique, la sortie se
+  fait par NAT.
 
 ### 5.2 `ACTION_DISCONNECT` n'est pas gérée — bloquant
 
@@ -288,58 +291,37 @@ if (IPTools::ruleExists('to ' . $labNetwork, 'lookup 4')) {
 }
 ```
 
-### 5.6 Plusieurs labs connectés sur le même worker — limitation connue
+### 5.6 Plusieurs labs connectés sur le même worker — supporté
 
-Tout ce que fait `connectToInternet()` est **global au worker**, pas à l'instance :
+La connexion est **par lab**, plus globale au worker :
 
-- `labNetwork = app.network.lab.cidr` (`LAB_NETWORK=10.11.0.0/16`) : le CIDR de
-  **tous** les labs du worker, pas le réseau de l'instance (pourtant disponible
-  dans le descriptor) ;
-- `bridgeInt = app.network.lab.internet_interface` (`INTERNET_INTERFACE_ACCESS`)
-  : une seule interface de données par worker ;
-- le port patch côté interface Internet s'appelle
-  **`Patch-ovs-<bridgeInt>`** : le **même nom pour tous les labs**
-  (`OVS::LinkTwoOVS`, `src/Bridge/Network/OVS.php:184`) et `setInterface` fait
-  pointer son `peer` vers le dernier lab connecté.
+- la règle NAT `POSTROUTING` utilise le **sous-réseau du lab**
+  (`$labInstance['network']`, ex. `10.11.3.0/24`) et non `LAB_NETWORK` ;
+- les règles `ip rule` (`from`/`to … lookup 4`) portent aussi sur ce sous-réseau ;
+- **plus de port OVS patch** : les interfaces `INTERNET_INTERFACE_ACCESS` étant
+  physiques, la sortie se fait par NAT, pas par un lien L2.
 
-Conséquences avec deux labs A et B sur un worker :
+Conséquences avec deux labs A et B sur un worker : chacun a sa propre NAT et ses
+propres règles de routage. La déconnexion de A ne retire que les règles de A ;
+les routes communes de la table 4 (réseau data, passerelle) restent en place et
+sont réutilisées par B (elles sont re-créées à la reconnexion si besoin).
 
-| Événement | Effet réel |
-|-----------|------------|
-| A connecté, puis B connecté | le port partagé `Patch-ovs-<bridgeInt>` est réutilisé (`--may-exist`) mais son `peer` est **repointé** vers le bridge de B : le trafic retour Internet → A arrive sur B |
-| déconnexion de A | `UnlinkTwoOVS` supprime le port `Patch-ovs-<bridgeInt>` **partagé** (OVS.php:193) : B perd son lien ; `ruleDelete`/`routeDelete`/`IPTables::delete` suppriment aussi les règles globales dont B dépend |
-| double `connectToInternet` | règles NAT/routage dupliquées (§5.4) mais partagées par tout le worker |
-
-En clair : **aujourd'hui un seul lab par worker peut réellement être connecté
-à Internet** ; la désactivation de ce lab casse le lien des autres s'il y en a.
-Corrections possibles côté worker, par ordre de coût :
-
-1. nommer le port patch par lab (`Patch-ovs-<bridgeInt>-<bridge>`), supprimer
-   uniquement le sien à la déconnexion ;
-2. déclarer les règles `ip rule`/routes/NAT **au nom du réseau de l'instance**
-   (`$labInstance['network']`) et ne les retirer que si plus aucune instance de
-   ce worker n'est connectée (compteur en base, ou `refcount` sur les règles) ;
-3. ou, plus simplement, garantir qu'un worker ne porte qu'un lab connecté
-   (repli documenté : le front envoie quand même les messages, l'effet est
-   partiel).
-
-Cette limite est **antérieure** à cette évolution (le chemin HTTP d'origine
-appelait exactement les mêmes méthodes) : elle est documentée ici parce que le
-basculement par lab la rend visible — auparavant le pilotage était cassé de
-bout en bout, donc jamais observée.
+Point d'attention : `connectToInternet()` route le trafic sortant via la table 4
+et `disconnectFromInternet()` supprime la route `default via <gateway>` de la
+table 4. Si deux labs sont connectés et que l'un se déconnecte, la route
+commune est retirée : le second perd sa passerelle tant qu'il n'est pas
+reconnecté (la prochaine `connect` la recrée). Si ce cas se produit, il faudra
+distinguer les routes propres à un lab des routes partagées.
 
 ### 5.7 Divers
 
-- `InstanceManager::interconnect()`/`disinterconnect()` (anciens helpers
-  appelés par le code HTTP supprimé) utilisent toujours `$labInstance->getWorketIp()`
-  — typo pré-existante sur un getter qui s'appelle `getWorkerIp()` : ces
-  méthodes sont mortes, ne pas les réactiver en l'état.
-- `connectToInternet()` est déclarée `connectToInternet(string $descriptor)`
-  mais appelée avec deux arguments ; PHP les ignore, mais autant aligner la
-  signature.
+- Les anciens helpers `InstanceManager::interconnect()`/`disinterconnect()`
+  (reliquat du chemin HTTP supprimé, qui créaient des ports OVS patch) ont été
+  **supprimés** avec la notion de patch.
 - La description des erreurs (JSON invalide → `BadDescriptorException`, sortie
   `ProcessFailedException`) reste gérée par le `try/catch` existant du handler :
-  c'est la construction du message de retour qui pose problème, pas le `catch`.
+  la construction du message de retour (§5.3) et la sortie sans réponse pour
+  CONNECT/DISCONNECT sont traitées dans `InstanceActionMessageHandler`.
 
 ---
 
@@ -348,7 +330,7 @@ bout en bout, donc jamais observée.
 | Sujet | Pourquoi |
 |-------|----------|
 | Exports (`ACTION_EXPORT_*`), copies, sandbox | n'utilisent pas `connectToInternet` ; le lab exporté conserve juste le drapeau |
-| Démarrage/arrêt des périphériques | `natif` et les interfaces de devices ne sont jamais modifiés par connect/disconnect (seuls le lien patch, la table 4 et la NAT) |
+| Démarrage/arrêt des périphériques | `natif` et les interfaces de devices ne sont jamais modifiés par connect/disconnect (seuls la table 4, la NAT et la règle `DROP` de sortie du lab) |
 | Placement / `LabPlacementCache` | `LabInternetManager` ne fait que dispatcher, il ne touche ni à `getFreeWorker()` ni aux réservations |
 | Sérialisation worker/sandbox/export | `isInternetAuthorized` n'est pas ajouté aux groupes `worker` : le descriptor envoyé au worker ne change pas de forme |
 

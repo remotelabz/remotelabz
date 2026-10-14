@@ -145,29 +145,6 @@ class LabLaunchRequestMessageHandler
             ]
         );
 
-        // Internet-authorized labs are connected as soon as they are launched.
-        // The message is routed to the same worker queue as the CREATE message
-        // above: the queue is FIFO, so the bridge exists by the time the worker
-        // processes the CONNECT action.
-        if ($labInstance->getLab()->isInternetAuthorized()) {
-            $this->bus->dispatch(
-                new InstanceActionMessage($labJson, $labInstance->getUuid(), InstanceActionMessage::ACTION_CONNECT), [
-                    new AmqpStamp($worker, AMQP_NOPARAM, []),
-                ]
-            );
-            $labInstance->setInternetConnected(true);
-            $this->entityManager->persist($labInstance);
-            $this->entityManager->flush();
-            $this->logger->info('[LabLaunchRequestMessageHandler]::Lab instance ' . $uuid . ' will be connected to the Internet (lab is internet authorized)');
-        } else {
-            // The lab is not internet authorized: the instance starts
-            // disconnected, and any stale flag left by a previous session is
-            // cleared so the Connect/Disconnect button shows the right state.
-            $labInstance->setInternetConnected(false);
-            $this->entityManager->persist($labInstance);
-            $this->entityManager->flush();
-        }
-
         // The lab is now placed: register its memory on this worker so that the
         // next placements take it into account until it is really running.
         $this->placementCache->assign($uuid, $worker);
@@ -197,6 +174,32 @@ class LabLaunchRequestMessageHandler
                     $this->logger->error('[LabLaunchRequestMessageHandler]::Error starting device ' . $deviceInstance->getUuid() . ' of lab instance ' . $uuid . ': ' . $e->getMessage());
                 }
             }
+        }
+
+        // Internet-authorized labs are connected once their devices have been
+        // started. The CONNECT message is dispatched after every ACTION_START
+        // above: it goes to the same worker queue (FIFO), so the worker has
+        // already run Create_And_Secure_OVS — the bridge is UP and has its
+        // gateway IP — by the time connectToInternet adds the policy routes.
+        // Dispatching CONNECT before the devices were started made those
+        // routes land on a DOWN, IP-less bridge and fail silently.
+        if ($labInstance->getLab()->isInternetAuthorized()) {
+            $this->bus->dispatch(
+                new InstanceActionMessage($labJson, $labInstance->getUuid(), InstanceActionMessage::ACTION_CONNECT), [
+                    new AmqpStamp($worker, AMQP_NOPARAM, []),
+                ]
+            );
+            $labInstance->setInternetConnected(true);
+            $this->entityManager->persist($labInstance);
+            $this->entityManager->flush();
+            $this->logger->info('[LabLaunchRequestMessageHandler]::Lab instance ' . $uuid . ' will be connected to the Internet (lab is internet authorized)');
+        } else {
+            // The lab is not internet authorized: the instance starts
+            // disconnected, and any stale flag left by a previous session is
+            // cleared so the Connect/Disconnect button shows the right state.
+            $labInstance->setInternetConnected(false);
+            $this->entityManager->persist($labInstance);
+            $this->entityManager->flush();
         }
     }
 
