@@ -1209,6 +1209,7 @@ class InstanceController extends Controller
         }
 
         $port_number = $this->isRemoteAccess($deviceInstance, $type);
+        $proxyError = false;
         if ($port_number) {
             $this->logger->debug("[InstanceController:viewInstanceAction]::Creation proxy rule to port " . $port_number);
             try {
@@ -1236,36 +1237,60 @@ class InstanceController extends Controller
             } catch (ServerException $exception) {
                 $this->logger->error($exception->getResponse()->getBody()->getContents());
                 $this->addFlash('danger', 'Cannot forward ' . $type . ' connection to client. Please try again later or contact an administrator.');
+                $proxyError = true;
             } catch (RequestException $exception) {
                 $this->logger->error($exception);
                 $this->addFlash('danger', 'Cannot forward ' . $type . ' connection to client. Please try again later or contact an administrator.');
+                $proxyError = true;
             } catch (ConnectException $exception) {
                 $this->logger->error($exception);
                 $this->addFlash('danger', 'Cannot forward ' . $type . ' connection to client. Please try again later or contact an administrator.');
+                $proxyError = true;
             }
-        }
-
-        if ($request->get('size') == "fullscreen") {
-            $fullscreen = true;
         } else {
-            $fullscreen = false;
+            $this->logger->debug("[InstanceController:viewInstanceAction]::No " . $type . " access for " . $deviceInstance->getUuid());
+            $this->addFlash('danger', 'No ' . $type . ' console available for this device.');
+            $proxyError = true;
         }
 
-        $this->logger->debug("[InstanceController:viewInstanceAction]::Want a fullscreen ?" . $fullscreen);
+        if ($proxyError) {
+            // Le referer est contrôlé par le client : on ne le suit que s'il pointe
+            // vers le même hôte, sinon on retombe sur la page d'accueil.
+            $referer = $request->headers->get('referer');
+            if ($referer && $request->getHost() === parse_url($referer, PHP_URL_HOST)) {
+                return $this->redirect($referer);
+            }
+
+            return $this->redirectToRoute('index');
+        }
+
+        // La console VNC est servie par le client noVNC intégré : pas d'intermédiaire,
+        // on redirige directement vers la page fullscreen.
+        if ($type == "vnc") {
+            if ($request->get('size') != "fullscreen") {
+                return $this->redirectToRoute('view_instance', [
+                    'uuid' => $uuid,
+                    'type' => 'vnc',
+                    'size' => 'fullscreen',
+                ]);
+            }
+
+            $this->logger->debug("[InstanceController:viewInstanceAction]::Render VNC fullscreen");
+            return $this->render('lab/vm_view_fullscreen.html.twig', [
+                'lab' => $lab,
+                'device' => $device,
+                'protocol' => $this->remotelabzProxyUseWss ? 'wss' : 'ws',
+                'host' => $this->proxyManager->getRemotelabzProxyServer(),
+                'path' => 'device/' . $deviceInstance->getUuid(),
+            ]);
+        }
+
+        // Console login / serial / admin : la page ttyd est déjà servie par le proxy,
+        // on y redirige directement.
         $ssl = ($this->remotelabzProxyUseWss ? 'https' : 'http');
-        $this->logger->debug("[InstanceController:viewInstanceAction]::Is proxy using SSL ? " . $ssl);
-        return $this->render(($fullscreen ? 'lab/vm_view_fullscreen.html.twig' : 'lab/vm_view.html.twig'), [
-            'lab' => $lab,
-            'uuid' => $uuid,
-            'device' => $device,
-            'deviceInstance' => $deviceInstance,
-            'ssl' => $ssl,
-            'type_control_access' => $type,
-            'protocol' => $request->get('protocol') ?: ($this->proxyManager->getRemotelabzProxyUseWss() ? 'wss' : 'ws'),
-            'host' => $request->get('host') ?: $this->proxyManager->getRemotelabzProxyServer(),
-            //'port' => $request->get('port') ?: $this->proxyManager->getRemotelabzProxyPort(),
-            'path' => $request->get('path') ?: 'device/' . $deviceInstance->getUuid()
-        ]);
+        $host = $this->proxyManager->getRemotelabzProxyServer();
+        $this->logger->debug("[InstanceController:viewInstanceAction]::Redirect to " . $ssl . "://" . $host . " for type " . $type);
+        return $this->redirect($ssl . '://' . $host . '/device/' . $uuid . '/');
     }
 
 

@@ -16,6 +16,16 @@ Une instance de device peut proposer plusieurs consoles, accessibles par la rout
 | Console série | `serial` | badge `admin` | tout utilisateur ayant accès à l'instance |
 | **Console d'administration** | `admin` | icône incognito | **profils restreints, voir ci-dessous** |
 
+Cette route ne rend plus de page intermédiaire : après avoir vérifié les droits
+et créé la règle de proxy correspondante, elle **redirige** (302) :
+
+- `vnc` → la page noVNC fullscreen (`view/vnc?size=fullscreen`) ;
+- `login` / `serial` / `admin` → directement vers la console ttyd servie par le
+  proxy (`https://<proxy>/device/<uuid>/`).
+
+En cas d'échec (pas de protocole exposé par le device, erreur du proxy), elle
+redirige vers la page précédente avec un message flash d'erreur.
+
 La vue `admin` est techniquement une connexion `login` réalisée sur le port
 d'administration (port + 1) du device : elle donne un accès élevé au système
 embarqué. Elle n'est donc pas ouverte à tous ceux qui peuvent voir l'instance.
@@ -137,11 +147,16 @@ icône qui ne lui menait à rien.
 curl -skI -b cookies.txt \
   https://<hote>/instances/<uuid-Instance>/view/admin
 # attendu : 302 Location: / pour un non autorisé
-# attendu : 200 pour un auteur / admin de site / owner-admin du groupe du lab
+# attendu : 302 Location: https://<proxy>/device/<uuid-Instance>/ pour un
+#          auteur / admin de site / owner-admin du groupe du lab
 
-curl -sk -b cookies.txt -o /dev/null -w '%{http_code}\n' \
+curl -skI -b cookies.txt \
   https://<hote>/instances/<uuid-Instance>/view/login
-# attendu : 200
+# attendu : 302 Location: https://<proxy>/device/<uuid-Instance>/
+
+curl -skI -b cookies.txt \
+  https://<hote>/instances/<uuid-Instance>/view/vnc
+# attendu : 302 Location: /instances/<uuid-Instance>/view/vnc?size=fullscreen
 ```
 
 Vérification des données exposées au frontend (après modification d'une
