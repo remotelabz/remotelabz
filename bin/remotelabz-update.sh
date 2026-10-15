@@ -49,6 +49,7 @@ if ! grep -q 'SecurityMessage: worker' "$MESSAGER_CFG"; then
     echo "ATTENTION: routage SecurityMessage absent de $MESSAGER_CFG, a ajouter manuellement sous \"routing:\""
 fi
 composer update
+yarn exec update-browserslist-db
 yarn encore prod
 php bin/console doctrine:migrations:migrate -n
 #npx browserslist@latest --update-db

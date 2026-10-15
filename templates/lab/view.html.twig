@@ -27,6 +27,13 @@
             <a href="{{ path('create_code_lab', {'id': lab.id}) }}" class="btn btn-success" role="button">{{ 'Codes'|trans }}</a>
             {% endif %}
             <a href="{{ path('export_lab', {'id': lab.id}) }}" class="btn btn-warning" role="button">{{ svg('download') }} {{ 'Export (Experimental)'|trans }}</a>
+            {% if lab.isInternetAuthorized %}
+                {% if internetConnected %}
+            <a href="{{ path('disconnect_internet', {'id': lab.id}) }}" class="btn btn-outline-warning" role="button">{{ 'Disconnect Internet'|trans }}</a>
+                {% else %}
+            <a href="{{ path('connect_internet', {'id': lab.id}) }}" class="btn btn-outline-success" role="button">{{ 'Connect Internet'|trans }}</a>
+                {% endif %}
+            {% endif %}
         {% endif %}
 
         {% if labInstance is empty %} 

@@ -98,9 +98,12 @@
                         {%- endif -%}
                     </p>
                     <div class="mt-2">
+                        {#- Hidden devices are only counted for the lab author and the admins #}
+                        {%- set can_see_hidden = is_granted('ROLE_ADMINISTRATOR') or (app.user is not null and app.user.id is defined and lab.author.id == app.user.id) -%}
+                        {%- set visible_devices = can_see_hidden ? lab.devices : lab.devices|filter(device => not device.hidden) -%}
                         <div class="d-inline" data-bs-toggle="tooltip" data-bs-placement="top" title="Devices">
-                            <span {% if lab.devices|length == 0 %}class="text-muted"{% endif -%}>
-                                <span>{{ svg('monitor-o', 'image-sm v-sub') }}</span> {{ lab.devices|length }} device{{ lab.devices|length > 1 ? 's' : '' }}
+                            <span {% if visible_devices|length == 0 %}class="text-muted"{% endif -%}>
+                                <span>{{ svg('monitor-o', 'image-sm v-sub') }}</span> {{ visible_devices|length }} device{{ visible_devices|length > 1 ? 's' : '' }}
                             </span>
                         </div>
                     </div>

@@ -12,7 +12,7 @@
  * @version 20160719
  */
 
-import {TIMEOUT, FOLDER, ROLE, TENANT, LOCK, AUTHOR, EDITION, setFolder, setLab, setLang, setLock, setName, setRole, setTenant, setUpdateId, LONGTIMEOUT, ATTACHMENTS, ISGROUPOWNER, HASGROUPACCESS, setAttachements, VIRTUALITY} from './javascript';
+import {TIMEOUT, FOLDER, ROLE, TENANT, LOCK, AUTHOR, EDITION, setFolder, setLab, setLang, setLock, setName, setRole, setTenant, setUpdateId, LONGTIMEOUT, ATTACHMENTS, ISGROUPOWNER, HASGROUPACCESS, setAttachements, VIRTUALITY, IS_INTERNET_AUTHORIZED, setIsInternetAuthorized, IS_INTERNET_CONNECTED, setIsInternetConnected} from './javascript';
 import {MESSAGES} from './messages_en';
 import 'jquery';
 window.$ = window.jQuery = $;
@@ -1030,6 +1030,38 @@ $(document).on('click', '.action-labedit-inline', function (e) {
     $('#context-menu').remove();
 });
 
+// Toggle Internet access for the current lab (all its instances)
+$(document).on('click', '.action-labinternet', function (e) {
+    logger(1, 'DEBUG: action = labinternet');
+    var lab_id = $('#lab-viewport').attr('data-path');
+    // The menu entry is only offered for internet-authorized labs: this is the
+    // permission (Lab.isInternetAuthorized). The label and the request follow
+    // the real state (LabInstance.isInternetConnected).
+    var connect = !IS_INTERNET_CONNECTED;
+    var url = '/api/labs/' + lab_id + '/internet/' + (connect ? 'connect' : 'disconnect');
+    $.ajax({
+        cache: false,
+        timeout: TIMEOUT,
+        type: 'POST',
+        url: encodeURI(url),
+        dataType: 'json',
+        success: function (data) {
+            if (data && data['status'] == 'success') {
+                setIsInternetConnected(!!data['isInternetConnected']);
+                addMessage('success', connect ? 'The lab is connected to the internet.' : 'The lab is disconnected from the internet.');
+            } else {
+                addModalError((data && data['message']) ? data['message'] : 'Internet connection change failed.');
+            }
+        },
+        error: function (data) {
+            var message = getJsonMessage(data['responseText']);
+            logger(1, 'DEBUG: server error (' + data['status'] + ') on POST ' + url + '.');
+            addModalError(message);
+        }
+    });
+    $('#context-menu').remove();
+});
+
 // Edit the lab description (Markdown, displayed when the lab is instantiated)
 $(document).on('click', '.action-labdescription', function (e) {
     logger(1, 'DEBUG: action = labdescription');
@@ -1515,6 +1547,9 @@ $(document).on('click', '.action-moreactions', function (e) {
         body += '<li><a class="action-labdescription" href="javascript:void(0)"><i class="glyphicon glyphicon-edit"></i> ' + MESSAGES[237] + '</a></li>';
         body += '<li><a class="action-labclone" href="javascript:void(0)"><i class="glyphicon glyphicon-copy"></i> Clone lab</a></li>';
         body += '<li><a class="action-labedit" href="javascript:void(0)"><i class="glyphicon glyphicon-pencil"></i> ' + MESSAGES[87] + '</a></li>';
+    }
+    if (IS_INTERNET_AUTHORIZED && (((ROLE == 'ROLE_TEACHER' || ROLE == 'ROLE_TEACHER_EDITOR') && AUTHOR == 1) || (ROLE == 'ROLE_ADMINISTRATOR' || ROLE == 'ROLE_SUPER_ADMINISTRATOR'))) {
+        body += '<li><a class="action-labinternet" href="javascript:void(0)"><i class="glyphicon glyphicon-globe"></i> ' + (IS_INTERNET_CONNECTED ? 'Disconnect Internet' : 'Connect Internet') + '</a></li>';
     }
     if (body != '') {
         printContextMenu(MESSAGES[125], body, e.pageX + 3, e.pageY + 3, true,"sidemenu", true);
@@ -2223,6 +2258,7 @@ $(document).on('submit', '#form-lab-edit', function (e) {
     var lab_filename = $('#lab-viewport').attr('data-path');
     var form_data = form2Array('lab');
     form_data['chatEnabled'] = $('input[name="lab[chatEnabled]"]').is(':checked');
+    form_data['isInternetAuthorized'] = $('input[name="lab[isInternetAuthorized]"]').is(':checked');
     if ($(this).find('#lab-share-rules').length) {
         // Sharing section is displayed: its rules replace the saved ones. When
         // the section is absent (lab creation), the key is not sent at all and
@@ -2248,6 +2284,15 @@ $(document).on('submit', '#form-lab-edit', function (e) {
         success: function (data) {
             if (data['status'] == 'success') {
                 logger(1, 'DEBUG: lab "' + form_data['name'] + '" saved.');
+                // Keep the "More actions" menu in sync with the Internet
+                // permission just saved: the entry is hidden when the lab is
+                // not internet authorized anymore.
+                if (data['isInternetAuthorized'] !== undefined) {
+                    setIsInternetAuthorized(!!data['isInternetAuthorized']);
+                }
+                if (data['isInternetConnected'] !== undefined) {
+                    setIsInternetConnected(!!data['isInternetConnected']);
+                }
                 var originalAuthor = $('#form-lab-edit').attr('data-original-author');
                 if (form_data['author'] !== undefined && form_data['author'] !== '' &&
                         String(form_data['author']) !== String(originalAuthor)) {

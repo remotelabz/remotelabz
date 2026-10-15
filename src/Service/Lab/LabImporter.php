@@ -266,6 +266,12 @@ class LabImporter
                 $device->setTemplate($deviceJson['template']);
             }
 
+            // Keep the hidden flag of the imported devices (the importer
+            // becomes their author, so he is allowed to see them).
+            if (!empty($deviceJson['hidden'])) {
+                $device->setHidden(true);
+            }
+
             
             foreach($deviceJson["controlProtocolTypes"] as $controlProtocolTypeJson){
                 $controlProtocolType = $this->controlProtocolTypeRepository->find($controlProtocolTypeJson["id"]);

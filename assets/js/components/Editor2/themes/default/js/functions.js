@@ -19,7 +19,7 @@
 import {DEBUG, TIMEOUT, LAB, NAME, ROLE, AUTHOR, UPDATEID, LOCK, EDITION, TEMPLATE, ISGROUPOWNER, HASGROUPACCESS, VIRTUALITY,
        setLab, setLang, setLock, setUserName, setEmail, setRole, setTenant, setUpdateId, setTemplate, setIsGroupOwner, setHasGroupAccess,
        STATUSINTERVAL, ATTACHMENTS, isIE, setEditon, setAuthor,
-      setVirtuality} from './javascript';
+      setVirtuality, setIsInternetAuthorized, setIsInternetConnected} from './javascript';
 import {MESSAGES} from './messages_en';
 import 'jquery';
 import '../bootstrap/js/tinytools.toggleswitch.min';
@@ -50,6 +50,12 @@ import Remotelabz from '../../../../API';
 // Basename: given /a/b/c return c
 export function basename(path) {
     return path.replace(/\\/g, '/').replace(/.*\//, '');
+}
+
+// Whether the current user may see and edit hidden devices
+// (lab author or system admin only, see LabVoter::SEE_HIDDEN_DEVICE).
+export function canSeeHiddenDevices() {
+    return AUTHOR == 1 || ROLE == 'ROLE_ADMINISTRATOR' || ROLE == 'ROLE_SUPER_ADMINISTRATOR';
 }
 
 // Dirname: given /a/b/c return /a/b
@@ -397,6 +403,9 @@ export function getLabInfo(labId) {
         success: function (data) {
             if (data['status'] == 'success') {
                 //logger(1, 'DEBUG: lab "' + labId + '" found.');
+                setIsInternetAuthorized(!(data['data']['isInternetAuthorized'] === false || data['data']['isInternetAuthorized'] === 'false' || data['data']['isInternetAuthorized'] === 0 || data['data']['isInternetAuthorized'] === '0'));
+                // The connected state defaults to false: it is absent from old payloads.
+                setIsInternetConnected(data['data']['isInternetConnected'] === true || data['data']['isInternetConnected'] === 'true' || data['data']['isInternetConnected'] === 1 || data['data']['isInternetConnected'] === '1');
                 deferred.resolve(data['data']);
             } else {
                 // Application error
@@ -1301,6 +1310,7 @@ export function printFormLab(action, values) {
         banner: (values['banner'] != null) ? values['banner'] : '',
         timer: (values['timer'] != null) ? values['timer'] : '0',
         chatEnabled: (values['chatEnabled'] === true || values['chatEnabled'] === 'true' || values['chatEnabled'] === 1 || values['chatEnabled'] === '1'),
+        isInternetAuthorized: !(values['isInternetAuthorized'] === false || values['isInternetAuthorized'] === 'false' || values['isInternetAuthorized'] === 0 || values['isInternetAuthorized'] === '0'),
         virtuality: VIRTUALITY,
         srcBanner : '/labs/'+id+'/banner?'+ currentTime,
         title: title,
@@ -1902,12 +1912,30 @@ export function printFormNode(action, values, fromNodeList) {
                             '<input class="form-control" name="node[top]" value="' + top + '" type="text"/>' +
                             '</div>';
 
+                        // Hidden device: only the lab author and the admins may hide a device
+                        if (canSeeHiddenDevices()) {
+                            var hiddenValue = (node_values != null && node_values['hidden']) ? 1 : 0;
+                            html_data += '<div class="form-group col-sm-12">' +
+                                '<label class="control-label" style="margin-bottom: 8px;">' +
+                                '<input type="checkbox" id="node-hidden-checkbox" ' + (hiddenValue ? 'checked' : '') + ' ' + (EDITION == 1 && LOCK == 0 ? '' : 'disabled') + ' style="width: 16px;"/>' +
+                                '&nbsp;' + MESSAGES[249] +
+                                '</label>' +
+                                '<input type="hidden" name="node[hidden]" id="node-hidden-value" value="' + hiddenValue + '"/>' +
+                                '<div class="text-muted small">' + MESSAGES[250] + '</div>' +
+                                '</div>';
+                        }
+
                         // Show the buttons
                         $('#form-node-buttons').html('<div class="form-group"><div class="col-md-5 col-md-offset-3"><button type="submit" class="btn btn-success">' + MESSAGES[47] + '</button> <button type="button" class="btn" data-dismiss="modal">' + MESSAGES[18] + '</button></div>');
 
                         // Show the form
                         $('#form-node-data').html(html_data);
                         $('.selectpicker').selectpicker('refresh');
+
+                        // Keep the hidden input in sync with the "hidden device" checkbox
+                        $('#node-hidden-checkbox').off('change').on('change', function () {
+                            $('#node-hidden-value').val(this.checked ? 1 : 0);
+                        });
                         
                         $(document).off('click', '.reset-to-template').on('click', '.reset-to-template', function(e) {
                             e.preventDefault();
@@ -2289,6 +2317,11 @@ export function printLabTopology() {
                 hrefbuf = '<a href="javascript:void(0)" >' ;
             }
 
+            var hiddenBadge = '';
+            if (value['hidden'] && canSeeHiddenDevices()) {
+                hiddenBadge = ' <i class="fa fa-eye-slash node-hidden-badge" title="' + MESSAGES[249] + '"></i>';
+            }
+
             $labViewport.append(
                 '<div id="node' + value['id'] + '" ' +
                 'class="context-menu node node' + value['id'] + ' node_frame "' +
@@ -2296,13 +2329,14 @@ export function printLabTopology() {
                 'data-path="' + value['id'] + '" ' +
                 'data-status="' + value['status'] + '" ' +
                 'data-type="' + value['type'] + '" ' +
+                'data-hidden="' + (value['hidden'] ? 1 : 0) + '" ' +
                 'data-name="' + value['name'] + '">' +
                 '<div class="tag  hidden" title="Connect to another node">'+
                 '<i class="fa fa-plug plug-icon dropdown-toggle ep"></i>'+
                 '</div>'+
                 hrefbuf +
                 '</a>' +
-                '<div class="node_name"><i class="node' + value['id'] + '_status"></i> ' + value['name'] + '</div>' +
+                '<div class="node_name"><i class="node' + value['id'] + '_status"></i> ' + value['name'] + hiddenBadge + '</div>' +
                 '</div>');
             nodesImgs.push($.Deferred(function (defer) {
                 var img = new Image();

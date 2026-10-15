@@ -253,9 +253,12 @@ class DeviceController extends Controller
         $response = new Response();
         $response->headers->set('Content-Type', 'application/json');
 
+        // Hidden devices are only visible to the lab author and system admins
+        $includeHidden = $this->isGranted(LabVoter::SEE_HIDDEN_DEVICE, $lab);
+
         if($nodeData['edition'] == 0 && $nodeData['labInstance'] != null) {
             $labInstance = $this->labInstanceRepository->find($nodeData['labInstance']);
-            $devices = $this->deviceRepository->findByLabInstance($labInstance);
+            $devices = $this->deviceRepository->findByLabInstance($labInstance, $includeHidden);
         }
         if($nodeData['edition'] == 0 && $nodeData['labInstance'] == null) {
             $response->setContent(json_encode([
@@ -265,7 +268,7 @@ class DeviceController extends Controller
                 return $response;
         }
         if($nodeData['edition'] == 1) {
-            $devices = $this->deviceRepository->findByLab($lab);
+            $devices = $this->deviceRepository->findByLab($lab, $includeHidden);
         }
         $data = [];
         foreach($devices as $device){
@@ -349,6 +352,7 @@ class DeviceController extends Controller
                 "template"=> $device->getTemplate(),
                 "status"=> $status,
                 "ethernet"=> $device->getEthernet(),
+                "hidden"=> $device->getHidden(),
                 "console" => $controlProtocolTypes,
                 "networkInterfaceTemplate"=> $device->getNetworkInterfaceTemplate()
             ];
@@ -384,7 +388,8 @@ class DeviceController extends Controller
         if ($user instanceof InvitationCode) {
             foreach ($user->getLab()->getDevices() as $userDevice) {
                 if ($userDevice == $device) {
-                    $canViewDevice = true;
+                    // Hidden devices are never exposed to guests
+                    $canViewDevice = !$device->getHidden();
                 }
             }
         }
@@ -419,6 +424,22 @@ class DeviceController extends Controller
             if ($user->isAdministrator() || $user->isEditor()) {
                 $canViewDevice = true;
             }
+
+            // A hidden device is only visible to the lab authors of the labs it
+            // belongs to and to the system admins.
+            if ($canViewDevice && $device->getHidden()) {
+                $canViewDevice = false;
+                if ($user->isAdministrator()) {
+                    $canViewDevice = true;
+                } else {
+                    foreach ($device->getLabs() as $deviceLab) {
+                        if ($user == $deviceLab->getAuthor()) {
+                            $canViewDevice = true;
+                            break;
+                        }
+                    }
+                }
+            }
         }
 
         if ($canViewDevice == false) {
@@ -452,6 +473,11 @@ class DeviceController extends Controller
         $this->logger->debug('[DeviceController:showActionTest]::Device id request '.$id);
         $nodeData = json_decode($request->getContent(), true);
         if (!$device) {
+            throw new NotFoundHttpException("Device " . $id . " does not exist.");
+        }
+
+        // Hidden devices are only visible to the lab author and system admins
+        if ($device->getHidden() && !$this->isGranted(LabVoter::SEE_HIDDEN_DEVICE, $lab)) {
             throw new NotFoundHttpException("Device " . $id . " does not exist.");
         }
 
@@ -552,7 +578,8 @@ class DeviceController extends Controller
             "cdrom_bus_type" => $device->getCdromBusType(),
             "bios_type" => $device->getBiosType(),
             "network_card_type" => $device->getNetworkCardType(),
-            "minimum_network_interfaces" => $device->getMinimumNetworkInterfaces()
+            "minimum_network_interfaces" => $device->getMinimumNetworkInterfaces(),
+            "hidden" => $device->getHidden()
         ];
         if (!is_null($device->getOperatingSystem()->getArch()))
             $data["qemu_arch"]=$device->getOperatingSystem()->getArch()->getId();
@@ -946,6 +973,10 @@ class DeviceController extends Controller
 
         if(isset($data['minimum_network_interfaces'])) {
             $device->setMinimumNetworkInterfaces((int) $data['minimum_network_interfaces']);
+        }
+
+        if(isset($data['hidden'])) {
+            $device->setHidden((bool) $data['hidden']);
         }
 
         
@@ -1443,6 +1474,11 @@ class DeviceController extends Controller
             $device->setMinimumNetworkInterfaces((int) $data['minimum_network_interfaces']);
         }
 
+        // Only the lab author / system admins reach this point (LabVoter::EDIT_DEVICE)
+        if(isset($data['hidden'])) {
+            $device->setHidden((bool) $data['hidden']);
+        }
+
         if(isset($data['name'])) {
             if($data['name'] != '') {
                 $oldDeviceName = $device->getName();
@@ -1889,6 +1925,11 @@ class DeviceController extends Controller
 
         if (!$device = $this->deviceRepository->find($deviceId)){
             throw new NotFoundHttpException("Device ".$id. " does not exist.");
+        }
+
+        // Hidden devices are only visible to the lab author and system admins
+        if ($device->getHidden() && !$this->isGranted(LabVoter::SEE_HIDDEN_DEVICE, $lab)) {
+            throw new NotFoundHttpException("Device ".$deviceId. " does not exist.");
         }
 
         if (!$lab->getDevices()->contains($device)){

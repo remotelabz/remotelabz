@@ -98,6 +98,24 @@ class DeviceInstanceRepository extends ServiceEntityRepository
         return $deviceInstances;
     }
 
+    /**
+     * Device instances stuck in "starting" since (at least) the given threshold.
+     * Rows with a NULL state_changed_at (predating the column) are included:
+     * they have been in "starting" for as long as we know.
+     *
+     * @return DeviceInstance[]
+     */
+    public function findStuckStartingBefore(\DateTimeInterface $threshold): array
+    {
+        return $this->createQueryBuilder('di')
+            ->andWhere('di.state = :state')
+            ->andWhere('(di.stateChangedAt < :threshold OR di.stateChangedAt IS NULL)')
+            ->setParameter('state', 'starting')
+            ->setParameter('threshold', $threshold)
+            ->getQuery()
+            ->getResult();
+    }
+
     public function findByLabInstance($lab)
     {
 

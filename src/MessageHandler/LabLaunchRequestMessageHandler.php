@@ -99,7 +99,13 @@ class LabLaunchRequestMessageHandler
         }
 
         // Best worker: real worker stats + memory reservations of the other pending instances
-        $worker = $this->workerManager->getFreeWorker($labInstance->getLab());
+        // Fail fast when no worker is flagged as available: getFreeWorker() would query
+        // the stats of every worker over HTTP for nothing.
+        if (!$this->workerManager->hasAvailableWorker()) {
+            $worker = '';
+        } else {
+            $worker = $this->workerManager->getFreeWorker($labInstance->getLab());
+        }
 
         if ('' === $worker) {
             $this->logger->error('[LabLaunchRequestMessageHandler]::No worker available for lab instance ' . $uuid . '. The instance is left in error state.');
@@ -147,20 +153,53 @@ class LabLaunchRequestMessageHandler
 
         $this->securityManager->syncLabInstance($labInstance);
 
-        if ($message->isAutoStartDevices()) {
-            foreach ($labInstance->getDeviceInstances() as $deviceInstance) {
-                if (
-                    $deviceInstance->getState() === InstanceStateMessage::STATE_STOPPED ||
-                    $deviceInstance->getState() === InstanceStateMessage::STATE_ERROR
-                ) {
-                    try {
-                        $this->instanceManager->start($deviceInstance);
-                        $this->logger->info('[LabLaunchRequestMessageHandler]::Start requested for device ' . $deviceInstance->getUuid() . ' of lab instance ' . $uuid);
-                    } catch (\Throwable $e) {
-                        $this->logger->error('[LabLaunchRequestMessageHandler]::Error starting device ' . $deviceInstance->getUuid() . ' of lab instance ' . $uuid . ': ' . $e->getMessage());
-                    }
+        foreach ($labInstance->getDeviceInstances() as $deviceInstance) {
+            $device = $deviceInstance->getDevice();
+            $isHidden = null !== $device && $device->getHidden();
+
+            // Hidden devices are always started with the lab: the lab users
+            // cannot see them, so they could never start them themselves.
+            if (!$isHidden && !$message->isAutoStartDevices()) {
+                continue;
+            }
+
+            if (
+                $deviceInstance->getState() === InstanceStateMessage::STATE_STOPPED ||
+                $deviceInstance->getState() === InstanceStateMessage::STATE_ERROR
+            ) {
+                try {
+                    $this->instanceManager->start($deviceInstance);
+                    $this->logger->info('[LabLaunchRequestMessageHandler]::Start requested for device ' . $deviceInstance->getUuid() . ' of lab instance ' . $uuid);
+                } catch (\Throwable $e) {
+                    $this->logger->error('[LabLaunchRequestMessageHandler]::Error starting device ' . $deviceInstance->getUuid() . ' of lab instance ' . $uuid . ': ' . $e->getMessage());
                 }
             }
+        }
+
+        // Internet-authorized labs are connected once their devices have been
+        // started. The CONNECT message is dispatched after every ACTION_START
+        // above: it goes to the same worker queue (FIFO), so the worker has
+        // already run Create_And_Secure_OVS — the bridge is UP and has its
+        // gateway IP — by the time connectToInternet adds the policy routes.
+        // Dispatching CONNECT before the devices were started made those
+        // routes land on a DOWN, IP-less bridge and fail silently.
+        if ($labInstance->getLab()->isInternetAuthorized()) {
+            $this->bus->dispatch(
+                new InstanceActionMessage($labJson, $labInstance->getUuid(), InstanceActionMessage::ACTION_CONNECT), [
+                    new AmqpStamp($worker, AMQP_NOPARAM, []),
+                ]
+            );
+            $labInstance->setInternetConnected(true);
+            $this->entityManager->persist($labInstance);
+            $this->entityManager->flush();
+            $this->logger->info('[LabLaunchRequestMessageHandler]::Lab instance ' . $uuid . ' will be connected to the Internet (lab is internet authorized)');
+        } else {
+            // The lab is not internet authorized: the instance starts
+            // disconnected, and any stale flag left by a previous session is
+            // cleared so the Connect/Disconnect button shows the right state.
+            $labInstance->setInternetConnected(false);
+            $this->entityManager->persist($labInstance);
+            $this->entityManager->flush();
         }
     }
 

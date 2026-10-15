@@ -1,11 +1,20 @@
 {% if (is_granted("ROLE_ADMINISTRATOR") or lab.author == user) %}
+    {% if lab.virtuality == 1 %}
     <a href="{{ path('create_code_lab', {'id': lab.id}) }}" class="btn btn-success" role="button">{{ 'Codes'|trans }}</a>
-    <a href="{{ path('export_lab', {'id': lab.id}) }}" class="btn btn-primary" role="button">{{ svg('download') }} {{ 'Export (Experimental)'|trans }}</a>
+    {% endif %}
+    <a href="{{ path('export_lab', {'id': lab.id}) }}" class="btn btn-warning" role="button">{{ svg('download') }} {{ 'Export (Experimental)'|trans }}</a>
+    {% if lab.isInternetAuthorized %}
+        {% if internetConnected %}
+    <a href="{{ path('disconnect_internet', {'id': lab.id}) }}" class="btn btn-outline-warning" role="button">{{ 'Disconnect Internet'|trans }}</a>
+        {% else %}
+    <a href="{{ path('connect_internet', {'id': lab.id}) }}" class="btn btn-outline-success" role="button">{{ 'Connect Internet'|trans }}</a>
+        {% endif %}
+    {% endif %}
 {% endif %}
 
-{% if labInstance is empty %} 
+{% if labInstance is empty %}
     {% if is_granted("ROLE_ADMINISTRATOR") or (is_granted("ROLE_TEACHER") and user.id == lab.author.id) %}
-        <a href="{{ path('edit_lab', {'id': lab.id}) }}" class="btn btn-secondary" role="button"><i class="fa fa-edit"></i> 
+        <a href="{{ path('edit_lab', {'id': lab.id}) }}" class="btn btn-secondary" role="button"><i class="fa fa-edit"></i>
             {{ 'Edit'|trans }}
         </a>
     {% endif %}

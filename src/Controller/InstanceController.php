@@ -1312,10 +1312,17 @@ class InstanceController extends Controller
         $user = $data['user'];
         $labInstance = $data['labInstance'];
 
+        // Same lab-level Internet aggregate as LabController::showAction():
+        // the header is rebuilt by InstanceManager while the page stays open,
+        // so the Connect/Disconnect button follows the live state instead of
+        // the one computed when the page was rendered.
+        $labEntity = is_array($lab) && !empty($lab['id']) ? $this->labRepository->find($lab['id']) : null;
+
         $html = $this->renderView('editButtonDisplay.html.twig', [
             'lab' => $lab,
             'user' => $user,
-            'labInstance' => $labInstance
+            'labInstance' => $labInstance,
+            'internetConnected' => $labEntity ? $this->labInstanceRepository->isLabInternetConnected($labEntity) : false
         ]);
         $response = new Response();
         $response->setContent(json_encode([
