@@ -15,6 +15,26 @@ function netmaskToCidr(netmask) {
     return netmask.split('.').map(o => Number(o).toString(2).padStart(8, '0')).join('').replace(/0+$/, '').length;
 }
 
+function ipToInt(ip) {
+  return ip.split('.').reduce((acc, octet) => (acc << 8) + parseInt(octet, 10), 0) >>> 0;
+}
+
+function intToIp(int) {
+  return [24, 16, 8, 0].map(shift => (int >>> shift) & 255).join('.');
+}
+
+function getLastUsableAddress(networkAddr, netmask) {
+  const net = (ipToInt(networkAddr) & ipToInt(netmask)) >>> 0;
+  const broadcast = (net | ~ipToInt(netmask)) >>> 0;
+  return intToIp(broadcast - 1);
+}
+
+function getReservedAddress(networkAddr, netmask) {
+  const net = (ipToInt(networkAddr) & ipToInt(netmask)) >>> 0;
+  const broadcast = (net | ~ipToInt(netmask)) >>> 0;
+  return intToIp(broadcast - 2);
+}
+
 function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCallEnabled: false, isSandbox: false, hasBooking: false, chatAccessible: false}) {
     const [labInstance, setLabInstance] = useState(props.labInstance);
     const [showLeaveLabModal, setShowLeaveLabModal] = useState(false);
@@ -282,11 +302,15 @@ useEffect(() => {
                         </div>
                     </div>
                     <div>
-                        {labInstance.network?.ip?.addr && labInstance.network.netmask?.addr &&
-                            <div className="text-muted small">
-                                Network: {labInstance.network.ip.addr}/{netmaskToCidr(labInstance.network.netmask.addr)}
-                            </div>
-                        }
+                        {labInstance.network?.ip?.addr && labInstance.network.netmask?.addr && (
+                            <>
+                                <h4 className="mb-0">Network: {labInstance.network.ip.addr}/{netmaskToCidr(labInstance.network.netmask.addr)}</h4>
+                                <span>Gateway :  {getLastUsableAddress(labInstance.network.ip.addr,labInstance.network.netmask.addr)}</span>
+                                <div className="text-muted small">
+                                    IP {getReservedAddress(labInstance.network.ip.addr,labInstance.network.netmask.addr)} is reserved
+                                </div>
+                            </>
+                        )}
                     </div>
                     <div>
                         {props.lab.virtuality == 1 && props.lab.hasTimer == true && <span id="timer">{timerCountDown}</span>
