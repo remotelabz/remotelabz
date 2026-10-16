@@ -51,7 +51,7 @@ uniquement par messages asynchrones, jamais en HTTP :
 | Client PHP | `php-amqplib` via le bridge `symfony/amqp-messenger` |
 | DSN | `MESSENGER_TRANSPORT_DSN="amqp://remotelabz-amqp:password-amqp@127.0.0.1:5672/%2f/messages"` (`.env` / `.env.local`) |
 | Vhost | `/` (encodé `%2f`) |
-| Segment final du chemin DSN | `messages` — c'est le **nom d'exchange par défaut** des transports qui n'en déclarent pas (utilisé seulement par le transport `async`, voir §3) |
+| Segment final du chemin DSN | `messages` — nom d'**exchange par défaut** du bridge AMQP. **Inutilisé** : tous les transports déclarent explicitement leur exchange (`worker`, `front`), donc cet échange par défaut n'est plus créé (voir §3). |
 | Sérialisation | **`PhpSerializer`** (sérialiseur natif de Messenger, défaut) : l'enveloppe complète est passée à `serialize()`, puis `addslashes()` (base64 si le résultat n'est pas de l'UTF-8) |
 | Format dans la file | Binaire PHP sérialisé — **pas du JSON** (le JSON n'apparaît qu'à l'intérieur des champs `content` de certains messages) |
 | Durabilité | Exchanges et queues déclarés durables (défaut Symfony) ; messages persistants |
@@ -77,7 +77,6 @@ Conséquences importantes de la sérialisation PHP native :
 |---|---|---|---|---|
 | `worker` | `direct` | `messages_worker1` | `192.168.11.132` (IP du worker) | Front → worker. La routing key = IP choisit la queue du bon worker. |
 | `front` | *(fanout — défaut)* | `messages_front` | clé par défaut (`null`), sans effet en fanout | Worker → front (états, logs, handshake) **et** front → front (placement). |
-| `messages` | *(fanout — défaut du DSN)* | `messages` | — | Transport `async` déclaré mais **aucun message routé vers lui** (héritage). |
 | `delays` | `direct` | `delay_<exchange>_<routingKey>_<delay>` | créées à la volée | Rejeu des messages en échec après un délai (`x-message-ttl` + dead-letter vers l'exchange d'origine). |
 | `failed` | `fanout` | `messages_failed` | — | **Worker uniquement** : messages échoués après épuisement des retries (`failure_transport`). |
 
@@ -117,7 +116,6 @@ les consumers.
 framework:
     messenger:
         transports:
-            async: '%env(MESSENGER_TRANSPORT_DSN)%'      # déclaré, non utilisé par le routage
             worker:                                      # front → worker
                 dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
                 options:

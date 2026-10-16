@@ -1,7 +1,6 @@
 framework:
     messenger:
         transports:
-            async: '%env(MESSENGER_TRANSPORT_DSN)%'
             worker:
                 dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
                 options:
