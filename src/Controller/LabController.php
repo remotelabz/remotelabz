@@ -1326,7 +1326,7 @@ class LabController extends Controller
 
         if (isset($data['author']) && $data['author'] !== '' && $data['author'] !== null) {
             $newAuthor = $userRepository->find((int) $data['author']);
-            if ($newAuthor === null || !($newAuthor->isAdministrator() || $newAuthor->isEditor())) {
+            if ($newAuthor === null || !($newAuthor->isAdministrator() || $newAuthor->isEditor() || $newAuthor->isTeacher())) {
                 $this->logger->warning("Lab named ".$lab->getName()." author change denied: user id ".$data['author']." is not eligible.");
                 $response = new Response();
                 $response->setContent(json_encode([

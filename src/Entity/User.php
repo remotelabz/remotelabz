@@ -232,6 +232,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Instanc
         return in_array('ROLE_TEACHER_EDITOR', $this->roles);
     }
 
+    public function isTeacher(): bool
+    {
+        return in_array('ROLE_TEACHER', $this->roles);
+    }
+
     public function hasRole(string $role): bool
     {
         return in_array($role, $this->getRoles());
