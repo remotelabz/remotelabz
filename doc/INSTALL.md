@@ -1,4 +1,4 @@
-How to install RemoteLabz
+How to install RemoteLabz with web
 =========================
 
 - [Requirements](#requirements)
