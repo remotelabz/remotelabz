@@ -1379,7 +1379,7 @@
     schema-utils "^3.0.0 || ^4.0.0"
 
 "@symfony/ux-react@file:vendor/symfony/ux-react/assets":
-  version "3.5.1"
+  version "3.6.0"
 
 "@symfony/webpack-encore@^5.1.0":
   version "5.3.1"
@@ -2043,9 +2043,9 @@ caniuse-api@^3.0.0:
     lodash.uniq "^4.5.0"
 
 caniuse-lite@^1.0.0, caniuse-lite@^1.0.30001759:
-  version "1.0.30001815"
-  resolved "https://registry.npmjs.org/caniuse-lite/-/caniuse-lite-1.0.30001815.tgz"
-  integrity sha512-uDybUEyfgbyJJ93J1vikTylBX31AkdVYeVPeffMQpf8XN7hSfr0oZOn4VFOIMNvtU5+rHvC5Udg2TgtJKHm23Q==
+  version "1.0.30001816"
+  resolved "https://registry.npmjs.org/caniuse-lite/-/caniuse-lite-1.0.30001816.tgz"
+  integrity sha512-+8Yx7BXCoqk6IF8yTicjfUR6D/ldJzdlsodlEOiOSPmhK844WIgk67/zIQaGAOxNkZyyvBlrRFnLvqKIoqbAFw==
 
 cardinal@^1.0.0:
   version "1.0.0"

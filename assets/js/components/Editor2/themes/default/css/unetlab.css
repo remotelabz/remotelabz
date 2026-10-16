@@ -911,6 +911,30 @@ input[name='login[username]'], input[name='login[password]']{
 	width: 100%;
 }
 
+/*
+ * Editor minimum-width gate.
+ * The "Display too small" screen is shown below 700px, the editor above it.
+ * Previously this relied on Bootstrap 3 .hidden-md/.hidden-lg/.hidden-xs/.hidden-sm
+ * classes, which switched at 992px.
+ */
+.editor-too-small {
+	display: none !important;
+}
+
+.editor-large-enough {
+	display: block !important;
+}
+
+@media (max-width: 699.98px) {
+	.editor-too-small {
+		display: block !important;
+	}
+
+	.editor-large-enough {
+		display: none !important;
+	}
+}
+
 #small .jumbotron {
 	background-color: #ffffff;
 	box-shadow: 0 0 30px black;

@@ -920,7 +920,63 @@ img {
   }
 }
 
-@media(min-width: 1600px) {
+// Responsive grid utility classes (mobile-first, Bootstrap 5 breakpoints):
+// .grid-xs-* applies from 0, .grid-sm-* from 576px, .grid-md-* from 768px,
+// .grid-lg-* from 992px, .grid-xl-* from 1200px, .grid-xxl-* from 1600px.
+@for $i from 1 through 12 {
+  .grid-#{$i} {
+    display: grid;
+    grid-template-columns: repeat($i, 1fr) !important;
+  }
+}
+
+@include media-breakpoint-up(xs) {
+  @for $i from 1 through 12 {
+    .grid-xs-#{$i} {
+      display: grid;
+      grid-template-columns: repeat($i, 1fr) !important;
+    }
+  }
+}
+
+@include media-breakpoint-up(sm) {
+  @for $i from 1 through 12 {
+    .grid-sm-#{$i} {
+      display: grid;
+      grid-template-columns: repeat($i, 1fr) !important;
+    }
+  }
+}
+
+@include media-breakpoint-up(md) {
+  @for $i from 1 through 12 {
+    .grid-md-#{$i} {
+      display: grid;
+      grid-template-columns: repeat($i, 1fr) !important;
+    }
+  }
+}
+
+@include media-breakpoint-up(lg) {
+  @for $i from 1 through 12 {
+    .grid-lg-#{$i} {
+      display: grid;
+      grid-template-columns: repeat($i, 1fr) !important;
+    }
+  }
+}
+
+@include media-breakpoint-up(xl) {
+  @for $i from 1 through 12 {
+    .grid-xl-#{$i} {
+      display: grid;
+      grid-template-columns: repeat($i, 1fr) !important;
+    }
+  }
+}
+
+// Custom xxl breakpoint (kept at 1600px, larger than Bootstrap's 1400px)
+@media (min-width: 1600px) {
   @for $i from 1 through 12 {
     .grid-xxl-#{$i} {
       display: grid;
