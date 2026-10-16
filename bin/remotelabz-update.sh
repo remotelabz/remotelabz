@@ -3,6 +3,10 @@
 #    rm package-lock.json
 #fi;
 cd /opt/remotelabz
+mv /opt/remotelabz/config/packages/messenger.yaml ~/
+git restore /opt/remotelabz/config/packages/messenger.yaml
+mv /opt/remotelabz/config/packages/dev/web_profiler.yaml ~/
+git restore /opt/remotelabz/config/packages/dev/web_profiler.yaml
 git fetch
 WORK_DIR=$(pwd)
 if [ ! -d "lib/network-bundle" ]; then
@@ -31,10 +35,7 @@ else
     git -C "$WORK_DIR/lib/remotelabz-message-bundle" fetch --tags
     git -C "$WORK_DIR/lib/remotelabz-message-bundle" checkout 1.0.9
 fi
-mv /opt/remotelabz/config/packages/messenger.yaml ~/
-git restore /opt/remotelabz/config/packages/messenger.yaml
-mv /opt/remotelabz/config/packages/dev/web_profiler.yaml ~/
-git restore /opt/remotelabz/config/packages/dev/web_profiler.yaml
+
 git pull
 mv ~/messenger.yaml /opt/remotelabz/config/packages/messenger.yaml
 mv ~/web_profiler.yaml /opt/remotelabz/config/packages/dev/web_profiler.yaml
