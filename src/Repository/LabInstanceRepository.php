@@ -39,6 +39,36 @@ class LabInstanceRepository extends ServiceEntityRepository
         ;
     }
 
+    /**
+     * Returns one page of every lab instance (newest first) plus the total row
+     * count.
+     *
+     * Pagination is done at the SQL level (LIMIT/OFFSET) so that only the
+     * requested number of instances is hydrated, instead of loading the whole
+     * table in memory.
+     *
+     * @return array{instances: LabInstance[], total: int}
+     */
+    public function findPageAll(int $page, int $limit): array
+    {
+        $page  = max(1, $page);
+        $limit = max(1, $limit);
+
+        $total = (int) $this->createQueryBuilder('l')
+            ->select('COUNT(l.id)')
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        $instances = $this->createQueryBuilder('l')
+            ->addOrderBy('l.id', 'DESC')
+            ->setFirstResult(($page - 1) * $limit)
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+
+        return ['instances' => $instances, 'total' => $total];
+    }
+
     public function findByGuestAndLab(InvitationCode $guest, Lab $lab)
     {
         return $this->createQueryBuilder('l')

@@ -122,6 +122,7 @@ class InstanceController extends Controller
         // Récupérer les paramètres
         $instanceParams = $request->query->all('instance');
         $searchUuid = $instanceParams['searchUuid'] ?? '';
+        $limit = $this->normalizeLimit($request->query->get('limit', 10));
         
         if ($user->getHighestRole() != "ROLE_USER") {
             $filter = $instanceParams['filter'] ?? 'none';
@@ -147,7 +148,8 @@ class InstanceController extends Controller
             'labInstances' => [], // Tableau vide
             'user' => $user,
             'filter' => $filter,
-            'subFilter' => $subFilter
+            'subFilter' => $subFilter,
+            'limit' => $limit
         ], 'json', SerializationContext::create()->setGroups(['api_get_lab_instance']));
 
         return $this->render('instance/index.html.twig', [
@@ -156,11 +158,23 @@ class InstanceController extends Controller
             'addFilterForm' => $addFilterForm ? $addFilterForm->createView() : "",
             'count' => 0,
             'page' => 1,
-            'limit' => 10,
+            'limit' => $limit,
             'searchUuid' => $searchUuid,
             'filter' => $filter,
             'subFilter' => $subFilter,
         ]);
+    }
+
+    /**
+     * Normalise la valeur "limit" (nombre d'instances par page) reçue en query
+     * string. Seules les valeurs 10, 20 et 50 sont acceptées afin d'éviter
+     * qu'un utilisateur ne force un chargement massif d'instances.
+     */
+    private function normalizeLimit($limit): int
+    {
+        $limit = (int) $limit;
+
+        return in_array($limit, [10, 20, 50], true) ? $limit : 10;
     }
 
     #[Get('/api/instances', name: 'api_get_instances')]
@@ -174,28 +188,32 @@ class InstanceController extends Controller
             $filter = $instance ? $instance['filter'] : "none";
             $subFilter = $instance ? $instance['subFilter'] : "allInstances";
             $searchUuid = $instance ? ($instance['searchUuid'] ?? '') : '';
-            $page = (int)$request->query->get('page', 1);
-            $limit = 10;
+            $page = max(1, (int)$request->query->get('page', 1));
+            $limit = $this->normalizeLimit($request->query->get('limit', 10));
 
-            $this->logger->debug("[InstanceController:apiIndexAction]::filter=$filter, subfilter=$subFilter, searchUuid=$searchUuid");
+            $this->logger->debug("[InstanceController:apiIndexAction]::filter=$filter, subfilter=$subFilter, searchUuid=$searchUuid, page=$page, limit=$limit");
 
             // PRIORITÉ 1 : Si un UUID est fourni, rechercher par UUID
             if (!empty($searchUuid)) {
                 $instances = $this->searchInstancesByUuid($searchUuid);
-                
+
                 if (empty($instances)) {
                     $this->logger->warning("[InstanceController:apiIndexAction]::No instances found for UUID: $searchUuid");
                 } else {
                     $this->logger->info("[InstanceController:apiIndexAction]::Found " . count($instances) . " instance(s) for UUID: $searchUuid");
                 }
-                
-                return $this->json($instances, 200, [], ['api_get_lab_instance']);
+
+                return $this->paginatedJsonResponse($instances, $page, $limit);
             }
 
             // PRIORITÉ 2 : Sinon, utiliser les filtres normaux
             if ($subFilter == "allInstances") {
                 if ($user->isAdministrator()) {
-                    $instances = $this->labInstanceRepository->findAll();
+                    // Pagination au niveau SQL : seules les instances de la page
+                    // demandée sont hydratées.
+                    $result = $this->labInstanceRepository->findPageAll($page, $limit);
+
+                    return $this->jsonWithTotal(array_values($result['instances']), $result['total']);
                 } else {
                     $instances = $this->labInstanceRepository->findByUserAndAllMembersGroups($user);
                 }
@@ -207,19 +225,44 @@ class InstanceController extends Controller
                 }
             }
 
-            $AllLabInstances = [];
-            foreach ($instances as $instance) {
-                array_push($AllLabInstances, $instance);
-            }
+            $this->logger->debug("[InstanceController:apiIndexAction]::Returning page $page (limit $limit) out of " . count($instances) . " instances");
 
-            $count = count($AllLabInstances);
-
-            $this->logger->debug("[InstanceController:apiIndexAction]::Returning JSON with " . count($AllLabInstances) . " instances");
-
-            return $this->json($AllLabInstances, 200, [], ['api_get_lab_instance']);
+            return $this->paginatedJsonResponse($instances, $page, $limit);
         }
         else 
             return $this->json("", 200, [], ['api_get_lab_instance']);
+    }
+
+    /**
+     * Sérialise uniquement la page demandée d'instances et expose le nombre
+     * total d'instances via l'en-tête HTTP `X-Total-Count`.
+     *
+     * La découpe (array_slice) est effectuée AVANT la sérialisation JMS, ce qui
+     * évite de charger/sérialiser toutes les instances en mémoire (source du
+     * "Allowed memory size exhausted" sur les grosses installations).
+     *
+     * @param \App\Entity\LabInstance[] $instances
+     */
+    private function paginatedJsonResponse(array $instances, int $page, int $limit): JsonResponse
+    {
+        $total = count($instances);
+        $pageInstances = array_slice($instances, ($page - 1) * $limit, $limit);
+
+        return $this->jsonWithTotal(array_values($pageInstances), $total);
+    }
+
+    /**
+     * Sérialise la page fournie (déjà découpée) et expose le total via
+     * l'en-tête `X-Total-Count`.
+     *
+     * @param \App\Entity\LabInstance[] $instances
+     */
+    private function jsonWithTotal(array $instances, int $total): JsonResponse
+    {
+        $response = $this->json($instances, 200, [], ['api_get_lab_instance']);
+        $response->headers->set('X-Total-Count', (string) $total);
+
+        return $response;
     }
 
     private function getLabInstances($filter, $subFilter)

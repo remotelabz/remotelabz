@@ -848,14 +848,16 @@ export class RemotelabzAPI {
              * @param {string} subFilter
              * @param {number} page
              * @param {string} searchUuid - UUID to search for (lab, device, or lab instance)
+             * @param {number} limit - Number of instances per page (10, 20 or 50)
              * 
              * @returns {Promise<import('axios').AxiosResponse<Array<LabInstance>>>}
              */
-            getAll(filter="none", subFilter="allInstances", page=1, searchUuid="") {
+            getAll(filter="none", subFilter="allInstances", page=1, searchUuid="", limit=10) {
                 const params = {
                     "instance[filter]": filter, 
                     "instance[subFilter]": subFilter, 
-                    page
+                    page,
+                    limit
                 };
                 
                 // Ajouter le searchUuid seulement s'il est fourni
