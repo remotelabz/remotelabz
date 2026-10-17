@@ -165,7 +165,7 @@ class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
             $this->logger->debug('[LoginFormAuthenticator:onAuthenticationSuccess]::IP stored in login notification: ' . $ip, [
                 'x_forwarded_for' => $request->server->get('HTTP_X_FORWARDED_FOR', 'unknown'),
             ]);
-            $this->loginNotificationService->logLogin($user, $user->getEmail(), $ip, $userAgent, 'form');
+            $this->loginNotificationService->logLogin($user->getEmail(), $user->getFirstName(), $user->getLastName(), $ip, $userAgent, 'form');
             $this->loginNotificationService->sendNotificationEmail($user->getEmail(), $user->getFirstName(), $ip, $userAgent, 'form', new DateTime());
 
             if ($request->query->has('ref_url')) {

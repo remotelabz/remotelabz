@@ -30,8 +30,18 @@
             <label for="log_user">User</label>
             <input type="text" class="form-control" id="log_user" name="user" value="{{ userFilter }}" placeholder="Name or email">
         </div>
-        <button type="submit" class="btn btn-primary me-2">Filter</button>
-        <a href="{{ path('login_logs') }}" class="btn btn-secondary">Last 7 days</a>
+        <div class="form-group me-2">
+            <label for="log_score">IP reputation</label>
+            <select class="form-control" id="log_score" name="score">
+                <option value="" {% if scoreFilter == '' %}selected{% endif %}>All</option>
+                <option value="suspicious" {% if scoreFilter == 'suspicious' %}selected{% endif %}>Suspicious (score ≥ {{ scoreThresholds.suspicious }})</option>
+                <option value="dangerous" {% if scoreFilter == 'dangerous' %}selected{% endif %}>Dangerous (score ≥ {{ scoreThresholds.dangerous }})</option>
+            </select>
+        </div>
+        <div class="mt-3">
+            <button type="submit" class="btn btn-primary me-2">Filter</button>
+            <a href="{{ path('login_logs') }}" class="btn btn-secondary">Last 7 days</a>
+        </div>
     </form>
 
     <p class="text-muted mb-2">
@@ -54,8 +64,8 @@
             <tr>
                 <td><span class="login-log-date" data-timestamp="{{ log.createdAt|date('U') }}">{{ log.createdAt|date('d/m/Y H:i:s') }} UTC</span></td>
                 <td>
-                    {% if log.user %}
-                        {{ log.user.name }}<br>
+                    {% if log.firstName or log.lastName %}
+                        {{ log.firstName }} {{ log.lastName }}<br>
                         <small class="text-muted">{{ log.email }}</small>
                     {% else %}
                         {{ log.email }}

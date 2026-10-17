@@ -173,7 +173,7 @@ public function authenticate(Request $request): Passport
         $this->logger->debug('[CodeLoginAuthenticator:onAuthenticationSuccess]::IP stored in login notification: ' . $ip, [
             'x_forwarded_for' => $request->server->get('HTTP_X_FORWARDED_FOR', 'unknown'),
         ]);
-        $this->loginNotificationService->logLogin(null, $user->getMail(), $ip, $userAgent, 'code');
+        $this->loginNotificationService->logLogin($user->getMail(), null, null, $ip, $userAgent, 'code');
         $this->loginNotificationService->sendNotificationEmail($user->getMail(), null, $ip, $userAgent, 'code', new DateTime());
 
         $response->setTargetUrl($this->router->generate('show_lab_to_guest', ['id'=> $user->getLab()->getId()]));
