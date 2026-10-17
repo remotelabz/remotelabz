@@ -65,7 +65,14 @@ class AuthenticationSuccessHandler implements AuthenticationSuccessHandlerInterf
             $this->logger->debug('[AuthenticationSuccessHandler:onAuthenticationSuccess]::IP stored in login notification: ' . $ip, [
                 'x_forwarded_for' => $request->server->get('HTTP_X_FORWARDED_FOR', 'unknown'),
             ]);
-            $this->loginNotificationService->logLogin($user, $user->getUserIdentifier(), $ip, $userAgent, 'api');
+            $this->loginNotificationService->logLogin(
+                $user->getUserIdentifier(),
+                $user instanceof User ? $user->getFirstName() : null,
+                $user instanceof User ? $user->getLastName() : null,
+                $ip,
+                $userAgent,
+                'api'
+            );
             $this->loginNotificationService->sendNotificationEmail($user->getUserIdentifier(), $user instanceof User ? $user->getFirstName() : null, $ip, $userAgent, 'api', new \DateTime());
         }
 

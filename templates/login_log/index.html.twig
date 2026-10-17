@@ -54,8 +54,8 @@
             <tr>
                 <td><span class="login-log-date" data-timestamp="{{ log.createdAt|date('U') }}">{{ log.createdAt|date('d/m/Y H:i:s') }} UTC</span></td>
                 <td>
-                    {% if log.user %}
-                        {{ log.user.name }}<br>
+                    {% if log.firstName or log.lastName %}
+                        {{ log.firstName }} {{ log.lastName }}<br>
                         <small class="text-muted">{{ log.email }}</small>
                     {% else %}
                         {{ log.email }}

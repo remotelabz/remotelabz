@@ -37,11 +37,12 @@ class LoginNotificationService
         $this->mailSubject = $mailSubject;
     }
 
-    public function logLogin(?User $user, string $email, string $ip, string $userAgent, string $loginType): void
+    public function logLogin(string $email, ?string $firstName, ?string $lastName, string $ip, string $userAgent, string $loginType): void
     {
         $log = new LoginLog();
-        $log->setUser($user);
         $log->setEmail($email);
+        $log->setFirstName($firstName);
+        $log->setLastName($lastName);
         $log->setIp($ip);
         $log->setUserAgent($userAgent);
 
@@ -102,10 +103,10 @@ class LoginNotificationService
     {
         $recentLogs = $this->entityManager->getRepository(LoginLog::class)
             ->createQueryBuilder('l')
-            ->where('l.user = :user')
+            ->where('l.email = :email')
             ->andWhere('l.login_type = :type')
             ->andWhere('l.created_at > :since')
-            ->setParameter('user', $user)
+            ->setParameter('email', $user->getEmail())
             ->setParameter('type', $loginType)
             ->setParameter('since', $since)
             ->setMaxResults(1)

@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\LoginLog;
+use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use SortDirection;
@@ -24,11 +25,10 @@ class LoginLogRepository extends ServiceEntityRepository
 
         if ($userFilter !== '') {
             $queryBuilder
-                ->leftJoin('l.user', 'u')
                 ->andWhere($queryBuilder->expr()->orX(
                     $queryBuilder->expr()->like('LOWER(l.email)', ':userFilter'),
-                    $queryBuilder->expr()->like('LOWER(u.firstName)', ':userFilter'),
-                    $queryBuilder->expr()->like('LOWER(u.lastName)', ':userFilter')
+                    $queryBuilder->expr()->like('LOWER(l.firstName)', ':userFilter'),
+                    $queryBuilder->expr()->like('LOWER(l.lastName)', ':userFilter')
                 ))
                 ->setParameter('userFilter', '%' . mb_strtolower($userFilter) . '%');
         }
@@ -36,11 +36,11 @@ class LoginLogRepository extends ServiceEntityRepository
         return $queryBuilder->orderBy('l.created_at', SortDirection::Descending);
     }
 
-    public function findRecentByUser($user, int $limit = 10): array
+    public function findRecentByUser(User $user, int $limit = 10): array
     {
         return $this->createQueryBuilder('l')
-            ->where('l.user = :user')
-            ->setParameter('user', $user)
+            ->where('l.email = :email')
+            ->setParameter('email', $user->getEmail())
             ->orderBy('l.created_at', SortDirection::Descending)
             ->setMaxResults($limit)
             ->getQuery()
