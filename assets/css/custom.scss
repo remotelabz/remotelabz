@@ -908,8 +908,11 @@ img {
   }
 }
 
+// Height utilities. Must NOT be named .h1-.h6: those collide with Bootstrap's
+// heading classes (.h1-.h6), which react-bootstrap reuses (e.g. <Modal.Title>
+// renders <div class="modal-title h4">). The .hh* prefix avoids the clash.
 @for $i from 1 through 12 {
-  .h#{$i} {
+  .hh#{$i} {
     height: $i + px !important;
   }
 }

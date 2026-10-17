@@ -188,7 +188,7 @@
                                         {% elseif 'ROLE_TEACHER' in user.roles %}
                                             <label class="badge text-bg-info">Teacher</label>
                                         {% elseif 'ROLE_USER' in user.roles %}
-                                            <label class="badge badge-light">Student</label>
+                                            <label class="badge text-bg-light">Student</label>
                                         {% endif %}
                                         {% if not user.enabled %}
                                             <label class="badge text-bg-warning">Blocked</label>
