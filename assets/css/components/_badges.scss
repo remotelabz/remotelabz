@@ -43,6 +43,14 @@
     &.bg-dark {
         color: #fff;
     }
+
+    // Student role badge: a dark chip in light mode, a light chip in dark mode.
+    // Theme-adaptive via CSS (not Twig) because the theme can be switched live,
+    // without reloading the page (only the <html theme> attribute changes).
+    &.badge-role-student {
+        color: #fff;
+        background-color: map-get($theme-colors, danger);
+    }
 }
 
 [theme="dark"] {
@@ -71,6 +79,12 @@
         &.bg-dark {
             background-color: map-get($theme-colors, dark-lightest);
             color: #fff;
+        }
+
+        // Student role badge: flip to a light chip in dark mode.
+        &.badge-role-student {
+            background-color: map-get($theme-colors, light);
+            color: $black;
         }
     }
 }
