@@ -320,7 +320,7 @@ useEffect(() => {
                         <h4 className="mb-0">Instances</h4>
                         <span>Started: { moment(labInstance.createdAt).format("DD/MM/YYYY hh:mm A") }</span>
                         <div className="text-muted small">
-                            {props.lab.uuid}
+                            {labInstance.uuid}
                         </div>
                     </div>
                     <div>

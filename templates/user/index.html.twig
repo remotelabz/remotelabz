@@ -182,13 +182,13 @@
                                             {{- user.name -}}
                                         </a>
                                         {% if 'ROLE_ADMINISTRATOR' in user.roles or 'ROLE_SUPER_ADMINISTRATOR' in user.roles %}
-                                            <label class="badge text-bg-success">Admin</label>
+                                            <label class="badge text-bg-danger">Admin</label>
                                         {% elseif 'ROLE_TEACHER_EDITOR' in user.roles %}
-                                            <label class="badge text-bg-secondary">Editor</label>
+                                            <label class="badge text-bg-warning">Editor</label>
                                         {% elseif 'ROLE_TEACHER' in user.roles %}
-                                            <label class="badge text-bg-info">Teacher</label>
+                                            <label class="badge text-bg-primary">Teacher</label>
                                         {% elseif 'ROLE_USER' in user.roles %}
-                                            <label class="badge badge-light">Student</label>
+                                            <label class="badge text-bg-success">Student</label>
                                         {% endif %}
                                         {% if not user.enabled %}
                                             <label class="badge text-bg-warning">Blocked</label>
