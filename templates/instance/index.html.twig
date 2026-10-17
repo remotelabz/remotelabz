@@ -58,6 +58,9 @@
                         {% endfor %}
                     </select>
 
+                    {# Conserve le nombre d'instances par page lors d'un changement de filtre #}
+                    <input type="hidden" name="limit" id="instance_limit" value="{{ limit }}"/>
+
                     <button id="instance_submit" class="btn-success btn" type="submit" name="{{ field_name(addFilterForm.submit) }}">{{ field_label(addFilterForm.submit) }}</button>
                 </div>
             </div>
@@ -112,6 +115,7 @@
                 <input type="hidden" id="instance_filter" value="none"/>
                 <input type="hidden" id="instance_subFilter" value="allInstances"/>
                 <input type="hidden" id="instance_searchUuid" value=""/>
+                <input type="hidden" id="instance_limit" value="{{ limit }}"/>
             </div>
         {% endif %}
 
