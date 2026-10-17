@@ -76,7 +76,7 @@
         </form>
     </div>
 
-    <div class="lab-cards grid-xs-1 grid-sm-1 grid-md-2 grid-lg-3 grid-xl-3 grid-xxl-4">
+    <div class="lab-cards grid-xs-1 grid-sm-1 grid-md-2 grid-lg-3 grid-xl-4 grid-xxl-5">
         {% for lab in labs %}
 
         {% set shouldDisplay = is_granted('ROLE_ADMINISTRATOR') or not (lab.name|lower matches '/sandbox/i') %}
