@@ -2087,13 +2087,9 @@ $(document).on('click', '.action-nodestart, .action-nodesstart, .action-nodestar
             }
         }
         else if (startAll) {
-            var nodesLenght = Object.keys(nodes).length;
+            nodeLenght = Object.keys(nodes).length;
             addMessage('info', 'Start all...');
-            $.when(recursive_start(nodes, nodesLenght)).done(function () {
-            }).fail(function (message) {
-                addMessage('danger', 'Start all: Error');
-            });
-            
+
              $.each(nodes, function(key, values) {
                 if(values['type'] != "switch") {
              $.when(start(key)).done(function() {
