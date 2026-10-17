@@ -15,7 +15,7 @@ class LoginLogRepository extends ServiceEntityRepository
         parent::__construct($registry, LoginLog::class);
     }
 
-    public function createQueryBuilderForRange(\DateTimeInterface $start, \DateTimeInterface $end, string $userFilter = '')
+    public function createQueryBuilderForRange(\DateTimeInterface $start, \DateTimeInterface $end, string $userFilter = '', ?int $minScore = null)
     {
         $queryBuilder = $this->createQueryBuilder('l')
             ->where('l.created_at >= :start')
@@ -31,6 +31,13 @@ class LoginLogRepository extends ServiceEntityRepository
                     $queryBuilder->expr()->like('LOWER(l.lastName)', ':userFilter')
                 ))
                 ->setParameter('userFilter', '%' . mb_strtolower($userFilter) . '%');
+        }
+
+        if ($minScore !== null) {
+            $queryBuilder
+                ->innerJoin('App\Entity\IpReputation', 'r', 'WITH', 'r.ip = l.ip')
+                ->andWhere('r.abuse_score >= :minScore')
+                ->setParameter('minScore', $minScore);
         }
 
         return $queryBuilder->orderBy('l.created_at', SortDirection::Descending);
