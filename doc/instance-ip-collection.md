@@ -860,6 +860,13 @@ class DeviceInfoMessageHandler
 
         $this->cache->store($uuid, $message->getInfo(), $workerIp);
         $this->cache->release($uuid, $message->getRequestId());
+
+        // Informations recues (interfaces, IP) tracees en debug.
+        $this->logger->debug('[DeviceInfoMessageHandler]::IP recue', [
+            'instance' => $uuid,
+            'workerIp' => $workerIp,
+            'device_info' => $message->getInfo(),
+        ]);
     }
 }
 ```
@@ -1089,6 +1096,23 @@ Forme ajoutée par instance :
 > dans `GET /api/devices/{id}` (appel unique au montage) : l'IP est par instance
 > (§2.2).
 
+### 7.7 Affichage React (ligne du device)
+
+L'IP est affichée sur la ligne de chaque device, sous l'UUID, dans le même style
+que les autres informations atténuées (`text-muted small`), avec une info-bulle
+listant toutes les adresses (`ips`, IPv4 puis IPv6) :
+
+- `assets/js/components/Instances/InstanceListItem.js` (page « Instances » du
+  lab, rafraîchie toutes les 10 s par `InstanceManager`) : div `IP: x` alimenté
+  par `instance.ip` ;
+- `assets/js/components/Instances/OptimizedInstanceList.js` (modal « Details »
+  de la liste de toutes les instances, rafraîchie toutes les 5 s) : même div
+  alimenté par `deviceInstance.ip`.
+
+Le div n'apparaît que lorsque l'IP est connue (worker ayant répondu) : au
+démarrage d'une VM, il s'affiche tout seul au rafraîchissement suivant, sans
+placeholder « en attente ».
+
 ---
 
 ## 8. Format de donnée échangé
@@ -1138,6 +1162,8 @@ Valeur stockée en Redis (`device_info.<uuid>`) :
    le worker.
 6. Sur `stopped`/`deleted`/`error` : `forget(uuid)` ; sur `start` :
    `forget(uuid)` → recollecte dans la minute.
+7. L'UI (pages instances / modal « Details ») affiche l'IP au rafraîchissement
+   suivant (5-10 s), sans requête supplémentaire vers le worker.
 
 ---
 
@@ -1195,6 +1221,9 @@ Valeur stockée en Redis (`device_info.<uuid>`) :
 - [x] `bin/systemd/remotelabz-instance-ips.{service,timer}` (créer) + `bin/systemd/README.md` + `lib/remotelabz/Installer.php`
 - [x] `src/Controller/DeviceController.php` : `ips`/`ip` dans `indexActionTest()` (+ `showActionTest()`)
 - [x] `src/EventListener/DeviceInstanceSerializationListener.php` (créer, `post_serialize`)
+- [x] `assets/js/components/Instances/InstanceListItem.js` : div `IP:` sur la ligne du device
+- [x] `assets/js/components/Instances/OptimizedInstanceList.js` : idem dans le modal « Details »
+- [x] `src/MessageHandler/DeviceInfoMessageHandler.php` : log debug des informations reçues (`device_info`)
 - [x] `.env` : `INSTANCE_IP_MAX_AGE=600`
 - [x] `doc/` : ce document, `doc/messenger-rabbitmq.md` (nouveaux messages)
 - [x] `tests/Service/IpSerializationTest.php` (créer)
@@ -1208,7 +1237,8 @@ Valeur stockée en Redis (`device_info.<uuid>`) :
 ## 12. Points d'attention / limites
 
 1. **Agent non démarré au moment du `STARTED`** : l'IP arrive via le tick suivant
-   (≤ 1 min) ou via le repli ARP ; prévoir un libellé UI « IP : en attente ».
+   (≤ 1 min) ou via le repli ARP ; le div `IP:` de l'UI n'apparaît qu'à ce
+   moment-là (pas de placeholder « en attente »).
 2. **Images sans `qemu-guest-agent`** : IP `null` → repli ARP/bail ou installation
    de l'agent dans les images de référence.
 3. **VM déjà lancées** au moment du déploiement : pas de canal QGA avant

@@ -49,6 +49,7 @@ class DeviceInfoMessageHandler
         $this->logger->debug('[DeviceInfoMessageHandler]::IP recue', [
             'instance' => $uuid,
             'workerIp' => $workerIp,
+            'device_info' => $message->getInfo()
         ]);
     }
 }

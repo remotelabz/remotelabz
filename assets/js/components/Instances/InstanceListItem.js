@@ -13,6 +13,16 @@ import { fetchDeviceLogs, startLogsPolling, stopLogsPolling, formatLogEntry, get
 import DeviceLogs from './DeviceLogs';
 import IsoSelector from './IsoSelector';
 
+// Toutes les adresses connues de l'instance (IPv4 puis IPv6), pour l'info-bulle.
+function formatInstanceIps(instance) {
+    if (!Array.isArray(instance.ips)) {
+        return '';
+    }
+    return instance.ips
+        .reduce((addresses, iface) => addresses.concat(iface.ipv4 || [], iface.ipv6 || []), [])
+        .join('\n');
+}
+
 const api = API.getInstance();
 
 function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, showControls, onStateUpdate, isSandbox, lab, user, allInstancesPage }) {
@@ -431,6 +441,11 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
                         <div className="text-muted small">
                             {instance.uuid}
                         </div>
+                        {instance.ip && (
+                            <div className="text-muted small" title={formatInstanceIps(instance)}>
+                                IP: {instance.ip}
+                            </div>
+                        )}
                     </div>
 
                     <div className="d-flex align-items-center">

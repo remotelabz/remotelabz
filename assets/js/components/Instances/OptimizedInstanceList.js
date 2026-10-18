@@ -10,6 +10,16 @@ import InstanceStateBadge from './InstanceStateBadge';
 import { fetchDeviceLogs, startLogsPolling, stopLogsPolling, formatLogEntry, getLastLogs } from './deviceLogsHelpers';
 import DeviceLogs from './DeviceLogs';
 
+// Toutes les adresses connues de l'instance (IPv4 puis IPv6), pour l'info-bulle.
+function formatInstanceIps(instance) {
+  if (!Array.isArray(instance.ips)) {
+    return '';
+  }
+  return instance.ips
+    .reduce((addresses, iface) => addresses.concat(iface.ipv4 || [], iface.ipv6 || []), [])
+    .join('\n');
+}
+
 const VirtualizedInstanceRow = React.memo((props) => {
   const { 
     index, 
@@ -445,6 +455,11 @@ const DetailsModal = ({ selectedInstance, onClose, sharedStates, onStateUpdate, 
                             <small style={{ color: '#6c757d', display: 'block' }}> 
                               {deviceInstance.uuid}
                             </small>
+                            {deviceInstance.ip && (
+                              <div className="text-muted small" title={formatInstanceIps(deviceInstance)}>
+                                IP: {deviceInstance.ip}
+                              </div>
+                            )}
                           </div>
 
                           {/* Right side: Action buttons */}
