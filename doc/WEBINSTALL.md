@@ -32,10 +32,9 @@ Open a browser and go to http://ip:port
 
 ## Troubleshooting
 
-Only the installation work for now.
+Auto install is the only installation method that works
 
 ## TODO
 
 - Custom installation
-- English translation
 - show important info at the end of the install

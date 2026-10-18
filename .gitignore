@@ -62,3 +62,11 @@ vagrant/provision_prod.sh
 /lib/network-bundle
 config/system/keys/myremotelabzfront
 config/system/keys/myremotelabzfront.pub
+
+# Playwright
+node_modules/
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
