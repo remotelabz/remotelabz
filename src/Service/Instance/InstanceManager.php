@@ -23,6 +23,7 @@ use Remotelabz\Message\Message\InstanceActionMessage;
 use Remotelabz\Message\Message\InstanceStateMessage;
 use Remotelabz\Message\Message\LabLaunchRequestMessage;
 use App\Service\Worker\LabPlacementCache;
+use App\Service\Instance\DeviceInfoCache;
 use App\Repository\DeviceRepository;
 use App\Repository\TextObjectRepository;
 use App\Repository\PictureRepository;
@@ -96,6 +97,7 @@ class InstanceManager
     protected $tokenStorage;
     protected $singleServer = true;
     protected SharedLabSecurityManager $securityManager;
+    protected DeviceInfoCache $deviceInfoCache;
 
     public function __construct(
         LoggerInterface $logger,
@@ -123,7 +125,8 @@ class InstanceManager
         BannerManager $bannerManager,
         TokenStorageInterface $tokenStorage,
         LabPlacementCache $placementCache,
-        SharedLabSecurityManager $securityManager
+        SharedLabSecurityManager $securityManager,
+        DeviceInfoCache $deviceInfoCache
     ) {
         $this->bus = $bus;
         $this->logger = $logger;
@@ -151,6 +154,7 @@ class InstanceManager
         $this->singleServer = $singleServer;
         $this->placementCache = $placementCache;
         $this->securityManager = $securityManager;
+        $this->deviceInfoCache = $deviceInfoCache;
     }
 
     /**
@@ -356,6 +360,9 @@ class InstanceManager
                 }
 
                 $deviceInstance->setState(InstanceState::STARTING);
+                // Une instance qui (re)demarre change d'IP : on oublie l'ancienne
+                // immediatement, la collecte la repeuplera apres le demarrage.
+                $this->deviceInfoCache->forget($uuid);
                 $this->entityManager->flush();
 
                 $context = SerializationContext::create()->setGroups($this->workerSerializationGroups);           

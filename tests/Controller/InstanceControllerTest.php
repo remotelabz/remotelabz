@@ -5,9 +5,8 @@ namespace App\Tests\Controller;
 use App\Entity\Lab;
 use App\Entity\User;
 use App\Entity\LabInstance;
-use Psr\Log\LoggerInterface;
-use App\Entity\DeviceInstance;
 use App\Instance\InstanceState;
+use App\Service\Worker\WorkerManager;
 use Remotelabz\Message\Message\InstanceStateMessage;
 use Doctrine\ORM\EntityManagerInterface;
 use App\MessageHandler\InstanceStateMessageHandler;
@@ -15,10 +14,10 @@ use App\MessageHandler\InstanceStateMessageHandler;
 class InstanceControllerTest extends AuthenticatedWebTestCase
 {
     /** @var string */
-    private $labUuid;
-
-    /** @var string */
     private $userUuid;
+
+    /** @var Lab|null */
+    private $lab;
 
     /** @var EntityManagerInterface */
     private $entityManager;
@@ -26,52 +25,69 @@ class InstanceControllerTest extends AuthenticatedWebTestCase
     /** @var InstanceStateMessageHandler */
     private $handler;
 
-    /** @var LoggerInterface */
-    private $logger;
-
     public function setUp(): void
     {
         parent::setUp();
-        $this->entityManager = static::bootKernel()->getContainer()->get('doctrine')->getManager();
+        $this->entityManager = static::getContainer()->get('doctrine')->getManager();
 
-        /** @var LoggerInterface */
-        $this->logger = $this->getMockBuilder(LoggerInterface::class)
-            ->disableOriginalConstructor()
-            ->getMock();
+        // Le handler est recupere depuis le conteneur : sa liste d'arguments a
+        // beaucoup evolue, la construire a la main dans le test n'est pas fiable.
+        $this->handler = static::getContainer()->get(InstanceStateMessageHandler::class);
+    }
 
-        $this->handler = new InstanceStateMessageHandler(
-            $this->entityManager->getRepository(DeviceInstance::class),
-            $this->entityManager->getRepository(LabInstance::class),
-            $this->entityManager,
-            $this->logger
-        );
+    public function tearDown(): void
+    {
+        // Lab dedie au test : on le supprime meme si le test a echoue en cours
+        // de route. Les LabInstance partent d'abord (pas de cascade depuis Lab).
+        if (null !== $this->lab) {
+            $em = static::getContainer()->get('doctrine')->getManager();
+
+            foreach ($em->getRepository(LabInstance::class)->findBy(['lab' => $this->lab->getId()]) as $labInstance) {
+                $em->remove($labInstance);
+            }
+
+            $lab = $em->getRepository(Lab::class)->find($this->lab->getId());
+            if (null !== $lab) {
+                $em->remove($lab);
+            }
+            $em->flush();
+
+            $this->lab = null;
+        }
+
+        parent::tearDown();
     }
 
     public function testCreateLabInstance()
     {
+        // Test de bout en bout : sans worker declare disponible,
+        // InstanceManager::create() refuse la creation (400).
+        if (!static::getContainer()->get(WorkerManager::class)->hasAvailableWorker()) {
+            $this->markTestSkipped('No worker flagged as available: skipping the instance lifecycle smoke test.');
+        }
+
         /** @var User */
         $user = $this->entityManager
             ->getRepository(User::class)
-            ->find(1);
+            ->findOneBy(['email' => 'root@localhost']);
 
         $this->assertInstanceOf(User::class, $user);
 
         $this->userUuid = $user->getUuid();
 
-        /** @var Lab */
-        $lab = $this->entityManager
-            ->getRepository(Lab::class)
-            ->find(1);
-
-        $this->assertInstanceOf(Lab::class, $lab);
-
-        $this->labUuid = $lab->getUuid();
+        // La base ne contient pas forcement de lab "id 1" : on cree un lab
+        // jetable dont l'auteur est l'utilisateur connecte (droit "see").
+        $this->lab = (new Lab())
+            ->setName('Instance Controller Test Lab')
+            ->setAuthor($user);
+        $this->entityManager->persist($this->lab);
+        $this->entityManager->flush();
 
         $this->client->request(
             'POST',
             '/api/instances/create',
             [
-                'lab' => $this->labUuid,
+                'lab' => $this->lab->getUuid(),
                 'instancier' => $this->userUuid,
                 'instancierType' => 'user',
             ]
