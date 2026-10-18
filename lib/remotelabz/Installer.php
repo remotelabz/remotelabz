@@ -206,6 +206,8 @@ class Installer
             $this->configureRouteMonitorTimerService();
             $this->configureCleanNotificationService();
             $this->configureCleanNotificationTimerService();
+            $this->configureInstanceIpsService();
+            $this->configureInstanceIpsTimerService();
             $this->configureGitVersionService();
             $this->configureGitVersionTimerService();
             echo "OK ✔️\n";
@@ -284,7 +286,8 @@ class Installer
             'remotelabz-proxy',
             'remotelabz-clean-notification.timer',
             'remotelabz-route-monitor.timer',
-            'remotelabz-route-monitor.service'
+            'remotelabz-route-monitor.service',
+            'remotelabz-instance-ips.timer'
         ];
 
         foreach ($services as $service) {
@@ -563,6 +566,30 @@ class Installer
         $returnCode = symlink($this->installPath . '/bin/systemd/remotelabz-route-monitor.timer', '/etc/systemd/system/remotelabz-route-monitor.timer');
         if (!$returnCode) {
             throw new Exception("Could not symlink route monitor timer service.");
+        }
+    }
+
+    private function configureInstanceIpsService()
+    {
+        chdir($this->installPath);
+        if (file_exists('/etc/systemd/system/remotelabz-instance-ips.service')) {
+            unlink('/etc/systemd/system/remotelabz-instance-ips.service');
+        }
+        $returnCode = symlink($this->installPath . '/bin/systemd/remotelabz-instance-ips.service', '/etc/systemd/system/remotelabz-instance-ips.service');
+        if (!$returnCode) {
+            throw new Exception("Could not symlink instance ips service.");
+        }
+    }
+
+    private function configureInstanceIpsTimerService()
+    {
+        chdir($this->installPath);
+        if (file_exists('/etc/systemd/system/remotelabz-instance-ips.timer')) {
+            unlink('/etc/systemd/system/remotelabz-instance-ips.timer');
+        }
+        $returnCode = symlink($this->installPath . '/bin/systemd/remotelabz-instance-ips.timer', '/etc/systemd/system/remotelabz-instance-ips.timer');
+        if (!$returnCode) {
+            throw new Exception("Could not symlink instance ips timer service.");
         }
     }
 

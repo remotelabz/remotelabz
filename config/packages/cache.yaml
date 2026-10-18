@@ -21,3 +21,5 @@ framework:
         pools:
             lab_placement:
                 adapter: cache.adapter.redis
+            device_info:
+                adapter: cache.adapter.redis

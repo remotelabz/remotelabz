@@ -1,0 +1,14 @@
+[Unit]
+Description=RemoteLabz Collect Instance IPs Timer
+Requires=remotelabz-instance-ips.service
+
+[Timer]
+# Toutes les minutes : la première IP est disponible moins d'une minute après
+# un démarrage. Le cache (INSTANCE_IP_MAX_AGE, 10 min par défaut) évite de
+# redemander l'IP à chaque passage.
+OnBootSec=2min
+OnUnitActiveSec=1min
+Unit=remotelabz-instance-ips.service
+
+[Install]
+WantedBy=timers.target

@@ -99,6 +99,27 @@ class DeviceInstanceRepository extends ServiceEntityRepository
     }
 
     /**
+     * Device instances in "started" state whose lab instance is placed on a
+     * worker (device_info collection target).
+     *
+     * Only virtualizable devices are relevant: an instance running on a worker
+     * always has a worker_ip, which excludes physical devices and instances
+     * still waiting for their placement.
+     *
+     * @return DeviceInstance[]
+     */
+    public function findStartedWithWorker(): array
+    {
+        return $this->createQueryBuilder('di')
+            ->innerJoin('di.labInstance', 'li')
+            ->andWhere('di.state = :state')
+            ->andWhere('li.workerIp IS NOT NULL')
+            ->setParameter('state', 'started')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
      * Device instances stuck in "starting" since (at least) the given threshold.
      * Rows with a NULL state_changed_at (predating the column) are included:
      * they have been in "starting" for as long as we know.

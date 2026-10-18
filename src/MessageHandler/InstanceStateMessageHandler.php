@@ -14,6 +14,7 @@ use App\Repository\DeviceRepository;
 use App\Repository\UserRepository;
 use App\Repository\OperatingSystemRepository;
 use App\Service\Instance\InstanceManager;
+use App\Service\Instance\DeviceInfoCache;
 use App\Service\SharedLabSecurityManager;
 use App\Service\Worker\LabPlacementCache;
 use App\Controller\OperatingSystemController;
@@ -41,6 +42,7 @@ class InstanceStateMessageHandler
     private UserRepository $userRepository;
     private LabPlacementCache $placementCache;
     private SharedLabSecurityManager $securityManager;
+    private DeviceInfoCache $deviceInfoCache;
 
     public function __construct(
         DeviceInstanceRepository $deviceInstanceRepository,
@@ -55,7 +57,8 @@ class InstanceStateMessageHandler
         ManagerRegistry $managerRegistry,
         UserRepository $userRepository,
         LabPlacementCache $placementCache,
-        SharedLabSecurityManager $securityManager
+        SharedLabSecurityManager $securityManager,
+        DeviceInfoCache $deviceInfoCache
     ) {
         $this->deviceInstanceRepository = $deviceInstanceRepository;
         $this->labInstanceRepository = $labInstanceRepository;
@@ -70,6 +73,7 @@ class InstanceStateMessageHandler
         $this->userRepository = $userRepository;
         $this->placementCache = $placementCache;
         $this->securityManager = $securityManager;
+        $this->deviceInfoCache = $deviceInfoCache;
     }
 
     /**
@@ -223,6 +227,22 @@ class InstanceStateMessageHandler
             if (!is_null($instance)) {
                 $userIds = $this->getUserIdFromInstance($instance);
                 $this->logger->debug("[InstanceStateMessageHandler:__invoke]::User id of the instance is ",$userIds);
+            }
+
+            // L'IP mise en cache n'est plus fiable des que l'instance n'est plus
+            // en marche : on l'oublie (arret, suppression, erreur, redemarrage).
+            if ($instance instanceof DeviceInstance
+                && in_array($message->getState(), [
+                    InstanceStateMessage::STATE_STOPPED,
+                    InstanceStateMessage::STATE_DELETED,
+                    InstanceStateMessage::STATE_ERROR,
+                    InstanceStateMessage::STATE_STARTING,
+                    InstanceStateMessage::STATE_STOPPING,
+                    InstanceStateMessage::STATE_RESET,
+                    InstanceStateMessage::STATE_RESETTING,
+                ], true)
+            ) {
+                $this->deviceInfoCache->forget($instance->getUuid());
             }
 
             // The lab instance reached its final state on the worker: stop reserving
@@ -461,7 +481,11 @@ class InstanceStateMessageHandler
                     break;
 
                     case InstanceStateMessage::STATE_DELETED:                
-                        if ($message->getType() === InstanceStateMessage::TYPE_LAB) {
+                        // L'instance peut avoir deja ete supprimee de la base
+                        // (suppression directe quand aucun worker n'a ete
+                        // assigne) : dans ce cas, le message DELETED du worker
+                        // n'a plus rien a finaliser.
+                        if ($message->getType() === InstanceStateMessage::TYPE_LAB && !is_null($instance)) {
                             $this->logger->debug("[InstanceStateMessageHandler:__invoke]::\"Deleted\" Instance state message is type Lab");
                             $lab=$instance->getLab();
                             $group=$instance->getGroup();

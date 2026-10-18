@@ -9,6 +9,7 @@
 > `src/MessageHandler` (front) et `src/MessageHandler` (worker).
 >
 > Compléments : `README-LabPlacement.md`, `doc/start-resync-state-started.md`,
+> `doc/instance-ip-collection.md` (collecte d'IP),
 > `lib/remotelabz-message-bundle/shared-labs-message-bundle-plan.md`.
 
 ## 1. Vue d'ensemble
@@ -21,25 +22,31 @@ uniquement par messages asynchrones, jamais en HTTP :
   ──────────────────                    ────────                     ───────────────────────────
 
   dispatch InstanceActionMessage ─┐
-  dispatch SecurityMessage ───────┴─► exchange « worker » (direct) ──► queue messages_worker1
+  dispatch SecurityMessage ───────┤
+  dispatch DeviceInfoRequestMessage
+                                  └─► exchange « worker » (direct) ──► queue messages_worker1
                                       routing key = IP du worker         │
                                                                          └─► messenger:consume worker
                                                                              ├─ InstanceActionMessageHandler
-                                                                             └─ SecurityMessageHandler
+                                                                             ├─ SecurityMessageHandler
+                                                                             └─ DeviceInfoRequestMessageHandler
 
   messenger:consume front
   ├─ InstanceStateMessageHandler  ◄── exchange « front » (fanout) ◄──── dispatch InstanceStateMessage
   ├─ InstanceLogMessageHandler    ◄── queue messages_front ◄─────────── dispatch InstanceLogMessage
   ├─ WorkerHandshakeMessageHandler◄──────────────────────────────────── dispatch WorkerHandshakeMessage
+  ├─ DeviceInfoMessageHandler     ◄──────────────────────────────────── dispatch DeviceInfoMessage
   └─ LabLaunchRequestMessageHandler
        (file « front » alimentée par le front lui-même)
 ```
 
-- **Front → worker** : `InstanceActionMessage` (ordres : créer/supprimer/démarrer…)
-  et `SecurityMessage` (topologie des labs partagés).
+- **Front → worker** : `InstanceActionMessage` (ordres : créer/supprimer/démarrer…),
+  `SecurityMessage` (topologie des labs partagés) et `DeviceInfoRequestMessage`
+  (demande d'IP d'une instance).
 - **Worker → front** : `InstanceStateMessage` (changements d'état),
-  `InstanceLogMessage` (logs d'instance) et `WorkerHandshakeMessage`
-  (démarrage du consumer worker).
+  `InstanceLogMessage` (logs d'instance), `WorkerHandshakeMessage`
+  (démarrage du consumer worker) et `DeviceInfoMessage` (réponse à une demande
+  d'IP).
 - **Front → front** : `LabLaunchRequestMessage` (placement d'un lab, volontairement
   sérialisé dans une file pour éviter les courses entre créations simultanées).
 
@@ -140,6 +147,8 @@ framework:
             Remotelabz\Message\Message\InstanceActionMessage: worker
             Remotelabz\Message\Message\InstanceStateMessage: front
             Remotelabz\Message\Message\LabLaunchRequestMessage: front
+            Remotelabz\Message\Message\DeviceInfoRequestMessage: worker
+            Remotelabz\Message\Message\DeviceInfoMessage: front
 ```
 
 ### 4.2 Worker — `config/packages/messenger.yaml`
@@ -164,6 +173,7 @@ framework:
             Remotelabz\Message\Message\InstanceLogMessage: front
             Remotelabz\Message\Message\InstanceStateMessage: front
             Remotelabz\Message\Message\WorkerHandshakeMessage: front
+            Remotelabz\Message\Message\DeviceInfoMessage: front
 ```
 
 ### 4.3 Routage
@@ -179,6 +189,8 @@ l'exchange où publier. La réception dépend uniquement de la queue consommée 
 | `InstanceLogMessage` | — | `front` | `messages_front` |
 | `WorkerHandshakeMessage` | — | `front` | `messages_front` |
 | `LabLaunchRequestMessage` | `front` | — | `messages_front` |
+| `DeviceInfoRequestMessage` | `worker` | — | `messages_worker1` |
+| `DeviceInfoMessage` | `front` | `front` | `messages_front` |
 
 ### 4.4 Retries
 
@@ -207,6 +219,8 @@ Doctrine. C'est le contrat partagé entre le front et le worker.
 | `InstanceLogMessage` | worker → front | `content`, `uuid`, `type`, `scope` | worker : `LogDispatcher` | front : `InstanceLogMessageHandler` |
 | `WorkerHandshakeMessage` | worker → front | `id` (IP du worker) | worker : `WorkerStartedEventSubscriber` | front : `WorkerHandshakeMessageHandler` |
 | `LabLaunchRequestMessage` | front → front | `labInstanceUuid`, `autoStartDevices` | `InstanceManager::create()` | front : `LabLaunchRequestMessageHandler` |
+| `DeviceInfoRequestMessage` | front → worker | `content` (JSON du lab, groupe `worker`), `uuid`, `requestId` | `CollectInstanceIpsCommand` | worker : `DeviceInfoRequestMessageHandler` |
+| `DeviceInfoMessage` | worker → front | `uuid`, `requestId`, `info` (`ips`, `collectedAt`), `error` | worker : `DeviceInfoRequestMessageHandler` | front : `DeviceInfoMessageHandler` |
 
 ### 5.1 `InstanceActionMessage` — ordres envoyés au worker
 
@@ -319,6 +333,32 @@ worker, pose la route IP, puis émet les `InstanceActionMessage`
 (`create`, éventuellement `start` des devices et `connect` Internet) et les
 `SecurityMessage`.
 
+### 5.7 `DeviceInfoRequestMessage` / `DeviceInfoMessage` — collecte de l'IP d'une instance
+
+Couple requête/réponse pour récupérer l'IP réelle d'une `DeviceInstance` (VM
+QEMU ou conteneur LXC), connue du seul worker qui l'héberge. L'IP n'est **pas
+persistée en base** : elle transite par messages puis est mise en cache Redis
+côté front. Voir `doc/instance-ip-collection.md` pour le plan complet.
+
+| Champ | `DeviceInfoRequestMessage` | `DeviceInfoMessage` |
+|---|---|---|
+| `content` | JSON du `LabInstance` (sérialisation JMS, groupe `worker`), identique à `ACTION_START` : la demande est auto-portante, le worker ne conserve aucun état | — |
+| `uuid` | UUID de la `DeviceInstance` concernée | UUID de la `DeviceInstance` concernée |
+| `requestId` | identifiant de corrélation généré par le front | identifiant renvoyé tel quel (libère le verrou anti-spam) |
+| `info` | — | `['ips' => [['name', 'mac', 'ipv4' => [], 'ipv6' => []], …], 'collectedAt' => int]` |
+| `error` | — | `null` en succès, message d'erreur sinon |
+
+Résolution côté worker (`DeviceIpResolver`) : `lxc-info -n <uuid> -iH` pour un
+conteneur LXC ; pour une VM QEMU, qemu-guest-agent en priorité
+(`guest-network-get-interfaces`), puis repli sur la table ARP du pont (par MAC)
+ou les baux DHCP Kea. Le handler **répond toujours**, y compris en erreur, sinon
+le verrou anti-spam du front expire sans réponse.
+
+Déclenchement : le timer front `remotelabz-instance-ips.timer` exécute
+`app:instance:collect-ips` toutes les minutes ; une entrée n'est redemandée que
+si elle est absente ou périmée (`INSTANCE_IP_MAX_AGE`, 600 s par défaut), avec un
+verrou anti-spam de 10 s par instance.
+
 ## 6. Scénarios de bout en bout
 
 ### 6.1 Création d'un lab par un utilisateur
@@ -364,6 +404,24 @@ Toute modification (règle de partage, démarrage/arrêt d'instance…) →
 `SharedLabSecurityManager::syncGroup()` → un `SecurityMessage` par worker et par
 groupe → le worker reconstruit ses règles iptables/routes sur l'union des
 groupes.
+
+### 6.6 Collecte de l'IP d'une instance
+
+1. Le timer front `remotelabz-instance-ips.timer` exécute
+   `app:instance:collect-ips` (toutes les minutes).
+2. La commande parcourt les device instances `started` placées sur un worker ;
+   pour chaque entrée absente ou périmée (`INSTANCE_IP_MAX_AGE`), elle pose un
+   verrou anti-spam (Redis) puis `dispatch(DeviceInfoRequestMessage)` avec
+   `AmqpStamp(<IP worker>)`.
+3. **Worker** : `DeviceInfoRequestMessageHandler` résout l'IP (`DeviceIpResolver`)
+   et `dispatch(DeviceInfoMessage)` — **toujours**, même en erreur.
+4. **Front** : `DeviceInfoMessageHandler` (consumer `front`) écrit
+   `device_info.<uuid>` dans Redis et libère le verrou.
+5. Le front expose l'IP : champ `ip`/`ips` des réponses de polling
+   (`DeviceController`) et listener JMS `post_serialize` sur `DeviceInstance`
+   pour les réponses `api_get_lab_instance`.
+6. À l'arrêt, à la suppression, sur erreur ou au (re)démarrage, l'entrée est
+   supprimée (`DeviceInfoCache::forget()`) : une IP périmée n'est jamais servie.
 
 ## 7. Exploitation et dépannage
 

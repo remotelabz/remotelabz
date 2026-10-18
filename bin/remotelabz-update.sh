@@ -27,13 +27,13 @@ if [ ! -d "lib/remotelabz-message-bundle" ]; then
     echo "Clonage de remotelabz-message-bundle"
     git clone https://github.com/remotelabz/remotelabz-message-bundle "$WORK_DIR/lib/remotelabz-message-bundle"
     git -C "$WORK_DIR/lib/remotelabz-message-bundle" fetch --tags
-    git -C "$WORK_DIR/lib/remotelabz-message-bundle" checkout 1.0.9
+    git -C "$WORK_DIR/lib/remotelabz-message-bundle" checkout 1.0.10
     git config --global --add safe.directory "$WORK_DIR/lib/remotelabz-message-bundle"
 else
     echo "lib/remotelabz-message-bundle existe déjà, mise à jour."
     git config --global --add safe.directory "$WORK_DIR/lib/remotelabz-message-bundle"
     git -C "$WORK_DIR/lib/remotelabz-message-bundle" fetch --tags
-    git -C "$WORK_DIR/lib/remotelabz-message-bundle" checkout 1.0.9
+    git -C "$WORK_DIR/lib/remotelabz-message-bundle" checkout 1.0.10
 fi
 
 git pull
@@ -48,6 +48,16 @@ if ! grep -q 'SecurityMessage: worker' "$MESSAGER_CFG"; then
 fi
 if ! grep -q 'SecurityMessage: worker' "$MESSAGER_CFG"; then
     echo "ATTENTION: routage SecurityMessage absent de $MESSAGER_CFG, a ajouter manuellement sous \"routing:\""
+fi
+# Idem pour la collecte d'IP d'instance (requete front -> worker, reponse worker -> front).
+if ! grep -qE 'DeviceInfoRequestMessage.{0,2}: +worker' "$MESSAGER_CFG"; then
+    sed -i '/^[[:space:]]*routing:$/a\            Remotelabz\\Message\\Message\\DeviceInfoRequestMessage: worker' "$MESSAGER_CFG"
+fi
+if ! grep -qE 'DeviceInfoMessage.{0,2}: +front' "$MESSAGER_CFG"; then
+    sed -i '/^[[:space:]]*routing:$/a\            Remotelabz\\Message\\Message\\DeviceInfoMessage: front' "$MESSAGER_CFG"
+fi
+if ! grep -qE 'DeviceInfoRequestMessage.{0,2}: +worker' "$MESSAGER_CFG"; then
+    echo "ATTENTION: routage DeviceInfoRequestMessage absent de $MESSAGER_CFG, a ajouter manuellement sous \"routing:\""
 fi
 composer update
 yarn exec update-browserslist-db

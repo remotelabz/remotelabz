@@ -54,6 +54,10 @@ parameters:
     app.general.maintenance: '%env(bool:APP_MAINTENANCE)%'
     app.general.single_srv: '%env(bool:DEPLOY_SINGLE_SERVER)%'
 
+    # Peremption (secondes) d'une entree du cache d'IP d'instance : au-dela,
+    # app:instance:collect-ips redemande l'IP au worker (defaut : 10 min).
+    app.instance_ip.max_age: '%env(int:INSTANCE_IP_MAX_AGE)%'
+
     app.shibboleth.enable: '%env(resolve:ENABLE_SHIBBOLETH)%'
 
     app.network.base_network: '%env(resolve:BASE_NETWORK)%'
@@ -205,6 +209,10 @@ services:
     App\EventListener\LabSerializationListener:
         tags:
             - { name: jms_serializer.event_subscriber }
+
+    App\EventListener\DeviceInstanceSerializationListener:
+        tags:
+            - { name: jms_serializer.event_subscriber }
     
     GuzzleHttp\Client: ~
 
@@ -277,6 +285,15 @@ services:
         arguments:
             $pool: '@lab_placement'
             $logger: '@logger'
+
+    App\Service\Instance\DeviceInfoCache:
+        arguments:
+            $pool: '@device_info'
+            $logger: '@logger'
+
+    App\Command\CollectInstanceIpsCommand:
+        arguments:
+            $deviceInfoMaxAge: '%app.instance_ip.max_age%'
 
     App\Service\ChatService:
         arguments:

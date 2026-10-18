@@ -55,6 +55,7 @@ use Symfony\Component\Yaml\Yaml;
 use function Symfony\Component\String\u;
 use JMS\Serializer\SerializationContext;
 use App\Service\DirectoryService;
+use App\Service\Instance\DeviceInfoCache;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Common\Collections\Order;
@@ -78,6 +79,7 @@ class DeviceController extends Controller
     private IsoRepository $isoRepository;
     private FlavorDiskRepository $flavorDiskRepository;   
     private PaginatorInterface $paginator;
+    private DeviceInfoCache $deviceInfoCache;
 
     /** @var LoggerInterface $logger */
     private $logger;
@@ -98,7 +100,8 @@ class DeviceController extends Controller
         EntityManagerInterface $entityManager,
         IsoRepository $isoRepository,
         FlavorDiskRepository $flavorDiskRepository,
-        PaginatorInterface $paginator)
+        PaginatorInterface $paginator,
+        DeviceInfoCache $deviceInfoCache)
     {
         $this->deviceRepository = $deviceRepository;
         $this->deviceInstanceRepository = $deviceInstanceRepository;
@@ -116,6 +119,7 @@ class DeviceController extends Controller
         $this->isoRepository = $isoRepository;
         $this->flavorDiskRepository = $flavorDiskRepository;
         $this->paginator = $paginator;
+        $this->deviceInfoCache = $deviceInfoCache;
     }
 
     
@@ -239,6 +243,28 @@ class DeviceController extends Controller
         return $this->redirect($directoryService->getReturnTo($request, $this->generateUrl('devices')));
     }
 
+    /**
+     * Premiere adresse IPv4 des interfaces renvoyees par le worker (repli
+     * IPv6), ou null si aucune adresse n'est encore connue.
+     *
+     * @param array<int, array{name?: string, mac?: ?string, ipv4?: string[], ipv6?: string[]}> $interfaces
+     */
+    private function firstIp(array $interfaces): ?string
+    {
+        foreach ($interfaces as $interface) {
+            if (is_array($interface) && !empty($interface['ipv4'][0])) {
+                return $interface['ipv4'][0];
+            }
+        }
+        foreach ($interfaces as $interface) {
+            if (is_array($interface) && !empty($interface['ipv6'][0])) {
+                return $interface['ipv6'][0];
+            }
+        }
+
+        return null;
+    }
+
     // Used in lab editor
 	#[Post('/api/labs/{id<\d+>}/nodes', name: 'api_get_devices')]
     #[Route(path: '/devices', name: 'get_devices')]
@@ -337,6 +363,19 @@ class DeviceController extends Controller
                 $finalControlProtocolType = null;
             }
 
+            // IP de l'instance : lue dans le cache Redis (jamais en base).
+            // Absente si le worker n'a pas encore repondu (VM en cours de
+            // demarrage, agent absent...) : le champ vaut alors null.
+            $ips = [];
+            $ip = null;
+            if ($nodeData['edition'] == 0 && isset($uuid)) {
+                $cached = $this->deviceInfoCache->get($uuid);
+                if (null !== $cached) {
+                    $ips = $cached['ips'] ?? [];
+                    $ip = $this->firstIp($ips);
+                }
+            }
+
             $data[$device->getId()] = [
                 "id"=> $device->getId(),
                 "name"=> $device->getName(),
@@ -354,7 +393,9 @@ class DeviceController extends Controller
                 "ethernet"=> $device->getEthernet(),
                 "hidden"=> $device->getHidden(),
                 "console" => $controlProtocolTypes,
-                "networkInterfaceTemplate"=> $device->getNetworkInterfaceTemplate()
+                "networkInterfaceTemplate"=> $device->getNetworkInterfaceTemplate(),
+                "ip"=> $ip,
+                "ips"=> $ips
             ];
 
             if (isset($uuid)) {
@@ -579,13 +620,22 @@ class DeviceController extends Controller
             "bios_type" => $device->getBiosType(),
             "network_card_type" => $device->getNetworkCardType(),
             "minimum_network_interfaces" => $device->getMinimumNetworkInterfaces(),
-            "hidden" => $device->getHidden()
+            "hidden" => $device->getHidden(),
+            "ip" => null,
+            "ips" => []
         ];
         if (!is_null($device->getOperatingSystem()->getArch()))
             $data["qemu_arch"]=$device->getOperatingSystem()->getArch()->getId();
 
         if (isset($uuid)) {
             $data['uuid'] = $uuid;
+
+            // IP de l'instance : lue dans le cache Redis (jamais en base).
+            $cached = $this->deviceInfoCache->get($uuid);
+            if (null !== $cached) {
+                $data['ips'] = $cached['ips'] ?? [];
+                $data['ip'] = $this->firstIp($data['ips']);
+            }
         }
 
         $response = new Response();
