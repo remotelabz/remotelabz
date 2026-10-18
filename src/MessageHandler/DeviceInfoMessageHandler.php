@@ -46,7 +46,7 @@ class DeviceInfoMessageHandler
         $this->cache->store($uuid, $message->getInfo(), $workerIp);
         $this->cache->release($uuid, $message->getRequestId());
 
-        $this->logger->debug('[DeviceInfoMessageHandler]::IP recue', [
+        $this->logger->debug('[DeviceInfoMessageHandler]::IP received', [
             'instance' => $uuid,
             'workerIp' => $workerIp,
             'device_info' => $message->getInfo()
