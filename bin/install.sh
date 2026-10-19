@@ -848,9 +848,9 @@ EOF
     fi
     
     # If cert.cnf exists in the RemoteLabz config, use it
-    if [ -f /home/${SUDO_USER:-root}/remotelabz/config/apache/cert.cnf ]; then
+    if [ -f "$SCRIPT_DIR/config/apache/cert.cnf" ]; then
         print_info "Using RemoteLabz certificate configuration..."
-        cp /home/${SUDO_USER:-root}/remotelabz/config/apache/cert.cnf .
+        cp "$SCRIPT_DIR/config/apache/cert.cnf" .
     elif [ -f $REMOTELABZ_PATH/config/apache/cert.cnf ]; then
         cp $REMOTELABZ_PATH/config/apache/cert.cnf .
     fi
@@ -866,7 +866,7 @@ EOF
         openssl req -x509 -nodes -days 365 -sha512 -newkey rsa:2048 \
             -keyout RemoteLabz-WebServer.key \
             -out RemoteLabz-WebServer.crt \
-            -config /home/${SUDO_USER:-root}/remotelabz/config/apache/cert.cnf
+            -config "$SCRIPT_DIR/config/apache/cert.cnf"
     fi
     
     # Install certificates
