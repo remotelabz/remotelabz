@@ -1,23 +1,30 @@
-# Spécification worker : type de carte réseau QEMU + minimum d'interfaces
+# Carte réseau QEMU + minimum d'interfaces réseau — fonctionnement
 
-> Côté **front** (`remotelabz`) : champs déjà implémentés.
-> Côté **worker** (`remotelabz-worker`) : ce document décrit les changements à faire.
+> **Statut** : **implémenté des deux côtés**.
+> - Côté **front** (`remotelabz`) : champs sur l'entité `Device`, whitelist UI,
+>   sérialisation dans le descripteur worker.
+> - Côté **worker** (`remotelabz-worker`, implémenté sur la branche
+>   `Get-IP-From-Worker` / `dev`) : sélection du modèle de carte, interfaces
+>   dummy de complément, re-validation.
 
-## 1. Nouveaux champs dans le descripteur
+Objectif : laisser le modèle de carte réseau QEMU et un **nombre minimum
+d'interfaces** à la VM, pour les images qui exigent N interfaces au démarrage.
+
+## 1. Champs du descripteur
 
 Le front sérialise le `LabInstance` avec le groupe `worker` (JMS Serializer,
-`identical_property_naming_strategy` → les clés JSON sont identiques aux noms
-des propriétés PHP).
+naming strategy identique aux propriétés PHP). Les deux champs sont sur
+l'entité `Device` (`src/Entity/Device.php:268`, `:278`) et donc dans
+`deviceInstance.device` :
 
-Champ(s) ajouté(s) sur l'entité `Device` :
+| Clé JSON | Type | Défaut | Signification |
+|---|---|---|---|
+| `network_card_type` | string | `e1000` | Modèle de carte réseau QEMU utilisé pour **toutes** les NIC de la VM |
+| `minimum_network_interfaces` | integer | `0` | Nombre minimum d'interfaces réseau que la VM doit voir au démarrage |
 
-| Clé JSON (dans `deviceInstance.device`) | Type    | Défaut   | Signification |
-|-----------------------------------------|---------|----------|---------------|
-| `network_card_type`                     | string  | `e1000`  | Modèle de carte réseau QEMU utilisé pour **toutes** les NIC de la VM |
-| `minimum_network_interfaces`            | integer | `0`      | Nombre minimum d'interfaces réseau que la VM doit voir au démarrage |
-
-Valeurs possibles de `network_card_type` : `e1000`, `e1000e`, `virtio-net-pci`,
-`rtl8139`, `vmxnet3`.
+Valeurs possibles : `e1000`, `e1000e`, `virtio-net-pci`, `rtl8139`, `vmxnet3`
+(whitelist côté front : `Assert\Choice` + `ChoiceType` dans le formulaire du
+device).
 
 Exemple de fragment du descripteur reçu par le worker :
 
@@ -40,98 +47,95 @@ Exemple de fragment du descripteur reçu par le worker :
 }
 ```
 
-## 2. Logique attendue à la construction de la ligne de commande QEMU
+## 2. Implémentation worker
 
-```php
-// Rétrocompatibilité : descripteurs produits par un front ancien
-$card = $device->network_card_type ?? 'e1000';
-$min  = (int) ($device->minimum_network_interfaces ?? 0);
+`src/Service/Instance/InstanceManager.php` (worker) :
 
-// Uniquement pour les VM QEMU (lxc / physical / natif : comportement inchangé)
-$isQemu = ($device->hypervisor->name ?? '') === 'qemu';
-```
+### 2.1 Résolution des paramètres — `resolveQemuNetworkSettings()` (`:6207-6217`)
 
-1. **Modèle de carte** : remplacer le `-device e1000` codé en dur par
-   `-device {$card}` pour **chaque** interface déjà réalisée (tap).
+Appelée à la construction du descripteur interne (`:6213-6214`) :
 
-2. **Comptage** : `n = count(deviceInstance.networkInterfaceInstances)`
-   (toutes les interfaces, connectées ou non).
+- **uniquement pour `hypervisor == 'qemu'`** ; LXC / natif / physique :
+  comportement inchangé (`e1000`, minimum `0`) ;
+- `resolveNetworkCardType()` (`:6220-6240`) : **re-validation** côté worker —
+  regex `^[a-zA-Z0-9_-]+$` + whitelist `QEMU_NETWORK_CARD_TYPES`
+  (`:30`) ; toute valeur invalide → repli **`e1000`** (protection contre
+  l'injection dans l'argv) ;
+- `resolveMinimumNetworkInterfaces()` (`:6242-6247`) : borné à
+  `[0, QEMU_MINIMUM_NETWORK_INTERFACES_MAX]` (`= 64`, `:31`).
 
-3. **Complément dummy** :
-   ```php
-   $pad = max(0, $min - $n);
-   for ($k = 1; $k <= $pad; $k++) {
-       $id   = 'dummy' . $k;
-       $mac  = /* MAC unique, voir §3 */;
-       $args[] = '-netdev';  $args[] = "user,id={$id}";
-       $args[] = '-device';  $args[] = "{$card},netdev={$id},mac={$mac}";
-   }
-   ```
+### 2.2 Ligne de commande QEMU (`create_qemu_device()`)
 
-   Exemple avec `virtio-net-pci`, 2 interfaces connectées et `minimum = 4` :
+- **Modèle de carte** : le `-device e1000` codé en dur est remplacé par
+  `-device {$card}` pour **chaque** interface tap réelle (`:5422-5428`) ;
+- **Complément dummy** — `buildDummyNetworkInterfaceParameters()`
+  (`:6249-6274`) :
 
-   ```
-   ... -netdev tap,id=tap0,... -device virtio-net-pci,netdev=tap0,mac=52:54:00:aa:bb:01
-       -netdev tap,id=tap1,... -device virtio-net-pci,netdev=tap1,mac=52:54:00:aa:bb:02
-       -netdev user,id=dummy1  -device virtio-net-pci,netdev=dummy1,mac=52:54:00:11:22:01
-       -netdev user,id=dummy2  -device virtio-net-pci,netdev=dummy2,mac=52:54:00:11:22:02
-   ```
+  ```php
+  $dummyCount = max(0, $minimumNetworkInterfaces - count($networkInterfaces));
+  for ($k = 1; $k <= $dummyCount; $k++) {
+      '-netdev', 'user,id=dummy'.$k
+      '-device', "{$card},netdev=dummy{$k},mac={$mac}"
+  }
+  ```
 
-### Pourquoi `user` et pas `tap`
+  Exemple avec `virtio-net-pci`, 2 interfaces connectées et minimum `4` :
 
-Les interfaces de complément sont en **netdev user** : aucun tap n'est créé sur
-l'hôte, le nombre d'interfaces de l'hôte reste inchangé, et il n'y a rien à
-détruire à l'arrêt (`tap`/`bridge` ne sont gérés que pour les interfaces
-réelles). Ces NIC sont donc « hors lab » (pas de connectivité vers un autre
-équipement) — leur seul but est de satisfaire le minimum exigé par l'image au
-démarrage.
+  ```
+  ... -netdev tap,id=tap0,... -device virtio-net-pci,netdev=tap0,mac=52:54:00:aa:bb:01
+      -netdev tap,id=tap1,... -device virtio-net-pci,netdev=tap1,mac=52:54:00:aa:bb:02
+      -netdev user,id=dummy1  -device virtio-net-pci,netdev=dummy1,mac=<MAC dérivé>
+      -netdev user,id=dummy2  -device virtio-net-pci,netdev=dummy2,mac=<MAC dérivé>
+  ```
 
-## 3. Adresses MAC
+  Les dummy sont ajoutés au bucket `network` de `$parameters`
+  (`:5499-5502`), et le log de démarrage porte
+  `minimum_network_interfaces` et `dummy_network_interfaces`
+  (`:5506-5508`).
 
-- Les MAC doivent être **uniques à l'intérieur d'une même VM** (QEMU le
-  vérifie), même si la VM est hébergée avec d'autres VMs (le netdev `user`
-  étant isolé, une collision inter-VM n'a pas d'impact, mais évitons-la).
-- OUI QEMU : `52:54:00`.
-- Recommandation : dériver la MAC de `hash(instanceUuid + index)` plutôt que
-  d'une constante `52:54:00:11:22:33` fixe, pour éviter tout conflit avec les
-  MAC déjà générées par `DeviceInstance::populate()` côté front.
-- Les MAC des interfaces réelles ne changent pas (elles viennent du descripteur).
+### 2.3 Pourquoi `user` et pas `tap`
 
-## 4. Validation / sécurité
+Les interfaces de complément sont en **netdev user** : aucun tap n'est créé
+sur l'hôte, le nombre d'interfaces de l'hôte reste inchangé, et il n'y a rien
+à détruire à l'arrêt (les `tap`/`bridge` ne sont gérés que pour les
+interfaces réelles). Ces NIC sont « hors lab » (pas de connectivité vers un
+autre équipement) — leur seul but est de satisfaire le minimum exigé par
+l'image.
 
-- Le champ `network_card_type` est **whitelisté** côté front
-  (`Assert\Choice` + `ChoiceType`), mais le worker doit **re-vérifier** avant
-  injection dans l'argv : regex `^[a-zA-Z0-9_-]+$` + liste des modèles
-  autorisés ; sinon, repli sur `e1000`.
-- `minimum_network_interfaces` borné à `[0, 64]` côté front ; le worker borne
-  aussi (`max(0, min($min, 64))`) pour éviter un argv géant.
-- Les ids de netdev dummy (`dummy1`, `dummy2`, …) ne doivent pas entrer en
-  collision avec les ids des netdevs tap existants.
+### 2.4 Adresses MAC — `generateDummyMac()` (`:6276-6292`)
 
-## 5. Rétrocompatibilité
+- OUI QEMU `52:54:00` + 3 octets dérivés de
+  `hash('sha256', $deviceUuid . '|' . $index . '|' . $salt)` ;
+- le salt est incrémenté tant que la MAC est déjà utilisée (`$usedMacAddresses`,
+  initialisé avec les MAC des interfaces réelles) : **uniques dans la VM**,
+  sans conflit avec les MAC générées par `DeviceInstance::populate()` côté
+  front ;
+- les MAC des interfaces réelles ne changent pas (elles viennent du
+  descripteur).
+
+### 2.5 Cycle de vie
+
+- `create` / `start` : les dummy sont recalculés à la construction de l'argv ;
+- `stop` / `delete` / `reset` : aucun nettoyage spécifique (pas de ressource
+  hôte créée) ; les dummy ne comptent pas dans le décompte des taps à détruire ;
+- re-démarrage : même complément recalculé depuis le descripteur.
+
+## 3. Rétrocompatibilité
 
 | Front \ Worker | Worker à jour | Worker ancien |
 |---|---|---|
 | **Ancien** (pas de champs) | défauts `e1000` / `0` → comportement actuel | inchangé |
 | **Nouveau** | feature active | les champs sont ignorés → comportement actuel |
 
-→ version minimale worker à documenter dès que la feature est utilisée.
+## 4. Tests worker (scénarios)
 
-## 6. Cycle de vie
-
-- `create` / `start` : les dummy sont générés à la construction de l'argv.
-- `stop` / `delete` / `reset` : aucun nettoyage spécifique (pas de ressource
-  hôte créée). Ne pas compter les interfaces dummy dans le décompte des taps à
-  détruire.
-- Re-démarrage : le même complément est recalculé depuis le descripteur.
-
-## 7. Tests à faire côté worker
-
-1. Device avec `network_card_type = virtio-net-pci` et 2 interfaces → vérifier
-   que `-device e1000` n'apparaît plus et que les 2 NIC sont en `virtio-net-pci`.
-2. `minimum_network_interfaces = 4` avec 2 interfaces connectées → exactement 2
-   paires `-netdev user,id=dummyN` / `-device …,netdev=dummyN,mac=…`.
-3. `minimum_network_interfaces = 2` avec 2 interfaces → **aucun** dummy ajouté.
-4. Descripteur sans les 2 champs → behaviour identique à avant (`e1000`, pas de dummy).
-5. Device `hypervisor != qemu` → aucun impact.
-6. `network_card_type = "virtio-net-pci; rm -rf /"` (injection) → repli `e1000`.
+1. `network_card_type = virtio-net-pci` avec 2 interfaces → `-device e1000`
+   absent, les 2 NIC en `virtio-net-pci`.
+2. `minimum_network_interfaces = 4` avec 2 interfaces → exactement 2 paires
+   `-netdev user,id=dummyN` / `-device …,netdev=dummyN,mac=…`.
+3. `minimum_network_interfaces = 2` avec 2 interfaces → **aucun** dummy.
+4. Descripteur sans les 2 champs → comportement identique à avant (`e1000`,
+   pas de dummy).
+5. `hypervisor != qemu` → aucun impact.
+6. `network_card_type = "virtio-net-pci; rm -rf /"` (injection) → repli
+   `e1000`.

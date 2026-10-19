@@ -10,7 +10,7 @@
 >
 > Compléments : `README-LabPlacement.md`, `doc/start-resync-state-started.md`,
 > `doc/instance-ip-collection.md` (collecte d'IP),
-> `lib/remotelabz-message-bundle/shared-labs-message-bundle-plan.md`.
+> `doc/shared-labs-message-bundle.md` (bundle partagé).
 
 ## 1. Vue d'ensemble
 
@@ -72,7 +72,7 @@ Conséquences importantes de la sérialisation PHP native :
   front **et** dans le worker).
 - Une classe de message absente côté récepteur fait échouer le décodage
   (`Message class ... not found during decoding`). D'où l'ordre de déploiement :
-  **bundle → workers → front** (cf. `shared-labs-message-bundle-plan.md` §7).
+  **bundle → workers → front** (cf. `doc/shared-labs-message-bundle.md` §6).
 - La routing key n'est jamais stockée dans le message lui-même : elle est posée
   au `dispatch()` avec `new AmqpStamp($workerIp, AMQP_NOPARAM, [])`.
 
@@ -338,7 +338,7 @@ worker, pose la route IP, puis émet les `InstanceActionMessage`
 Couple requête/réponse pour récupérer l'IP réelle d'une `DeviceInstance` (VM
 QEMU ou conteneur LXC), connue du seul worker qui l'héberge. L'IP n'est **pas
 persistée en base** : elle transite par messages puis est mise en cache Redis
-côté front. Voir `doc/instance-ip-collection.md` pour le plan complet.
+côté front. Voir `doc/instance-ip-collection.md` pour le fonctionnement complet.
 
 | Champ | `DeviceInfoRequestMessage` | `DeviceInfoMessage` |
 |---|---|---|

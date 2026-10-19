@@ -5,7 +5,7 @@ import { Pagination } from 'react-bootstrap';
 import OptimizedInstanceList from './OptimizedInstanceList';
 
 // Valeurs autorisées pour le nombre d'instances chargées par page.
-const PAGE_SIZE_CHOICES = [10, 20, 50, 100];
+const PAGE_SIZE_CHOICES = [10, 20, 50];
 
 function AllInstancesList(props = {labInstances: [], user:{}}) { 
     const [instances, setInstances] = useState([]);

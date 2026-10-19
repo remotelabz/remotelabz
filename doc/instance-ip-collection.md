@@ -1,7 +1,9 @@
 # Collecte à la demande de l'IP des instances (front ↔ worker, cache Redis)
 
-> **Statut** : document de conception unique (fusion des deux plans de collecte
-> d'IP qui existaient séparément). Rien n'est encore codé.
+> **Statut** : **implémenté** sur la branche `Get-IP-From-Worker` des trois
+> dépôts (front, worker, bundle) — checklist §11. Ce document décrit le
+> fonctionnement effectif ; les sections de conception (4-7) restent la
+> référence des classes livrées.
 > **Décisions retenues** :
 > 1. **Nouveau couple de messages** requête/réponse (`DeviceInfoRequestMessage`
 >    front → worker, `DeviceInfoMessage` worker → front), un message par
@@ -81,7 +83,7 @@ dépôt) :
 La sérialisation est **PHP native** (`PhpSerializer`, défaut Symfony) : les
 classes de messages doivent être **identiques des deux côtés** → le bundle partagé
 `lib/remotelabz-message-bundle`, et un **ordre de déploiement imposé** :
-**bundle → workers → front** (cf. `lib/remotelabz-message-bundle/shared-labs-message-bundle-plan.md` §7).
+**bundle → workers → front** (cf. `doc/shared-labs-message-bundle.md` §6).
 
 ### 2.4 D'où le worker peut tirer l'IP
 
@@ -664,8 +666,8 @@ class DeviceInfoRequestMessageHandler implements MessageHandlerInterface
 Points d'attention :
 
 - **Toujours répondre**, même en erreur (`catch \Throwable`) : c'est le
-  contre-pied du `start-resync-state-started.md` §5 (ne jamais laisser le front
-  sans réponse) ;
+  même principe que `start-resync-state-started.md` §4.3 (un handler ne doit
+  jamais se terminer sans réponse) ;
 - nouveau service `DeviceIpResolver` + `QemuGuestAgentClient` auto-câblés par
   autowiring (`config/services.yaml` : `App\:` avec `autowire: true`), rien à
   déclarer ;

@@ -1,148 +1,54 @@
-# Plan de modification — Bundle partagé : `remotelabz-message-bundle`
+# Message partagé `SecurityMessage` — bundle `remotelabz-message-bundle`
 
-> Issue associée : [#1128 Add sharing lab](https://github.com/remotelabz/remotelabz/issues/1128)
-> (issue worker : [#212 Shared lab](https://github.com/remotelabz/remotelabz-worker/issues/212))
+> **Statut** : **implémenté** (issue
+> [#1128 Add sharing lab](https://github.com/remotelabz/remotelabz/issues/1128) ;
+> issue worker :
+> [#212 Shared lab](https://github.com/remotelabz/remotelabz-worker/issues/212)).
 >
-> Document à appliquer sur le dépôt **`remotelabz/remotelabz-message-bundle`**.
-> Plans companions : [`shared-labs-front-plan.md`](./shared-labs-front-plan.md) (front, implémenté)
-> et [`shared-labs-worker-plan.md`](./shared-labs-worker-plan.md) (worker).
+> Ce document décrit le message `SecurityMessage` du bundle partagé et le
+> comportement effectif des trois dépôts qui l'échangent.
+>
+> Doc compagnon côté front : [`shared-labs-front.md`](./shared-labs-front.md).
 
-## 1. Contexte & pourquoi ce bundle
+## 1. Rôle du bundle
 
-Le front calcule la topologie des labs partagés d'un groupe et la diffuse vers
-**tous** les workers : un `SecurityMessage` **par groupe et par worker**
-(`SharedLabSecurityManager::syncGroup()`, plan front §4 et §5.2).
+Le bundle `remotelabz-message-bundle` est un **path repository Composer**
+présent à l'identique dans les deux dépôts (`lib/remotelabz-message-bundle`),
+namespace `Remotelabz\Message\` :
 
-Le bundle est un *path repository* partagé par le front **et** par le worker
-(`lib/remotelabz-message-bundle` dans les deux dépôts, `composer.json` →
-`repositories` côté front) : la classe de message doit donc vivre ici pour être
-visible des deux côtés sans duplication.
+- il ne contient que des **DTO** : aucun code d'exécution, aucune dépendance
+  Symfony, Doctrine ou réseau ;
+- la sérialisation des messages est **PHP native** (`PhpSerializer`), donc les
+  classes de message doivent être **identiques des deux côtés** : d'où le
+  bundle partagé ;
+- un **ordre de déploiement est imposé** : **bundle → workers → front** (un
+  récepteur sans la classe échoue au décodage).
 
-**Ce qui change dans le bundle** : uniquement l'ajout d'un message et de son
-test. Aucune modification des messages existants, aucune dépendance ajoutée
-(`php >= 7.3` reste inchangé).
+`SecurityMessage` a été ajouté au bundle avec son test
+(`Tests/SecurityMessageTest.php`) ; aucun message existant n'a été modifié et
+aucune dépendance ajoutée (`php >= 7.3` inchangé).
 
-## 2. Modifications à appliquer
-
-### 2.1 Nouveau fichier `Message/SecurityMessage.php`
+## 2. Le message — `Message/SecurityMessage.php`
 
 ```php
-<?php
-
-namespace Remotelabz\Message\Message;
-
-/**
- * Topology of the shared labs of one group.
- *
- * The content is the JSON of the whole topology of a single group:
- * {"group":"<group uuid>","links":[{"a":{...},"b":{...}}, ...]}.
- *
- * The group uuid is the state key on the worker side: a message replaces the
- * entry of that group and the worker rebuilds its rules from the union of every
- * group, so the messages of the other groups are never overwritten. A message
- * with an empty link list means "no shared lab in this group" and makes the
- * worker purge its rules and routes for that group.
- */
 class SecurityMessage
 {
-    private string $content;
-
-    private string $group;
+    private string $content; // JSON de la topologie d'un seul groupe
+    private string $group;   // UUID du groupe = clé d'état côté worker
 
     public function __construct(string $content, string $group = '')
-    {
-        $this->content = $content;
-        $this->group = $group;
-    }
-
-    public function getContent(): string
-    {
-        return $this->content;
-    }
-
-    public function setContent(string $content): self
-    {
-        $this->content = $content;
-
-        return $this;
-    }
-
-    public function getGroup(): string
-    {
-        return $this->group;
-    }
-
-    public function setGroup(string $group): self
-    {
-        $this->group = $group;
-
-        return $this;
-    }
+    // getters / setters
 }
 ```
 
-### 2.2 Nouveau fichier `Tests/SecurityMessageTest.php`
-
-```php
-<?php
-
-namespace Remotelabz\Message\Tests;
-
-use PHPUnit\Framework\TestCase;
-use Remotelabz\Message\Message\SecurityMessage;
-
-class SecurityMessageTest extends TestCase
-{
-    public function testConstruct()
-    {
-        $message = new SecurityMessage('{"group":"3f2b9c1e","links":[]}');
-
-        $this->assertInstanceOf(SecurityMessage::class, $message);
-        $this->assertEquals('{"group":"3f2b9c1e","links":[]}', $message->getContent());
-        $this->assertEquals('', $message->getGroup());
-    }
-
-    public function testConstructWithGroup()
-    {
-        $message = new SecurityMessage('{"group":"3f2b9c1e","links":[]}', '3f2b9c1e');
-
-        $this->assertEquals('3f2b9c1e', $message->getGroup());
-    }
-
-    public function testGettersAndSetters()
-    {
-        $message = new SecurityMessage('{"group":"3f2b9c1e","links":[]}', '3f2b9c1e');
-
-        $message->setContent('{"group":"aa","links":[]}');
-        $message->setGroup('aa');
-
-        $this->assertEquals('{"group":"aa","links":[]}', $message->getContent());
-        $this->assertEquals('aa', $message->getGroup());
-    }
-
-    public function testEmptyTopology()
-    {
-        $message = new SecurityMessage('{"group":"3f2b9c1e","links":[]}', '3f2b9c1e');
-
-        $topology = json_decode($message->getContent(), true);
-
-        $this->assertIsArray($topology);
-        $this->assertEquals([], $topology['links']);
-    }
-}
-```
-
-Rien d'autre à changer : `RemotelabzMessageBundle.php`, `composer.json` et les
-messages existants restent inchangés.
-
-## 3. Contrat du message
+### Contrat
 
 | Champ | Type | Signification |
 |---|---|---|
-| `content` | `string` | JSON de la topologie d'**un seul** groupe (format §4) |
-| `group` | `string` | UUID du groupe = **clé d'état** côté worker |
+| `content` | `string` | JSON de la topologie d'**un seul** groupe (format ci-dessous) |
+| `group` | `string` | UUID du groupe — **clé d'état** côté worker |
 
-Format du `content` (plan front §6) :
+Format du `content` :
 
 ```json
 {
@@ -156,58 +62,53 @@ Format du `content` (plan front §6) :
 }
 ```
 
-Sémantique :
+Sémantique (commentaire de classe + comportement worker) :
 
-- liens **non orientés** (le worker génère les deux directions d'`ACCEPT`) ;
-- un message **remplace** l'entrée `[group]` de l'état du worker ; l'état global
-  est la **réunion de tous les groupes** (les autres messages ne sont jamais
-  écrasés) ;
-- `links: []` = « aucun lab partagé dans ce groupe » → purge des règles/routes de
-  ce groupe sur chaque worker (nettoyage garanti, pas besoin de calcul de
+- liens **non orientés** : le worker génère les deux directions d'`ACCEPT` ;
+- un message **remplace** l'entrée `[group]` de l'état du worker ; l'état
+  global est la **réunion de tous les groupes** — les messages des autres
+  groupes ne sont jamais écrasés ;
+- `links: []` = « aucun lab partagé dans ce groupe » → le worker **purge** ses
+  règles et routes pour ce groupe (nettoyage garanti, sans calcul de
   destinataires côté front) ;
-- le worker filtre lui-même les liens qui le concernent (comparaison avec
+- chaque worker filtre lui-même les liens qui le concernent (comparaison avec
   `app.worker.ip`).
 
-## 4. Intégration côté front (déjà appliquée dans `remotelabz/remotelabz`)
+## 3. Côté front (producteur)
 
-Ces éléments sont donnés à titre de référence : ils sont **hors du bundle**.
+`SecurityMessage` est **émis par le front uniquement** :
 
-1. `config/packages/messenger.yaml` :
+- **Routage** : `Remotelabz\Message\Message\SecurityMessage: worker`
+  (`config/packages/messenger.yaml:27`) — le transport `worker` est un exchange
+  AMQP `direct` dont la binding key est l'IP du worker ;
+- **Émetteur** : `src/Service/SharedLabSecurityManager.php`
+  (`buildLinks(Group)` calcule la topologie, `syncGroup(Group)` diffuse un
+  message **par worker disponible**, ciblé par
+  `new AmqpStamp($workerIp, AMQP_NOPARAM, [])`).
 
-   ```yaml
-   routing:
-       Remotelabz\Message\Message\SecurityMessage: worker
-   ```
+**Déclencheurs** (détails : `shared-labs-front.md` §5) :
 
-   Le transport `worker` est un exchange AMQP `direct` dont la binding key est
-   l'IP du worker : chaque envoi est ciblé par `new AmqpStamp($workerIp, AMQP_NOPARAM, [])`
-   (`SharedLabSecurityManager::syncGroup()`).
+1. placement d'un lab — `LabLaunchRequestMessageHandler` ;
+2. start/stop d'un device — `InstanceManager::start()` / `stop()` ;
+3. suppression d'une instance — `InstanceStateMessageHandler` sur `STATE_DELETED` ;
+4. création/suppression d'une règle de partage — `LabController::updateActionTest` ;
+5. retrait d'un lab d'un groupe — `GroupController::removeLabAction` ;
+6. handshake worker — `WorkerHandshakeMessageHandler`.
 
-2. Émetteur : `src/Service/SharedLabSecurityManager.php`
-   (`buildLinks(Group)` calcule la topologie, `syncGroup(Group)` diffuse un
-   message par worker disponible).
+Le front **consomme** `SecurityMessage` ? Non — il n'y a pas de handler front ;
+la classe n'est référencée côté front que par le routage (le front ne l'émet
+que vers le transport `worker`).
 
-3. Déclencheurs : placement d'un lab (`LabLaunchRequestMessageHandler`),
-   start/stop d'un device (`InstanceManager`), suppression d'instance
-   (`InstanceStateMessageHandler` sur `STATE_DELETED`), création/suppression
-   d'une règle (`LabController::updateActionTest`), retrait d'un lab d'un groupe
-   (`GroupController::removeLabAction`), handshake worker
-   (`WorkerHandshakeMessageHandler`).
+## 4. Côté worker (consommateur)
 
-## 5. Côté worker
+Le worker consomme `SecurityMessage` via son handler de shared labs
+(`SecurityMessageHandler` → `InstanceManager::updateSharedSecurity()`), avec la
+sémantique décrite en §2 : remplacement par groupe, union de tous les groupes,
+purge si `links: []`, reconstruction des règles iptables et des routes. Aucun
+changement de routage n'est nécessaire côté worker pour la réception (le
+routage Messenger ne s'applique qu'à l'émission).
 
-Le worker devra :
-
-- consommer `SecurityMessage` (handler à écrire d'après
-  [`shared-labs-worker-plan.md`](./shared-labs-worker-plan.md)) ;
-- remplacer l'entrée `[group]` de son état, reconstruire les règles sur la
-  **réunion de tous les groupes**, purger iptables/routes du groupe si
-  `links` est vide.
-
-Aucun changement de routage n'est attendu côté worker pour la réception : les
-transports/routages Messenger sont du côté émetteur.
-
-## 6. Vérifications
+## 5. Vérifications
 
 Dans le dépôt du bundle :
 
@@ -217,36 +118,30 @@ composer test      # simple-phpunit : Tests/SecurityMessageTest.php
 composer phpcs     # PSR2, hors longueur de lignes
 ```
 
-Côté front (une fois le bundle synchronisé dans `lib/remotelabz-message-bundle`) :
+Côté front (bundle synchronisé dans `lib/remotelabz-message-bundle`) :
 
 ```bash
-composer install   # path repository → recharge la classe
+composer install
 php bin/console cache:warmup
 vendor/bin/phpunit tests/Service/SharedLabSecurityManagerTest.php tests/Service/LabShareManagerTest.php
-php bin/console doctrine:migrations:migrate   # Version20261009120543 : lab_share + drop lab.shared
 ```
 
-> **Important** : Symfony valide l'existence des classes listées dans
+> **À noter** : Symfony valide l'existence des classes listées dans
 > `framework.messenger.routing` au chargement du conteneur. Tant que
 > `SecurityMessage` n'existe pas côté front, **toute** commande `bin/console`
-> (et les tests fonctionnels) échouent par
-> `Invalid Messenger routing configuration: class ... not found`.
-> C'est le comportement attendu tant que le bundle n'est pas déployé (plan front
-> §5.1 : bundle → workers → front).
+> échoue par `Invalid Messenger routing configuration: class ... not found`.
+> D'où l'ordre de déploiement **bundle → workers → front**.
 
-## 7. Déploiement
+## 6. Déploiement
 
-1. Pousser ces fichiers sur `remotelabz/remotelabz-message-bundle`.
+1. Pousser les fichiers sur `remotelabz/remotelabz-message-bundle` ;
 2. Synchroniser `lib/remotelabz-message-bundle` côté front **et** côté worker
-   (`composer install` ou `git pull` dans le path repository).
-   *Si une copie locale des fichiers existe déjà dans `lib/`, la retirer avant
-   le `git pull` (fichiers non suivis) pour éviter un conflit.*
-3. Déployer les workers **puis** le front.
+   (`composer install` ou `git pull` dans le path repository) ;
+3. Déployer les workers **puis** le front :
    - front ancien + bundle à jour : sans effet (aucun message émis) ;
-   - worker ancien + message reçu : message inconnu (erreur côté worker, à
-     éviter en déployant le worker avant le front).
+   - worker ancien + message inconnu : erreur de décodage — à éviter.
 
-## 8. Points d'attention
+## 7. Points d'attention
 
 - **Rétrocompatibilité** : aucun message existant n'est modifié ; un worker à
   jour ignore un front qui n'émet rien.

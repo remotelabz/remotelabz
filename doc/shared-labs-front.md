@@ -1,363 +1,293 @@
-# Plan de modification — Front : partage des labs (« shared lab »)
+# Labs partagés (« shared lab ») — fonctionnement côté front
 
-> Issue associée : [#1128 Add sharing lab](https://github.com/remotelabz/remotelabz/issues/1128)
-> — *« a shared lab can exchange data with all labs which are in the same group »*
-> (issue worker complémentaire : [#212 Shared lab](https://github.com/remotelabz/remotelabz-worker/issues/212))
+> **Statut** : **implémenté** (issue
+> [#1128 Add sharing lab](https://github.com/remotelabz/remotelabz/issues/1128) ;
+> issue worker complémentaire :
+> [#212 Shared lab](https://github.com/remotelabz/remotelabz-worker/issues/212)).
 >
-> Document à **soumettre au projet front** (`remotelabz/remotelabz`, branche `dev`).
-> Le plan côté worker est détaillé dans [`shared-labs-worker-plan.md`](./shared-labs-worker-plan.md).
+> Ce document décrit le comportement effectif du code front (`remotelabz`).
+> Côté bundle : `doc/shared-labs-message-bundle.md`.
 
-## 1. Contexte & analyse de l'existant
+Un **lab partagé** échange du trafic avec d'autres labs **au sein d'un groupe**,
+selon des **règles explicites** déclarées par l'auteur du lab.
 
-### 1.1 L'attribut `shared` actuel est insuffisant
+## 1. Rappel : pourquoi pas un simple booléen
 
-- Entité `Lab::$shared` : booléen `false` par défaut
-  (`src/Entity/Lab.php:99-100`, `isShared():583`, `setShared():588`),
-  colonne ajoutée par la migration `Version20250831194129`.
-- Utilisations actuelles (aucune logique réseau) :
-  - `LabController::seeAction` (`:525`) : renvoie `"shared"` dans la réponse ;
-  - `LabController::update` (`:1250-1252`) : lit/clôt la clé `shared` du payload ;
-  - `LabRepository:73` : sélection SQL `L.shared`.
-- Commentaire sur l'issue #1128 : *« The property is added in the lab entity in 2.5.0
-  release but is not used yet »*.
-
-**Pourquoi ce n'est pas suffisant** : un simple booléen ne dit **ni avec quel lab**
-ce lab doit être interconnecté, **ni pour quel groupe**. Or le besoin réel est :
+Le booléen `Lab::$shared` (ajouté en 2.5.0, jamais utilisé) ne disait **ni avec
+quel lab** le lab devait être interconnecté, **ni pour quel groupe**. Le modèle
+retenu est une **règle** `(S, L, G)` :
 
 ```
-Lab L disponible dans G1 et dans G2 (même template, instances distinctes)
-Prof définit : « S est partagé avec L pour le groupe G1 »
-
-G1 :  S(G1)  ↔  instance de L rejointe par l'utilisateur A   ✅ atteignable
-G2 :  instance(s) de L appartenant à G2                       ❌ injoignable depuis S(G1)
+Lab S partagé avec L pour le groupe G :
+   les instances de S appartenant à G  ↔  les instances de L appartenant à G
 ```
 
-Le partage doit donc être une **règle explicite** : **(lab source S, lab cible L, groupe G)**.
+- une seule règle suffit (connectivité **bidirectionnelle**) ;
+- `S` peut être partagé avec plusieurs labs et dans plusieurs groupes ;
+- `S` **n'a pas besoin d'être listé dans `G`** : c'est le cas « lab caché »
+  (partagé avec un groupe sans être visible de ses membres) ;
+- le booléen `Lab::$shared` a été **supprimé** de l'entité et de la base.
 
-### 1.2 Modèle existant exploité
+## 2. Modèle de données
 
-| Concept | Relation | Emplacement |
+### 2.1 Entité `LabShare` — `src/Entity/LabShare.php`
+
+| Champ | Relation | Contraintes |
 |---|---|---|
-| Un lab est **disponible** dans un groupe | M2M `Lab::$groups` ↔ `Group::$labs` | `Lab.php:92`, `Group.php:89` ; géré par `GroupController::addLabAction/removeLabAction` (`:809`, `:848`) et l'édition de lab (`LabController.php:694`) |
-| Une **instance** appartient à un groupe | `LabInstance::_group` + `ownedBy == 'group'` | `LabInstance::populate():324`, `Group::$labInstances` (`Group.php:74`) |
-| Édition de lab | payload JSON `LabController::update` | `:1235-1265` (où vivait la clé `shared`) |
+| `lab` (source S) | `ManyToOne(Lab)`, `inversedBy: 'shares'` | `nullable: false, onDelete: 'CASCADE'` |
+| `sharedWith` (cible L) | `ManyToOne(Lab)` | `nullable: false, onDelete: 'CASCADE'` |
+| `group` (périmètre G) | `ManyToOne(Group)` | `nullable: false, onDelete: 'CASCADE'` |
+| `createdBy` | `ManyToOne(User)` | `nullable: true, onDelete: 'SET NULL'` (traçabilité) |
+| `createdAt` | `datetime` | nullable |
 
-## 2. Révision du modèle de partage (décisions)
+- Contrainte unique `uniq_share (lab_id, shared_with_id, group_id)` (`:17`) ;
+- repository dédié `App\Repository\LabShareRepository` ;
+- `Lab::$shares` (`src/Entity/Lab.php:105-107`) : `OneToMany`,
+  `cascade: ['persist']`, `orphanRemoval: true`, getter `getShares()` (`:611`),
+  `addShare()` / `removeShare()`.
 
-### 2.1 Décisions retenues
+**Sérialisation** : `Lab::$shares` est exposée dans les groupes
+`api_get_lab`, `api_get_lab_template`, `api_groups`, `api_get_group`. Pour
+éviter les cycles de sérialisation, `LabShare` n'expose que des **propriétés
+virtuelles scalaires** (`LabShare.php:110-146`) : `getSharedWithId()`,
+`getSharedWithUuid()`, `getSharedWithName()`, `getGroupId()`,
+`getGroupUuid()` — jamais les objets `Lab`/`Group` bruts.
 
-1. **Remplacer** le booléen `Lab::$shared` par une **entité de règles de partage** (pas de conservation).
-2. **Granularité** : paire explicite `(S, L, G)` — seules les instances de `S` et de `L`
-   appartenant à `G` sont interconnectées.
-3. **Administration** : règles créées/modifiées par l'**auteur du lab ou un admin**
-   (droits existants sur `LabController::update` / `LabVoter`), côté édition de lab.
+### 2.2 Migration
 
-### 2.2 Nouvelle entité — `LabShare` (proposition)
+`migrations/Version20261009120543.php` :
 
-```php
-#[ORM\Entity]
-#[ORM\Table(name: 'lab_share')]
-#[ORM\UniqueConstraint(name: 'uniq_share', columns: ['lab_id', 'shared_with_id', 'group_id'])]
-class LabShare
-{
-    #[ORM\Id, ORM\GeneratedValue, ORM\Column]
-    private ?int $id;
+- `CREATE TABLE lab_share (…)`, contrainte unique `uniq_share`, FK en cascade
+  vers `lab` (×2), `_group`, et `created_by_id → user(id) ON DELETE SET NULL` ;
+- **`ALTER TABLE lab DROP shared`** (`:27`) ;
+- `down()` : table supprimée, colonne `lab.shared` réajoutée.
 
-    #[ORM\ManyToOne(targetEntity: Lab::class, inversedBy: 'shares')]
-    #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
-    private Lab $lab;              // lab source S (le lab « partagé »)
+La rupture API (disparition de la clé `shared`) est consignée dans
+`CHANGELOG.md` (remplacée par `shares`).
 
-    #[ORM\ManyToOne(targetEntity: Lab::class)]
-    #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
-    private Lab $sharedWith;       // lab cible L (« avec lequel » S est partagé)
+## 3. API d'administration des règles
 
-    #[ORM\ManyToOne(targetEntity: Group::class)]
-    #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
-    private Group $group;          // groupe G (périmètre de la règle)
+### 3.1 Écriture — `PUT /api/labs/test/{id}`
 
-    // éventuels : createdBy (User), createdAt (datetime) pour la traçabilité
-}
-```
+`LabController::updateActionTest()` (`src/Controller/LabController.php:1273`,
+garde `LabVoter::EDIT`) :
 
-Côté `Lab` : `#[ORM\OneToMany(targetEntity: LabShare::class, mappedBy: 'lab', orphanRemoval: true)] private $shares;`
+- la clé `shares` du payload doit être un tableau (`:1297-1305`) ;
+- le remplacement est délégué à **`src/Service/LabShareManager.php`** :
+  `replaceShares($lab, $rules)` (`:49-129`) — **atomique** (une règle invalide
+  laisse la collection intacte) ;
+- après le `flush`, le contrôleur diffuse `syncGroup()` pour **chaque groupe
+  impacté** : les groupes des règles supprimées **et** celles ajoutées
+  (`:1289-1295`, `:1320-1324`, `:1380-1386`, chacun dans son try/catch).
 
-**Sémantique** : une règle `(S, L, G)` signifie que **les instances de `S` dans `G` et
-les instances de `L` dans `G` sont mutuellement atteignables** (connectivité
-bidirectionnelle ; une seule règle suffit, pas besoin de `(L, S, G)` en miroir).
-Un lab `S` peut être partagé avec **plusieurs labs** dans un même groupe
-(N règles), et avec le même lab dans **plusieurs groupes** (lignes distinctes).
-
-### 2.3 Validations à l'écriture
-
-- `S ≠ L` ;
-- `L` doit être **disponible dans `G`** (`Lab::$groups` contient `G`)
-  — sinon la règle est sans effet et doit être rejetée (message d'erreur clair) ;
-- `S` **n'a pas besoin d'être disponible dans `G`** : c'est ce qui permet de
-  partager un lab avec un groupe tout en le cachant à ses membres (`S` n'est
-  simplement pas listé dans `G`, mais une instance de `S` peut quand même
-  appartenir à `G`) ;
-- unicité `(S, L, G)` ;
-- suppression **en cascade** : quand un lab est retiré d'un groupe
-  (`GroupController::removeLabAction`) → purger les règles `(*, lab, G)` où le
-  lab est la **cible** (les règles où il est la source sont conservées) ;
-  quand un lab est supprimé → cascade FK déjà prévue.
-
-### 2.4 Migration & suppression du booléen `shared`
-
-- **Nouvelle migration Doctrine** : `CREATE TABLE lab_share (...)` +
-  `ALTER TABLE lab DROP shared` ;
-- **Suppressions** :
-  - `src/Entity/Lab.php` : propriété `:99-100`, `isShared()` `:583`, `setShared()` `:588` → remplacés par `getShares()` ;
-  - `src/Repository/LabRepository.php:73` : retirer `L.shared` du SELECT
-    (remplacer par un compteur/liste de règles si nécessaire) ;
-  - `src/Controller/LabController.php:525` : clé `"shared"` de la réponse `seeAction` → remplacer par `"shares"` (liste des règles) ;
-  - `src/Controller/LabController.php:1250-1252` : `setShared(...)` → traitement de la nouvelle clé `shares` du payload (cf. §2.5) ;
-  - fixtures/tests éventuels référençant `shared`.
-- **Point d'attention API** : la disparition de la clé `shared` est une **rupture**
-  pour les clients externes (à mentionner dans `CHANGELOG.md`). Aucun usage worker
-  (le worker ne reçoit jamais l'entité `Lab` avec ce champ — `Serializer\Groups`
-  absent, exclu du groupe `worker`), donc **aucune coordination worker** pour cette partie.
-
-### 2.5 API d'administration des règles
-
-Étendre `LabController::update` (payload de l'édition de lab, droits auteur/admin déjà en place) :
+Format du payload :
 
 ```json
 {
   "shares": [
-    { "sharedWith": 42, "group": "3f2b9c1e-..." },   // S (lab édité) partagé avec L(id=42) pour G(uuid)
-    { "sharedWith": 57, "group": "3f2b9c1e-..." }
+    { "sharedWith": 42, "group": "3f2b9c1e-..." }
   ]
 }
 ```
 
-- Remplacement **atomique** des règles du lab à chaque envoi (comme pour les collections
-  existantes), avec validations §2.3.
-- Lecture : ajouter les règles aux groupes de sérialisation `api_get_lab` (et `api_groups`
-  si l'UI de groupe doit les afficher).
-- UI (plus tard) : section « Partage » dans l'édition de lab
-  (`edit_lab` / `LabController:915`), sélecteurs de lab cible + de groupe,
-  en s'appuyant sur `Lab::$groups` pour ne proposer que des couples valides.
+Si la clé `shares` est absente, les règles existantes ne sont pas touchées.
 
-## 3. Périmètre des liens (calcul)
+### 3.2 Validations — `LabShareManager::replaceShares()`
 
-Pour un groupe `G`, la topologie est calculée à partir des **règles `LabShare`
-dont `group == G`** :
+| Règle | Erreur |
+|---|---|
+| `S ≠ L` | « A lab cannot be shared with itself. » |
+| `L` existe (id numérique) | « Target lab not found. » |
+| `G` existe (uuid) | « Group not found. » |
+| **`L` est disponible dans `G`** (`$target->getGroups()->contains($group)`) | « Lab {L} is not available in group {G}. » |
+| `S` dans `G` ? | **Non exigé** (cas « lab caché ») |
+| Unicité des paires `(L, G)` dans le payload | « Share rule … is duplicated. » |
 
-1. **Instances retenues** (pour chaque lab impliqué) — deux sources, filtrées par :
-   - `workerIp != null` (instance placée sur un worker) ;
-   - `lab.virtuality == 1` (labs virtuels uniquement — pas de bridge OVS pour le physique) ;
-   - **au moins un device** en état `starting` ou `started`
-     (une instance en cours d'arrêt/stoppée sort de la topologie ; elle y revient au lancement) ;
-   - instances **groupées** : `G->getLabInstances()`
-     (`src/Entity/Group.php:509-513`) dont le groupe propriétaire est `G` — lab
-     lancé *par* le groupe (tous ses membres travaillent sur la même instance) ;
-   - instances **user (sandbox)** : celles dont le propriétaire est **membre de `G`**
-     (`LabInstanceRepository::findBy(['lab' => …, 'ownedBy' => 'user'])` +
-     `Group::hasUser`) — le contexte de groupe vient de l'**appartenance du user**
-     et de la présence d'une règle pour `G`, pas de l'instance ;
-   - instances **guest** exclues.
-2. **Liens** =, pour chaque règle `(S, L, G)` :
-   `instances(S, G) × instances(L, G)` (produit cartésien des instances retenues),
-   dédupliqués, sans lien vers soi-même.
-3. Aucune instance d'un **autre groupe** n'entre jamais dans le calcul : une instance
-   sandbox d'un user membre de `G1` **et** de `G2` entre dans les topologies de `G1`
-   et de `G2` **si et seulement si** chacun de ces groupes a une règle concernant son lab.
+`createdAt` est posé sur chaque règle à l'insertion.
 
-Exemple (le cas « lab caché ») :
+`LabShareManager::purgeGroupShareRules($lab, $group)` (`:140-155`) supprime
+seules les règles où le lab est la **cible** ; les règles où il est la source
+sont conservées.
 
-```
-Règles : (S, L, G1)          // seul ; S n'est PAS listé dans G1
-G1 : membre m1 join L en sandbox → instance I_L(m1) ; l'auteur (membre de G1) join S → I_S(a)
-     → liens : I_S(a) ↔ I_L(m1)
-     → les autres membres de G1 n'ont aucune instance de L → rien pour eux
-G2 : (pas de règle) → I_L(m1) n'entre dans aucune topologie de G2, même si m1 en est membre
-```
+### 3.3 Lecture — `GET /api/labs/info/{id}`
 
-> Comparaison avec l'idée initiale de l'issue #1128 (« shared lab ↔ tous les labs du
-> groupe ») : le modèle par règles le couvre aussi, en déclarant une règle pour chaque
-> lab cible du groupe — ou en ajoutant plus tard, si besoin, un cas particulier
-> « tous les labs de `G` » (hors périmètre actuel).
+`LabController::showActionTest()` (`:508-578`) renvoie :
 
-## 4. Mécanisme de diffusion vers les workers
+- `"shares"` : `[{id, sharedWith, sharedWithUuid, sharedWithName, group, groupName}]` ;
+- `"shareChoices"` : pour chaque groupe de l'utilisateur courant, la liste des
+  labs disponibles dans ce groupe (cibles valides), chacun trié par nom —
+  utilisé directement par l'UI.
 
-- **Broadcast** : un `SecurityMessage` **par groupe et par worker** disponible
-  (`configWorkerRepository->findAll()`, pattern de `InstanceManager:626-647`),
-  ciblé avec `new AmqpStamp($workerIP, AMQP_NOPARAM, [])` (transport `worker` = exchange
-  `direct`, binding key = IP du worker — `config/packages/messenger.yaml`).
-- Le message contient la **topologie complète d'un seul groupe** (UUID du groupe inclus) ;
-  le worker l'utilise comme **clé d'état** : il remplace l'entrée de ce groupe et reconstruit
-  les règles sur la **réunion de tous les groupes** — les messages des autres groupes
-  ne sont jamais écrasés (cf. plan worker §3).
-- Chaque worker filtre lui-même les liens le concernant (comparaison avec son
-  `app.worker.ip`).
-- → **Pas de calcul de destinataires côté front**, et le nettoyage est garanti :
-  un worker qui ne détient plus aucun lien reçoit un message à liens vides et purge ses
-  règles/routes pour ce groupe.
+### 3.4 Retrait d'un lab d'un groupe
 
-> Alternatives écartées : envoi ciblé (nécessite de mémoriser les destinataires passés,
-> y compris sur suppression) ; scan disque côté worker (ne couvre ni la mise à jour
-> dynamique, ni le cross-worker).
+`GroupController::removeLabAction()` (`src/Controller/GroupController.php:849`) :
+`purgeGroupShareRules()` (`:870`) + `flush` + `syncGroup()` (`:879`).
 
-## 5. Modifications concrètes
+## 4. Calcul des liens — `SharedLabSecurityManager`
 
-### 5.1 Bundle partagé — `remotelabz-message-bundle`
+`src/Service/SharedLabSecurityManager.php` (`final class`) :
 
-> Dépôt : `remotelabz/remotelabz-message-bundle` (path repository, `lib/remotelabz-message-bundle`
-> côté front **et** côté worker). À pousser sur le dépôt puis synchronisé dans les deux `lib/`.
+### 4.1 `buildLinks(Group $group): array` (`:57-98`)
 
-- **Nouveau** `Message/SecurityMessage.php` :
-
-  ```php
-  class SecurityMessage
-  {
-      private string $content; // JSON de la topologie d'un groupe
-      private string $group;   // UUID du groupe = clé d'état côté worker
-
-      public function __construct(string $content, string $group = '') { ... }
-  }
-  ```
-
-- **Nouveau** `Tests/SecurityMessageTest.php`.
-- Le front et le worker doivent être déployés **après** le bundle (sinon classe inconnue).
-
-### 5.2 Nouveau service — `SharedLabSecurityManager`
-
-```php
-final class SharedLabSecurityManager
-{
-    public function buildLinks(Group $group): array;        // topologie d'un groupe donné
-    public function syncGroup(Group $group): void;          // broadcast de cette topologie
-    public function syncLabInstance(?LabInstance $i): void; // broadcast des groupes où le lab de $i est partagé
-}
-```
-
-- `buildLinks(Group $group)` :
-  - charger les règles `LabShare` du groupe (repository `findBy(['group' => $group])`) ;
-  - pour chaque règle `(S, L)` : instances retenues de `S` et de `L` dans `G` (§3) ;
-  - sérialisation JSON `{group, links:[{a:{uuid,network,workerIp}, b:{...}}]}` (dédup) ;
-  - réseau via `(string) $labInstance->getNetwork()` → CIDR
-    (`Network::__toString`, `lib/network-bundle/Entity/Network.php:159`).
-- `syncGroup(Group $group)` : boucle sur les workers, `SecurityMessage($json, $group->getUuid())`
-  + `AmqpStamp($workerIp)`.
-- Emplacement : `src/Service/…` selon les conventions du front (service Symfony,
-  autoconfigure).
-
-### 5.3 Déclencheurs (`syncLabInstance()` / `syncGroup()`)
-
-Les événements **d'instance** (1-4) appellent `syncLabInstance($instance)` : elle
-broadcast **tous les groupes où le lab de l'instance est partagé** (`LabShareRepository::findGroupsWithLab`)
-+ le groupe propriétaire d'une instance groupée (couvre le lab retiré du groupe).
-Les événements **de règles / de composition de groupe** (5, 7) appellent directement
-`syncGroup($g)`.
-
-| # | Événement | Fichier / point | Quand |
-|---|---|---|---|
-| 1 | **Placement** d'une instance | `LabLaunchRequestMessageHandler` | après `setWorkerIp` + dispatch `ACTION_CREATE` |
-| 2 | **Lancement** device | `InstanceManager::start()` (front) | couvre le restart après stop |
-| 3 | **Arrêt** device | `InstanceManager::stop()` (front) | l'instance sort des topologies des groupes concernés |
-| 4 | **Suppression** lab | `InstanceStateMessageHandler` | réception `STATE_DELETED` (broadcast → pas besoin du `workerIp` de l'instance supprimée) |
-| 5 | **Création / suppression d'une règle** | `LabController::update` (§2.5) | après flush : `syncGroup()` pour le groupe de la règle ; si le lab retirait ses dernières instances partagées, message à liens vides → nettoyage |
-| 6 | **Handshake** worker | `WorkerHandshakeMessageHandler` | renvoi, **pour chaque groupe** ayant des instances placées sur ce worker (un message par groupe) |
-| 7 | **Retrait d'un lab d'un groupe** | `GroupController::removeLabAction` (`:848`) | purge des règles cible + `syncGroup()` |
-
-Ces points couvrent les cas arbitrés : **lancement + arrêt/suppression + handshake**,
-plus les évolutions de configuration des règles. Le handshake est indispensable :
-après un reboot worker, iptables, routes et état local sont perdus et la topologie est
-réappliquée intégralement.
-
-### 5.4 Routage Messenger — `config/packages/messenger.yaml`
-
-Ajouter `SecurityMessage` vers le transport `worker` :
-
-```yaml
-remotelabz_message_routing:
-    Remotelabz\Message\Message\SecurityMessage: worker
-```
-
-(à adapter à la syntaxe exacte du fichier — le front route déjà
-`InstanceActionMessage`, `LabLaunchRequestMessage`, etc. vers `worker`.)
-
-## 6. Format du payload (JSON)
+1. Chargement des règles du groupe : `labShareRepository->findBy(['group' => $group])` ;
+2. pour chaque règle `(S, L)` : **produit cartésien**
+   `instances(S, G) × instances(L, G)`, en ignorant les liens vers soi-même et
+   en dédoublonnant par paire triée d'uuids (`linkKey()`, `:329-335`) ;
+3. retour :
 
 ```json
-{
-  "group": "3f2b9c1e-....-....-....-............",
-  "links": [
-    {
-      "a": { "uuid": "9a1c...", "network": "10.11.0.0/24", "workerIp": "192.168.11.132" },
-      "b": { "uuid": "77bd...", "network": "10.11.1.0/24", "workerIp": "192.168.11.133" }
-    }
-  ]
-}
+{ "group": "<uuid de G>", "links": [ { "a": {…}, "b": {…} } ] }
 ```
 
-- Liens **non orientés** : le worker génère les deux directions d'`ACCEPT`.
-- `group` : un message = la topologie d'**un** groupe ; le worker l'utilise comme clé
-  d'état (remplacement par groupe, union de tous les groupes — cf. plan worker §5).
+chaque extrémité étant `{ "uuid", "network" (CIDR, `(string) $labInstance->getNetwork()`), "workerIp" }`.
 
-## 7. Séquence (textuelle)
+### 4.2 Instances retenues — `eligibleInstances()` / `isEligibleInstance()`
+
+Un lab ne produit d'instances que s'il est **virtuel** (`virtuality == 1`,
+`:241-243`). Pour un lab donné et un groupe `G` (`:232-294`) :
+
+| Type d'instance | Retenue si |
+|---|---|
+| lancée **par le groupe** (`ownedBy = group`) | le groupe propriétaire est exactement `G` |
+| **user** (sandbox) | l'utilisateur propriétaire est **membre de `G`** (`$group->hasUser(...)`) |
+| **guest** | **jamais** (commentaire explicite `:278-281`) |
+| non placée | jamais (`workerIp` vide) |
+| sans réseau | jamais (`network` null) |
+| à l'arrêt | jamais : il faut **au moins un device `starting` ou `started`** (`hasRunningDevice()`, `:296-305`) |
+
+Une instance sandbox d'un user membre de `G1` **et** `G2` entre dans la
+topologie de chacun des deux groupes, **si et seulement si** le groupe porte
+une règle concernant son lab. Aucune instance d'un autre groupe n'entre jamais
+dans le calcul.
+
+Exemple (cas « lab caché ») :
 
 ```
-Prof configure : règle de partage (S, L, G1) — édition de lab
-        │
-        ▼
-LabController::update
-  · persist LabShare (validations §2.3)
-  · syncGroup(G1) ────────────────────┐
-                                      ▼
-                        SecurityMessage { group: G1, links: [S(G1)↔L(G1)] }
-                        broadcast → worker.1, worker.2 …
-                                      │
-                                      ▼
-                        worker : remplace l'entrée [G1] dans l'état
-                        · union avec les autres groupes (G2 intact)
-                        · iptables : rebuild shared_forward (union)
-                        · routes : diff vs var/shared-security.json
+Règle : (S, L, G1) ; S n'est PAS listé dans G1.
+m1 (membre de G1) joint L en sandbox → I_L(m1)
+l'auteur (membre de G1) joint S      → I_S(auteur)
+→ lien I_S(auteur) ↔ I_L(m1)
+→ G2 : aucune règle → I_L(m1) n'entre dans aucune topologie de G2
+```
 
-Puis, indépendamment de la configuration :
-L'utilisateur A rejoint L dans G1 ; le prof lance S dans G1
-  → triggers 1/2 (placement, start) → rebuild idempotent → S(G1) ↔ L(A,G1) ✅
-Instances de L dans G2 : aucune règle (S,L,G2) → jamais de lien avec S(G1) ❌
+### 4.3 Diffusion — `syncGroup()` / `syncLabInstance()` / `syncGroups()`
+
+- **`syncGroup(Group)`** (`:103-151`) : sérialise la topologie, parcourt
+  `configWorkerRepository->findAll()`, saute les workers sans IPv4 ou
+  `available == false`, et dispatch **un `SecurityMessage` par worker** avec
+  `new AmqpStamp($workerIp, AMQP_NOPARAM, [])` (transport `worker` = exchange
+  direct, binding key = IP du worker). Log INFO par worker avec le payload ;
+  WARNING « No available worker » sinon.
+- **`syncLabInstance(?LabInstance)`** (`:174-216`) : collecte le groupe
+  propriétaire de l'instance **et** tous les groupes où le lab est partagé en
+  source **ou** en cible (`LabShareRepository::findGroupsWithLab`), puis
+  `syncGroup()` pour chacun (try/catch par groupe).
+- **`syncGroups(iterable)`** (`:158-163`) : simple boucle de `syncGroup()`.
+
+Le worker utilise l'uuid du groupe comme **clé d'état** : il remplace l'entrée
+de ce groupe et reconstruit ses règles sur la **réunion de tous les groupes**
+(`links: []` purge le groupe). Chaque worker filtre les liens qui le concernent
+(comparaison avec `app.worker.ip`). Pas de calcul de destinataires côté front :
+le nettoyage est garanti par le broadcast systématique.
+
+## 5. Déclencheurs de synchronisation
+
+| # | Événement | Emplacement |
+|---|---|---|
+| 1 | **Placement** d'une instance | `LabLaunchRequestMessageHandler.php:154` — après `setWorkerIp` + dispatch `ACTION_CREATE` |
+| 2 | **Démarrage** d'un device | `InstanceManager::start()` (`:435`), après le dispatch `ACTION_START` |
+| 3 | **Arrêt** d'un device | `InstanceManager::stop()` (`:502`), après le dispatch `ACTION_STOP` |
+| 4 | **Suppression** d'une instance | `InstanceStateMessageHandler.php:501` — sur `STATE_DELETED`, après `remove()` + flush et le retrait du groupe (try/catch) |
+| 5 | **Création / suppression de règles** | `LabController::updateActionTest` (§3.1) — `syncGroup()` par groupe impacté |
+| 6 | **Handshake** d'un worker | `WorkerHandshakeMessageHandler.php:58-77, 125-131` — pour chaque device instance `starting`/`started` placée sur ce worker, le **groupe propriétaire** est collecté, puis `syncGroups()` |
+| 7 | **Retrait d'un lab d'un groupe** | `GroupController::removeLabAction` (§3.4) |
+
+Le handshake est indispensable : après un reboot worker, iptables, routes et
+état local sont perdus et la topologie est réappliquée intégralement.
+
+Routage Messenger : `Remotelabz\Message\Message\SecurityMessage: worker`
+(`config/packages/messenger.yaml:27`).
+
+## 6. Interface utilisateur
+
+Section « Sharing » de l'édition de lab (le lab n'étant modifiable que dans
+l'éditeur) :
+
+- **Template** : `assets/js/components/Editor2/themes/default/ejs/form_lab.ejs:120-130`
+  — en mode `edit`, rendu du bloc `#lab-share-rules` avec les conteneurs
+  header/rules/buttons.
+- **Logique JS** : `assets/js/components/Editor2/themes/default/js/functions.js:1416-1600`
+  — `getLabShareChoices()` (issues de `shareChoices`), `buildLabShareRow()`
+  (sélecteur de groupe + sélecteur de lab cible + bouton de suppression,
+  règles invalides signalées par `MESSAGES[247]`), `initLabShareRules()`
+  (état vide, bouton « Add a sharing rule »), `collectLabShareRules(form)`
+  (produit `[{sharedWith: <id>, group: <uuid>}]`, dédoublonné côté client).
+- **Soumission** : `assets/js/components/Editor2/themes/default/js/actions.js:2258-2263`
+  — `form_data['shares'] = collectLabShareRules(this)` à l'envoi du
+  formulaire d'édition (`PUT /api/labs/test/{id}`) ; à la création de lab, la
+  clé n'est pas envoyée.
+- **i18n** : `messages_en.js:199-207` (`MESSAGES[240]`–`[248]`).
+
+## 7. Séquence typique
+
+```
+Auteur : règle (S, L, G1) dans l'édition de lab
+   │
+   ▼
+LabController::updateActionTest
+  · LabShareManager::replaceShares (validations §3.2)
+  · syncGroup(G1) pour chaque groupe impacté
+   │
+   ▼
+SecurityMessage { group: G1, links: [ I_S(G1) ↔ I_L(G1) ] }
+   broadcast → chaque worker disponible
+   │
+   ▼
+worker : remplace l'entrée [G1], reconstruit iptables/routes sur l'union
+   (les autres groupes ne sont jamais écrasés)
+   │
+   ▼
+Ensuite, indépendamment : jointure/démarrage/arrêt d'instances
+   → déclencheurs §5 → rebuild idempotent
 ```
 
 ## 8. Points d'attention
 
-- **Isolation des groupes** : jamais de message « global » ; le périmètre d'un message est
-  toujours l'ensemble des instances portant le même `_group` et les règles de ce groupe.
-  C'est la garantie qu'aucune instance de `L(G2)` n'accède à `S(G1)`.
-- **Rupture API** : disparition de la clé `shared` (`seeAction`, payload d'édition) →
-  documenter dans `CHANGELOG.md` ; remplacer par `shares`.
-- **Déploiement coordonné** : bundle → workers → front. Un front ancien n'envoie rien
-  (sans effet) ; un worker ancien reçoit un message inconnu.
-- **Idempotence** : le front peut envoyer des messages redondants (placement + start,
-  par exemple) — sans effet, le worker reconstruit le même état.
-- **Labs physiques** : hors périmètre (filtre `virtuality == 1`).
-- Le front **ne change pas** son routage de sous-réseaux (`routeAdd` vers le worker
-  propriétaire) : seul l'inter-worker est nouveau, géré par les workers.
-- **Prochaine étape** : ce document sert de base au ticket ; l'implémentation front
-  (entité, migration, API, UI, service) sera faite ultérieurement.
+- **Isolation des groupes** : jamais de message « global » ; le périmètre d'un
+  message est toujours un seul groupe. C'est la garantie qu'aucune instance de
+  `L(G2)` n'accède à `S(G1)`.
+- **Déploiement coordonné** : bundle → workers → front (sérialisation PHP
+  native ; une classe de message absente côté récepteur échoue au décodage).
+  Voir `doc/shared-labs-message-bundle.md` §6.
+- **Idempotence** : le front peut émettre des messages redondants (placement +
+  start) — sans effet, le worker reconstruit le même état.
+- **Labs physiques** : hors périmètre (`virtuality == 1` requis).
+- Le front **ne modifie pas** son routage de sous-réseaux vers le worker
+  propriétaire : seule la connectivité inter-worker est gérée par les workers.
 
-## 9. Tests & scénarios d'acceptation
+## 9. Tests
 
-1. **Unitaires — modèle** :
-   - création de règle valide / rejet (`S == L`, lab cible absent du groupe, doublon) ;
-   - purge des règles lors du retrait d'un lab du groupe et lors de la suppression d'un lab ;
-   - `buildLinks()` : produit cartésien `instances(S) × instances(L)` sur une règle ;
-     **aucun lien sans règle**, même si les deux labs sont dans le même groupe ;
-     instances non placées / stopped / physiques / user-owned exclues ;
-     dédup, lien vers soi-même exclu ;
-   - isolation multi-groupes : `(S, L, G1)` ne produit aucun lien pour `G2`.
-2. **Manuel — 2 workers, règle `(A, L, G1)`** :
-   - labs **A**, **L** répartis sur les deux workers, une règle `(A, L, G1)` ;
-   - ping `A ↔ L` joignables ; un lab **B** du même groupe **sans règle** reste isolé ;
-   - suppression de la règle → connectivité coupée, règles purgées des workers ;
-   - stop device de A → liens retirés sur **tous** les workers ; start → rétablis ;
-   - delete de L → topologie réduite ; reboot d'un worker → handshake → état restauré.
-3. **Manuel — isolation G1/G2 (scénario §1.1)** :
-   - lab `L` instancié dans `G1` (utilisateur A) **et** dans `G2` ;
-   - règle `(S, L, G1)` + lancement de `S` dans `G1` → ping `S(G1) ↔ L(A,G1)` OK ;
-   - ping `S(G1) ↔ L(G2)` **échoue** (vérifier aussi `iptables -S shared_forward`
-     : aucune règle mentionnant le réseau de `L(G2)`) ;
-   - mettre à jour la topologie de `G2` (lancement/arrêt d'une instance `L(G2)`) →
-     les règles de `G1` subsistent sur les workers.
+- `tests/Service/SharedLabSecurityManagerTest.php` (unitaires, repositories en
+  mock) : produit cartésien, absence de règle → aucun lien, exclusion des
+  instances non placées / à l'arrêt / physiques, inclusion `starting`,
+  sandbox de non-membre exclue / de membre incluse, sandbox liée uniquement aux
+  groupes de son propriétaire, dédoublonnage + auto-lien exclu, isolation
+  multi-groupes, contenu et routage (`AmqpStamp` = IP du worker) des messages,
+  warning sans worker, broadcast `syncLabInstance`, résilience du repository.
+- `tests/Service/LabShareManagerTest.php` : règle valide (`createdAt` posé),
+  auto-partage rejeté, cible hors groupe rejetée, **source hors groupe
+  acceptée** (cas caché), groupe/lab inconnus rejetés, doublons rejetés,
+  atomicité, purge des règles cible uniquement.
+- `lib/remotelabz-message-bundle/Tests/SecurityMessageTest.php` : DTO.
+
+Scénarios manuels d'acceptation :
+
+1. **2 workers, règle `(A, L, G1)`** : pings `A ↔ L` OK ; un lab `B` du même
+   groupe sans règle reste isolé ; suppression de la règle → connectivité
+   coupée et règles purgées des workers ; stop d'un device de `A` → liens
+   retirés sur tous les workers ; reboot d'un worker → handshake → état
+   restauré.
+2. **Isolation G1/G2** : `L` instancié dans `G1` (user A) et `G2` ; règle
+   `(S, L, G1)` + lancement de `S` dans `G1` → ping `S(G1) ↔ L(A,G1)` OK ;
+   ping `S(G1) ↔ L(G2)` **échoue** (`iptables -S shared_forward` ne mentionne
+   pas le réseau de `L(G2)`).
