@@ -23,6 +23,10 @@ jobs:
 
 
     - name: Install remotelabz (script)
+
+      env:
+        TERM: xterm
+
       run: |
         cd bin
 
