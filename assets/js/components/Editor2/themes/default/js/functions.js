@@ -1302,7 +1302,6 @@ export function printFormLab(action, values) {
     }).render({
         name: (values['name'] != null) ? values['name'] : '',
         version: (values['version'] != null) ? values['version'] : '',
-        scripttimeout: (values['scripttimeout'] != null) ? values['scripttimeout'] : '300',
         author: (values['author'] != null) ? values['author'] : '',
         authorId: (values['author_id'] != null) ? values['author_id'] : '',
         description: (values['description'] != null) ? values['description'] : '',
@@ -1325,7 +1324,7 @@ export function printFormLab(action, values) {
 
     if (action == 'edit') {
         // Fill the author select with users allowed to own a lab
-        // (teacher editors, administrators and super administrators)
+        // (teachers, teacher editors, administrators and super administrators)
         var currentAuthorId = (values['author_id'] != null) ? String(values['author_id']) : '';
         var currentAuthorName = (values['author'] != null) ? values['author'] : '';
         // Remember the author at the time the form was opened, so that the

@@ -567,7 +567,6 @@ class LabController extends Controller
             "author"=>$labInfo["author"],
             "author_id"=>$labInfo["authorId"] ?? null,
             "version"=>$labInfo["version"],
-            "scripttimeout"=>$labInfo["scripttimeout"],
             "lock"=>$labInfo["locked"],
             "banner"=>$labInfo["banner"],
             "timer"=>$labInfo["timer"],
@@ -1199,7 +1198,6 @@ class LabController extends Controller
         $new_lab->setDescription($lab->getDescription());
         $new_lab->setTasks($lab->getTasks());
         $new_lab->setVersion($lab->getVersion());
-        $new_lab->setScripttimeout($lab->getScripttimeout());
         $new_lab->setIsInternetAuthorized($lab->isInternetAuthorized());
         $new_lab->setHasTimer($lab->getHasTimer());
         $new_lab->setTimer($lab->getTimer());
@@ -1342,8 +1340,7 @@ class LabController extends Controller
 
         $lab->setName($data['name']);
         $lab->setVersion($data['version']);
-        $lab->setShortDescription($data['description']);
-        $lab->setScripttimeout($data['scripttimeout']);
+        $lab->setShortDescription($data['description']);    
         if (array_key_exists('chatEnabled', $data)) {
             $lab->setChatEnabled((bool) $data['chatEnabled']);
         }
