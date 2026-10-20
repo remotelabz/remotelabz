@@ -29,3 +29,6 @@ jobs:
         mkdir /opt/remotelabz
         cp ../.env /opt/remotelabz/.env.local
         
+        echo "1
+        n
+        y" | sudo ./install.sh
