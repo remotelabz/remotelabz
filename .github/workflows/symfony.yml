@@ -1,0 +1,37 @@
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+
+name: Symfony
+
+on:
+  push:
+    branches: [ "webinstaller" ]
+  pull_request:
+    branches: [ "master" ]
+
+permissions:
+  contents: read
+
+jobs:
+  symfony-tests:
+    runs-on: ubuntu-latest
+    steps:
+
+    - uses: actions/checkout@v4
+
+
+    - name: Install remotelabz (script)
+      run: |
+
+        sudo add-apt-repository -y ppa:ondrej/php
+        sudo apt-get update --allow-releaseinfo-change-label
+        cd bin
+
+        mkdir /opt/remotelabz
+        cp ../.env /opt/remotelabz/.env.local
+        
+        echo "1
+        n
+        y" | ./install.sh
