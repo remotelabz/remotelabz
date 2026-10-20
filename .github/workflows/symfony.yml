@@ -41,6 +41,8 @@ jobs:
         TERM: xterm
         DEBIAN_FRONTEND: noninteractive
       run: |
+        pwd
+        ln -sfn "$GITHUB_WORKSPACE" /home/runner/remotelabz
         sudo mkdir -p /opt/remotelabz /home/root
         sudo cp .env /opt/remotelabz/.env.local
         cd bin
