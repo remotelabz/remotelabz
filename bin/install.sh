@@ -367,6 +367,8 @@ install_requirements() {
         npm install -g configurable-http-proxy@5.0.1
     fi
     
+    MERCURE_DEB_PATH="${SCRIPT_DIR}/mercure_1.0.2_linux_amd64.deb"
+
     # Install and configure MySQL
     print_info "Installing and configuring MySQL..."
     apt-get install -y mysql-server
@@ -463,9 +465,9 @@ install_requirements() {
     systemctl restart rabbitmq-server
     
     print_info "Installation de Mercure Hub"
-    wget https://github.com/dunglas/mercure/releases/download/v1.0.2/mercure_1.0.2_linux_amd64.deb
-    wget https://github.com/dunglas/mercure/releases/download/v1.0.2/checksums.txt
-    sha256sum -c checksums.txt --ignore-missing 
+    wget -O "$MERCURE_DEB_PATH" https://github.com/dunglas/mercure/releases/download/v1.0.2/mercure_1.0.2_linux_amd64.deb
+    wget -O "${MERCURE_DEB_PATH}.sha256" https://github.com/dunglas/mercure/releases/download/v1.0.2/checksums.txt
+    sha256sum -c "${MERCURE_DEB_PATH}.sha256" --ignore-missing
 
     print_info "System requirements installation completed! ✅"
 }
@@ -970,11 +972,13 @@ final_configuration() {
     
 	#Configure Mercure Hub
     print_info "Configuration de Mercure Hub"
-    apt install ./mercure_1.0.2_linux_amd64.deb
+    cp -f "${SCRIPT_DIR}/mercure_1.0.2_linux_amd64.deb" /tmp/
+    apt install -y /tmp/mercure_1.0.2_linux_amd64.deb
+    cp -f "${SCRIPT_DIR}/.env.mercure" /opt/remotelabz/.env.mercure.local 2>/dev/null || true
     cp /opt/remotelabz/bin/systemd/remotelabz-mercure.service /etc/systemd/system
     systemctl daemon-reload
     systemctl enable --now remotelabz-mercure
-    rm mercure_1.0.2_linux_amd64.deb checksums.txt
+    rm -f /tmp/mercure_1.0.2_linux_amd64.deb
 
     # Configure HAProxy and Apache symlinks if not already done
     if [ -f $REMOTELABZ_PATH/config/haproxy/haproxy.cfg ]; then
