@@ -34,4 +34,4 @@ jobs:
         
         echo "1
         n
-        y" | ./install.sh
+        y" | sudo ./install.sh
