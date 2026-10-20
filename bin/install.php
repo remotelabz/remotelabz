@@ -164,7 +164,6 @@ while (ob_get_level() > 0) { ob_end_flush(); }
     $process = proc_open($cmd, $descriptorspec, $pipes, realpath('./'),
                         array(
                             'TERM'    => 'xterm-256color',
-                            'SUDO_USER' => 'vboxuser',
                             'HOME' => '/home/vboxuser',
                             'PATH' => getenv("PATH")
                             ));
