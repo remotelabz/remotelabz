@@ -24,11 +24,6 @@ jobs:
 
     - name: Install remotelabz (script)
       run: |
-
-        sudo add-apt-repository -y ppa:ondrej/php
-        sudo apt-get update --allow-releaseinfo-change-label
-        cd bin
-
         mkdir /opt/remotelabz
         cp ../.env /opt/remotelabz/.env.local
         
