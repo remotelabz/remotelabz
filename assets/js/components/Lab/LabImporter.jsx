@@ -5,6 +5,7 @@ import { Formik, Form, Field, useFormikContext } from 'formik';
 import { useDropzone } from 'react-dropzone';
 import Remotelabz from '../API';
 import { toast } from 'react-toastify';
+import EveNgImporter from './EveNgImporter';
 
 
 export default function LabImporter()
@@ -15,6 +16,7 @@ export default function LabImporter()
     });
     const [fileContent, setFileContent] = useState('');
     const[labTemplateList, setLabTemplateList] = useState([]);
+    const [eveNgFile, setEveNgFile] = useState(null);
     //var labTemplatesOptions = [];
 
     useEffect(() => {
@@ -37,6 +39,13 @@ export default function LabImporter()
     
     const onDrop = useCallback(acceptedFiles => {
         acceptedFiles.forEach((file) => {
+            // EVE-NG labs (.unl) and their archives (.zip) are handled by the
+            // dedicated import wizard instead of the JSON importer.
+            if (/\.(unl|zip)$/i.test(file.name)) {
+                setEveNgFile(file);
+                return;
+            }
+
             const reader = new FileReader()
             reader.onabort = () => console.log('file reading was aborted')
             reader.onerror = () => console.log('file reading has failed')
@@ -56,7 +65,8 @@ export default function LabImporter()
    }, [fileContent]);
 
     const formRef = useRef();
-    const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop, maxFiles: 1, accept: 'application/json' })
+    const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop, maxFiles: 1, accept: '.json,.unl,.zip' })
+
 
     const validateJson = (value) => {
         let error;
@@ -104,6 +114,19 @@ export default function LabImporter()
                 <a href={success.redirect} className="btn btn-primary mt-2">View</a>
             </div>
             :
+            eveNgFile ?
+            <EveNgImporter
+                file={eveNgFile}
+                onCancel={() => setEveNgFile(null)}
+                onImported={(data) => {
+                    if (data?.url) {
+                        setSuccess({ wasCreated: true, redirect: data.url });
+                    } else {
+                        window.location.reload();
+                    }
+                }}
+            />
+            :
             <div>
             <section>
                 <div {...getRootProps({className: 'dropzone'})}>
@@ -111,7 +134,7 @@ export default function LabImporter()
                     {isDragActive ?
                         <p>Paste your file here.</p>
                     :
-                        <p>Drag 'n' drop a files here, or click to select a file.</p>
+                        <p>Drag 'n' drop a file here, or click to select a file (.json, .unl or .zip).</p>
                     }
                 </div>
             </section>

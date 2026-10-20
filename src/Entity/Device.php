@@ -198,7 +198,7 @@ class Device implements InstanciableInterface, DirectoryAwareInterface
     #[Serializer\Groups(['api_get_device'])]
     private $config = 0;
 
-    #[ORM\Column(type: 'string', options: ['default' => ''])]
+    #[ORM\Column(type: 'text', options: ['default' => ''])]
     #[Serializer\Groups(['api_get_device'])]
     private $config_data = "";
 

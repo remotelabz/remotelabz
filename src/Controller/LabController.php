@@ -39,9 +39,12 @@ use App\Exception\AlreadyInstancedException;
 use App\Repository\OperatingSystemRepository;
 use App\Repository\HypervisorRepository;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use App\Repository\NetworkInterfaceRepository;
 use App\Service\ChatService;
+use App\Service\EveNg\ImageCatalog;
 use App\Service\Lab\LabImporter;
+use App\Service\Lab\Unl\UnlImporter;
 use App\Service\Lab\BannerManager;
 use App\Service\LabInternetManager;
 use App\Service\LabShareManager;
@@ -83,6 +86,7 @@ use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Filesystem\Exception\IOExceptionInterface;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\Process\Process;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Common\Collections\Order;
 
@@ -1628,101 +1632,332 @@ class LabController extends Controller
         return $this->redirectToRoute('show_lab', ['id' => $data]);
     }
 
+    /**
+     * Analyse d'un lab EVE-NG (.unl ou .zip) : dry-run, rien n'est persiste.
+     *
+     * Renvoie un LabPreview serialise (source, lab, devices, images, warnings)
+     * utilise par la fenetre de revue EveNgImporter cote client.
+     */
+    #[Post('/api/labs/import/eve-ng/analyze', name: 'api_eve_ng_import_analyze')]
+    #[Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message: "Access denied.")]
+    public function eveNgAnalyzeAction(Request $request, UnlImporter $unlImporter): JsonResponse
+    {
+        $file = $request->files->get('file');
+        if (null === $file || !$file->isValid()) {
+            return new JsonResponse(['status' => 'error', 'error' => 'No file uploaded.'], 400);
+        }
+
+        $temporaryPath = $this->storeTemporaryUpload($file);
+
+        try {
+            $preview = $unlImporter->analyze($temporaryPath, $file->getClientOriginalName());
+        } catch (\Throwable $exception) {
+            $this->logger->error('[LabController:eveNgAnalyzeAction]::'.$exception->getMessage());
+
+            return new JsonResponse([
+                'status' => 'error',
+                'error' => $exception->getMessage(),
+            ], 400);
+        } finally {
+            @unlink($temporaryPath);
+        }
+
+        return new JsonResponse(['status' => 'success', 'data' => $preview->toArray()], 200);
+    }
+
+    /**
+     * Commit d'un import EVE-NG : applique les decisions d'images, cree les OS
+     * manquants, diffuse les fichiers puis cree le Lab (via LabImporter).
+     */
+    #[Post('/api/labs/import/eve-ng/commit', name: 'api_eve_ng_import_commit')]
+    #[Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message: "Access denied.")]
+    public function eveNgCommitAction(Request $request, UnlImporter $unlImporter): JsonResponse
+    {
+        $file = $request->files->get('file');
+        if (null === $file || !$file->isValid()) {
+            return new JsonResponse(['status' => 'error', 'error' => 'No file uploaded.'], 400);
+        }
+
+        // Le mapping est transmis en JSON dans le champ "mapping".
+        $mapping = json_decode((string) $request->request->get('mapping', '[]'), true);
+        if (!is_array($mapping)) {
+            $mapping = [];
+        }
+
+        // Les choix utilisateur arrivent indexes par index ; on les reindexe par
+        // identifiant d'image EVE-NG.
+        $decisions = [];
+        foreach ($mapping as $key => $value) {
+            if (!is_array($value)) {
+                continue;
+            }
+            if (isset($value['eve_image']) && '' !== $value['eve_image']) {
+                $decisions[(string) $value['eve_image']] = $value;
+            } elseif (is_string($key) && '' !== $key) {
+                $decisions[$key] = $value;
+            }
+        }
+
+        $temporaryPath = $this->storeTemporaryUpload($file);
+
+        try {
+            $labId = $unlImporter->import($temporaryPath, $decisions, $this->getUser());
+        } catch (\Throwable $exception) {
+            $this->logger->error('[LabController:eveNgCommitAction]::'.$exception->getMessage());
+
+            return new JsonResponse([
+                'status' => 'error',
+                'error' => $exception->getMessage(),
+            ], 400);
+        } finally {
+            @unlink($temporaryPath);
+        }
+
+        return new JsonResponse([
+            'status' => 'success',
+            'data' => [
+                'id' => $labId,
+                'url' => $this->generateUrl('show_lab', ['id' => $labId]),
+            ],
+        ], 200);
+    }
+
+    /**
+     * Glossaire des correspondances image EVE-NG -> OperatingSystem RemoteLabz.
+     */
+    #[Get('/api/eve-ng/images/mappings', name: 'api_eve_ng_image_mappings')]
+    #[Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message: "Access denied.")]
+    public function eveNgImageMappingsAction(ImageCatalog $imageCatalog): JsonResponse
+    {
+        $mappings = [];
+        foreach ($imageCatalog->all() as $eveImage => $mapping) {
+            $operatingSystem = $mapping->getOperatingSystem();
+            $mappings[] = [
+                'eve_image' => $eveImage,
+                'os_id' => $operatingSystem?->getId(),
+                'os_name' => $operatingSystem?->getName(),
+                'os_image' => $operatingSystem?->getImageUrl() ?: $operatingSystem?->getImageFilename(),
+                'created_at' => $mapping->getCreatedAt()->format(\DateTimeInterface::ATOM),
+            ];
+        }
+
+        return new JsonResponse(['status' => 'success', 'data' => $mappings], 200);
+    }
+
+    /**
+     * Stocke un upload dans un fichier temporaire (le parser accepte un chemin
+     * disque, ce qui permet de gerer aussi bien .unl que .zip).
+     */
+    private function storeTemporaryUpload(UploadedFile $file): string
+    {
+        $directory = rtrim(sys_get_temp_dir(), '/').'/remotelabz-eve-ng';
+        if (!is_dir($directory)) {
+            mkdir($directory, 0700, true);
+        }
+
+        $temporaryPath = $directory.'/'.uniqid('unl_', true).'_'.preg_replace('/[^A-Za-z0-9._-]/', '_', $file->getClientOriginalName());
+        $file->move($directory, basename($temporaryPath));
+
+        return $temporaryPath;
+    }
+
     #[Route(path: '/admin/labs/{id<\d+>}/export', name: 'export_lab', methods: 'GET')]
-    public function exportAction(int $id, LabImporter $labImporter)
+    public function exportAction(int $id, Request $request, LabImporter $labImporter)
     {
         if (!$lab = $this->labRepository->find($id)) {
             throw new NotFoundHttpException();
         }
-        
+
+        // Include the device images in the archive (default) or only the
+        // JSON topology (?images=0, fast sharing).
+        $includeImages = '0' !== (string) $request->query->get('images', '1');
+
+        // B5: optionally embed remote (URL) images too, by downloading them
+        // front-side (§8.2 limitation #2). Off by default because the worker
+        // can fetch the URL itself, so the file is not always needed.
+        $includeUrlImages = '1' === (string) $request->query->get('url_images', '0');
+
         $workers = $this->configWorkerRepository->findBy(["available" => true]);
         $data = $labImporter->export($lab);
 
-        $fileSystem = new FileSystem();
-        $fileSystem->remove($this->getParameter('kernel.project_dir').'/public/uploads/lab/export');
-        $fileSystem->mkdir($this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid());
-        set_time_limit(120);
-        foreach($lab->getDevices() as $device) {
-            if ($device->getOperatingSystem()->getHypervisor()->getName() == "qemu" && $device->getOperatingSystem()->getImageFileName() == $device->getOperatingSystem()->getImage()) {
-                $image = $device->getOperatingSystem()->getImage();
-                if ($workers !== null) {
-                    if (!$fileSystem->exists($this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid().'/'.$image)) {
-                        $break = false;
-                        foreach($workers as $worker) {
-                            $this->logger->debug("[LabController:exportAction]worker ".$worker->getIPv4());
-                            $workerPort = $this->getParameter('app.worker_port');
-                            $resource = fopen($this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid().'/'.$image, 'w');
-                            $this->logger->debug("[LabController:exportAction]curl http://".$worker->getIPv4().":".$workerPort."/images/".$image);
-                            $curl = curl_init();
-                            curl_setopt($curl, CURLOPT_URL, "http://".$worker->getIPv4().":".$workerPort."/images/".$image);
-                            curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "GET");
-                            curl_setopt($curl, CURLOPT_TIMEOUT, 600);
-                            curl_setopt($curl, CURLOPT_FILE, $resource);
-                            curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
-                            curl_exec($curl);
-                                                        
-                            if (curl_errno($curl)) { 
-                                $this->logger->debug("[LabController:exportAction]::Curl error of image download: ".curl_error($curl));
-                            }
-                            else if (curl_getinfo($curl, CURLINFO_HTTP_CODE) != 200) {
-                                $this->logger->debug("[LabController:exportAction]::Http code of image download : ".curl_getinfo($curl, CURLINFO_HTTP_CODE));
-                            }
-                            else {
-                                break;
-                            }
-                            curl_close($curl);
-                            fclose($resource);
+        $exportRoot = $this->getParameter('kernel.project_dir').'/public/uploads/lab/export';
+        $exportDir = $exportRoot.'/lab_'.$lab->getUuid();
 
+        $fileSystem = new FileSystem();
+
+        // B4: only purge the export directory of *this* lab (and stale exports
+        // older than a day), instead of wiping every previously generated
+        // export on the whole platform.
+        $fileSystem->remove($exportDir);
+        $this->purgeOldExports($exportRoot, $exportDir);
+        $fileSystem->mkdir($exportDir);
+
+        set_time_limit(120);
+
+        $seenImages = [];
+
+        foreach ($lab->getDevices() as $device) {
+            $operatingSystem = $device->getOperatingSystem();
+            if (null === $operatingSystem || null === $operatingSystem->getHypervisor()) {
+                $this->logger->debug("[LabController:exportAction]::Skipping device without operating system or hypervisor", [
+                    'device' => $device->getName(),
+                ]);
+                continue;
+            }
+
+            $hypervisorName = $operatingSystem->getHypervisor()->getName();
+
+            if ('qemu' === $hypervisorName) {
+                // B5 / §8.2: base the decision on the real nature of the OS.
+                // A disk file present on the workers (imageFilename) must be
+                // embedded; an URL image is fetched by the worker itself and is
+                // therefore left to the worker (the URL stays in the JSON),
+                // unless the caller explicitly asks to embed URL images too.
+                $imageFilename = $operatingSystem->getImageFilename();
+                if (null === $imageFilename || '' === $imageFilename) {
+                    if ($includeImages && $includeUrlImages) {
+                        $this->embedUrlImage($operatingSystem->getImageUrl(), $exportDir, $fileSystem);
+                    } else {
+                        $this->logger->debug("[LabController:exportAction]::OS image is an URL, not embedding it in the archive", [
+                            'image' => $operatingSystem->getImage(),
+                        ]);
+                    }
+                    continue;
+                }
+
+                if (isset($seenImages['qemu'][$imageFilename]) || !$includeImages) {
+                    continue;
+                }
+                $seenImages['qemu'][$imageFilename] = true;
+
+                $image = $imageFilename;
+                $targetFile = $exportDir.'/'.$image;
+                if ($fileSystem->exists($targetFile)) {
+                    continue;
+                }
+
+                if (!empty($workers)) {
+                    foreach ($workers as $worker) {
+                        $workerPort = $this->getParameter('app.worker_port');
+                        $this->logger->debug("[LabController:exportAction]::Downloading image ".$image." from worker ".$worker->getIPv4());
+
+                        $resource = fopen($targetFile, 'w');
+                        if (false === $resource) {
+                            $this->logger->error("[LabController:exportAction]::Unable to open ".$targetFile." for writing");
+                            break;
+                        }
+
+                        $curl = curl_init();
+                        curl_setopt($curl, CURLOPT_URL, "http://".$worker->getIPv4().":".$workerPort."/images/".rawurlencode($image));
+                        curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "GET");
+                        curl_setopt($curl, CURLOPT_TIMEOUT, 600);
+                        curl_setopt($curl, CURLOPT_FILE, $resource);
+                        curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
+                        curl_exec($curl);
+
+                        $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+                        $curlError = curl_errno($curl);
+                        if ($curlError) {
+                            $this->logger->debug("[LabController:exportAction]::Curl error of image download: ".curl_error($curl));
+                        } elseif (200 !== $httpCode) {
+                            $this->logger->debug("[LabController:exportAction]::Http code of image download : ".$httpCode);
+                        }
+                        curl_close($curl);
+                        fclose($resource);
+
+                        if (0 === $curlError && 200 === $httpCode) {
+                            break;
+                        }
+
+                        // Image not found on this worker: remove the partial
+                        // file and try the next worker.
+                        if ($fileSystem->exists($targetFile)) {
+                            $fileSystem->remove($targetFile);
                         }
                     }
                 }
-            } 
-            else if($device->getOperatingSystem()->getHypervisor()->getName() == "lxc") {
-                $containerArchive = $device->getOperatingSystem()->getImageFileName().".tar.gz";
-                if (!$fileSystem->exists($this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid().'/'.$containerArchive)) {
-                    exec("ls /var/lib/lxc/", $containersOutput);
+            }
+            elseif ('lxc' === $hypervisorName) {
+                $imageFilename = $operatingSystem->getImageFilename();
+                if (null === $imageFilename || '' === $imageFilename || !$includeImages) {
+                    continue;
+                }
+
+                $containerArchive = $imageFilename.".tar.gz";
+                if (isset($seenImages['lxc'][$containerArchive])) {
+                    continue;
+                }
+                $seenImages['lxc'][$containerArchive] = true;
+
+                $targetArchive = $exportDir.'/'.$containerArchive;
+                if (!$fileSystem->exists($targetArchive)) {
+                    $containersOutput = [];
+                    exec("ls /var/lib/lxc/ 2>/dev/null", $containersOutput);
                     foreach ($containersOutput as $container) {
-                        if ($container == $device->getOperatingSystem()->getImageFileName()) {
-                            $this->logger->debug("[LabController:exportAction]::Compressing container ".$device->getOperatingSystem()->getImageFileName());
-                            exec("tar -cvzf ".$this->getParameter('kernel.project_dir')."/public/uploads/lab/export/lab_".$lab->getUuid()."/".$containerArchive." -C /var/lib/lxc/".$device->getOperatingSystem()->getImageFileName()." .");
+                        if ($container === $imageFilename) {
+                            $this->logger->debug("[LabController:exportAction]::Compressing container ".$imageFilename);
+                            $process = new Process([
+                                'tar', '-czf', $targetArchive,
+                                '-C', '/var/lib/lxc/'.$imageFilename, '.',
+                            ]);
+                            try {
+                                $process->run();
+                            } catch (\Exception $exception) {
+                                $this->logger->debug("[LabController:exportAction]::Container compression failed: ".$exception->getMessage());
+                            }
                             break;
                         }
                     }
                 }
-                
-                if ($workers !== null && $fileSystem->exists($this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid().'/'.$containerArchive)) {
-                    foreach($workers as $worker) {
+
+                if (!empty($workers) && $fileSystem->exists($targetArchive)) {
+                    foreach ($workers as $worker) {
                         $this->logger->debug("[LabController:exportAction]::Copying container archive to worker ".$worker->getIPv4());
                         $workerPort = $this->getParameter('app.worker_port');
-                        $localFile = fopen($this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid().'/'.$containerArchive, 'r');
+                        $localFile = fopen($targetArchive, 'r');
+                        if (false === $localFile) {
+                            break;
+                        }
                         $curl = curl_init();
-                        curl_setopt($curl, CURLOPT_URL, "http://".$worker->getIPv4().":".$workerPort."/images/containers/".$containerArchive);
+                        curl_setopt($curl, CURLOPT_URL, "http://".$worker->getIPv4().":".$workerPort."/images/containers/".rawurlencode($containerArchive));
                         curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "PUT");
                         curl_setopt($curl, CURLOPT_TIMEOUT, 600);
                         curl_setopt($curl, CURLOPT_INFILE, $localFile);
-                        curl_setopt($curl, CURLOPT_INFILESIZE, filesize($this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid().'/'.$containerArchive));
+                        curl_setopt($curl, CURLOPT_INFILESIZE, filesize($targetArchive));
                         curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
                         curl_exec($curl);
-                        
+
                         if (curl_errno($curl)) {
                             $this->logger->debug("[LabController:exportAction]::Curl error of container archive upload: ".curl_error($curl));
-                        }
-                        else if (curl_getinfo($curl, CURLINFO_HTTP_CODE) != 200 && curl_getinfo($curl, CURLINFO_HTTP_CODE) != 201) {
+                        } else if (curl_getinfo($curl, CURLINFO_HTTP_CODE) != 200 && curl_getinfo($curl, CURLINFO_HTTP_CODE) != 201) {
                             $this->logger->debug("[LabController:exportAction]::Http code of container archive upload: ".curl_getinfo($curl, CURLINFO_HTTP_CODE));
                         }
-                        
+
                         curl_close($curl);
                         fclose($localFile);
                     }
                 }
-            }           
+            }
         }
-        $fileSystem->dumpFile($this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid().'/lab_'.$lab->getUuid().'.json', $data);
+
+        $jsonFile = $exportDir.'/lab_'.$lab->getUuid().'.json';
+        $fileSystem->dumpFile($jsonFile, $data);
 
         $this->logger->debug("[LabController:exportAction]::Compressing to tar.gz");
-        exec("tar -cvzf ".$this->getParameter('kernel.project_dir')."/public/uploads/lab/export/lab_".$lab->getUuid()."/lab_".$lab->getUuid().".tar.gz -C ". $this->getParameter('kernel.project_dir')."/public/uploads/lab/export/lab_".$lab->getUuid()." .");
+        $tarFile = $exportDir.'/lab_'.$lab->getUuid().'.tar.gz';
+        $process = new Process([
+            'tar', '-czf', $tarFile,
+            '-C', $exportDir, '.',
+        ]);
+        try {
+            $process->run();
+        } catch (\Exception $exception) {
+            $this->logger->error("[LabController:exportAction]::Compression failed: ".$exception->getMessage());
+            throw new BadRequestHttpException("Unable to create the export archive.");
+        }
+
         $this->logger->debug("[LabController:exportAction]::Starting download");
-        $filePath = $this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid().'/lab_'.$lab->getUuid().'.tar.gz';
+        $filePath = $tarFile;
         $response = new StreamedResponse(function() use ($filePath) {
             readfile($filePath);exit;
         });
@@ -1735,6 +1970,86 @@ class LabController extends Controller
         $response->headers->set('Content-Disposition', $disposition);
 
         return $response;
+    }
+
+    /**
+     * Télécharge une image distante (`OperatingSystem.imageUrl`) et l'ajoute à
+     * l'archive d'export (option `?url_images=1`).
+     */
+    private function embedUrlImage(?string $url, string $exportDir, FileSystem $fileSystem): void
+    {
+        if (null === $url || '' === $url) {
+            return;
+        }
+
+        $targetFile = $exportDir.'/'.basename(parse_url($url, PHP_URL_PATH) ?: $url);
+        if ($fileSystem->exists($targetFile)) {
+            return;
+        }
+
+        $this->logger->debug("[LabController:exportAction]::Downloading URL image ".$url);
+
+        $resource = fopen($targetFile, 'w');
+        if (false === $resource) {
+            $this->logger->error("[LabController:exportAction]::Unable to open ".$targetFile." for writing");
+
+            return;
+        }
+
+        $curl = curl_init();
+        curl_setopt($curl, CURLOPT_URL, $url);
+        curl_setopt($curl, CURLOPT_CUSTOMREQUEST, 'GET');
+        curl_setopt($curl, CURLOPT_TIMEOUT, 600);
+        curl_setopt($curl, CURLOPT_FILE, $resource);
+        curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
+        curl_exec($curl);
+
+        $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        $curlError = curl_errno($curl);
+        curl_close($curl);
+        fclose($resource);
+
+        if (0 !== $curlError || 200 !== $httpCode) {
+            $this->logger->warning("[LabController:exportAction]::Unable to download URL image ".$url." (http ".$httpCode.")");
+            if ($fileSystem->exists($targetFile)) {
+                $fileSystem->remove($targetFile);
+            }
+        }
+    }
+
+    /**
+     * Purge les exports perimes (plus vieux qu'un jour) du repertoire d'export
+     * partage, sans toucher aux exports recents des autres labs.
+     */
+    private function purgeOldExports(string $exportRoot, string $keepDirectory): void
+    {
+        if (!is_dir($exportRoot)) {
+            return;
+        }
+
+        $threshold = time() - 86400;
+
+        foreach (scandir($exportRoot) ?: [] as $entry) {
+            if ('.' === $entry || '..' === $entry) {
+                continue;
+            }
+
+            $path = $exportRoot.'/'.$entry;
+            if (!is_dir($path) || $path === $keepDirectory) {
+                continue;
+            }
+
+            $modifiedAt = @filemtime($path);
+            if (false === $modifiedAt || $modifiedAt >= $threshold) {
+                continue;
+            }
+
+            try {
+                (new FileSystem())->remove($path);
+            } catch (IOExceptionInterface $exception) {
+                $this->logger->warning("[LabController:purgeOldExports]::Unable to remove stale export ".$path);
+            }
+        }
     }
 
     

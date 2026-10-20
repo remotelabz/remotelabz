@@ -485,6 +485,49 @@ export class RemotelabzAPI {
         },
 
         /**
+         * Analyse an EVE-NG lab file (.unl or .zip) without importing it.
+         * 
+         * Implements POST `/api/labs/import/eve-ng/analyze`
+         * 
+         * @param {File} file 
+         * 
+         * @returns {Promise<import('axios').AxiosResponse<{status: string, data: Object}>>}
+         */
+        analyzeEveNg(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+            return axios.post(`/labs/import/eve-ng/analyze`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+        },
+
+        /**
+         * Import an EVE-NG lab, applying the image decisions taken in the review window.
+         * 
+         * Implements POST `/api/labs/import/eve-ng/commit`
+         * 
+         * @param {File} file 
+         * @param {Array} mapping Image decisions ({ action, os_id?, filename?, url?, name?, flavorDisk? })
+         * 
+         * @returns {Promise<import('axios').AxiosResponse<{status: string, data: {id: number, url: string}}>>}
+         */
+        commitEveNg(file, mapping) {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('mapping', JSON.stringify(mapping || []));
+            return axios.post(`/labs/import/eve-ng/commit`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+        },
+
+        /**
+         * Get the EVE-NG image -> operating system glossary.
+         * 
+         * Implements GET `/api/eve-ng/images/mappings`
+         * 
+         * @returns {Promise<import('axios').AxiosResponse<{status: string, data: Array}>>}
+         */
+        getEveNgImageMappings() {
+            return axios.get(`/eve-ng/images/mappings`);
+        },
+
+        /**
          * copy a banner by lab ID.
          * 
          * Implements GET `/api/labs/{id}/banner/{newId}`
@@ -1406,6 +1449,50 @@ export class RemotelabzAPI {
         sendPresence(labUuid, action) {
             return axios.post(`/chat/${labUuid}/presence`, { action });
         }
+    }
+
+    /**
+     * Operating system endpoint.
+     */
+    operatingSystems = {
+        /**
+         * Get a collection of operating systems.
+         * 
+         * Implements GET `/api/operating-systems`
+         * 
+         * @returns {Promise<import('axios').AxiosResponse<{data: Array}>>}
+         */
+        all(search = '', hypervisor = '') {
+            return axios.get('/operating-systems', { params: { search, hypervisor, limit: 500 } });
+        },
+
+        /**
+         * Upload an image file (.qcow2, .img, .tar OVA) and get its temporary filename.
+         * 
+         * Implements POST `/api/images/upload`
+         * 
+         * @param {File} file 
+         * 
+         * @returns {Promise<import('axios').AxiosResponse<{success: boolean, filename: string, originalName: string}>>}
+         */
+        upload(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+            return axios.post('/images/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+        },
+
+        /**
+         * Validate a remote image URL.
+         * 
+         * Implements POST `/api/images/validate-url`
+         * 
+         * @param {string} url 
+         * 
+         * @returns {Promise<import('axios').AxiosResponse<{valid: boolean, error?: string}>>}
+         */
+        validateUrl(url) {
+            return axios.post('/images/validate-url', { url });
+        },
     }
 }
 
