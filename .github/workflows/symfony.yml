@@ -29,7 +29,7 @@ jobs:
         mkdir /opt/remotelabz
         cp ../.env /opt/remotelabz/.env.local
 
-        mkdir -p /home/root
+        sudo mkdir -p /home/root
         
         echo "1
         n
