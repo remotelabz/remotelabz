@@ -24,6 +24,8 @@ jobs:
 
     - name: Install remotelabz (script)
       run: |
+        cd bin
+
         mkdir /opt/remotelabz
         cp ../.env /opt/remotelabz/.env.local
         
