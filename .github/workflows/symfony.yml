@@ -1,8 +1,3 @@
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
-
 name: Symfony
 
 on:
@@ -21,7 +16,6 @@ jobs:
 
     - uses: actions/checkout@v4
 
-
     - name: Add PHP repository
       run: |
         sudo apt-get update
@@ -29,19 +23,25 @@ jobs:
         sudo add-apt-repository -y ppa:ondrej/php
         sudo apt-get update
 
-    - name: Install remotelabz (script)
+    - name: Prepare MySQL (root sans mot de passe)
+      run: |
+        sudo systemctl start mysql
+        for i in $(seq 1 30); do
+          sudo mysqladmin ping --silent && break
+          sleep 1
+        done
+        # Sur le runner, root a le mot de passe "root" ; on tente aussi le socket
+        sudo mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY ''; FLUSH PRIVILEGES;" \
+          || mysql -uroot -proot -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY ''; FLUSH PRIVILEGES;"
+        mysql -uroot -e "SELECT 1"
 
+    - name: Install remotelabz (script)
+      shell: bash
       env:
         TERM: xterm
-
+        DEBIAN_FRONTEND: noninteractive
       run: |
+        sudo mkdir -p /opt/remotelabz /home/root
+        sudo cp .env /opt/remotelabz/.env.local
         cd bin
-
-        mkdir /opt/remotelabz
-        cp ../.env /opt/remotelabz/.env.local
-
-        sudo mkdir -p /home/root
-        
-        echo "1
-        n
-        y" | sudo bash -x ./install.sh 2>&1 | tail -80
+        printf '1\nn\ny\n' | sudo --preserve-env=TERM,DEBIAN_FRONTEND bash -x ./install.sh 2>&1 | tail -80
