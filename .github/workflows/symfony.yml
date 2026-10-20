@@ -22,6 +22,13 @@ jobs:
     - uses: actions/checkout@v4
 
 
+    - name: Add PHP repository
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y software-properties-common ca-certificates gnupg
+        sudo add-apt-repository -y ppa:ondrej/php
+        sudo apt-get update
+
     - name: Install remotelabz (script)
 
       env:
