@@ -16,6 +16,11 @@ jobs:
 
     - uses: actions/checkout@v4
 
+    - name: Retirer Firefox et snapd des mises à jour
+      run: |
+        sudo apt-mark hold firefox snapd
+        sudo apt-get purge -y firefox || true
+
     - name: Add PHP repository
       run: |
         sudo apt-get update
@@ -41,34 +46,9 @@ jobs:
         TERM: xterm
         DEBIAN_FRONTEND: noninteractive
       run: |
+        pwd
         ln -sfn "$GITHUB_WORKSPACE" /home/runner/remotelabz
         sudo mkdir -p /opt/remotelabz /home/root
         sudo cp .env /opt/remotelabz/.env.local
-        sudo apt-get install -y expect
         cd bin
-        sudo --preserve-env=TERM,DEBIAN_FRONTEND expect -c '
-          set timeout 900
-          set menu 0
-          log_file -a /tmp/install.log
-          spawn bash ./install.sh
-          expect {
-            -re {Enter your choice \[1-7\]: } {
-              if {$menu == 0} { send "1\r"; set menu 1 } else { send "7\r" }
-              exp_continue
-            }
-            -re {review/edit the existing configuration} { send "n\r"; exp_continue }
-            -re {review/edit the configuration now}      { send "n\r"; exp_continue }
-            -re {public IP or FQDN: }                    { send "127.0.0.1\r"; exp_continue }
-            -re {(Enter|Re-Enter) New CA passphrase}     { send "\r"; exp_continue }
-            -re {PEM passphrase: }                       { send "pempass1234\r"; exp_continue }
-            -re {Press Enter to continue}                { send "\r"; exp_continue }
-            -re {\(Y/n\): }                              { send "y\r"; exp_continue }
-            eof
-          }
-          catch wait result
-          exit [lindex $result 3]
-        '
-
-    - name: Show install log
-      if: failure()
-      run: tail -150 /tmp/install.log
+        printf '1\nn\ny\n' | sudo --preserve-env=TERM,DEBIAN_FRONTEND bash -x ./install.sh 2>&1 | tail -80
