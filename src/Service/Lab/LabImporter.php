@@ -177,80 +177,112 @@ class LabImporter
         }
 
 
+        // Resolutions done during a single import, so that devices sharing the
+        // same image (or memory) are linked to a single OperatingSystem (or
+        // Flavor). Necessary because the repository lookups below go straight
+        // to the persister (through `matching()`/`findBy()`) and therefore do
+        // not see entities that are only persisted, not flushed yet.
+        $operatingSystemsByImage = [];
+        $flavorsByMemory = [];
+
         foreach ($labJson['devices'] ?? [] as $deviceJson) {
             //$this->logger->debug('Lab Json', $deviceJson);
             // find similar operating system
             $operatingSystemJson = $deviceJson['operatingSystem'] ?? [];
-            $criteria = Criteria::create()
-                ->where(Criteria::expr()->eq('imageUrl', $operatingSystemJson['image'] ?? null))
-                ->orWhere(Criteria::expr()->eq('imageFilename', $operatingSystemJson['image'] ?? null))
-            ;
+            $image = $operatingSystemJson['image'] ?? ($operatingSystemJson['name'] ?? '');
+            $operatingSystemKey = (string) $image;
 
-            $results = $this->operatingSystemRepository->matching($criteria);
+            if ('' !== $operatingSystemKey && isset($operatingSystemsByImage[$operatingSystemKey])) {
+                $operatingSystem = $operatingSystemsByImage[$operatingSystemKey];
 
-            if (count($results) > 0) {
-                $operatingSystem = $results[0];
-
-                $this->logger->info('Found similar operating system. Using this instead of creating a new one.', ['ID' => $operatingSystem->getId()]);
+                $this->logger->info('Reusing the operating system already resolved for this import.', ['ID' => $operatingSystem->getId(), 'image' => $operatingSystemKey]);
             } else {
-                $this->logger->info('No similar operating system found. Creating a new one.');
-
-                $image = $operatingSystemJson['image'] ?? ($operatingSystemJson['name'] ?? '');
-                $operatingSystem = new OperatingSystem();
-                if (str_contains((string) $image, '/')) {
-                    $operatingSystem->setImageUrl($image);
-                }
-                else {
-                    $operatingSystem->setImageFilename($image);
-                }
-                $operatingSystem
-                    ->setName($operatingSystemJson['name'] ?? $image)
-                    ->setImage($image)
+                $criteria = Criteria::create()
+                    ->where(Criteria::expr()->eq('imageUrl', $image))
+                    ->orWhere(Criteria::expr()->eq('imageFilename', $image))
                 ;
 
-                // An imported operating system must carry the same metadata as
-                // an exported one (hypervisor, arch), otherwise a re-export or
-                // a device start would lose/blank those fields.
-                if (!empty($deviceJson['hypervisor']['id'])
-                    && $hypervisor = $this->hypervisorRepository->find($deviceJson['hypervisor']['id'])) {
-                    $operatingSystem->setHypervisor($hypervisor);
-                }
+                $results = $this->operatingSystemRepository->matching($criteria);
 
-                if (!empty($operatingSystemJson['arch']['name'])) {
-                    $arch = $this->archRepository->findByName($operatingSystemJson['arch']['name']);
-                    if (null !== $arch) {
-                        $operatingSystem->setArch($arch);
+                if (count($results) > 0) {
+                    $operatingSystem = $results[0];
+
+                    $this->logger->info('Found similar operating system. Using this instead of creating a new one.', ['ID' => $operatingSystem->getId()]);
+                } else {
+                    $this->logger->info('No similar operating system found. Creating a new one.');
+
+                    $operatingSystem = new OperatingSystem();
+                    if (str_contains((string) $image, '/')) {
+                        $operatingSystem->setImageUrl($image);
                     }
+                    else {
+                        $operatingSystem->setImageFilename($image);
+                    }
+                    $operatingSystem
+                        ->setName($operatingSystemJson['name'] ?? $image)
+                        ->setImage($image)
+                    ;
+
+                    // An imported operating system must carry the same metadata as
+                    // an exported one (hypervisor, arch), otherwise a re-export or
+                    // a device start would lose/blank those fields.
+                    if (!empty($deviceJson['hypervisor']['id'])
+                        && $hypervisor = $this->hypervisorRepository->find($deviceJson['hypervisor']['id'])) {
+                        $operatingSystem->setHypervisor($hypervisor);
+                    }
+
+                    if (!empty($operatingSystemJson['arch']['name'])) {
+                        $arch = $this->archRepository->findByName($operatingSystemJson['arch']['name']);
+                        if (null !== $arch) {
+                            $operatingSystem->setArch($arch);
+                        }
+                    }
+
+                    if (!empty($operatingSystemJson['description'])) {
+                        $operatingSystem->setDescription($operatingSystemJson['description']);
+                    }
+
+                    $this->entityManager->persist($operatingSystem);
                 }
 
-                if (!empty($operatingSystemJson['description'])) {
-                    $operatingSystem->setDescription($operatingSystemJson['description']);
+                if ('' !== $operatingSystemKey) {
+                    $operatingSystemsByImage[$operatingSystemKey] = $operatingSystem;
                 }
-
-                $this->entityManager->persist($operatingSystem);
             }
 
             // find similar flavor
             $flavorJson = $deviceJson['flavor'] ?? [];
-            $results = $this->flavorRepository->findBy([
-                'memory' => $flavorJson['memory'] ?? null,
-                //'disk' => $flavorJson['disk']
-            ]);
+            $flavorKey = (string) ($flavorJson['memory'] ?? '');
 
-            if (count($results) > 0) {
-                $flavor = $results[0];
+            if ('' !== $flavorKey && isset($flavorsByMemory[$flavorKey])) {
+                $flavor = $flavorsByMemory[$flavorKey];
 
-                $this->logger->info('Found similar flavor. Using this instead of creating a new one.', ['ID' => $flavor->getId()]);
+                $this->logger->info('Reusing the flavor already resolved for this import.', ['ID' => $flavor->getId(), 'memory' => $flavorKey]);
             } else {
-                $this->logger->info('No similar flavor found. Creating a new one.');
+                $results = $this->flavorRepository->findBy([
+                    'memory' => $flavorJson['memory'] ?? null,
+                    //'disk' => $flavorJson['disk']
+                ]);
 
-                $flavor = new Flavor();
-                $flavor
-                    ->setName($flavorJson['name'] ?? ('flavor-' . ($flavorJson['memory'] ?? 0)))
-                    ->setMemory((int) ($flavorJson['memory'] ?? 0))
-                ;
+                if (count($results) > 0) {
+                    $flavor = $results[0];
 
-                $this->entityManager->persist($flavor);
+                    $this->logger->info('Found similar flavor. Using this instead of creating a new one.', ['ID' => $flavor->getId()]);
+                } else {
+                    $this->logger->info('No similar flavor found. Creating a new one.');
+
+                    $flavor = new Flavor();
+                    $flavor
+                        ->setName($flavorJson['name'] ?? ('flavor-' . ($flavorJson['memory'] ?? 0)))
+                        ->setMemory((int) ($flavorJson['memory'] ?? 0))
+                    ;
+
+                    $this->entityManager->persist($flavor);
+                }
+
+                if ('' !== $flavorKey) {
+                    $flavorsByMemory[$flavorKey] = $flavor;
+                }
             }
 
             $editorDataJson = $deviceJson['editorData'] ?? [];
@@ -289,7 +321,7 @@ class LabImporter
                 ->setIsTemplate(false)
                 ->setNetworkInterfaceTemplate($deviceJson['networkInterfaceTemplate'] ?? 'eth')
             ;
-            if (array_key_exists("template",$deviceJson)) {
+            if (!empty($deviceJson['template']) && is_string($deviceJson['template'])) {
                 $device->setTemplate($deviceJson['template']);
             }
 
