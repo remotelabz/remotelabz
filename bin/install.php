@@ -10,6 +10,7 @@ function editEnv($key,$newVal){
 
 print_r($_POST);
 
+
 if($_SERVER['REQUEST_METHOD'] == 'POST'){
 
 while (ob_get_level() > 0) { ob_end_flush(); }
@@ -164,7 +165,8 @@ while (ob_get_level() > 0) { ob_end_flush(); }
     $process = proc_open($cmd, $descriptorspec, $pipes, realpath('./'),
                         array(
                             'TERM'    => 'xterm-256color',
-                            'HOME' => '/home/vboxuser',
+                            'SUDO_USER' => get_current_user(),
+                            'HOME' => '\/home\/'.get_current_user(),
                             'PATH' => getenv("PATH")
                             ));
 
