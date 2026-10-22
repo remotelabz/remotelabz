@@ -83,15 +83,14 @@ jobs:
         cd /opt/remotelabz
         php bin/console cache:clear --env=test
         php bin/phpunit --log-junit var/log/res.xml
-        python3 bin/xml2htmlReport.py var/log/res.xml var/log/res.html
+        
       
       continue-on-error: true
 
-    - name: Debug - list files
+    - name: Convert report to html
       run: |
         cd /opt/remotelabz
-        ls -la var/
-        ls -la var/log/ || echo "var/log n'existe pas"
+        python3 bin/xml2htmlReport.py var/log/res.xml var/log/res.html
       if: always()
 
     - name: Upload test result
@@ -99,5 +98,5 @@ jobs:
       if: always()
       with:
         name: test-report
-        path: /opt/remotelabz/var/log/res.xml
+        path: /opt/remotelabz/var/log/res.html
         retention-days: 14
