@@ -89,6 +89,7 @@ jobs:
 
     - name: Debug - list files
       run: |
+        cd /opt/remotelabz
         ls -la var/
         ls -la var/log/ || echo "var/log n'existe pas"
       if: always()
@@ -98,5 +99,5 @@ jobs:
       if: always()
       with:
         name: test-report
-        path: var/log/res.xml
+        path: /opt/remotelabz/var/log/res.xml
         retention-days: 14
