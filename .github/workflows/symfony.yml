@@ -100,3 +100,7 @@ jobs:
         name: test-report
         path: /opt/remotelabz/var/log/res.html
         retention-days: 14
+
+    - name: Report test status
+      if: steps.tests.outcome == 'failure'
+      run: exit 1
