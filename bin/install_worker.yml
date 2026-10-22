@@ -1,0 +1,38 @@
+- hosts: all
+  become: true
+  vars:
+    worker_repo: "https://github.com/remotelabz/remotelabz-worker.git"
+    worker_branch: "dev"
+    worker_dir: "{{ ansible_facts.user_dir }}/remotelabz-worker"
+
+  tasks:
+    - name: Cloner le worker
+      ansible.builtin.git:
+        repo: "{{ worker_repo }}"
+        dest: "{{ worker_dir }}"
+        version: "{{ worker_branch }}"
+        single_branch: true
+        depth: 1
+
+    - name: Lancer l'installation du worker
+      ansible.builtin.shell: |
+        {
+          echo "{{ worker_topology }}"
+          echo "{{ worker_adm_interface }}"
+          echo "{{ worker_data_interface }}"
+          echo "{{ worker_ip }}"
+          echo "{{ worker_internet_interface }}"
+          echo "{{ worker_front_ip }}"
+          echo "{{ worker_data_network }}"
+          echo "{{ worker_data_ip }}"
+          echo "{{ worker_data_gateway }}"
+          echo "{{ worker_vpn_local }}"
+          echo "{{ worker_ssh_password }}"
+          echo "{{ worker_front_password }}"
+          echo "{{ worker_wss }}"
+          echo "{{ worker_contact_mail }}"
+          echo "n"
+          echo ""
+        } | sudo bash ./bin/install.sh 2>&1 | tee /tmp/worker_install.log
+      args:
+        chdir: "{{ worker_dir }}"
