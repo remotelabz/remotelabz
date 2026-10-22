@@ -77,3 +77,20 @@ jobs:
     - name: Show install log
       if: failure()
       run: tail -150 /tmp/install.log
+
+    - name: Run tests
+      run: |
+        cd /opt/remotelabz
+        php bin/console cache:clear --env=test
+        php bin/phpunit --log-junit var/log/res.xml
+        python3 bin/xml2htmlReport.py var/log/res.xml var/log/res.html
+      
+      continue-on-error: true
+
+    - name: Upload test result
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-report
+        path: var/log/res.html
+        retention-day: 14
