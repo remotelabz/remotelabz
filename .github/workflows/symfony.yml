@@ -87,10 +87,16 @@ jobs:
       
       continue-on-error: true
 
+    - name: Debug - list files
+      run: |
+        ls -la var/
+        ls -la var/log/ || echo "var/log n'existe pas"
+      if: always()
+
     - name: Upload test result
       uses: actions/upload-artifact@v4
       if: always()
       with:
         name: test-report
-        path: var/log/res.html
-        retention-day: 14
+        path: var/log/res.xml
+        retention-days: 14
