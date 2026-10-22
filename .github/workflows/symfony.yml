@@ -79,11 +79,11 @@ jobs:
       run: tail -150 /tmp/install.log
 
     - name: Run tests
+      id: tests
       run: |
         cd /opt/remotelabz
         php bin/console cache:clear --env=test
         php bin/phpunit --log-junit var/log/res.xml
-        
       
       continue-on-error: true
 
