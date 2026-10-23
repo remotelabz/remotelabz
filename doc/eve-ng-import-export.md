@@ -819,9 +819,16 @@ Réseaux : 52 `bridge` → autant de `connection` distinctes ; le `nat0` « Net 
     { "eve_image": "linux-ubuntu-24.04-server", "status": "matched",
       "used_by": [5, 7], "os_id": 7, "os_name": "Ubuntu24.04SrvLTS" }
   ],
-  "warnings": [ "template 'vios' absent du catalogue RLZ", "8 images non résolues" ]
+  "warnings": [ "template 'vios' absent du catalogue RLZ", "8 images non résolues" ],
+  "limits": { "upload_max_bytes": 2097152, "upload_max_human": "2 MB" }
 }
 ```
+
+> `limits` (ajouté par le contrôleur `analyze`) expose la limite d'upload
+> effectivement appliquée par PHP (`min(upload_max_filesize, post_max_size)`),
+> afin que la fenêtre de revue refuse une image trop grosse avant même l'envoi :
+> un corps de requête dépassant `post_max_size` est vidé par PHP et se
+> manifesterait sinon comme un « no file uploaded » trompeur.
 
 ## 16. Annexe C — Glossaire de conversion
 

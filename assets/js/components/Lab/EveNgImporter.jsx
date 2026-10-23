@@ -4,32 +4,32 @@ import { toast } from 'react-toastify';
 import Remotelabz from '../API';
 
 /**
- * Assistant d'import d'un lab EVE-NG (.unl ou .zip).
+ * Import wizard for an EVE-NG lab (.unl or .zip).
  *
- * Enchaine :
- *   1. analyse serveur (POST /api/labs/import/eve-ng/analyze) ;
- *   2. fenetre de revue : topologie + tableau des images avec leur statut ;
- *   3. commit (POST /api/labs/import/eve-ng/commit) avec les decisions choisies.
+ * Steps:
+ *   1. server-side analysis (POST /api/labs/import/eve-ng/analyze);
+ *   2. review window: topology + image table with their status;
+ *   3. commit (POST /api/labs/import/eve-ng/commit) with the chosen decisions.
  *
- * Le composant est monte par LabImporter des qu'un fichier .unl/.zip est depose.
+ * The component is mounted by LabImporter as soon as a .unl/.zip file is dropped.
  */
 
 const STATUS_META = {
-    matched: { color: 'success', label: 'Correspondance exacte' },
-    auto: { color: 'primary', label: 'Equivalence proposee' },
-    missing: { color: 'danger', label: 'Introuvable' },
-    not_applicable: { color: 'secondary', label: 'Sans image' },
+    matched: { color: 'success', label: 'Exact match' },
+    auto: { color: 'primary', label: 'Suggested equivalent' },
+    missing: { color: 'danger', label: 'Not found' },
+    not_applicable: { color: 'secondary', label: 'No image' },
 };
 
 const ACTIONS = [
-    { value: 'reuse', label: 'Choisir une image existante' },
-    { value: 'upload', label: 'Televerser un fichier' },
-    { value: 'url', label: 'Fournir une URL' },
-    { value: 'blank', label: 'Creer une VM vierge' },
-    { value: 'skip', label: 'Ignorer (a corriger plus tard)' },
+    { value: 'reuse', label: 'Use an existing image' },
+    { value: 'upload', label: 'Upload a file' },
+    { value: 'url', label: 'Provide a URL' },
+    { value: 'blank', label: 'Create a blank VM' },
+    { value: 'skip', label: 'Skip (fix later)' },
 ];
 
-/** Decision par defaut pour une image donnee selon son statut / action suggeree. */
+/** Default decision for a given image according to its status / suggested action. */
 function defaultDecision(image) {
     if (image.status === 'not_applicable') {
         return { action: 'skip' };
@@ -45,6 +45,25 @@ function defaultDecision(image) {
 
 function statusMeta(status) {
     return STATUS_META[status] ?? { color: 'secondary', label: status };
+}
+
+/** Human readable byte count, e.g. 2097152 => "2 MB". */
+function formatBytes(bytes) {
+    if (!bytes || bytes <= 0) {
+        return '0 B';
+    }
+
+    const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+    let value = bytes;
+    let unit = 0;
+    while (value >= 1024 && unit < units.length - 1) {
+        value /= 1024;
+        unit += 1;
+    }
+
+    const decimals = unit > 0 && value < 10 ? 1 : 0;
+
+    return `${value.toFixed(decimals)} ${units[unit]}`;
 }
 
 export default function EveNgImporter({ file, onCancel, onImported }) {
@@ -103,7 +122,7 @@ export default function EveNgImporter({ file, onCancel, onImported }) {
                 if (cancelled) {
                     return;
                 }
-                setError(err.response?.data?.error || 'Impossible d\'analyser ce fichier.');
+                setError(err.response?.data?.error || 'Unable to analyze this file.');
             })
             .finally(() => {
                 if (!cancelled) {
@@ -117,6 +136,10 @@ export default function EveNgImporter({ file, onCancel, onImported }) {
     }, [file]);
 
     const images = preview?.images ?? [];
+    const uploadLimit = {
+        bytes: preview?.limits?.upload_max_bytes ?? 0,
+        human: preview?.limits?.upload_max_human ?? '',
+    };
     const unresolvedCount = images.filter(image => {
         const decision = decisions[image.eve_image] ?? {};
         return decision.action !== 'skip' && !['matched', 'auto', 'not_applicable'].includes(image.status);
@@ -151,13 +174,13 @@ export default function EveNgImporter({ file, onCancel, onImported }) {
         Remotelabz.labs.commitEveNg(file, mapping)
             .then(response => {
                 const data = response.data?.data ?? {};
-                toast.success('Le lab EVE-NG a ete importe.');
+                toast.success('The EVE-NG lab has been imported.');
                 if (onImported) {
                     onImported(data);
                 }
             })
             .catch(err => {
-                toast.error(err.response?.data?.error || 'L\'import du lab a echoue.');
+                toast.error(err.response?.data?.error || 'The lab import failed.');
             })
             .finally(() => {
                 setSubmitting(false);
@@ -168,7 +191,7 @@ export default function EveNgImporter({ file, onCancel, onImported }) {
         return (
             <div className="text-center py-4">
                 <Spinner animation="border" role="status" />
-                <p className="mt-2">Analyse du fichier EVE-NG…</p>
+                <p className="mt-2">Analyzing the EVE-NG file…</p>
             </div>
         );
     }
@@ -177,7 +200,7 @@ export default function EveNgImporter({ file, onCancel, onImported }) {
         return (
             <div>
                 <Alert variant="danger">{error}</Alert>
-                <Button variant="secondary" onClick={onCancel}>Retour</Button>
+                <Button variant="secondary" onClick={onCancel}>Back</Button>
             </div>
         );
     }
@@ -189,24 +212,24 @@ export default function EveNgImporter({ file, onCancel, onImported }) {
     return (
         <div className="eve-ng-importer">
             <p className="mb-1">
-                <strong>Lab :</strong> {preview.lab?.name}
+                <strong>Lab:</strong> {preview.lab?.name}
             </p>
             <p className="text-muted">
-                Devices : {preview.lab?.devices} · Liens : {preview.lab?.links} · Annotations : {preview.lab?.textobjects}
-                {unresolvedCount > 0 && <> · <span className="text-danger">{unresolvedCount} image(s) a resoudre</span></>}
+                Devices: {preview.lab?.devices} · Links: {preview.lab?.links} · Annotations: {preview.lab?.textobjects}
+                {unresolvedCount > 0 && <> · <span className="text-danger">{unresolvedCount} image(s) to resolve</span></>}
             </p>
 
             {(preview.warnings || []).map((warning, index) => (
                 <Alert key={index} variant="warning" className="py-2 mb-2">{warning}</Alert>
             ))}
 
-            <h6 className="mt-3">Images des devices</h6>
+            <h6 className="mt-3">Device images</h6>
             <Table size="sm" responsive>
                 <thead>
                     <tr>
-                        <th>Statut</th>
-                        <th>Image EVE-NG</th>
-                        <th>Image RemoteLabz</th>
+                        <th>Status</th>
+                        <th>EVE-NG image</th>
+                        <th>RemoteLabz image</th>
                         <th>Action</th>
                     </tr>
                 </thead>
@@ -217,6 +240,7 @@ export default function EveNgImporter({ file, onCancel, onImported }) {
                             image={image}
                             decision={decisions[image.eve_image] ?? {}}
                             operatingSystems={operatingSystems}
+                            uploadLimit={uploadLimit}
                             onChange={updateDecision}
                             onUpload={handleUpload}
                         />
@@ -225,32 +249,46 @@ export default function EveNgImporter({ file, onCancel, onImported }) {
             </Table>
 
             <div className="d-flex justify-content-between mt-3">
-                <Button variant="secondary" onClick={onCancel} disabled={submitting}>Annuler</Button>
+                <Button variant="secondary" onClick={onCancel} disabled={submitting}>Cancel</Button>
                 <Button variant="success" onClick={submit} disabled={submitting}>
-                    {submitting ? 'Import en cours…' : 'Importer'}
+                    {submitting ? 'Importing…' : 'Import'}
                 </Button>
             </div>
         </div>
     );
 }
 
-function ImageRow({ image, decision, operatingSystems, onChange, onUpload }) {
+function ImageRow({ image, decision, operatingSystems, uploadLimit, onChange, onUpload }) {
     const meta = statusMeta(image.status);
     const [uploading, setUploading] = useState(false);
     const showResolution = decision.action !== 'reuse' || image.status === 'missing';
 
     const handleFileChange = useCallback(event => {
         const selected = event.target.files?.[0];
+        // Reset the input so picking the same file again still fires onChange.
+        event.target.value = '';
+
         if (!selected) {
+            return;
+        }
+
+        // Pre-check the size against PHP's limit so an oversized file yields a
+        // clear message instead of being silently dropped by PHP (which would
+        // otherwise look like an empty upload).
+        if (uploadLimit.bytes > 0 && selected.size > uploadLimit.bytes) {
+            toast.error(`File is too large (${formatBytes(selected.size)}). Maximum upload size is ${uploadLimit.human}.`);
             return;
         }
 
         setUploading(true);
         Remotelabz.operatingSystems.upload(selected)
             .then(response => onUpload(image, response.data))
-            .catch(() => toast.error('Le televersement a echoue.'))
+            .catch(error => {
+                const data = error.response?.data;
+                toast.error(data?.message || data?.error || 'The upload failed.');
+            })
             .finally(() => setUploading(false));
-    }, [image, onUpload]);
+    }, [image, onUpload, uploadLimit]);
 
     return (
         <>
@@ -264,7 +302,7 @@ function ImageRow({ image, decision, operatingSystems, onChange, onUpload }) {
                 </td>
                 <td>
                     {image.status === 'not_applicable' ? (
-                        <span className="text-muted">device natif</span>
+                        <span className="text-muted">native device</span>
                     ) : (
                         <Form.Select
                             size="sm"
@@ -285,6 +323,7 @@ function ImageRow({ image, decision, operatingSystems, onChange, onUpload }) {
                             image={image}
                             decision={decision}
                             operatingSystems={operatingSystems}
+                            uploadLimit={uploadLimit}
                             onChange={onChange}
                             onFileChange={handleFileChange}
                             uploading={uploading}
@@ -296,7 +335,7 @@ function ImageRow({ image, decision, operatingSystems, onChange, onUpload }) {
     );
 }
 
-function ResolutionFields({ image, decision, operatingSystems, onChange, onFileChange, uploading }) {
+function ResolutionFields({ image, decision, operatingSystems, uploadLimit, onChange, onFileChange, uploading }) {
     switch (decision.action) {
         case 'reuse': {
             const candidates = decision.candidates ?? image.candidates ?? [];
@@ -323,7 +362,7 @@ function ResolutionFields({ image, decision, operatingSystems, onChange, onFileC
                     value={decision.os_id ?? ''}
                     onChange={event => onChange(image.eve_image, { os_id: Number(event.target.value) || null })}
                 >
-                    <option value="">— selectionner une image existante —</option>
+                    <option value="">— select an existing image —</option>
                     {options.map(option => (
                         <option key={option.id} value={option.id}>{option.label}</option>
                     ))}
@@ -334,8 +373,11 @@ function ResolutionFields({ image, decision, operatingSystems, onChange, onFileC
             return (
                 <Form.Group>
                     <Form.Control size="sm" type="file" onChange={onFileChange} disabled={uploading} />
-                    {uploading && <small className="text-muted">Televersement…</small>}
-                    {decision.filename && <small className="text-muted d-block">Fichier : {decision.filename}</small>}
+                    {uploading && <small className="text-muted">Uploading…</small>}
+                    {decision.filename && <small className="text-muted d-block">File: {decision.filename}</small>}
+                    {uploadLimit.human && (
+                        <small className="text-muted d-block">Maximum upload size: {uploadLimit.human}.</small>
+                    )}
                 </Form.Group>
             );
         case 'url':
@@ -353,13 +395,13 @@ function ResolutionFields({ image, decision, operatingSystems, onChange, onFileC
                 <Form.Control
                     size="sm"
                     type="text"
-                    placeholder="Taille du disque (ex. 3GB)"
+                    placeholder="Disk size (e.g. 3GB)"
                     value={decision.flavorDisk ?? '3GB'}
                     onChange={event => onChange(image.eve_image, { flavorDisk: event.target.value })}
                 />
             );
         case 'skip':
-            return <span className="text-muted">Le device sera cree sans image resolue.</span>;
+            return <span className="text-muted">The device will be created without a resolved image.</span>;
         default:
             return null;
     }

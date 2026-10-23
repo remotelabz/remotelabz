@@ -45,6 +45,7 @@ use App\Service\ChatService;
 use App\Service\EveNg\ImageCatalog;
 use App\Service\Lab\LabImporter;
 use App\Service\Lab\Unl\UnlImporter;
+use App\Service\UploadLimit;
 use App\Service\Lab\BannerManager;
 use App\Service\LabInternetManager;
 use App\Service\LabShareManager;
@@ -1644,6 +1645,10 @@ class LabController extends Controller
     {
         $file = $request->files->get('file');
         if (null === $file || !$file->isValid()) {
+            if ($oversized = $this->oversizedUploadResponse($request, $file)) {
+                return $oversized;
+            }
+
             return new JsonResponse(['status' => 'error', 'error' => 'No file uploaded.'], 400);
         }
 
@@ -1662,7 +1667,19 @@ class LabController extends Controller
             @unlink($temporaryPath);
         }
 
-        return new JsonResponse(['status' => 'success', 'data' => $preview->toArray()], 200);
+        $data = $preview->toArray();
+
+        // Advertise PHP's effective upload limit so the review window can reject
+        // an oversized image before sending it (a body bigger than
+        // `post_max_size` is silently discarded by PHP, which would otherwise
+        // surface as a confusing "no file uploaded").
+        $maxUploadBytes = UploadLimit::maxBytes();
+        $data['limits'] = [
+            'upload_max_bytes' => $maxUploadBytes,
+            'upload_max_human' => UploadLimit::format($maxUploadBytes),
+        ];
+
+        return new JsonResponse(['status' => 'success', 'data' => $data], 200);
     }
 
     /**
@@ -1675,6 +1692,10 @@ class LabController extends Controller
     {
         $file = $request->files->get('file');
         if (null === $file || !$file->isValid()) {
+            if ($oversized = $this->oversizedUploadResponse($request, $file)) {
+                return $oversized;
+            }
+
             return new JsonResponse(['status' => 'error', 'error' => 'No file uploaded.'], 400);
         }
 
@@ -1742,6 +1763,44 @@ class LabController extends Controller
         }
 
         return new JsonResponse(['status' => 'success', 'data' => $mappings], 200);
+    }
+
+    /**
+     * Builds a JSON response describing an oversized upload (file bigger than
+     * `upload_max_filesize`, or request body bigger than `post_max_size`, in
+     * which case PHP drops the file and hands us a null `$file`).
+     *
+     * Returns null when the failure is not a size issue, so the caller can fall
+     * back to its own error handling.
+     */
+    private function oversizedUploadResponse(Request $request, ?UploadedFile $file): ?JsonResponse
+    {
+        $maxUploadSize = UploadLimit::maxBytes();
+        if ($maxUploadSize <= 0) {
+            return null;
+        }
+
+        if (null === $file) {
+            // Body bigger than post_max_size: PHP dropped the file altogether.
+            $tooLarge = (int) $request->headers->get('Content-Length', '0') > $maxUploadSize;
+        } else {
+            // upload_max_filesize / MAX_FILE_SIZE rejected the file.
+            $tooLarge = \UPLOAD_ERR_INI_SIZE === $file->getError() || \UPLOAD_ERR_FORM_SIZE === $file->getError();
+        }
+
+        if (!$tooLarge) {
+            return null;
+        }
+
+        return new JsonResponse(['status' => 'error', 'error' => $this->tooLargeMessage($maxUploadSize)], 413);
+    }
+
+    private function tooLargeMessage(int $maxUploadSize): string
+    {
+        return sprintf(
+            'The file is too large. Maximum upload size is %s.',
+            UploadLimit::format($maxUploadSize)
+        );
     }
 
     /**

@@ -14,6 +14,7 @@ use App\Repository\HypervisorRepository;
 use App\Repository\OperatingSystemRepository;
 use App\Service\DirectoryService;
 use App\Service\Files2WorkerManager;
+use App\Service\UploadLimit;
 use App\Service\ImageFileUploader;
 use App\Service\OvaManager;
 use Doctrine\Common\Collections\Criteria;
@@ -823,109 +824,134 @@ class OperatingSystemController extends Controller
     public function upload(Request $request, SluggerInterface $slugger): Response
 {
     $this->logger->info('Uploading image file requested by user '.$this->getUser()->getName());
-    
+
+    $maxUploadSize = UploadLimit::maxBytes();
+    $maxUploadLabel = UploadLimit::format($maxUploadSize);
+
     $file = $request->files->get('file');
-    
-    if ($file && $file->isValid()) {
-        $this->logger->debug('[OperatingSystemController:upload]::The file to upload will be '.$file.' of size '.$file->getSize());
 
-        $maxUploadSize = $this->convertPHPSizeToBytes(min(ini_get('upload_max_filesize'),ini_get('post_max_size')));
+    // When the request body exceeds PHP's `post_max_size`, PHP discards both the
+    // POST fields and the uploaded files before the controller runs: `$file` is
+    // null even though the client did send something. Detect that case so the
+    // user gets an actionable "file too large" message (with the limit) instead
+    // of a misleading "no file uploaded".
+    if (null === $file) {
+        $contentLength = (int) $request->headers->get('Content-Length', '0');
 
-        if ($file->getSize() > $maxUploadSize) {
-            return $this->json(['error' => 'File too large'], 413);
+        if ($contentLength > 0 && $maxUploadSize > 0 && $contentLength > $maxUploadSize) {
+            $this->logger->warning('[OperatingSystemController:upload]::Request body ('.$contentLength.' bytes) exceeds PHP post_max_size ('.$maxUploadSize.' bytes).');
+
+            return $this->tooLargeResponse($maxUploadSize, $maxUploadLabel);
         }
 
-        $originalFilename = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-        $safeFilename = $slugger->slug($originalFilename);
-        $newFilename = $safeFilename . '-' . uniqid() . '.' . $file->guessExtension();
-        $file_extension = $file->guessExtension();
-        $this->logger->debug('[OperatingSystemController:upload]::The '.$file.' is a '.$file_extension.' file');
-        
-        if ($file_extension === "tar" || $file_extension === "img" || $file_extension === "qcow2") {
-            $filesystem = new Filesystem();
-            $temp_path = sys_get_temp_dir()."/Remotelabz-image-convert-".uniqid();
-            $filesystem->mkdir($temp_path);
-            
-            try {
-                $uploadDir = $this->getParameter('image_directory');
-                
-                if ($file_extension === "tar") {
-                    // Conversion OVA vers QCOW2
-                    $newFilename = basename($newFilename, ".tar") . ".qcow2";
-                    $converted_file=$this->convertOva2qcow2($temp_path, $file, $newFilename);
-
-                    if ($converted_file) {
-                        $this->logger->debug('[OperatingSystemController:upload]::Convert OVA file to '.$converted_file.' done.');
-                    } else {
-                        throw new \Exception('Error during OVA to QCOW2 conversion');
-                    }
-                    
-                    // Déplacement du fichier converti vers le répertoire final
-                    
-                    $destinationFile = $uploadDir . "/" . $newFilename;
-                    
-                    $this->logger->debug('[OperatingSystemController:upload]::Try to move '.$converted_file.' file to '.$destinationFile);
-
-                    if (!file_exists($converted_file)) {
-                        throw new \Exception('Converted file not found: ' . $converted_file);
-                    }
-
-                    if (!rename($converted_file, $destinationFile)) {
-                        // Si rename échoue (par exemple entre partitions différentes), utiliser copy + unlink
-                        if (!copy($converted_file, $destinationFile)) {
-                            throw new \Exception('Failed to copy file to destination');
-                        }
-                        unlink($converted_file);
-                    }
-                    
-                } else {
-                    // Pour IMG et QCOW2, déplacement direct
-                    $this->logger->debug('[OperatingSystemController:upload]::Try to move file to '.$uploadDir);
-                    $file->move($uploadDir, $newFilename);
-                    $destinationFile = $uploadDir . "/" . $newFilename;
-                }
-                
-                $fileSize = file_exists($destinationFile) ? filesize($destinationFile) : null;
-                
-                $this->logger->debug('[OperatingSystemController:upload]::Move file to '.$destinationFile.' done');
-                $this->logger->info('File successfully uploaded to '.$destinationFile);
-                
-                return $this->json([
-                    'success' => true, 
-                    'filename' => $newFilename,
-                    'originalName' => $file->getClientOriginalName(),
-                    'size' => $fileSize
-                ]);
-            }
-            catch (FileException $e) {
-                $this->logger->error('[OperatingSystemController:upload]::FileException occurs: ' . $e->getMessage());
-                
-                if (str_contains($e->getMessage(), "No space left"))
-                    return $this->json(['error' => 'No space left on the device'], 500);
-                else
-                    return $this->json(['error' => 'Upload failed'], 500);
-            }
-            catch (\Exception $e) {
-                $this->logger->error('[OperatingSystemController:upload]::Error during file upload: ' . $e->getMessage());
-                if (str_contains($e->getMessage(), "No space left"))
-                    return $this->json(['error' => 'No space left on the device'], 500);
-                else
-                    return $this->json(['error' => 'Upload failed due to an unexpected error'], 500);
-            }
-            finally {
-                // Nettoyage du répertoire temporaire
-                if ($filesystem->exists($temp_path)) {
-                    $filesystem->remove($temp_path);
-                    $this->logger->debug('[OperatingSystemController:upload]::Temporary directory '.$temp_path.' cleaned');
-                }
-            }
-        } else {
-            $this->logger->debug('[OperatingSystemController:upload]::The upload file is not supported: '.$file_extension);
-            return $this->json(['error' => 'Only TAR (OVA), IMG or QCOW2 files are supported for upload.'], 400);
-        }
-    }
-    else {
         return $this->json(['error' => 'No file uploaded'], 400);
+    }
+
+    if (!$file->isValid()) {
+        // `upload_max_filesize` (or another PHP upload error) rejected the file
+        // before it reached us; surface the limit rather than a generic failure.
+        if (\UPLOAD_ERR_INI_SIZE === $file->getError() || \UPLOAD_ERR_FORM_SIZE === $file->getError()) {
+            $this->logger->warning('[OperatingSystemController:upload]::Uploaded file exceeds PHP upload_max_filesize ('.$maxUploadSize.' bytes).');
+
+            return $this->tooLargeResponse($maxUploadSize, $maxUploadLabel);
+        }
+
+        return $this->json(['error' => 'No file uploaded'], 400);
+    }
+
+    $this->logger->debug('[OperatingSystemController:upload]::The file to upload will be '.$file.' of size '.$file->getSize());
+
+    if ($maxUploadSize > 0 && $file->getSize() > $maxUploadSize) {
+        return $this->tooLargeResponse($maxUploadSize, $maxUploadLabel);
+    }
+
+    $originalFilename = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+    $safeFilename = $slugger->slug($originalFilename);
+    $newFilename = $safeFilename . '-' . uniqid() . '.' . $file->guessExtension();
+    $file_extension = $file->guessExtension();
+    $this->logger->debug('[OperatingSystemController:upload]::The '.$file.' is a '.$file_extension.' file');
+
+    if ($file_extension === "tar" || $file_extension === "img" || $file_extension === "qcow2") {
+        $filesystem = new Filesystem();
+        $temp_path = sys_get_temp_dir()."/Remotelabz-image-convert-".uniqid();
+        $filesystem->mkdir($temp_path);
+        
+        try {
+            $uploadDir = $this->getParameter('image_directory');
+            
+            if ($file_extension === "tar") {
+                // Conversion OVA vers QCOW2
+                $newFilename = basename($newFilename, ".tar") . ".qcow2";
+                $converted_file=$this->convertOva2qcow2($temp_path, $file, $newFilename);
+
+                if ($converted_file) {
+                    $this->logger->debug('[OperatingSystemController:upload]::Convert OVA file to '.$converted_file.' done.');
+                } else {
+                    throw new \Exception('Error during OVA to QCOW2 conversion');
+                }
+                
+                // Déplacement du fichier converti vers le répertoire final
+                
+                $destinationFile = $uploadDir . "/" . $newFilename;
+                
+                $this->logger->debug('[OperatingSystemController:upload]::Try to move '.$converted_file.' file to '.$destinationFile);
+
+                if (!file_exists($converted_file)) {
+                    throw new \Exception('Converted file not found: ' . $converted_file);
+                }
+
+                if (!rename($converted_file, $destinationFile)) {
+                    // Si rename échoue (par exemple entre partitions différentes), utiliser copy + unlink
+                    if (!copy($converted_file, $destinationFile)) {
+                        throw new \Exception('Failed to copy file to destination');
+                    }
+                    unlink($converted_file);
+                }
+                
+            } else {
+                // Pour IMG et QCOW2, déplacement direct
+                $this->logger->debug('[OperatingSystemController:upload]::Try to move file to '.$uploadDir);
+                $file->move($uploadDir, $newFilename);
+                $destinationFile = $uploadDir . "/" . $newFilename;
+            }
+            
+            $fileSize = file_exists($destinationFile) ? filesize($destinationFile) : null;
+            
+            $this->logger->debug('[OperatingSystemController:upload]::Move file to '.$destinationFile.' done');
+            $this->logger->info('File successfully uploaded to '.$destinationFile);
+            
+            return $this->json([
+                'success' => true, 
+                'filename' => $newFilename,
+                'originalName' => $file->getClientOriginalName(),
+                'size' => $fileSize
+            ]);
+        }
+        catch (FileException $e) {
+            $this->logger->error('[OperatingSystemController:upload]::FileException occurs: ' . $e->getMessage());
+            
+            if (str_contains($e->getMessage(), "No space left"))
+                return $this->json(['error' => 'No space left on the device'], 500);
+            else
+                return $this->json(['error' => 'Upload failed'], 500);
+        }
+        catch (\Exception $e) {
+            $this->logger->error('[OperatingSystemController:upload]::Error during file upload: ' . $e->getMessage());
+            if (str_contains($e->getMessage(), "No space left"))
+                return $this->json(['error' => 'No space left on the device'], 500);
+            else
+                return $this->json(['error' => 'Upload failed due to an unexpected error'], 500);
+        }
+        finally {
+            // Nettoyage du répertoire temporaire
+            if ($filesystem->exists($temp_path)) {
+                $filesystem->remove($temp_path);
+                $this->logger->debug('[OperatingSystemController:upload]::Temporary directory '.$temp_path.' cleaned');
+            }
+        }
+    } else {
+        $this->logger->debug('[OperatingSystemController:upload]::The upload file is not supported: '.$file_extension);
+        return $this->json(['error' => 'Only TAR (OVA), IMG or QCOW2 files are supported for upload.'], 400);
     }
 }
 
@@ -1129,6 +1155,20 @@ class OperatingSystemController extends Controller
         $archs = $this->entityManager->getRepository(\App\Entity\Arch::class)->findAll();
         return array_map(fn($arch) => $arch->getName(), $archs);
 
+    }
+
+    /**
+     * JSON response for a file (or request body) larger than PHP allows,
+     * carrying the effective limit so the client can display it.
+     */
+    private function tooLargeResponse(int $maxUploadSize, string $maxUploadLabel): Response
+    {
+        return $this->json([
+            'error' => 'File too large',
+            'message' => sprintf('The file is too large. Maximum upload size is %s.', $maxUploadLabel),
+            'maxSize' => $maxUploadSize,
+            'maxSizeHuman' => $maxUploadLabel,
+        ], 413);
     }
 
     // Fonction utilitaire pour convertir la taille PHP en octets

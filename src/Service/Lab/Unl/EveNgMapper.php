@@ -174,7 +174,7 @@ class EveNgMapper
             // slightly larger, so clip it rather than failing the whole import.
             if (mb_strlen($data) > 1500) {
                 $data = mb_substr($data, 0, 1500);
-                $warnings[] = sprintf("L'annotation \"%s\" a ete tronquee a 1500 caracteres.", $textobject['name']);
+                $warnings[] = sprintf('The annotation "%s" was truncated to 1500 characters.', $textobject['name']);
             }
 
             $textobjects[] = [

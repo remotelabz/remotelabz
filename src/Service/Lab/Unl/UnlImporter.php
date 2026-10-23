@@ -98,7 +98,7 @@ class UnlImporter
         $warnings = array_merge($mapped['warnings'] ?? [], $this->collectWarnings($images));
 
         if (!empty($resolution['warn_worker_offline'])) {
-            $warnings[] = 'Aucun worker joignable : la presence reelle des images sur les workers n\'a pas pu etre verifiee.';
+            $warnings[] = 'No worker reachable: the actual presence of the images on the workers could not be verified.';
         }
 
         $source = [
@@ -224,7 +224,7 @@ class UnlImporter
                     null,
                     $hypervisor,
                     $arch,
-                    (string) ($decision['description'] ?? 'Image EVE-NG importee (fichier televerse).')
+                    (string) ($decision['description'] ?? 'EVE-NG image imported (uploaded file).')
                 );
                 $this->rememberAndDistribute($eveImage, $os, $filename, $user);
 
@@ -241,7 +241,7 @@ class UnlImporter
                     $url,
                     $hypervisor,
                     $arch,
-                    (string) ($decision['description'] ?? 'Image EVE-NG importee (URL distante).')
+                    (string) ($decision['description'] ?? 'EVE-NG image imported (remote URL).')
                 );
                 $this->imageCatalog->remember($eveImage, $os, $user);
 
@@ -260,7 +260,7 @@ class UnlImporter
                     null,
                     $hypervisor,
                     $arch,
-                    (string) ($decision['description'] ?? 'VM vierge creee depuis un import EVE-NG.'),
+                    (string) ($decision['description'] ?? 'Blank VM created from an EVE-NG import.'),
                     $flavorDisk
                 );
                 $this->rememberAndDistribute($eveImage, $os, $filename, $user);
@@ -420,7 +420,7 @@ class UnlImporter
         }
 
         if ($unresolved > 0) {
-            $warnings[] = sprintf('%d image(s) non resolue(s) : une action est requise dans la fenetre de revue.', $unresolved);
+            $warnings[] = sprintf('%d unresolved image(s): an action is required in the review window.', $unresolved);
         }
 
         return $warnings;

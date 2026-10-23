@@ -112,7 +112,7 @@ class ImageResolver
 
         if (!($requirement['applicable'] ?? true)) {
             $result['status'] = 'not_applicable';
-            $result['reason'] = 'device sans image (vpcs/natif)';
+            $result['reason'] = 'device without image (vpcs/native)';
 
             return $result;
         }
@@ -125,7 +125,7 @@ class ImageResolver
 
         // 2. Correspondance memorisee dans le glossaire.
         if (isset($glossary[$eveImage]) && null !== $os = $glossary[$eveImage]->getOperatingSystem()) {
-            return $this->decorateMatch($result, $os, 'auto', $operatingSystems, $glossary, $workerImages, $workerOffline, 'glossaire partage');
+            return $this->decorateMatch($result, $os, 'auto', $operatingSystems, $glossary, $workerImages, $workerOffline, 'shared glossary');
         }
 
         // 3. Heuristique (famille + similarite).
@@ -135,12 +135,12 @@ class ImageResolver
         if (!empty($candidates) && $candidates[0]['score'] >= self::AUTO_THRESHOLD) {
             $os = $this->operatingSystemRepository->find($candidates[0]['id']);
             if (null !== $os) {
-                return $this->decorateMatch($result, $os, 'auto', $operatingSystems, $glossary, $workerImages, $workerOffline, 'equivalence proposee');
+                return $this->decorateMatch($result, $os, 'auto', $operatingSystems, $glossary, $workerImages, $workerOffline, 'suggested equivalent');
             }
         }
 
         $result['status'] = 'missing';
-        $result['reason'] = 'aucune correspondance';
+        $result['reason'] = 'no match';
 
         return $result;
     }
@@ -169,7 +169,7 @@ class ImageResolver
             $missingFile = $this->isMissingOnWorkers($os, $workerImages);
             if ($missingFile) {
                 $result['status'] = 'missing';
-                $result['reason'] = sprintf("l'image '%s' est absente des workers (a (re)diffuser)", $os->getImageFilename() ?? $os->getName());
+                $result['reason'] = sprintf("the image '%s' is missing from the workers (to (re)distribute)", $os->getImageFilename() ?? $os->getName());
             }
         }
 
