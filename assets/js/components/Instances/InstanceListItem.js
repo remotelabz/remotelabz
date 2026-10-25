@@ -433,7 +433,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
                 </div>
             :
             <div>
-                <div className="d-flex justify-content-between">
+                <div className="d-flex justify-content-between instance-item-row">
                     <div className="d-flex flex-column">
                         <div>
                             {device.name} <InstanceStateBadge state={displayState} className="ms-1" />
@@ -448,7 +448,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
                         )}
                     </div>
 
-                    <div className="d-flex align-items-center">
+                    <div className="d-flex align-items-center instance-item-actions">
                         {((instance.state == 'stopped' || instance.state == 'exported' || instance.state == 'error') && 
                             //(allInstance?.length == labDeviceLength) && 
                             //isSandbox && 
