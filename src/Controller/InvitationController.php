@@ -6,6 +6,7 @@ use App\Repository\LabRepository;
 use App\Repository\InvitationCodeRepository;
 use App\Entity\InvitationCode;
 use App\Form\InvitationCodeType;
+use App\Form\InvitationCodeImportType;
 use App\Security\ACL\LabVoter;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -120,6 +121,40 @@ class InvitationController extends Controller
             $invitationForm = $this->createForm(InvitationCodeType::class);
         }
 
+        // Import d'une liste de mails depuis un fichier CSV/TXT (même principe
+        // que l'import de membres d'un groupe).
+        $importForm = $this->createForm(InvitationCodeImportType::class);
+        $importForm->handleRequest($request);
+
+        if ($importForm->isSubmitted() && $importForm->isValid()) {
+            $data = $importForm->getData();
+            $file = $data['file'];
+            $fileExtension = strtolower($file->getClientOriginalExtension());
+
+            if (in_array($fileExtension, ['csv', 'txt'], true)) {
+                $emails = $this->importEmailsFromFile($file->getPathname(), $fileExtension);
+
+                if (count($emails) > 0) {
+                    $validated = $this->checkAction(
+                        ['emailAdresses' => $emails, 'duration' => $data['duration']],
+                        $lab
+                    );
+                    if ($validated > 0) {
+                        $this->addFlash(
+                            'success',
+                            $validated.' code(s) generated or renewed for lab '.$lab->getName().'.'
+                        );
+                    }
+                } else {
+                    $this->addFlash('warning', 'No e-mail address found in the file.');
+                }
+            } else {
+                $this->addFlash('danger', 'This file is not accepted.');
+            }
+
+            return $this->redirectToRoute('create_code_lab', ['id' => $lab->getId()]);
+        }
+
         $props=$serializer->serialize(
             ['lab' => $lab],
             'json',
@@ -129,9 +164,62 @@ class InvitationController extends Controller
         return $this->render('lab/create_code_lab.html.twig', [
             'lab' => $lab,
             'form'=> $invitationForm->createView(),
+            'addCodeFromFileForm'=> $importForm->createView(),
             'props' =>$props
 
         ]);
+    }
+
+    /**
+     * Extrait les adresses e-mail d'un fichier CSV (colonne "email") ou TXT
+     * (une adresse par ligne). La validation du format est faite ensuite par
+     * checkAction().
+     *
+     * @return string[]
+     */
+    private function importEmailsFromFile(string $filePath, string $fileExtension): array
+    {
+        $emails = [];
+
+        if ($fileExtension === 'csv') {
+            $csv = array_map('str_getcsv', file($filePath, FILE_SKIP_EMPTY_LINES | FILE_IGNORE_NEW_LINES));
+
+            if (empty($csv)) {
+                $this->addFlash('danger', "File format is incorrect. CSV is empty.");
+                return $emails;
+            }
+
+            $header = array_map('strtolower', array_map('trim', array_shift($csv)));
+            // Retire un éventuel BOM UTF-8 ajouté par certains éditeurs (Excel "CSV UTF-8")
+            if (isset($header[0])) {
+                $header[0] = preg_replace('/^\xEF\xBB\xBF/', '', $header[0]);
+            }
+
+            if (!in_array('email', $header, true)) {
+                $this->addFlash('danger', "File format is incorrect. CSV must have an 'email' column.");
+                return $emails;
+            }
+
+            $emailIndex = array_search('email', $header, true);
+
+            foreach ($csv as $line) {
+                if (isset($line[$emailIndex])) {
+                    $email = trim($line[$emailIndex]);
+                    if (!empty($email)) {
+                        $emails[] = $email;
+                    }
+                }
+            }
+        } else {
+            foreach (file($filePath, FILE_SKIP_EMPTY_LINES | FILE_IGNORE_NEW_LINES) as $line) {
+                $email = trim($line);
+                if (!empty($email)) {
+                    $emails[] = $email;
+                }
+            }
+        }
+
+        return $emails;
     }
 
     
@@ -258,15 +346,16 @@ class InvitationController extends Controller
             $this->addFlash('warning','Certaines adresses ne sont pas valides');
         }
         $this->sendMail($validatedEmails, $lab, $data['duration']);
+
+        return count($validatedEmails);
     }
 
     public function sendMail($validatedEmails, $lab, $duration) {
         
         foreach($validatedEmails as $email) {
-            $code = $this->generateCode();
-            $isCodeRegistered = $this->registerCode($email, $lab, $code, $duration);
+            $code = $this->registerCode($email, $lab, $duration);
         
-            if ($isCodeRegistered == true) {
+            if ($code !== null) {
                 $emailToSend = (new Email)
                 ->from($this->getParameter('app.general.contact_mail'))
                 ->to($email)
@@ -306,26 +395,43 @@ class InvitationController extends Controller
         return $code;
     }
 
-    public function registerCode($email, $lab, $code, $duration) {
+    /**
+     * Enregistre (ou renouvelle) le code d'invitation d'un mail pour un lab.
+     *
+     * Si un code existe déjà pour ce mail et ce lab, on conserve le même code
+     * (l'utilisateur garde celui qu'il a déjà reçu) et on met simplement à jour
+     * sa date d'expiration, même si le précédent code était expiré.
+     *
+     * @return string|null Le code à envoyer, ou null si l'enregistrement a échoué.
+     */
+    public function registerCode($email, $lab, $duration) {
         $entityManager = $this->entityManager;
 
-        $invitationCode = $this->invitationCodeRepository->findBy(['lab'=>$lab, 'mail'=> $email]);
-        /*$date = new \DateTime();
-        $date->modify('+'.$duration['hour'].' hours + '.$duration['minute'].' minutes');*/
-        if (!$invitationCode) {
+        $invitationCodes = $this->invitationCodeRepository->findBy(['lab'=>$lab, 'mail'=> $email]);
+
+        if (!$invitationCodes) {
             $invitation = new InvitationCode();
-            $invitation->setCode($code);
+            $invitation->setCode($this->generateCode());
             $invitation->setMail($email);
             $invitation->setLab($lab);
             $invitation->setExpiryDate($duration);
             $entityManager->persist($invitation);
             $entityManager->flush();
 
-            return true;
+            return $invitation->getCode();
         }
-        else {
-            $this->logger->error( $email. " is already registered for the lab" .$lab->getId()."/".$lab->getName());
-            return false;
-        }
+
+        // Un code existe déjà pour ce mail : on le réutilise et on renouvelle
+        // uniquement sa date d'expiration.
+        $invitation = $invitationCodes[0];
+        $invitation->setExpiryDate($duration);
+        $entityManager->flush();
+
+        $this->logger->info(
+            $email." already has a code for lab ".$lab->getId()."/".$lab->getName().
+            ", reusing it and renewing its expiry date"
+        );
+
+        return $invitation->getCode();
     }
 }
