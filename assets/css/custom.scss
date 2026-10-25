@@ -1209,3 +1209,38 @@ code:hover {
     }
   }
 }
+
+// On tablets (Bootstrap md: 768px - 991.98px) there is still enough room to
+// keep the buttons next to the instance summary, but not enough to fit them
+// all on a single line: they wrap onto several lines. Rebuild them as a
+// wrapping flexbox with a gap so every row keeps an even spacing, instead of
+// relying only on the left Bootstrap spacing utilities (ms-2, ms-3, ...) which
+// only space the buttons sharing the same line.
+@media (min-width: 768px) and (max-width: 991.98px) {
+  .instance-summary {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .instance-manager-actions,
+  .instance-item-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+
+    // Cancel the horizontal Bootstrap spacing utilities (ms-2, ms-3, ...):
+    // the gap above now handles the spacing between the buttons.
+    > * {
+      margin-left: 0 !important;
+      margin-right: 0 !important;
+    }
+  }
+
+  .instance-manager-actions,
+  .instance-item-actions {
+    // Keep the buttons aligned to the right edge of the row, even when they
+    // move below the instance summary / device name.
+    margin-left: auto;
+  }
+}
