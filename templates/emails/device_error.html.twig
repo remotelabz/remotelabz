@@ -1,0 +1,23 @@
+<html>
+    <body>
+        <p>
+            Hello,<br><br>
+            A device instance reached the <strong>error</strong> state on RemoteLabz:<br><br>
+            <ul>
+                <li><strong>Device:</strong> {{ deviceName|default('unknown') }}</li>
+                <li><strong>Instance UUID:</strong> {{ deviceUuid }}</li>
+                {% if labName %}<li><strong>Lab:</strong> {{ labName }}</li>{% endif %}
+                {% if owner %}<li><strong>Owner:</strong> {{ owner }}</li>{% endif %}
+                {% if previousState %}<li><strong>State before error:</strong> {{ previousState }}</li>{% endif %}
+                {% if action %}<li><strong>Failed action:</strong> {{ action }}</li>{% endif %}
+                {% if workerIp %}<li><strong>Worker:</strong> {{ workerIp }}</li>{% endif %}
+                {% if errorCode is not null %}<li><strong>Error code:</strong> {{ errorCode }}</li>{% endif %}
+                {% if errorMessage %}<li><strong>Error message:</strong> {{ errorMessage }}</li>{% endif %}
+                <li><strong>Received at:</strong> {{ receivedAt }}</li>
+            </ul>
+            <br>
+            Regards,<br>
+            The RemoteLabz team.
+        </p>
+    </body>
+</html>

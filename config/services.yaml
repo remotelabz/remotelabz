@@ -309,6 +309,11 @@ services:
             $contactMail: '%app.general.contact_mail%'
             $mailSubject: '%env(resolve:MAIL_SUBJECT)%'
 
+    App\Service\Instance\DeviceErrorMailService:
+        arguments:
+            $contactMail: '%app.general.contact_mail%'
+            $mailSubject: '%env(resolve:MAIL_SUBJECT)%'
+
     App\Service\Lab\BannerManager:
         arguments:
             $bannerDirectory: '%directory.public.upload.lab.banner%'
