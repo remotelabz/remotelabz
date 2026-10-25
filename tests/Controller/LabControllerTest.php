@@ -2,6 +2,9 @@
 
 namespace App\Tests\Controller;
 
+use App\Entity\InvitationCode;
+use App\Entity\Lab;
+
 class LabControllerTest extends AuthenticatedWebTestCase
 {
     public function testCreateLab()
@@ -239,6 +242,62 @@ class LabControllerTest extends AuthenticatedWebTestCase
         $this->client->request('DELETE', '/api/practical-subjects/'.$subjectId);
         $this->assertResponseIsSuccessful();
         $this->client->request('DELETE', '/api/labs/'.$sourceId);
+        $this->assertResponseIsSuccessful();
+    }
+
+    /**
+     * A user logged in with an invitation code (ROLE_GUEST) must be able to
+     * open the practical subjects of its lab, just like any other user.
+     */
+    public function testGuestWithCodeCanViewPracticalSubject()
+    {
+        // An administrator creates a lab with a practical subject
+        $this->client->request('POST', '/api/labs');
+        $this->assertResponseIsSuccessful();
+        $labId = json_decode($this->client->getResponse()->getContent(), true)['id'];
+
+        $this->client->request('PUT', '/api/labs/'.$labId, [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+            'name' => 'Guest practical subject lab',
+        ]));
+        $this->assertResponseIsSuccessful();
+
+        $this->client->request('POST', '/api/practical-subjects', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+            'name' => 'Sujet visible par les invités',
+            'description' => 'Contenu du sujet',
+        ]));
+        $this->assertResponseIsSuccessful();
+        $subjectId = json_decode($this->client->getResponse()->getContent(), true)['id'];
+
+        $this->client->request('POST', '/api/labs/'.$labId.'/practical-subjects/'.$subjectId);
+        $this->assertResponseIsSuccessful();
+
+        // An invitation code is created for this lab
+        $entityManager = static::getContainer()->get('doctrine')->getManager();
+        $guest = new InvitationCode();
+        $guest->setCode(strtoupper(bin2hex(random_bytes(4))));
+        $guest->setMail('guest-'.bin2hex(random_bytes(3)).'@localhost');
+        $guest->setLab($entityManager->getRepository(Lab::class)->find($labId));
+        $guest->setExpiryDate(new \DateTime('tomorrow 00:00'));
+        $entityManager->persist($guest);
+        $entityManager->flush();
+
+        // The guest logs in with the code and must be able to open the subject
+        $this->client->loginUser($guest, 'default');
+
+        $this->client->request('GET', '/labs/'.$labId.'/subject/'.$subjectId);
+        $this->assertResponseIsSuccessful();
+        // The guest really lands on the subject page (and is not silently
+        // redirected to its lab page by the access denied handler)
+        $this->assertSame('/labs/'.$labId.'/subject/'.$subjectId, $this->client->getRequest()->getPathInfo());
+        $this->assertStringContainsString('Contenu du sujet', $this->client->getResponse()->getContent());
+
+        // Cleanup as administrator
+        $this->client->request('GET', '/logout');
+        $this->logIn();
+
+        $this->client->request('DELETE', '/api/practical-subjects/'.$subjectId);
+        $this->assertResponseIsSuccessful();
+        $this->client->request('DELETE', '/api/labs/'.$labId);
         $this->assertResponseIsSuccessful();
     }
 
