@@ -7,6 +7,8 @@ mv /opt/remotelabz/config/packages/messenger.yaml ~/
 git restore /opt/remotelabz/config/packages/messenger.yaml
 mv /opt/remotelabz/config/packages/dev/web_profiler.yaml ~/
 git restore /opt/remotelabz/config/packages/dev/web_profiler.yaml
+mv /opt/remotelabz/yarn.lock ~/
+git restore /opt/remotelabz/yarn.lock
 git fetch
 WORK_DIR=$(pwd)
 if [ ! -d "lib/network-bundle" ]; then
@@ -39,6 +41,7 @@ fi
 git pull
 mv ~/messenger.yaml /opt/remotelabz/config/packages/messenger.yaml
 mv ~/web_profiler.yaml /opt/remotelabz/config/packages/dev/web_profiler.yaml
+mv ~/yarn.lock /opt/remotelabz/yarn.lock
 # Le messenger.yaml local est conserve pendant la mise a jour : on s'assure que
 # le routage de SecurityMessage (topologie des labs partages) y figure bien,
 # sinon le front ne peut plus diffuser vers les workers.
