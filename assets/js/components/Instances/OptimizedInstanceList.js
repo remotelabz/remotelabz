@@ -20,6 +20,31 @@ function formatInstanceIps(instance) {
     .join('\n');
 }
 
+// Construit les informations du propriétaire d'une instance.
+// Une instance peut appartenir à un utilisateur, un groupe, ou un invité
+// (connexion par code). Dans ce dernier cas, le propriétaire est un
+// InvitationCode : on affiche le code utilisé ainsi que le mail associé.
+function buildOwnerInfo(instance) {
+  const ownerInfo = instance?.owner || {};
+  const isGuest = instance?.ownedBy === 'guest';
+
+  if (isGuest) {
+    return {
+      isGuest: true,
+      label: ownerInfo.code || ownerInfo.mail || 'N/A',
+      code: ownerInfo.code || null,
+      mail: ownerInfo.mail || null,
+    };
+  }
+
+  return {
+    isGuest: false,
+    label: ownerInfo.name || ownerInfo.mail || 'N/A',
+    code: null,
+    mail: ownerInfo.mail || null,
+  };
+}
+
 const VirtualizedInstanceRow = React.memo((props) => {
   const { 
     index, 
@@ -402,7 +427,18 @@ const DetailsModal = ({ selectedInstance, onClose, sharedStates, onStateUpdate, 
                       <h5 className="mb-0">Owner</h5>
                     </div>
                     <div className="card-body">
-                      <p className="text-muted mb-0">{labInfo.ownerName || 'N/A'}</p>
+                      {labInfo.ownerIsGuest ? (
+                        <>
+                          <p className="mb-1">
+                            <strong>Code:</strong> {labInfo.ownerCode || 'N/A'}
+                          </p>
+                          <p className="text-muted mb-0">
+                            <strong>Mail:</strong> {labInfo.ownerMail || 'N/A'}
+                          </p>
+                        </>
+                      ) : (
+                        <p className="text-muted mb-0">{labInfo.ownerName || 'N/A'}</p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -667,7 +703,7 @@ export default function OptimizedInstanceList({
     }
 
     const labInfo = instance.lab || {};
-    const ownerInfo = instance.owner || {};
+    const owner = buildOwnerInfo(instance);
     
     cacheRef.current.set(uuid, true);
     
@@ -677,7 +713,10 @@ export default function OptimizedInstanceList({
         ...prev.labCache, 
         [uuid]: {
           name: labInfo.name || 'Lab inconnu',
-          ownerName: ownerInfo.name || ownerInfo.email || 'N/A',
+          ownerName: owner.label,
+          ownerIsGuest: owner.isGuest,
+          ownerCode: owner.code,
+          ownerMail: owner.mail,
           workerIp: instance.workerIp || 'N/A',
           network: instance.network?.ip?.addr || 'N/A',
           state: instance.state
@@ -732,7 +771,7 @@ export default function OptimizedInstanceList({
   const handleRefreshDetails = useCallback((uuid) => {
     Remotelabz.instances.lab.get(uuid).then((updatedInstance) => {
       const labInfo = updatedInstance.data.lab || {};
-      const ownerInfo = updatedInstance.data.owner || {};
+      const owner = buildOwnerInfo(updatedInstance.data);
       
       setSharedStates(prev => ({
         ...prev,
@@ -740,7 +779,10 @@ export default function OptimizedInstanceList({
           ...prev.labCache, 
           [uuid]: {
             name: labInfo.name || 'Lab inconnu',
-            ownerName: ownerInfo.name || 'N/A',
+            ownerName: owner.label,
+            ownerIsGuest: owner.isGuest,
+            ownerCode: owner.code,
+            ownerMail: owner.mail,
             workerIp: updatedInstance.data.workerIp || 'N/A',
             network: updatedInstance.data.network?.ip?.addr || 'N/A',
             state: updatedInstance.data.state

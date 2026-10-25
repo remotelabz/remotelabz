@@ -40,7 +40,7 @@ class InvitationCode implements UserInterface, PasswordAuthenticatedUserInterfac
      * @var string
      */
     #[ORM\Column(type: 'string', length: 8, unique: true)]
-    #[Serializer\Groups(['api_invitation_codes'])]
+    #[Serializer\Groups(['api_invitation_codes', 'api_get_lab_instance'])]
     private $code;
 
     /**
