@@ -11,7 +11,14 @@ doctrine:
 framework:
     cache:
         pools:
+            # Le cache de résultats DQL est stocké dans Redis (cf. cache.yaml) :
+            # l'adaptateur par défaut de cache.app (filesystem) peut échouer en
+            # accès concurrent ("rename(...): No such file or directory").
             doctrine.result_cache_pool:
-                adapter: cache.app
+                adapter: cache.adapter.redis
+            # Le cache de requêtes DQL (objets Doctrine\ORM\Query\ParserResult)
+            # utilisait cache.system, c.-à-d. PhpFilesAdapter sur
+            # var/cache/prod/pools/system/..., également sujet aux erreurs de
+            # rename() sous forte concurrence. On le bascule sur Redis.
             doctrine.system_cache_pool:
-                adapter: cache.system
+                adapter: cache.adapter.redis

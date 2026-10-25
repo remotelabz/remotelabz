@@ -98,11 +98,11 @@ services:
         arguments:  []
 
     #Add IP source of each log and the request url
-    #monolog.processor.web:
-    #    class: Monolog\Processor\WebProcessor
+    monolog.processor.web:
+        class: Monolog\Processor\WebProcessor
         # Le tag monolog.processor l'attache au logger principal
-    #    tags:
-    #        - { name: monolog.processor }
+        tags:
+            - { name: monolog.processor }
 
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name
