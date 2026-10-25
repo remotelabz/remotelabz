@@ -15,6 +15,7 @@ use App\Repository\UserRepository;
 use App\Repository\OperatingSystemRepository;
 use App\Service\Instance\InstanceManager;
 use App\Service\Instance\DeviceInfoCache;
+use App\Service\Instance\DeviceErrorMailService;
 use App\Service\SharedLabSecurityManager;
 use App\Service\Worker\LabPlacementCache;
 use App\Controller\OperatingSystemController;
@@ -43,6 +44,7 @@ class InstanceStateMessageHandler
     private LabPlacementCache $placementCache;
     private SharedLabSecurityManager $securityManager;
     private DeviceInfoCache $deviceInfoCache;
+    private DeviceErrorMailService $deviceErrorMailService;
 
     public function __construct(
         DeviceInstanceRepository $deviceInstanceRepository,
@@ -58,7 +60,8 @@ class InstanceStateMessageHandler
         UserRepository $userRepository,
         LabPlacementCache $placementCache,
         SharedLabSecurityManager $securityManager,
-        DeviceInfoCache $deviceInfoCache
+        DeviceInfoCache $deviceInfoCache,
+        DeviceErrorMailService $deviceErrorMailService
     ) {
         $this->deviceInstanceRepository = $deviceInstanceRepository;
         $this->labInstanceRepository = $labInstanceRepository;
@@ -74,6 +77,7 @@ class InstanceStateMessageHandler
         $this->placementCache = $placementCache;
         $this->securityManager = $securityManager;
         $this->deviceInfoCache = $deviceInfoCache;
+        $this->deviceErrorMailService = $deviceErrorMailService;
     }
 
     /**
@@ -280,6 +284,12 @@ class InstanceStateMessageHandler
                     $errorMessage .= ': ' . $options['error_message'];
                 }
                 $this->notificationService->error($userIds, $errorMessage, $uuid, $options ?? []);
+
+                // Alert the platform contact address (CONTACT_MAIL) when a
+                // device instance fails on its worker.
+                if ($message->getType() === InstanceStateMessage::TYPE_DEVICE && $instance instanceof DeviceInstance) {
+                    $this->deviceErrorMailService->sendDeviceErrorNotification($instance, $options ?? []);
+                }
 
                 if (!is_null($options) && !empty($options)) {
                     $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Show options of error message received : ', $options);
