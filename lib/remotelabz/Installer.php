@@ -227,7 +227,26 @@ class Installer
         // Step 10: Configure sudoers
         echo "👮 Configuring sudoers file... ";
         try {
-            copy("config/sudo/remotelabz", "/etc/sudoers.d/remotelabz");
+            $source = "config/sudo/remotelabz";
+            $dest = "/etc/sudoers.d/remotelabz";
+
+            if (!file_exists($source)) {
+                throw new Exception("Source file not found: {$source}");
+            }
+            if (!is_dir('/etc/sudoers.d')) {
+                throw new Exception("Directory /etc/sudoers.d does not exist");
+            }
+
+            if (!copy($source, $dest)) {
+                $error = error_get_last();
+                throw new Exception("Failed to copy {$source} to {$dest}: " . ($error['message'] ?? 'unknown error'));
+            }
+
+            // Sudoers files must be 0440 or sudo will ignore them
+            if (!chmod($dest, 0440)) {
+                throw new Exception("Failed to chmod {$dest} to 0440");
+            }
+
             echo "OK ✔️\n";
         } catch (Exception $e) {
             throw new Exception("Error configuring sudoers: " . $e->getMessage());

@@ -38,6 +38,9 @@ SSL_CA_KEY_PASSPHRASE=""
 WORKER_COUNT=0
 declare -a WORKER_IPS=()
 declare -a WORKER_TOPOLOGIES=()
+declare -a WORKER_SSH_PWS=()
+declare -a WORKER_SSH_USERS=()
+declare -a WORKER_SSH_USERS_PW=()
 WORKER_ANSIBLE_PLAYBOOK="${SCRIPT_DIR}/bin/install_worker.yml"
 
 # Functions for colored output
@@ -1009,18 +1012,27 @@ final_configuration() {
         a2ensite 200-remotelabz-ssl.conf 2>/dev/null || true
     fi
 
-	# Configure SSH for the front
+	# Configure SSH for the front (generate keys as remotelabz user)
 	if [ ! -d /home/remotelabz/.ssh ]; then
-        print_info "Configuring SSH directory..."
+        print_info "Configuring SSH directory and generating keys as remotelabz user..."
 		mkdir -p /home/remotelabz/.ssh
 		chown remotelabz:remotelabz /home/remotelabz/.ssh
-
         chmod 700 /home/remotelabz/
 		chmod 700 /home/remotelabz/.ssh
-        mkdir /opt/remotelabz/config/system/keys
-		ssh-keygen -m PEM -t rsa -f /opt/remotelabz/config/system/keys/myremotelabzfront -N ""
-        chown www-data:www-data /opt/remotelabz/config/system/keys/*
+		ssh-keygen -m PEM -t rsa -f /home/remotelabz/.ssh/myremotelabzfront -N ""
+		chown remotelabz:remotelabz /home/remotelabz/.ssh/myremotelabzfront
+		chown remotelabz:remotelabz /home/remotelabz/.ssh/myremotelabzfront.pub
+		chmod 600 /home/remotelabz/.ssh/myremotelabzfront
 	fi
+
+	# Copy public key to system keys directory for PHP app (SshService)
+	mkdir -p /opt/remotelabz/config/system/keys
+	if [ ! -f /opt/remotelabz/config/system/keys/myremotelabzfront.pub ]; then
+		cp /home/remotelabz/.ssh/myremotelabzfront.pub /opt/remotelabz/config/system/keys/myremotelabzfront.pub
+	fi
+	cp /home/remotelabz/.ssh/myremotelabzfront /opt/remotelabz/config/system/keys/myremotelabzfront 2>/dev/null || true
+	chmod 600 /opt/remotelabz/config/system/keys/myremotelabzfront 2>/dev/null || true
+	chmod 644 /opt/remotelabz/config/system/keys/myremotelabzfront.pub 2>/dev/null || true
 
     # Restart all services
     print_info "Restarting services..."
@@ -1052,6 +1064,14 @@ configure_workers() {
         apt-get update
         apt-get install -y ansible
         print_info "Ansible installed ✅"
+    fi
+    
+    # Check if sshpass is installed (required for SSH key deployment)
+    if ! command -v sshpass &> /dev/null; then
+        print_warning "sshpass is not installed. Installing..."
+        apt-get update
+        apt-get install -y sshpass
+        print_info "sshpass installed ✅"
     fi
     
     # Disable host key checking for Ansible
@@ -1236,6 +1256,9 @@ EOF
         WORKER_TOPOLOGIES+=("$topology")
         WORKER_VARS_FILES+=("$vars_file")
         WORKER_NAMES+=("$worker_name")
+        WORKER_SSH_PWS+=("$ssh_pw")
+        WORKER_SSH_USERS+=("$worker_user")
+        WORKER_SSH_USERS_PW+=("$ssh_pw")
         
         print_info "Worker $i configuration saved ✅"
         echo ""
@@ -1361,7 +1384,13 @@ EOF
         else
             extra_vars="--extra-vars \"ansible_become_pass=\" "
         fi
-        
+
+        # Read the SSH public key from remotelabz user
+        local ssh_key_content=""
+        if [ -f "/home/remotelabz/.ssh/myremotelabzfront.pub" ]; then
+            ssh_key_content=$(cat /home/remotelabz/.ssh/myremotelabzfront.pub)
+        fi
+
         ansible-playbook "$WORKER_ANSIBLE_PLAYBOOK" \
             -i "$final_inventory" \
             --private-key "$ansible_ssh_key" \
@@ -1373,6 +1402,52 @@ EOF
             print_error "Failed to deploy $worker_name (check /tmp/worker_install_${worker_name}.log)"
         else
             print_info "$worker_name deployed successfully ✅"
+        fi
+
+        # Send SSH key to worker (remotelabz -> remotelabz-worker)
+        if [ -f "/home/remotelabz/.ssh/myremotelabzfront.pub" ]; then
+            local worker_user="${WORKER_SSH_USERS[$i]}"
+            local worker_ssh_pw="${WORKER_SSH_USERS_PW[$i]}"
+            local worker_ip="${WORKER_IPS[$i]}"
+
+            print_info "─────────────────────────────────────────"
+            print_info "Sending SSH key to $worker_name ($worker_ip)..."
+            print_info "─────────────────────────────────────────"
+            echo ""
+
+            # Single-server: key already on same machine, copy locally
+            if [ "$wtopo" -eq 1 ]; then
+                sudo -u remotelabz ssh-copy-id -i /home/remotelabz/.ssh/myremotelabzfront.pub "${worker_user}@127.0.0.1" 2>&1 || true
+                print_info "SSH key sent to $worker_name (single-server) ✅"
+            # Multi-server: send via scp + ssh
+            elif [ "$wtopo" -eq 2 ] && [ -n "$worker_ssh_pw" ]; then
+                # Step 1: Copy public key file to worker
+                scp -o StrictHostKeyChecking=no -o ConnectTimeout=10 \
+                    /home/remotelabz/.ssh/myremotelabzfront.pub \
+                    "${worker_user}@${worker_ip}:~/myremotelabzfront.pub"
+
+                # Step 2: Append key to authorized_keys on worker
+                sshpass -p "$worker_ssh_pw" ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 \
+                    "${worker_user}@${worker_ip}" \
+                    "mkdir -p ~/.ssh && chmod 700 ~/.ssh && touch ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys && cat ~/myremotelabzfront.pub >> ~/.ssh/authorized_keys && rm ~/myremotelabzfront.pub"
+
+                # Step 3: Verify SSH connection works with the new key
+                if ssh -o StrictHostKeyChecking=no -o BatchMode=yes -o ConnectTimeout=10 \
+                    -i /home/remotelabz/.ssh/myremotelabzfront \
+                    "${worker_user}@${worker_ip}" "echo key-test" 2>/dev/null | grep -q "key-test"; then
+                    print_info "SSH key sent and verified for $worker_name ✅"
+                else
+                    print_warning "Could not verify SSH key for $worker_name (key may need a few seconds to propagate)"
+                fi
+            else
+                print_error "SSH key for $worker_name skipped: no worker password provided"
+                print_error "Please provide a password when prompted for 'remotelabz-worker user'"
+            fi
+            echo ""
+        else
+            print_error "SSH key file not found: /home/remotelabz/.ssh/myremotelabzfront.pub"
+            print_error "The key must be generated before deploying workers"
+            print_error "Run: sudo -u remotelabz ssh-keygen -t rsa -b 4096 -m PEM -f /home/remotelabz/.ssh/myremotelabzfront -N \"\""
         fi
         echo ""
     done
