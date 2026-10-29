@@ -1,5 +1,6 @@
 - hosts: all
   become: true
+  become_method: sudo
   vars:
     worker_repo: "https://github.com/remotelabz/remotelabz-worker.git"
     worker_branch: "dev"
@@ -14,7 +15,7 @@
         single_branch: true
         depth: 1
 
-    - name: Lancer l'installation du worker
+    - name: Lancer l'installation du worker (crée remotelabz-worker)
       ansible.builtin.shell: |
         {
           echo "{{ worker_topology }}"
@@ -36,3 +37,20 @@
         } | sudo bash ./bin/install.sh 2>&1 | tee /tmp/worker_install.log
       args:
         chdir: "{{ worker_dir }}"
+
+    - name: Créer .ssh directory pour remotelabz-worker
+      ansible.builtin.file:
+        path: /home/remotelabz-worker/.ssh
+        state: directory
+        owner: remotelabz-worker
+        group: remotelabz-worker
+        mode: "0700"
+
+    - name: Installer clé SSH dans authorized_keys pour remotelabz-worker
+      ansible.builtin.lineinfile:
+        path: /home/remotelabz-worker/.ssh/authorized_keys
+        line: "{{ lookup('file', '/home/remotelabz/.ssh/myremotelabzfront.pub') | trim }}"
+        create: true
+        owner: remotelabz-worker
+        group: remotelabz-worker
+        mode: "0600"

@@ -41,6 +41,7 @@ declare -a WORKER_TOPOLOGIES=()
 declare -a WORKER_SSH_PWS=()
 declare -a WORKER_SSH_USERS=()
 declare -a WORKER_SSH_USERS_PW=()
+declare -a WORKER_EXISTING_PWS=()
 WORKER_ANSIBLE_PLAYBOOK="${SCRIPT_DIR}/bin/install_worker.yml"
 
 # Functions for colored output
@@ -1077,6 +1078,43 @@ configure_workers() {
     # Disable host key checking for Ansible
     export ANSIBLE_HOST_KEY_CHECKING=False
     
+    # Ensure SUDO_USER is set (fallback to current user if not running with sudo)
+    export SUDO_USER="${SUDO_USER:-$USER}"
+    
+    # Generate current user SSH key if it doesn't exist
+    local current_user="$SUDO_USER"
+    local current_key="${HOME}/.ssh/id_ed25519"
+    if [ ! -f "$current_key" ] || [ ! -f "${current_key}.pub" ]; then
+        print_info "No SSH key found, generating ed25519 keypair for $current_user..."
+        mkdir -p "${HOME}/.ssh"
+        chmod 700 "${HOME}/.ssh"
+        ssh-keygen -t ed25519 -f "$current_key" -N "" -C "$current_user@remotelabz" -q
+        # Fix ownership if running as root
+        chown "$current_user:$current_user" "${HOME}/.ssh/id_ed25519" "${HOME}/.ssh/id_ed25519.pub" 2>/dev/null || true
+        chmod 600 "${HOME}/.ssh/id_ed25519" 2>/dev/null || true
+        chmod 644 "${HOME}/.ssh/id_ed25519.pub" 2>/dev/null || true
+        print_info "SSH key generated at ${current_key} ✅"
+    fi
+    
+    # Generate remotelabz SSH key if it doesn't exist
+    if ! sudo -u remotelabz test -f /home/remotelabz/.ssh/myremotelabzfront 2>/dev/null; then
+        print_info "No SSH key found for remotelabz user, generating keypair..."
+        sudo -u remotelabz mkdir -p /home/remotelabz/.ssh
+        sudo -u remotelabz chmod 700 /home/remotelabz/.ssh
+        sudo -u remotelabz ssh-keygen -m PEM -t rsa -f /home/remotelabz/.ssh/myremotelabzfront -N "" -q
+        sudo -u remotelabz chmod 600 /home/remotelabz/.ssh/myremotelabzfront
+        print_info "SSH key generated for remotelabz user ✅"
+    fi
+    
+    # Copy public key to system keys directory for PHP app (SshService)
+    mkdir -p /opt/remotelabz/config/system/keys
+    if [ ! -f /opt/remotelabz/config/system/keys/myremotelabzfront.pub ]; then
+        cp /home/remotelabz/.ssh/myremotelabzfront.pub /opt/remotelabz/config/system/keys/myremotelabzfront.pub
+    fi
+    cp /home/remotelabz/.ssh/myremotelabzfront /opt/remotelabz/config/system/keys/myremotelabzfront 2>/dev/null || true
+    chmod 600 /opt/remotelabz/config/system/keys/myremotelabzfront 2>/dev/null || true
+    chmod 644 /opt/remotelabz/config/system/keys/myremotelabzfront.pub 2>/dev/null || true
+    
     # Check if playbook exists
     if [ ! -f "$WORKER_ANSIBLE_PLAYBOOK" ]; then
         print_error "Ansible playbook not found at $WORKER_ANSIBLE_PLAYBOOK"
@@ -1213,6 +1251,17 @@ EOF
         # 11. SSH passwords
         echo ""
         print_warning "IMPORTANT: Change default passwords for security!"
+        
+        # Password for the user that already exists on the worker (e.g., giz)
+        local existing_user_pw=""
+        if [ "$topology" -eq 2 ]; then
+            read -s -r -p "Password for user '${worker_user}' on worker [leave empty if none]: " existing_user_pw
+            echo ""
+        else
+            existing_user_pw=""
+        fi
+        
+        # Password for the remotelabz-worker user that will be created by Ansible
         read -p "Password for remotelabz-worker user [leave empty for default]: " ssh_pw
         read -p "Password for remotelabz (front) user [leave empty for default]: " front_pw
         
@@ -1259,6 +1308,7 @@ EOF
         WORKER_SSH_PWS+=("$ssh_pw")
         WORKER_SSH_USERS+=("$worker_user")
         WORKER_SSH_USERS_PW+=("$ssh_pw")
+        WORKER_EXISTING_PWS+=("$existing_user_pw")
         
         print_info "Worker $i configuration saved ✅"
         echo ""
@@ -1273,6 +1323,40 @@ EOF
     
     if [ "$has_single" -eq 0 ] && [ "$has_multi" -eq 0 ]; then
         return 0
+    fi
+    
+    # Ask for worker password FIRST (needed for inventory and SSH setup)
+    if [ "$has_multi" -eq 1 ]; then
+        print_info "─────────────────────────────────────────"
+        print_info "SSH Access Configuration"
+        print_info "─────────────────────────────────────────"
+        echo ""
+        
+        # Auto-detect worker password from .env.local or .env
+        local default_worker_pass=""
+        local env_candidate=""
+        if [ -f "$ENV_FILE" ]; then
+            env_candidate="$ENV_FILE"
+        elif [ -f "${SCRIPT_DIR}/.env" ]; then
+            env_candidate="${SCRIPT_DIR}/.env"
+        fi
+        
+        if [ -n "$env_candidate" ]; then
+            default_worker_pass=$(grep -E '^SSH_USER_PASSWD=' "$env_candidate" | head -n1 | cut -d= -f2- | tr -d '"')
+        fi
+        
+        if [ -n "$default_worker_pass" ]; then
+            read -s -p "Password for user remotelabz-worker [${default_worker_pass}]: " worker_pass
+            worker_pass=${worker_pass:-$default_worker_pass}
+        else
+            read -s -p "Password for user remotelabz-worker: " worker_pass
+        fi
+        echo ""
+        
+        if [ -z "$worker_pass" ]; then
+            print_error "Password is required to access workers"
+            return 1
+        fi
     fi
     
     # ========================================================================
@@ -1304,10 +1388,17 @@ EOF
           ansible_user: $SUDO_USER
 EOF
         else
-            # Multi-server: add with SSH
+            # Multi-server: connect as existing user (giz) who will create remotelabz-worker
+            local wuser="${WORKER_SSH_USERS[$i]}"
+            local wpw="${WORKER_EXISTING_PWS[$i]}"
             cat >> "$final_inventory" <<EOF
         $wname:
           ansible_host: $wip
+          ansible_user: $wuser
+          ansible_password: "${wpw}"
+          ansible_become_pass: "${wpw}"
+          ansible_become_method: sudo
+          ansible_become_flags: "-S"
 EOF
         fi
     done
@@ -1315,51 +1406,6 @@ EOF
     echo "Inventory:"
     cat "$final_inventory"
     echo ""
-    
-    # Ask for worker password once (used for all multi-server workers)
-    if [ "$has_multi" -eq 1 ]; then
-        print_info "─────────────────────────────────────────"
-        print_info "SSH Access Configuration"
-        print_info "─────────────────────────────────────────"
-        echo ""
-        read -s -p "Worker password (for user $SUDO_USER on all workers): " worker_pass
-        echo ""
-        
-        if [ -z "$worker_pass" ]; then
-            print_error "Password is required to access workers"
-            return 1
-        fi
-        
-        # Setup SSH access on each multi-server worker
-        local current_user="$SUDO_USER"
-        local original_home=$(eval echo ~$current_user)
-        local key_base64=$(base64 -w0 < "${original_home}/.ssh/id_ed25519.pub")
-        
-        for (( i=0; i<worker_count; i++ )); do
-            if [ "${WORKER_TOPOLOGIES[$i]}" -ne 2 ]; then continue; fi
-            
-            local worker_name="${WORKER_NAMES[$i]}"
-            local worker_ip="${WORKER_IPS[$i]}"
-            
-            print_info "─────────────────────────────────────────"
-            print_info "Setting up SSH access for $worker_name ($worker_ip)..."
-            print_info "─────────────────────────────────────────"
-            echo ""
-            
-            sshpass -p "$worker_pass" ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 -t \
-                "${current_user}@$worker_ip" \
-                "mkdir -p ~/.ssh && chmod 700 ~/.ssh && touch ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys && export KEY='$key_base64' && echo \$KEY | base64 -d >> ~/.ssh/authorized_keys" 2>/dev/null
-            
-            local key_file="${original_home}/.ssh/id_ed25519"
-            if ssh -o StrictHostKeyChecking=no -o BatchMode=yes -o ConnectTimeout=10 -i "$key_file" "${current_user}@$worker_ip" "echo connected" 2>/dev/null | grep -q "connected"; then
-                print_info "SSH access to $worker_name confirmed ✅"
-            else
-                print_error "SSH access to $worker_name failed"
-                echo "Please verify: password correct, SSH enabled, firewall allows port 22"
-                return 1
-            fi
-        done
-    fi
     
     # Deploy each worker with Ansible
     local ansible_ssh_key="${HOME}/.ssh/id_ed25519"
@@ -1376,13 +1422,12 @@ EOF
         print_info "─────────────────────────────────────────"
         echo ""
         
-        # Single-server = localhost, no SSH key needed
-        # Multi-server = SSH key + password
-        local extra_vars=""
+        # Multi-server: set become pass for sudo
         if [ "$wtopo" -eq 2 ]; then
-            extra_vars="--extra-vars \"ansible_become_pass=${worker_pass}\""
-        else
-            extra_vars="--extra-vars \"ansible_become_pass=\" "
+            local wexistingpw="${WORKER_EXISTING_PWS[$i]}"
+            echo "  Worker existing user: ${WORKER_SSH_USERS[$i]}"
+            echo "  Worker existing password length: ${#wexistingpw}"
+            export ANSIBLE_BECOME_PASS="$wexistingpw"
         fi
 
         # Read the SSH public key from remotelabz user
@@ -1396,7 +1441,10 @@ EOF
             --private-key "$ansible_ssh_key" \
             -e "target_hosts=${worker_name}" \
             -e "@${vars_file}" \
-            $extra_vars 2>&1 | tee /tmp/worker_install_${worker_name}.log
+            -e ansible_become_method=sudo \
+            2>&1 | tee /tmp/worker_install_${worker_name}.log
+
+        unset ANSIBLE_BECOME_PASS
         
         if [ ${PIPESTATUS[0]} -ne 0 ]; then
             print_error "Failed to deploy $worker_name (check /tmp/worker_install_${worker_name}.log)"
@@ -1404,50 +1452,11 @@ EOF
             print_info "$worker_name deployed successfully ✅"
         fi
 
-        # Send SSH key to worker (remotelabz -> remotelabz-worker)
-        if [ -f "/home/remotelabz/.ssh/myremotelabzfront.pub" ]; then
+        # Single-server: send SSH key to localhost
+        if [ "$wtopo" -eq 1 ] && [ -f "/home/remotelabz/.ssh/myremotelabzfront.pub" ]; then
             local worker_user="${WORKER_SSH_USERS[$i]}"
-            local worker_ssh_pw="${WORKER_SSH_USERS_PW[$i]}"
-            local worker_ip="${WORKER_IPS[$i]}"
-
-            print_info "─────────────────────────────────────────"
-            print_info "Sending SSH key to $worker_name ($worker_ip)..."
-            print_info "─────────────────────────────────────────"
-            echo ""
-
-            # Single-server: key already on same machine, copy locally
-            if [ "$wtopo" -eq 1 ]; then
-                sudo -u remotelabz ssh-copy-id -i /home/remotelabz/.ssh/myremotelabzfront.pub "${worker_user}@127.0.0.1" 2>&1 || true
-                print_info "SSH key sent to $worker_name (single-server) ✅"
-            # Multi-server: send via scp + ssh
-            elif [ "$wtopo" -eq 2 ] && [ -n "$worker_ssh_pw" ]; then
-                # Step 1: Copy public key file to worker
-                scp -o StrictHostKeyChecking=no -o ConnectTimeout=10 \
-                    /home/remotelabz/.ssh/myremotelabzfront.pub \
-                    "${worker_user}@${worker_ip}:~/myremotelabzfront.pub"
-
-                # Step 2: Append key to authorized_keys on worker
-                sshpass -p "$worker_ssh_pw" ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 \
-                    "${worker_user}@${worker_ip}" \
-                    "mkdir -p ~/.ssh && chmod 700 ~/.ssh && touch ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys && cat ~/myremotelabzfront.pub >> ~/.ssh/authorized_keys && rm ~/myremotelabzfront.pub"
-
-                # Step 3: Verify SSH connection works with the new key
-                if ssh -o StrictHostKeyChecking=no -o BatchMode=yes -o ConnectTimeout=10 \
-                    -i /home/remotelabz/.ssh/myremotelabzfront \
-                    "${worker_user}@${worker_ip}" "echo key-test" 2>/dev/null | grep -q "key-test"; then
-                    print_info "SSH key sent and verified for $worker_name ✅"
-                else
-                    print_warning "Could not verify SSH key for $worker_name (key may need a few seconds to propagate)"
-                fi
-            else
-                print_error "SSH key for $worker_name skipped: no worker password provided"
-                print_error "Please provide a password when prompted for 'remotelabz-worker user'"
-            fi
-            echo ""
-        else
-            print_error "SSH key file not found: /home/remotelabz/.ssh/myremotelabzfront.pub"
-            print_error "The key must be generated before deploying workers"
-            print_error "Run: sudo -u remotelabz ssh-keygen -t rsa -b 4096 -m PEM -f /home/remotelabz/.ssh/myremotelabzfront -N \"\""
+            sudo -u remotelabz ssh-copy-id -i /home/remotelabz/.ssh/myremotelabzfront.pub "${worker_user}@127.0.0.1" 2>&1 || true
+            print_info "SSH key sent to $worker_name (single-server) ✅"
         fi
         echo ""
     done
