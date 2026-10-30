@@ -1,0 +1,86 @@
+#!/usr/bin/env php
+<?php
+
+use GetOpt\GetOpt;
+use GetOpt\Option;
+use GetOpt\Command;
+use GetOpt\Operand;
+use GetOpt\Argument;
+use RemoteLabz\Logger;
+use RemoteLabz\Service;
+use GetOpt\ArgumentException;
+
+require dirname(__DIR__).'/lib/autoload.php';
+
+// Default values
+const REMOTELABZ_LOG                    = "/var/log/remotelabz/remotelabz.log";
+const CONFIGURABLE_HTTP_PROXY_PORT      = 8000;
+
+$getopt = new GetOpt([
+    Option::create('h', 'help', GetOpt::NO_ARGUMENT)
+        ->setDescription("Show this help text."),
+    
+], [GetOpt::SETTING_STRICT_OPERANDS => true]);
+
+$getopt->addCommands([
+    Command::create('reconfigure', 'RemoteLabz\Configurator\Configurator::handle', [
+        Option::create(null, 'skip-migration', GetOpt::NO_ARGUMENT)
+            ->setDescription("Skip database migration step.")
+            ->setDefaultValue(false),
+        Option::create(null, 'skip-fixtures', GetOpt::NO_ARGUMENT)
+            ->setDescription("Skip database fixtures loading step.")
+            ->setDefaultValue(false),
+        Option::create('v', 'verbose')
+        ->setDescription('Set the verbosity level.')
+        ->setDefaultValue(0)
+    ])
+        ->setDescription("Reconfigure various parts of the app.")
+        ->addOperand(Operand::create("action", Operand::REQUIRED)
+            ->setValidation(function ($value) {
+                return in_array($value, ["database"]);
+            })
+        ),
+    Command::create('service', 'RemoteLabz\Service\Service::handle', [
+        Option::create('p', 'port', GetOpt::REQUIRED_ARGUMENT)
+            ->setDescription("Set the port used by configurable-http-proxy. Default : 8000")
+            ->setArgument(new Argument(CONFIGURABLE_HTTP_PROXY_PORT, 'is_numeric', 'port')),
+    ])
+        ->setDescription("Control all necessary services of RemoteLabz.")
+        ->addOperand(Operand::create("action", Operand::REQUIRED)
+            ->setDescription("Action to perform")
+            ->setValidation(function ($value) {
+                return in_array($value, ["start", "stop", "restart", "reload"]);
+            })
+        )
+]);
+
+try {
+    $getopt->process();
+} catch (ArgumentException $e) {
+    if ($getopt->getCommand() && ($getopt->getOption('help') || empty($getopt->getOperands()))) {
+        echo $getopt->getHelpText();
+        exit(0);
+    } else {
+        echo $e;
+        exit(1);
+    }
+}
+
+
+// Help
+if ($getopt->getOption('help')) {
+    echo $getopt->getHelpText();
+    exit(0);
+}
+
+$command = $getopt->getCommand();
+if (!$command) {
+    echo $getopt->getHelpText();
+    exit(0);
+} else {
+    list ($class, $method) = explode('::', $command->getHandler());
+    $logger = new Logger(REMOTELABZ_LOG, DATE_RFC2822, $getopt->getOption('v'));
+    call_user_func([$class, $method], $getopt->getOptions(), $getopt->getOperands(), $logger);
+}
+
+exit(0);

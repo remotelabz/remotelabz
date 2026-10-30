@@ -23,6 +23,7 @@ REMOTELABZ_MAX_FILESIZE="3000M"
 INSTALL_LOG_PATH="/var/log/remotelabz"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/.."
 DEFAULT_CA_PASS="R3mot3!abz-0penVPN-CA2020"
+MERCURE_DEB_PATH="${SCRIPT_DIR}/mercure_1.0.2_linux_amd64.deb"
 # Global variable to track which .env.local file was used
 ENV_FILE="${REMOTELABZ_PATH}/.env.local"
 
@@ -462,9 +463,9 @@ install_requirements() {
     systemctl restart rabbitmq-server
     
     print_info "Installation de Mercure Hub"
-    wget https://github.com/dunglas/mercure/releases/download/v1.0.2/mercure_1.0.2_linux_amd64.deb
-    wget https://github.com/dunglas/mercure/releases/download/v1.0.2/checksums.txt
-    sha256sum -c checksums.txt --ignore-missing 
+    wget -O "$MERCURE_DEB_PATH" https://github.com/dunglas/mercure/releases/download/v1.0.2/mercure_1.0.2_linux_amd64.deb
+    wget -O "${MERCURE_DEB_PATH}.sha256" https://github.com/dunglas/mercure/releases/download/v1.0.2/checksums.txt
+    sha256sum -c "${MERCURE_DEB_PATH}.sha256" --ignore-missing
 
     print_info "System requirements installation completed! ✅"
 }
@@ -847,9 +848,9 @@ EOF
     fi
     
     # If cert.cnf exists in the RemoteLabz config, use it
-    if [ -f /home/${SUDO_USER:-root}/remotelabz/config/apache/cert.cnf ]; then
+    if [ -f "$SCRIPT_DIR/config/apache/cert.cnf" ]; then
         print_info "Using RemoteLabz certificate configuration..."
-        cp /home/${SUDO_USER:-root}/remotelabz/config/apache/cert.cnf .
+        cp "$SCRIPT_DIR/config/apache/cert.cnf" .
     elif [ -f $REMOTELABZ_PATH/config/apache/cert.cnf ]; then
         cp $REMOTELABZ_PATH/config/apache/cert.cnf .
     fi
@@ -865,7 +866,7 @@ EOF
         openssl req -x509 -nodes -days 365 -sha512 -newkey rsa:2048 \
             -keyout RemoteLabz-WebServer.key \
             -out RemoteLabz-WebServer.crt \
-            -config /home/${SUDO_USER:-root}/remotelabz/config/apache/cert.cnf
+            -config "$SCRIPT_DIR/config/apache/cert.cnf"
     fi
     
     # Install certificates
@@ -938,7 +939,7 @@ install_remotelabz_app() {
     if [ ! -d "$SCRIPT_DIR/lib/remotelabz-message-bundle" ]; then
         git clone https://github.com/remotelabz/remotelabz-message-bundle.git "$SCRIPT_DIR/lib/remotelabz-message-bundle"
         git -C "$SCRIPT_DIR/lib/remotelabz-message-bundle" fetch --tags
-        git -C "$SCRIPT_DIR/lib/remotelabz-message-bundle" checkout 1.0.8
+        git -C "$SCRIPT_DIR/lib/remotelabz-message-bundle" checkout 1.0.10
     fi
 
     # Build install command
@@ -969,13 +970,15 @@ final_configuration() {
     
 	#Configure Mercure Hub
     print_info "Configuration de Mercure Hub"
-    if ! dpkg -s mercure >/dev/null 2>&1; then
-    	dpkg -i "${SCRIPT_DIR}/mercure_1.0.2_linux_amd64.deb" || apt-get install -f -y
-    fi
+    apt install ./mercure_1.0.2_linux_amd64.deb
+    cp -f "${SCRIPT_DIR}/mercure_1.0.2_linux_amd64.deb" /tmp/
+    apt install -y /tmp/mercure_1.0.2_linux_amd64.deb
+    cp -f "${SCRIPT_DIR}/.env.mercure" /opt/remotelabz/.env.mercure.local 2>/dev/null || true
     cp /opt/remotelabz/bin/systemd/remotelabz-mercure.service /etc/systemd/system
     systemctl daemon-reload
     systemctl enable --now remotelabz-mercure
-    rm -f "${SCRIPT_DIR}/mercure_1.0.2_linux_amd64.deb" "${SCRIPT_DIR}/checksums.txt"
+    rm mercure_1.0.2_linux_amd64.deb checksums.txt
+    rm -f /tmp/mercure_1.0.2_linux_amd64.deb
 
     # Configure HAProxy and Apache symlinks if not already done
     if [ -f $REMOTELABZ_PATH/config/haproxy/haproxy.cfg ]; then
