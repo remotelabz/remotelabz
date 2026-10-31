@@ -40,7 +40,7 @@ function defaultDecision(image) {
 
     const action = image.suggested_action && image.suggested_action !== 'not_applicable' ? image.suggested_action : 'reuse';
 
-    return { action, os_id: null };
+    return { action, os_id: null, flavor_id: image.recommended_flavor_id ?? null };
 }
 
 function statusMeta(status) {
@@ -71,6 +71,7 @@ export default function EveNgImporter({ file, onCancel, onImported }) {
     const [error, setError] = useState(null);
     const [preview, setPreview] = useState(null);
     const [decisions, setDecisions] = useState({});
+    const [deviceSelections, setDeviceSelections] = useState({});
     const [operatingSystems, setOperatingSystems] = useState([]);
     const [submitting, setSubmitting] = useState(false);
 
@@ -117,6 +118,12 @@ export default function EveNgImporter({ file, onCancel, onImported }) {
                     initial[image.eve_image] = defaultDecision(image);
                 });
                 setDecisions(initial);
+
+                const initialDevices = {};
+                (data.device_choices || []).forEach(choice => {
+                    initialDevices[choice.eve_id] = choice.selected ?? '';
+                });
+                setDeviceSelections(initialDevices);
             })
             .catch(err => {
                 if (cancelled) {
@@ -136,6 +143,9 @@ export default function EveNgImporter({ file, onCancel, onImported }) {
     }, [file]);
 
     const images = preview?.images ?? [];
+    const deviceChoices = preview?.device_choices ?? [];
+    const deviceCandidates = preview?.device_candidates ?? [];
+    const flavors = preview?.flavors ?? [];
     const uploadLimit = {
         bytes: preview?.limits?.upload_max_bytes ?? 0,
         human: preview?.limits?.upload_max_human ?? '',
@@ -171,7 +181,11 @@ export default function EveNgImporter({ file, onCancel, onImported }) {
             ...decision,
         }));
 
-        Remotelabz.labs.commitEveNg(file, mapping)
+        const devices = Object.entries(deviceSelections)
+            .filter(([, template]) => !!template)
+            .map(([eveId, template]) => ({ eve_id: Number(eveId), template }));
+
+        Remotelabz.labs.commitEveNg(file, mapping, devices)
             .then(response => {
                 const data = response.data?.data ?? {};
                 toast.success('The EVE-NG lab has been imported.');
@@ -185,7 +199,7 @@ export default function EveNgImporter({ file, onCancel, onImported }) {
             .finally(() => {
                 setSubmitting(false);
             });
-    }, [file, preview, decisions, onImported]);
+    }, [file, preview, decisions, deviceSelections, onImported]);
 
     if (loading) {
         return (
@@ -240,6 +254,7 @@ export default function EveNgImporter({ file, onCancel, onImported }) {
                             image={image}
                             decision={decisions[image.eve_image] ?? {}}
                             operatingSystems={operatingSystems}
+                            flavors={flavors}
                             uploadLimit={uploadLimit}
                             onChange={updateDecision}
                             onUpload={handleUpload}
@@ -247,6 +262,47 @@ export default function EveNgImporter({ file, onCancel, onImported }) {
                     ))}
                 </tbody>
             </Table>
+
+            {deviceChoices.length > 0 && (
+                <>
+                    <h6 className="mt-3">Devices without image (VPCS/PC)</h6>
+                    <p className="text-muted mb-1">
+                        These EVE-NG nodes have no disk image. Pick the RemoteLabz device to create for each one.
+                    </p>
+                    <Table size="sm" responsive>
+                        <thead>
+                            <tr>
+                                <th>EVE-NG device</th>
+                                <th>RemoteLabz device</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {deviceChoices.map(choice => (
+                                <tr key={choice.eve_id}>
+                                    <td className="text-break">{choice.name}</td>
+                                    <td>
+                                        <Form.Select
+                                            size="sm"
+                                            value={deviceSelections[choice.eve_id] ?? ''}
+                                            onChange={event => setDeviceSelections(prev => ({
+                                                ...prev,
+                                                [choice.eve_id]: event.target.value,
+                                            }))}
+                                        >
+                                            <option value="">— none —</option>
+                                            {deviceCandidates.map(candidate => (
+                                                <option key={candidate.template} value={candidate.template}>
+                                                    {candidate.name} ({candidate.type})
+                                                </option>
+                                            ))}
+                                        </Form.Select>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </Table>
+                </>
+            )}
 
             <div className="d-flex justify-content-between mt-3">
                 <Button variant="secondary" onClick={onCancel} disabled={submitting}>Cancel</Button>
@@ -258,7 +314,7 @@ export default function EveNgImporter({ file, onCancel, onImported }) {
     );
 }
 
-function ImageRow({ image, decision, operatingSystems, uploadLimit, onChange, onUpload }) {
+function ImageRow({ image, decision, operatingSystems, flavors, uploadLimit, onChange, onUpload }) {
     const meta = statusMeta(image.status);
     const [uploading, setUploading] = useState(false);
     const showResolution = decision.action !== 'reuse' || image.status === 'missing';
@@ -328,10 +384,55 @@ function ImageRow({ image, decision, operatingSystems, uploadLimit, onChange, on
                             onFileChange={handleFileChange}
                             uploading={uploading}
                         />
+                        {image.status === 'missing' && decision.action !== 'skip' && (
+                            <FlavorField
+                                image={image}
+                                decision={decision}
+                                flavors={flavors}
+                                onChange={onChange}
+                            />
+                        )}
                     </td>
                 </tr>
             )}
         </>
+    );
+}
+
+/**
+ * Flavor (RAM) selection for the device template created from an unresolved
+ * image. The EVE-NG node `ram` value is shown as a recommendation.
+ */
+function FlavorField({ image, decision, flavors, onChange }) {
+    const recommended = image.recommended_flavor_id ?? null;
+    const value = decision.flavor_id ?? recommended ?? '';
+
+    return (
+        <Form.Group className="mt-2">
+            <Form.Label className="mb-1">
+                <small>
+                    Device template memory
+                    {image.ram > 0 && (
+                        <span className="text-muted"> — recommended: {image.ram} MB (EVE-NG node)</span>
+                    )}
+                </small>
+            </Form.Label>
+            <Form.Select
+                size="sm"
+                value={value}
+                onChange={event => onChange(image.eve_image, { flavor_id: Number(event.target.value) || null })}
+            >
+                <option value="">— default —</option>
+                {(flavors || []).map(flavor => (
+                    <option key={flavor.id} value={flavor.id}>
+                        {flavor.name} ({flavor.memory} MB){flavor.id === recommended ? ' — recommended' : ''}
+                    </option>
+                ))}
+            </Form.Select>
+            <small className="text-muted d-block">
+                A RemoteLabz device template will be created for this image and used by the imported devices.
+            </small>
+        </Form.Group>
     );
 }
 

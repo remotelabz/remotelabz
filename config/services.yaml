@@ -171,6 +171,10 @@ services:
             $projectDirectory: '%kernel.project_dir%'
             $iconsDirectory: '%directory.public.images%/icons'
 
+    App\Service\Lab\Unl\DeviceTemplateFactory:
+        arguments:
+            $projectDirectory: '%kernel.project_dir%'
+
     App\Service\ImageFileUploader:
         arguments:
             $targetDirectory: '%image_directory%'

@@ -54,7 +54,7 @@ class EveNgMapper
 
     /** @var array<string, int>|null */
     private ?array $hypervisorIds = null;
-    /** @var array<int, array{name: ?string, memory: int}> */
+    /** @var array<int, array{id: ?int, name: ?string, memory: int}> */
     private array $flavors = [];
     /** @var array<string, int> */
     private array $controlProtocolIds = [];
@@ -87,7 +87,7 @@ class EveNgMapper
      * Construit la liste des images requises par le lab (une entree par
      * identifiant d'image distinct).
      *
-     * @return array<int, array{eve_image: string, hypervisor: ?string, arch: string, os_hint: string[], applicable: bool, suggested_action: string, used_by: int[]}>
+     * @return array<int, array{eve_image: string, hypervisor: ?string, arch: string, device_type: string, console: string, cpu: int, ram: int, icon: string, os_hint: string[], applicable: bool, suggested_action: string, used_by: int[]}>
      */
     public function buildRequirements(array $parsed): array
     {
@@ -113,6 +113,13 @@ class EveNgMapper
                     // (qemu -> qemu, docker -> lxc...) avec repli sur le template.
                     'hypervisor' => $this->hypervisorForNode($node, $entry),
                     'arch' => $this->archForNode($node),
+                    // Parametres repris du <node> pour creer un device template
+                    // lorsqu'aucune image ne correspond (cf. UnlImporter).
+                    'device_type' => $entry['device_type'] ?? 'vm',
+                    'console' => (string) ($node['console'] ?? ''),
+                    'cpu' => max(1, (int) ($node['cpu'] ?? 1)),
+                    'ram' => (int) ($node['ram'] ?? 0),
+                    'icon' => $this->resolveIcon((string) ($node['icon'] ?? ''), $entry['icon'] ?? self::FALLBACK_ICON),
                     'os_hint' => $entry['os_hint'] ?? [],
                     'applicable' => $applicable,
                     'suggested_action' => $entry['suggested_action'] ?? 'reuse',
@@ -130,14 +137,88 @@ class EveNgMapper
     }
 
     /**
+     * Drivers RemoteLabz (`config/templates/`) proposes comme device de
+     * remplacement pour un noeud sans image (EVE-NG `vpcs`/PC).
+     *
+     * @return array<int, array{template: string, name: string, type: string, hypervisor: int, description: string}>
+     */
+    public function deviceCandidates(): array
+    {
+        $this->loadDrivers();
+
+        $candidates = [];
+        foreach ($this->drivers as $driver) {
+            $candidates[] = [
+                'template' => (string) $driver['template'],
+                'name' => (string) $driver['name'],
+                'type' => (string) $driver['type'],
+                'hypervisor' => (int) $driver['hypervisor'],
+                'description' => (string) $driver['description'],
+            ];
+        }
+
+        usort($candidates, static fn (array $a, array $b): int => strcasecmp($a['name'], $b['name']));
+
+        return $candidates;
+    }
+
+    /**
+     * Noeuds EVE-NG sans image (`vpcs`/PC) requerant le choix d'un device de
+     * remplacement, avec le driver retenu par defaut.
+     *
+     * @param array<int, array{template:string}> $deviceChoices Choix deja exprimes, indexes par `eve_id`
+     *
+     * @return array<int, array{eve_id: int, name: string, selected: ?string}>
+     */
+    public function deviceChoices(array $parsed, array $deviceChoices = []): array
+    {
+        $this->loadCatalogue();
+        $this->loadDrivers();
+        $this->loadHypervisors();
+
+        $choices = [];
+        foreach ($parsed['nodes'] as $node) {
+            if (!$this->isVpcsNode($node)) {
+                continue;
+            }
+
+            $eveId = (int) $node['eve_id'];
+            $entry = $this->catalogueEntry($node['template'], $node['type']);
+
+            $selected = $deviceChoices[$eveId]['template'] ?? null;
+            if (null === $selected || '' === $selected) {
+                $selected = $this->pickDriver(
+                    (string) ($entry['device_type'] ?? 'switch'),
+                    $this->hypervisorId($this->hypervisorForNode($node, $entry)),
+                    $entry['rlz_template'] ?? null
+                );
+            }
+
+            $choices[] = [
+                'eve_id' => $eveId,
+                'name' => '' !== $node['name'] ? $node['name'] : sprintf('device-%d', $eveId),
+                'selected' => $selected,
+            ];
+        }
+
+        return $choices;
+    }
+
+    /**
      * Convertit la topologie en JSON "Lab RemoteLabz".
      *
      * @param array<string, array{status:string, os_id:?int, os_name:?string, os_image:?string}> $images
      *        Resolution des images, indexee par identifiant EVE-NG.
+     * @param array<int, array{template:string}> $deviceChoices
+     *        Device de remplacement choisi pour un noeud sans image, indexe par
+     *        identifiant de noeud EVE-NG (`eve_id`).
+     * @param array<string, array{template?: string, flavor?: array}> $imageOverrides
+     *        Surcharges par image EVE-NG : device template cree pour une image
+     *        sans correspondance (`template`) et flavour retenue (`flavor`).
      *
      * @return array{labJson: array, devices: array, warnings: string[]}
      */
-    public function map(array $parsed, array $images = []): array
+    public function map(array $parsed, array $images = [], array $deviceChoices = [], array $imageOverrides = []): array
     {
         $warnings = [];
         $this->loadCatalogue();
@@ -158,7 +239,9 @@ class EveNgMapper
         // --- Devices des noeuds ---------------------------------------------
         foreach ($parsed['nodes'] as $node) {
             $entry = $this->catalogueEntry($node['template'], $node['type']);
-            $device = $this->mapNode($node, $entry, $images, $connections, $usedConnections);
+            $deviceChoice = $deviceChoices[(int) $node['eve_id']]['template'] ?? null;
+            $imageOverride = $imageOverrides[$node['image']] ?? [];
+            $device = $this->mapNode($node, $entry, $images, $connections, $usedConnections, $deviceChoice, $imageOverride);
             $devices[] = $device;
         }
 
@@ -214,15 +297,39 @@ class EveNgMapper
         ];
     }
 
-    private function mapNode(array $node, array $entry, array $images, array $connections, array &$usedConnections): array
+    private function mapNode(array $node, array $entry, array $images, array $connections, array &$usedConnections, ?string $deviceChoice = null, array $imageOverride = []): array
     {
-        $hypervisorId = $this->hypervisorId($this->hypervisorForNode($node, $entry));
-        $deviceType = $entry['device_type'] ?? 'vm';
-        $osId = $images[$node['image']]['os_id'] ?? null;
-        $template = $this->pickDriver($deviceType, $hypervisorId, $entry['rlz_template'] ?? null, $osId);
+        // An image-less node (EVE-NG vpcs/PC) can be replaced by an arbitrary
+        // RemoteLabz device chosen by the user in the review window. A chosen
+        // driver fully defines the device (type, hypervisor, OS, control
+        // protocol, icon); otherwise the catalogue mapping is used.
+        $driver = (null !== $deviceChoice && '' !== $deviceChoice)
+            ? $this->driverByTemplate($deviceChoice)
+            : null;
 
-        $osJson = $this->operatingSystemJson($node, $entry, $images);
-        $flavor = $this->resolveFlavor((int) $node['ram']);
+        if (null !== $driver) {
+            $hypervisorId = (int) $driver['hypervisor'];
+            $deviceType = (string) $driver['type'];
+            $template = (string) $driver['template'];
+            $icon = $this->resolveIcon('', $driver['icon'] ?? ($entry['icon'] ?? self::FALLBACK_ICON));
+            $osJson = $this->operatingSystemJsonFromDriver($driver);
+            $controlProtocols = $this->controlProtocolsFromDriver($driver, $deviceType);
+            $networkInterfaceTemplate = (string) ($driver['network_interface_template'] ?? 'eth');
+        } else {
+            $hypervisorId = $this->hypervisorId($this->hypervisorForNode($node, $entry));
+            $deviceType = $entry['device_type'] ?? 'vm';
+            $osId = $images[$node['image']]['os_id'] ?? null;
+            // Une image sans correspondance a recu un device template dedie au
+            // commit : il prime sur la selection automatique d'un driver.
+            $template = $imageOverride['template']
+                ?? $this->pickDriver($deviceType, $hypervisorId, $entry['rlz_template'] ?? null, $osId);
+            $icon = $this->resolveIcon($node['icon'], $entry['icon'] ?? self::FALLBACK_ICON);
+            $osJson = $this->operatingSystemJson($node, $entry, $images);
+            $controlProtocols = $this->controlProtocols((string) $node['console'], $deviceType);
+            $networkInterfaceTemplate = 'eth';
+        }
+
+        $flavor = $imageOverride['flavor'] ?? $this->resolveFlavor((int) $node['ram']);
 
         $interfaces = [];
         $index = 0;
@@ -257,7 +364,7 @@ class EveNgMapper
             'brand' => '',
             'model' => '',
             'type' => $deviceType,
-            'icon' => $this->resolveIcon($node['icon'], $entry['icon'] ?? self::FALLBACK_ICON),
+            'icon' => $icon,
             'virtuality' => 1,
             'hypervisor' => ['id' => $hypervisorId],
             'nbCpu' => max(1, (int) $node['cpu']),
@@ -267,9 +374,9 @@ class EveNgMapper
                 'x' => (int) $node['left'],
                 'y' => (int) $node['top'],
             ],
-            'networkInterfaceTemplate' => 'eth',
+            'networkInterfaceTemplate' => $networkInterfaceTemplate,
             'template' => $template,
-            'controlProtocolTypes' => $this->controlProtocols((string) $node['console'], $deviceType),
+            'controlProtocolTypes' => $controlProtocols,
             'networkInterfaces' => $interfaces,
             'config' => (int) ($node['config'] ?? 0),
             'config_data' => (string) ($node['config_data'] ?? ''),
@@ -352,9 +459,49 @@ class EveNgMapper
         return $osJson;
     }
 
+    /**
+     * OS JSON d'un device construit depuis un driver choisi : l'OS du driver est
+     * resolu en base pour que LabImporter reutilise exactement le meme
+     * OperatingSystem (au lieu d'en creer un nouveau).
+     *
+     * @param array<string, mixed> $driver
+     *
+     * @return array<string, mixed>
+     */
+    private function operatingSystemJsonFromDriver(array $driver): array
+    {
+        $hypervisor = ['id' => (int) $driver['hypervisor']];
+
+        $osId = $driver['os_id'] ?? null;
+        $os = null !== $osId ? $this->operatingSystemRepository->find((int) $osId) : null;
+
+        if (null !== $os) {
+            return [
+                'name' => $os->getName(),
+                'image' => $os->getImageUrl() ?: $os->getImageFilename(),
+                'hypervisor' => $hypervisor,
+            ];
+        }
+
+        return [
+            'name' => (string) $driver['name'],
+            'image' => (string) $driver['name'],
+            'hypervisor' => $hypervisor,
+        ];
+    }
+
+    /**
+     * Noeud EVE-NG sans image disque (mini-simulateur IP `vpcs`).
+     */
+    private function isVpcsNode(array $node): bool
+    {
+        return 'vpcs' === strtolower(trim((string) ($node['template'] ?? '')))
+            || 'vpcs' === strtolower(trim((string) ($node['type'] ?? '')));
+    }
+
     private function isImageLessNode(array $node, array $entry): bool
     {
-        if ('vpcs' === strtolower($node['template']) || 'vpcs' === strtolower($node['type'])) {
+        if ($this->isVpcsNode($node)) {
             return true;
         }
 
@@ -497,13 +644,14 @@ class EveNgMapper
     }
 
     /**
-     * @return array<int, array{name: ?string, memory: int}>
+     * @return array<int, array{id: ?int, name: ?string, memory: int}>
      */
     private function loadFlavors(): array
     {
         $flavors = [];
         foreach ($this->flavorRepository->findAll() as $flavor) {
             $flavors[] = [
+                'id' => $flavor->getId(),
                 'name' => $flavor->getName(),
                 'memory' => (int) $flavor->getMemory(),
             ];
@@ -511,6 +659,29 @@ class EveNgMapper
         usort($flavors, static fn (array $a, array $b): int => $a['memory'] <=> $b['memory']);
 
         return $flavors;
+    }
+
+    /**
+     * Flavours RemoteLabz proposees a l'utilisateur pour une image sans
+     * correspondance (choix de la RAM du device template).
+     *
+     * @return array<int, array{id: ?int, name: ?string, memory: int}>
+     */
+    public function flavorOptions(): array
+    {
+        if (empty($this->flavors)) {
+            $this->flavors = $this->loadFlavors();
+        }
+
+        return $this->flavors;
+    }
+
+    /**
+     * Flavour recommandee pour une RAM EVE-NG donnee (la plus proche >= ram).
+     */
+    public function recommendedFlavorId(int $ram): ?int
+    {
+        return $this->resolveFlavor($ram)['id'] ?? null;
     }
 
     /**
@@ -524,25 +695,25 @@ class EveNgMapper
         }
 
         if (empty($this->flavors)) {
-            return ['name' => 'small-1024', 'memory' => 1024, 'image' => null];
+            return ['id' => null, 'name' => 'small-1024', 'memory' => 1024, 'image' => null];
         }
 
         foreach ($this->flavors as $flavor) {
             $memory = (int) ($flavor['memory'] ?? 0);
             if ($memory >= $ram && $ram > 0) {
-                return ['name' => $flavor['name'], 'memory' => $memory, 'image' => null];
+                return ['id' => $flavor['id'] ?? null, 'name' => $flavor['name'], 'memory' => $memory, 'image' => null];
             }
         }
 
         if ($ram <= 0) {
             $first = $this->flavors[0];
 
-            return ['name' => $first['name'], 'memory' => (int) $first['memory'], 'image' => null];
+            return ['id' => $first['id'] ?? null, 'name' => $first['name'], 'memory' => (int) $first['memory'], 'image' => null];
         }
 
         $last = $this->flavors[count($this->flavors) - 1];
 
-        return ['name' => $last['name'], 'memory' => (int) $last['memory'], 'image' => null];
+        return ['id' => $last['id'] ?? null, 'name' => $last['name'], 'memory' => (int) $last['memory'], 'image' => null];
     }
 
     /**
@@ -581,6 +752,61 @@ class EveNgMapper
         }
 
         return $ids;
+    }
+
+    /**
+     * Identifiants des protocoles de controle correspondant a une console
+     * EVE-NG (`vnc`/`rdp` -> vnc, `telnet`/`serial` -> serial, sinon login).
+     *
+     * Expose pour la creation d'un device template a partir d'un <node>.
+     *
+     * @return int[]
+     */
+    public function controlProtocolIds(string $console, string $deviceType = 'vm'): array
+    {
+        return array_map(
+            static fn (array $entry): int => (int) $entry['id'],
+            $this->controlProtocols($console, $deviceType)
+        );
+    }
+
+    /**
+     * Protocoles de controle declares par un driver (`controlProtocol`), avec
+     * repli sur le protocole de console du noeud si le driver n'en declare aucun.
+     *
+     * @param array<string, mixed> $driver
+     *
+     * @return array<int, array{id: int}>
+     */
+    private function controlProtocolsFromDriver(array $driver, string $deviceType): array
+    {
+        $ids = [];
+        foreach ((array) ($driver['control_protocol'] ?? []) as $id) {
+            $id = (int) $id;
+            if ($id > 0) {
+                $ids[] = ['id' => $id];
+            }
+        }
+
+        return [] !== $ids ? $ids : $this->controlProtocols('', $deviceType);
+    }
+
+    /**
+     * Retrouve un driver par son identifiant (`Device.template`).
+     *
+     * @return array<string, mixed>|null
+     */
+    private function driverByTemplate(string $template): ?array
+    {
+        $this->loadDrivers();
+
+        foreach ($this->drivers as $driver) {
+            if ($driver['template'] === $template) {
+                return $driver;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -669,10 +895,15 @@ class EveNgMapper
                 'template' => basename($entry, '.yaml'),
                 'name' => $data['name'] ?? basename($entry, '.yaml'),
                 'type' => $data['type'] ?? 'vm',
-                'hypervisor' => $data['hypervisor'] ?? 3,
-                'os_id' => $data['operatingSystem'] ?? null,
+                'hypervisor' => (int) ($data['hypervisor'] ?? 3),
+                'os_id' => isset($data['operatingSystem']) ? (int) $data['operatingSystem'] : null,
                 'description' => $data['description'] ?? '',
                 'config_script' => $data['config_script'] ?? null,
+                // Champs utilises lorsqu'un driver est choisi pour remplacer un
+                // device sans image (vpcs/PC).
+                'icon' => $data['icon'] ?? null,
+                'control_protocol' => array_map('intval', (array) ($data['controlProtocol'] ?? [])),
+                'network_interface_template' => $data['networkInterfaceTemplate'] ?? 'eth',
             ];
         }
     }

@@ -1719,10 +1719,16 @@ class LabController extends Controller
             }
         }
 
+        // Device de remplacement choisi pour les noeuds sans image (vpcs/PC).
+        $deviceMapping = json_decode((string) $request->request->get('devices', '[]'), true);
+        if (!is_array($deviceMapping)) {
+            $deviceMapping = [];
+        }
+
         $temporaryPath = $this->storeTemporaryUpload($file);
 
         try {
-            $labId = $unlImporter->import($temporaryPath, $decisions, $this->getUser());
+            $labId = $unlImporter->import($temporaryPath, $decisions, $deviceMapping, $this->getUser());
         } catch (\Throwable $exception) {
             $this->logger->error('[LabController:eveNgCommitAction]::'.$exception->getMessage());
 

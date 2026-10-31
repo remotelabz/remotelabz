@@ -278,6 +278,47 @@ Extrait de `lab_<uuid>.json` :
 - **Alternative** : mapper vers une petite VM Linux (`linux` + flavour
   `xx-small-256`) si on veut un vrai shell.
 
+Comme ce choix est purement subjectif, il n'est **pas** fait en dur : la
+fenêtre de revue demande à l'utilisateur quel **device RemoteLabz** créer à la
+place de chaque nœud `vpcs`. L'`analyze` renvoie :
+
+- `device_candidates` : tous les drivers de `config/templates/` (nom + type +
+  hyperviseur) ;
+- `device_choices` : un enregistrement par nœud `vpcs`
+  (`eve_id`, `name`, `selected`) ; `selected` est le driver présélectionné
+  (le « Switch internet » natif par défaut).
+
+Le `commit` reçoit `devices: [{ eve_id, template }]`. Le driver retenu définit
+alors entièrement le device : `type`, `hypervisor`, `operatingSystem` (l'OS du
+driver est réutilisé, jamais dupliqué), `controlProtocolTypes` (ceux déclarés
+par le driver), l'icône et le `networkInterfaceTemplate`. Un `template` inconnu
+fait retomber sur le mapping catalogue.
+
+#### 4.2.2 Image inconnue : création d'un device template
+
+Lorsqu'une image EVE-NG n'a **aucune correspondance** (statut `missing`), le
+commit ne se contente pas de créer l'`OperatingSystem` : il crée **en plus** un
+**device template** RemoteLabz (`Device` avec `isTemplate=true` + fichier
+`config/templates/<id>-<CamelName>.yaml`) portant les paramètres définis dans le
+`<node>` du `.unl` :
+
+| Paramètre du `<node>` | Valeur du device template |
+|---|---|
+| `image` (`name` de l'OS créé) | `Device.name` (et donc `<id>-<CamelName>`) |
+| `type` | `Device.type` (`vm`, `container`…) |
+| `type` → hyperviseur | `Device.hypervisor` (`qemu`, `lxc`…) |
+| `console` | `Device.controlProtocolTypes` (`vnc`/`serial`/`login`) |
+| `cpu` | `Device.nbCpu` |
+| `icon` | `Device.icon` |
+| `ram` | `Flavor` **choisie par l'utilisateur** (voir §6.2) |
+| `qemu_arch` | `OperatingSystem.arch` (repris dans le YAML `qemu_arch`) |
+
+Les devices importés de cette image référencent alors ce nouveau template via
+`Device.template` (au lieu du driver choisi automatiquement). Le même template
+est réutilisé pour toutes les images partageant le même nom **et** le même OS
+(pas de doublon). L'OS et le template ne sont **jamais** créés pour une action
+`skip` ni pour un device sans image (`vpcs`).
+
 ### 4.3 Niveau réseau : le point le plus délicat
 
 EVE-NG regroupe les interfaces **par `network_id`** (un segment L2 partagé). La
@@ -503,15 +544,26 @@ liens, annotations, **et** pour chaque image un statut :
 │             ( ) Fournir une URL              [ https://… ]                  │
 │             ( ) Créer une VM vierge          disque [ 3 GB ▾ ]             │
 │             ( ) Ignorer (à corriger plus tard)                             │
+│             Mémoire du device template [ small-1024 (1024 Mo) ▾ ]          │
+│             (recommandé : 1024 Mo, valeur `ram` du nœud EVE-NG)            │
 │  🔴      win-10-x64-21H1v1                        ⚠ introuvable   (idem…)  │
 │  ⚪      (vpcs)                                   → device natif            │
+│                                                                             │
+│ Devices sans image (vpcs/PC)                                                │
+│  Nœud EVE-NG         → Device RemoteLabz                                    │
+│  PC_A1                 [ Switch internet (switch) ▾ ]                       │
+│  PC_A2                 [ Linux Alpine (vm)        ▾ ]                       │
 │                                                                             │
 │ [ Annuler ]                                        [ Analyser ] [ Importer ]│
 └────────────────────────────────────────────────────────────────────────────┘
 ```
 
 **Étape 3 — Commit.** Chaque image reçoit un « plan » :
-`{ action: "reuse"|"upload"|"url"|"blank"|"skip", os_id?, file?, url?, flavorDisk? }`.
+`{ action: "reuse"|"upload"|"url"|"blank"|"skip", os_id?, file?, url?, flavorDisk?, flavor_id? }`.
+Les nœuds sans image reçoivent un plan `{ eve_id, template }` (driver
+RemoteLabz choisi). Pour une image `missing`, `flavor_id` porte la flavour
+retenue pour la RAM du device template créé (§4.2.2) ; à défaut, la flavour
+recommandée (arrondi de `ram` à la flavour ≥ la plus proche) est utilisée.
 
 ### 6.2 Actions disponibles pour une image manquante
 
@@ -528,6 +580,11 @@ liens, annotations, **et** pour chaque image un statut :
 > `linux-*` → liste des OS Linux RLZ ; `win-*` → OS Windows ; `pfsense-*` →
 > pfSense ; `vios*`/`ios*` → catégorie « routeur/switch Cisco » (souvent absente
 > → téléversement). L'utilisateur ne fait que valider ou ouvrir la liste.
+
+Pour une image `missing`, un **device template** est créé au commit (§4.2.2).
+La fenêtre propose donc en plus un sélecteur de **mémoire/flavour**, présélectionné
+sur la flavour recommandée à partir de la valeur `ram` du nœud (`ram="1024"` →
+`small-1024`). Les devices importés reçoivent cette même flavour.
 
 ### 6.3 Réutilisation de l'existant
 
@@ -715,8 +772,9 @@ $response->headers->set('X-Accel-Buffering', 'no');   // + proxy buffering off
    - `win-10-x64-21H1v1` → 🔴,
    - `pfsense-*` → 🔴.
 3. La **fenêtre de revue** affiche la topologie et les images. Pour chaque 🔴,
-   l'utilisateur choisit une action (§6.2). Les choix sont mémorisés dans
-   `eve_ng_image_mapping`.
+   l'utilisateur choisit une action (§6.2) ; les choix sont mémorisés dans
+   `eve_ng_image_mapping`. Pour chaque nœud sans image (`vpcs`/PC), il choisit
+   aussi le **device RemoteLabz** de remplacement (§4.2.1), choix non mémorisé.
 4. `POST …/commit` : `UnlImporter` crée les `OperatingSystem` manquants, diffuse
    les fichiers sur tous les workers, puis crée `Lab`, `Device`,
    `NetworkInterface`, `EditorData`, `TextObject`.
@@ -825,9 +883,16 @@ Réseaux : 52 `bridge` → autant de `connection` distinctes ; le `nat0` « Net 
   ],
   "images": [
     { "eve_image": "vios-adventerprisek9-m.spa.159-3.M3", "status": "missing",
-      "used_by": [1, 2, 3], "suggested_action": "upload", "candidates": [] },
+      "used_by": [1, 2, 3], "suggested_action": "upload", "candidates": [],
+      "ram": 1024, "recommended_flavor_id": 3 },
     { "eve_image": "linux-ubuntu-24.04-server", "status": "matched",
       "used_by": [5, 7], "os_id": 7, "os_name": "Ubuntu24.04SrvLTS" }
+  ],
+  "device_candidates": [ { "template": "6-switchInternet", "name": "Switch internet", "type": "switch", "hypervisor": "natif" } ],
+  "device_choices": [ { "eve_id": 4, "name": "PC_A1", "selected": "6-switchInternet" } ],
+  "flavors": [
+    { "id": 1, "name": "xx-small-256", "memory": 256 },
+    { "id": 3, "name": "small-1024", "memory": 1024 }
   ],
   "warnings": [ "template 'vios' absent du catalogue RLZ", "8 images non résolues" ],
   "limits": { "upload_max_bytes": 2097152, "upload_max_human": "2 MB" }

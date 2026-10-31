@@ -12,6 +12,11 @@ use JsonSerializable;
  *  - `lab`     : les metadonnees du lab (nom, compteurs) ;
  *  - `devices` : la liste des devices convertis (pour l'affichage) ;
  *  - `images`  : l'etat de resolution de chaque image (statut + OS propose) ;
+ *  - `deviceCandidates` : les drivers RemoteLabz proposes pour remplacer un
+ *                          device sans image (vpcs/PC) ;
+ *  - `deviceChoices` : pour chaque device sans image, le driver retenu ;
+ *  - `flavors` : les flavours RemoteLabz proposees pour la RAM d'un device
+ *                template cree depuis une image sans correspondance ;
  *  - `labJson` : le JSON pret a etre passe a LabImporter::import() lors du commit ;
  *  - `warnings`: messages non bloquants a remonter a l'utilisateur.
  *
@@ -26,6 +31,9 @@ class LabPreview implements JsonSerializable
     private array $images;
     private array $warnings;
     private array $labJson;
+    private array $deviceCandidates;
+    private array $deviceChoices;
+    private array $flavors;
 
     public function __construct(
         array $source,
@@ -33,7 +41,10 @@ class LabPreview implements JsonSerializable
         array $devices,
         array $images,
         array $labJson,
-        array $warnings = []
+        array $warnings = [],
+        array $deviceCandidates = [],
+        array $deviceChoices = [],
+        array $flavors = []
     ) {
         $this->source = $source;
         $this->lab = $lab;
@@ -41,6 +52,9 @@ class LabPreview implements JsonSerializable
         $this->images = $images;
         $this->labJson = $labJson;
         $this->warnings = $warnings;
+        $this->deviceCandidates = $deviceCandidates;
+        $this->deviceChoices = $deviceChoices;
+        $this->flavors = $flavors;
     }
 
     public function getSource(): array
@@ -69,6 +83,31 @@ class LabPreview implements JsonSerializable
     }
 
     /**
+     * Drivers proposes pour remplacer un device sans image (vpcs/PC).
+     */
+    public function getDeviceCandidates(): array
+    {
+        return $this->deviceCandidates;
+    }
+
+    /**
+     * Devices sans image (vpcs/PC) et driver retenu pour chacun.
+     */
+    public function getDeviceChoices(): array
+    {
+        return $this->deviceChoices;
+    }
+
+    /**
+     * Flavours RemoteLabz proposees pour la RAM d'un device template cree
+     * depuis une image sans correspondance.
+     */
+    public function getFlavors(): array
+    {
+        return $this->flavors;
+    }
+
+    /**
      * Le JSON "Lab RemoteLabz" (format attendu par LabImporter::import()).
      */
     public function getLabJson(): array
@@ -87,6 +126,9 @@ class LabPreview implements JsonSerializable
             'lab' => $this->lab,
             'devices' => $this->devices,
             'images' => $this->images,
+            'device_candidates' => $this->deviceCandidates,
+            'device_choices' => $this->deviceChoices,
+            'flavors' => $this->flavors,
             'warnings' => $this->warnings,
         ];
     }

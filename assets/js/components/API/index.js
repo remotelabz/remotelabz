@@ -506,13 +506,15 @@ export class RemotelabzAPI {
          * 
          * @param {File} file 
          * @param {Array} mapping Image decisions ({ action, os_id?, filename?, url?, name?, flavorDisk? })
+         * @param {Array} devices Device replacement choices for image-less nodes ({ eve_id, template })
          * 
          * @returns {Promise<import('axios').AxiosResponse<{status: string, data: {id: number, url: string}}>>}
          */
-        commitEveNg(file, mapping) {
+        commitEveNg(file, mapping, devices) {
             const formData = new FormData();
             formData.append('file', file);
             formData.append('mapping', JSON.stringify(mapping || []));
+            formData.append('devices', JSON.stringify(devices || []));
             return axios.post(`/labs/import/eve-ng/commit`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
         },
 

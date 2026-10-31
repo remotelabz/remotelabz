@@ -109,6 +109,13 @@ class ImageResolver
             'suggested_action' => $requirement['suggested_action'] ?? 'reuse',
             'hypervisor' => $requirement['hypervisor'] ?? null,
             'arch' => $requirement['arch'] ?? null,
+            // Parametres du <node> repris pour creer un device template lorsque
+            // l'image reste sans correspondance (cf. UnlImporter).
+            'device_type' => $requirement['device_type'] ?? 'vm',
+            'console' => $requirement['console'] ?? '',
+            'cpu' => (int) ($requirement['cpu'] ?? 1),
+            'ram' => (int) ($requirement['ram'] ?? 0),
+            'icon' => $requirement['icon'] ?? null,
         ];
 
         if (!($requirement['applicable'] ?? true)) {

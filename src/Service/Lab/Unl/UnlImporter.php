@@ -7,6 +7,7 @@ use App\Entity\OperatingSystem;
 use App\Entity\User;
 use App\Repository\ArchRepository;
 use App\Repository\FlavorDiskRepository;
+use App\Repository\FlavorRepository;
 use App\Repository\HypervisorRepository;
 use App\Repository\OperatingSystemRepository;
 use App\Service\EveNg\ImageCatalog;
@@ -53,7 +54,9 @@ class UnlImporter
     private HypervisorRepository $hypervisorRepository;
     private ArchRepository $archRepository;
     private FlavorDiskRepository $flavorDiskRepository;
+    private FlavorRepository $flavorRepository;
     private Files2WorkerManager $files2WorkerManager;
+    private DeviceTemplateFactory $deviceTemplateFactory;
 
     public function __construct(
         LoggerInterface $logger,
@@ -66,7 +69,9 @@ class UnlImporter
         HypervisorRepository $hypervisorRepository,
         ArchRepository $archRepository,
         FlavorDiskRepository $flavorDiskRepository,
-        Files2WorkerManager $files2WorkerManager
+        FlavorRepository $flavorRepository,
+        Files2WorkerManager $files2WorkerManager,
+        DeviceTemplateFactory $deviceTemplateFactory
     ) {
         $this->logger = $logger;
         $this->parser = $parser;
@@ -78,7 +83,9 @@ class UnlImporter
         $this->hypervisorRepository = $hypervisorRepository;
         $this->archRepository = $archRepository;
         $this->flavorDiskRepository = $flavorDiskRepository;
+        $this->flavorRepository = $flavorRepository;
         $this->files2WorkerManager = $files2WorkerManager;
+        $this->deviceTemplateFactory = $deviceTemplateFactory;
     }
 
     /**
@@ -92,8 +99,25 @@ class UnlImporter
         $resolution = $this->imageResolver->resolve($requirements);
         $images = $resolution['images'];
 
+        // Pour chaque image, indique la flavour conseillee (RAM EVE-NG arrondie a
+        // la flavour RemoteLabz superieure). Sert de valeur par defaut dans la
+        // fenetre d'import lorsqu'un device template doit etre cree.
+        $images = $this->attachFlavorRecommendations($images, $requirements);
+
         $imageMap = $this->keyImagesByEveImage($images);
-        $mapped = $this->mapper->map($parsed, $imageMap);
+
+        // Noeuds sans image (vpcs/PC) : on expose les drivers candidats et on
+        // applique le driver retenu par defaut, de sorte que l'apercu montre les
+        // devices tels qu'ils seront importes si l'utilisateur ne change rien.
+        $deviceChoices = $this->mapper->deviceChoices($parsed);
+        $selectedDevices = [];
+        foreach ($deviceChoices as $choice) {
+            if (!empty($choice['selected'])) {
+                $selectedDevices[(int) $choice['eve_id']] = ['template' => (string) $choice['selected']];
+            }
+        }
+
+        $mapped = $this->mapper->map($parsed, $imageMap, $selectedDevices);
 
         $warnings = array_merge($mapped['warnings'] ?? [], $this->collectWarnings($images));
 
@@ -115,16 +139,19 @@ class UnlImporter
             'textobjects' => (int) ($mapped['lab']['textobjects'] ?? count($parsed['textobjects'])),
         ];
 
-        return new LabPreview($source, $lab, $mapped['devices'], $images, $mapped['labJson'], $warnings);
+        return new LabPreview($source, $lab, $mapped['devices'], $images, $mapped['labJson'], $warnings, $this->mapper->deviceCandidates(), $deviceChoices, $this->mapper->flavorOptions());
     }
 
     /**
      * Analyse puis commit en une seule passe (utilise par l'import direct
      * "Phase 1" ou lorsqu'aucune decision n'est fournie).
      *
-     * @param array<string, array> $mapping Decisions indexees par identifiant d'image EVE-NG
+     * @param array<string, array> $mapping       Decisions indexees par identifiant d'image EVE-NG
+     * @param array<int, array>    $deviceChoices Device de remplacement choisi
+     *                                            ({ eve_id, template }), pour les
+     *                                            noeuds sans image (vpcs/PC)
      */
-    public function import(string $path, array $mapping = [], ?User $user = null): int
+    public function import(string $path, array $mapping = [], array $deviceChoices = [], ?User $user = null): int
     {
         $parsed = $this->parser->parseFile($path);
         $requirements = $this->mapper->buildRequirements($parsed);
@@ -134,7 +161,12 @@ class UnlImporter
 
         $applied = $this->applyDecisions($requirements, $analyzed, $mapping, $user);
 
-        $mapped = $this->mapper->map($parsed, $applied);
+        $mapped = $this->mapper->map(
+            $parsed,
+            $applied['images'],
+            $this->normalizeDeviceChoices($deviceChoices),
+            $applied['overrides']
+        );
 
         $this->logger->info('[UnlImporter:import]::Committing EVE-NG lab', [
             'file' => basename($path),
@@ -145,19 +177,22 @@ class UnlImporter
     }
 
     /**
-     * Applique les decisions utilisateur, cree les OS manquants et memorise le
-     * glossaire. Retourne la carte { eve_image => { os_id, os_name, os_image } }
-     * attendue par EveNgMapper.
+     * Applique les decisions utilisateur, cree les OS manquants, cree un device
+     * template pour chaque image sans correspondance et memorise le glossaire.
      *
      * @param array<int, array>    $requirements
      * @param array<string, array> $analyzed      Resolution automatique indexee par image EVE-NG
      * @param array<string, array> $mapping       Decisions indexees par image EVE-NG
      *
-     * @return array<string, array{os_id: ?int, os_name: ?string, os_image: ?string}>
+     * @return array{
+     *     images: array<string, array{os_id: ?int, os_name: ?string, os_image: ?string}>,
+     *     overrides: array<string, array{template: string, flavor: array}>
+     * }
      */
     private function applyDecisions(array $requirements, array $analyzed, array $mapping, ?User $user): array
     {
         $applied = [];
+        $overrides = [];
 
         foreach ($requirements as $requirement) {
             $eveImage = (string) $requirement['eve_image'];
@@ -188,9 +223,120 @@ class UnlImporter
             }
 
             $applied[$eveImage] = $resolution;
+
+            // L'image n'existait pas (statut "missing") : on materialise en plus
+            // un device template RemoteLabz portant les parametres du <node>, et
+            // on fait pointer les devices importes dessus.
+            if ($this->isUnknownImage($eveImage, $analyzed)) {
+                $override = $this->createDeviceTemplateOverride($requirement, $resolution, $decision, $user);
+                if (null !== $override) {
+                    $overrides[$eveImage] = $override;
+                }
+            }
         }
 
-        return $applied;
+        return ['images' => $applied, 'overrides' => $overrides];
+    }
+
+    /**
+     * Cree un device template pour une image sans correspondance et retourne la
+     * surcharge a appliquer aux devices importes (`template` + `flavor`).
+     *
+     * @param array<string, mixed>      $requirement
+     * @param array{os_id: ?int, os_name: ?string, os_image: ?string} $resolution
+     * @param array<string, mixed>|null $decision
+     *
+     * @return array{template: string, flavor: array}|null
+     */
+    private function createDeviceTemplateOverride(array $requirement, array $resolution, ?array $decision, ?User $user): ?array
+    {
+        $osId = $resolution['os_id'] ?? null;
+        if (null === $osId) {
+            // Aucune OS reel (action "skip" ou placeholder) : pas de template.
+            return null;
+        }
+
+        $os = $this->operatingSystemRepository->find($osId);
+        if (null === $os) {
+            return null;
+        }
+
+        $deviceType = (string) ($requirement['device_type'] ?? 'vm');
+        $console = (string) ($requirement['console'] ?? '');
+        $ram = (int) ($requirement['ram'] ?? 0);
+
+        $flavor = $this->resolveImportFlavor($decision, $ram);
+
+        $created = $this->deviceTemplateFactory->findOrCreate(
+            (string) $os->getName(),
+            $deviceType,
+            $this->operatingSystemHypervisor($os, $requirement['hypervisor'] ?? null),
+            $os,
+            $flavor,
+            (int) ($requirement['cpu'] ?? 1),
+            (string) ($requirement['icon'] ?? 'Server_Linux.png'),
+            $this->mapper->controlProtocolIds($console, $deviceType),
+            $user
+        );
+
+        return [
+            'template' => $created['template'],
+            'flavor' => [
+                'id' => null !== $flavor ? $flavor->getId() : null,
+                'name' => null !== $flavor ? $flavor->getName() : null,
+                'memory' => null !== $flavor ? (int) $flavor->getMemory() : $ram,
+                'image' => null,
+            ],
+        ];
+    }
+
+    /**
+     * Flavour retenue pour l'import : celle choisie par l'utilisateur
+     * (`flavor_id`), sinon celle recommandee pour la RAM du <node>.
+     */
+    private function resolveImportFlavor(?array $decision, int $ram): ?\App\Entity\Flavor
+    {
+        $flavorId = $decision['flavor_id'] ?? null;
+        if (null !== $flavorId && '' !== $flavorId && null !== $flavor = $this->flavorRepository->find((int) $flavorId)) {
+            return $flavor;
+        }
+
+        $recommendedId = $this->mapper->recommendedFlavorId($ram);
+        if (null !== $recommendedId && null !== $flavor = $this->flavorRepository->find($recommendedId)) {
+            return $flavor;
+        }
+
+        // Dernier recours : une flavour existe forcement (colonne NOT NULL), on
+        // prend la plus petite disponible plutot que d'echouer a la creation.
+        return $this->flavorRepository->findOneBy([], ['memory' => 'ASC']);
+    }
+
+    /**
+     * Hyperviseur du device template : celui de l'OS cree prime, sinon
+     * l'hyperviseur deduit du <node>, sinon qemu.
+     */
+    private function operatingSystemHypervisor(OperatingSystem $os, ?string $nodeHypervisor): ?\App\Entity\Hypervisor
+    {
+        if (null !== $os->getHypervisor()) {
+            return $os->getHypervisor();
+        }
+
+        return $this->resolveHypervisor($nodeHypervisor);
+    }
+
+    /**
+     * Une image est "inconnue" lorsqu'aucune correspondance n'a ete trouvee lors
+     * de l'analyse (statut `missing`), par opposition a une image deja resolue.
+     *
+     * @param array<string, array> $analyzed
+     */
+    private function isUnknownImage(string $eveImage, array $analyzed): bool
+    {
+        if (!isset($analyzed[$eveImage])) {
+            return true;
+        }
+
+        return 'missing' === ($analyzed[$eveImage]['status'] ?? null);
     }
 
     /**
@@ -403,6 +549,35 @@ class UnlImporter
     }
 
     /**
+     * Reindexe les choix de device ({ eve_id, template }) en une carte
+     * { eve_id => { template } } attendue par EveNgMapper::map(). Accepte une
+     * liste indexee ou une carte deja indexee par `eve_id`.
+     *
+     * @param array<int|string, array> $deviceChoices
+     *
+     * @return array<int, array{template: string}>
+     */
+    private function normalizeDeviceChoices(array $deviceChoices): array
+    {
+        $normalized = [];
+
+        foreach ($deviceChoices as $key => $choice) {
+            if (!is_array($choice)) {
+                continue;
+            }
+
+            $eveId = isset($choice['eve_id']) ? (int) $choice['eve_id'] : (is_numeric($key) ? (int) $key : 0);
+            $template = trim((string) ($choice['template'] ?? ''));
+
+            if ($eveId > 0 && '' !== $template) {
+                $normalized[$eveId] = ['template' => $template];
+            }
+        }
+
+        return $normalized;
+    }
+
+    /**
      * @param array<int, array> $images
      *
      * @return array<string, array>
@@ -417,6 +592,30 @@ class UnlImporter
         }
 
         return $map;
+    }
+
+    /**
+     * Ajoute a chaque image la flavour recommandee (`recommended_flavor_id`)
+     * calculee a partir de la RAM du <node> EVE-NG.
+     *
+     * @param array<int, array> $images
+     * @param array<int, array> $requirements
+     *
+     * @return array<int, array>
+     */
+    private function attachFlavorRecommendations(array $images, array $requirements): array
+    {
+        $ramByImage = [];
+        foreach ($requirements as $requirement) {
+            $ramByImage[(string) $requirement['eve_image']] = (int) ($requirement['ram'] ?? 0);
+        }
+
+        foreach ($images as $index => $image) {
+            $eveImage = (string) ($image['eve_image'] ?? '');
+            $images[$index]['recommended_flavor_id'] = $this->mapper->recommendedFlavorId($ramByImage[$eveImage] ?? 0);
+        }
+
+        return $images;
     }
 
     /**
