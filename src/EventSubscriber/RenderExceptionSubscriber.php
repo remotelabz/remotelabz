@@ -38,6 +38,11 @@ class RenderExceptionSubscriber implements EventSubscriberInterface
             $this->logger->error($exception->getMessage(), [
                 'line' => $exception->getLine(),
                 'file' => $exception->getFile(),
+                'method' => $request->getMethod(),
+                'uri' => $request->getRequestUri(),
+                'route' => $request->attributes->get('_route'),
+                'referer' => $request->headers->get('referer'),
+                'ip' => $request->getClientIp(),
             ]);
         }
 

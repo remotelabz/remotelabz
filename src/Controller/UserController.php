@@ -907,7 +907,7 @@ class UserController extends Controller
     public function getProfilePictureAction(Request $request, KernelInterface $kernel)
     {
         $user = $this->getUser();
-        $size = $request->query->get('size', 96);
+        $size = min(max((int) $request->query->get('size', 96), 16), 512);
 
         $profilePicture = $user->getProfilePicture();
         $response="";
@@ -958,7 +958,20 @@ class UserController extends Controller
         )
     {
         $user = $this->userRepository->find($id);
-        $size = $request->query->get('size', 128);
+        // Clamp the requested size: it is used both as image dimension and as part of the
+        // cache file path, and this route is public, so an unbounded value could be abused
+        // to generate huge images and fill the disk.
+        $size = min(max((int) $request->query->get('size', 128), 16), 512);
+
+        // The requested user may no longer exist (stale link, cached page, crawler, ...).
+        // Answer 404 instead of failing with a fatal error.
+        // NB: a thrown NotFoundHttpException would be turned into a 302 redirect to '/'
+        // by App\EventListener\ExceptionListener, so we return the response directly.
+        if (null === $user) {
+            $this->logger->info("getUserProfilePictureAction: user #".$id." does not exist.");
+            return new Response('This user does not exist.', Response::HTTP_NOT_FOUND);
+        }
+
         $profilePicture = $user->getProfilePicture();
 
         if ($profilePicture && is_file($profilePicture)) {
@@ -1004,7 +1017,7 @@ class UserController extends Controller
     public function deleteProfilePictureAction(Request $request, KernelInterface $kernel)
     {
         $user = $this->getUser();
-        $size = $request->query->get('size', 128);
+        $size = min(max((int) $request->query->get('size', 128), 16), 512);
 
         $profilePicture = $user->getProfilePicture();
 

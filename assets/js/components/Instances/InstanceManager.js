@@ -315,7 +315,7 @@ useEffect(() => {
 
         {labInstance ?
             <ListGroup>
-                <ListGroupItem className="d-flex align-items-center justify-content-between">
+                <ListGroupItem className="d-flex align-items-center justify-content-between instance-summary">
                     <div>
                         <h4 className="mb-0">Instances</h4>
                         <span>Started: { moment(labInstance.createdAt).format("DD/MM/YYYY hh:mm A") }</span>
@@ -340,7 +340,7 @@ useEffect(() => {
                         {props.lab.virtuality == 1 && props.lab.hasTimer == false && <span>No timer</span>
                         }
                     </div>
-                    <div>
+                    <div className="instance-manager-actions">
                     {labInstance.state === "created" &&
                         <Button href="/profile/vpn" variant="primary">
                             <SVG name="download" className="v-sub image-sm"></SVG>

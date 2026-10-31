@@ -220,6 +220,28 @@ img {
       margin-bottom: 0;
     }
   }
+
+  // On small screens, stack the action buttons (Codes, Export, Disconnect, ...)
+  // one below the other with a small gap instead of squeezing them on one line.
+  @media (max-width: 767.98px) {
+    &.content-title-stacked {
+      flex-wrap: wrap;
+
+      .content-title-actions {
+        flex: 1 0 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+        margin-top: 0.75rem;
+
+        > .btn {
+          margin: 0;
+          width: 100%;
+        }
+      }
+    }
+  }
 }
 
 .content-body {
@@ -1150,4 +1172,75 @@ code:hover {
 
 .sidebar-dark .nav-link.active {
   color: var(--bg-dark-lighter);
+}
+
+// ========== LAB INSTANCE (react InstanceManager) ==========
+
+// On phones, the action buttons rendered by the InstanceManager component
+// (OpenVPN file, Chat, See Lab, Leave lab, and the per-device controls) are
+// stacked one below the other with a small gap instead of being squeezed on
+// a single line.
+@media (max-width: 767.98px) {
+  .instance-summary,
+  .instance-item-row {
+    flex-direction: column;
+    align-items: stretch !important;
+  }
+
+  .instance-manager-actions,
+  .instance-item-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+
+    // Cancel the horizontal Bootstrap spacing utilities (ms-2, ms-3, ...):
+    // the gap above now handles the spacing between stacked buttons.
+    > * {
+      margin-left: 0 !important;
+      margin-right: 0 !important;
+    }
+
+    > .btn,
+    > a.btn,
+    > div > .btn {
+      width: 100%;
+    }
+  }
+}
+
+// On tablets (Bootstrap md: 768px - 991.98px) there is still enough room to
+// keep the buttons next to the instance summary, but not enough to fit them
+// all on a single line: they wrap onto several lines. Rebuild them as a
+// wrapping flexbox with a gap so every row keeps an even spacing, instead of
+// relying only on the left Bootstrap spacing utilities (ms-2, ms-3, ...) which
+// only space the buttons sharing the same line.
+@media (min-width: 768px) and (max-width: 991.98px) {
+  .instance-summary {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .instance-manager-actions,
+  .instance-item-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+
+    // Cancel the horizontal Bootstrap spacing utilities (ms-2, ms-3, ...):
+    // the gap above now handles the spacing between the buttons.
+    > * {
+      margin-left: 0 !important;
+      margin-right: 0 !important;
+    }
+  }
+
+  .instance-manager-actions,
+  .instance-item-actions {
+    // Keep the buttons aligned to the right edge of the row, even when they
+    // move below the instance summary / device name.
+    margin-left: auto;
+  }
 }

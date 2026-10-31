@@ -9,6 +9,20 @@
 
 {% block wrapper %}
 
+{% embed 'modal.html.twig' with {'title': 'Import emails from file'|trans, 'class': 'import-code-modal'} %}
+    {% block body %}
+        <p>The CSV file, encoded in UTF8, must contain the email addresses in the following format:
+            <br>
+            <br>
+            <kbd>email</kbd>
+            <br><br>
+            You can also import a TXT file with one email per line.<br>
+            <span class="text-muted">If an email already has a code for this lab, the same code is kept and only its expiration date is renewed.</span>
+        </p>
+        {{ form(addCodeFromFileForm, {'id': 'addCodeFromFileForm'}) }}
+    {% endblock %}
+{% endembed %}
+
 <div class="content-title">
     <h1>Invite users to {{lab.name}}</h1>
 </div>
@@ -16,6 +30,11 @@
     <p class="text-muted">List of emails separated by a comma. No spaces must be between the comma and the email.</p>
     {{ form_start(form) }}
     {{ form_end(form) }}
+    <div class="mb-3">
+        <a class="btn btn-primary" data-bs-target=".import-code-modal" data-bs-toggle="modal" href="#import-from-file" role="button">
+            <i class="fa fa-upload"></i> Import file
+        </a>
+    </div>
     <div class="row">
         <div class="col"><div {{ react_component('CodeManager', props|json_decode(true)) }}></div></div>
     </div>
