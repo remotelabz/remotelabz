@@ -302,7 +302,7 @@ class OperatingSystemController extends Controller
         $this->ensureDefaultArchitecture($operatingSystem);
         $operatingSystemForm = $this->createForm(OperatingSystemType::class, $operatingSystem);
         $operatingSystemForm->handleRequest($request);
-        $maxUploadSize = min(ini_get('upload_max_filesize'), ini_get('post_max_size'));
+        $maxUploadSize = UploadLimit::maxBytes();
 
         if ($operatingSystemForm->isSubmitted() && $operatingSystemForm->isValid()) {
             /** @var OperatingSystem $operatingSystem */
@@ -317,7 +317,7 @@ class OperatingSystemController extends Controller
             
                 return $this->render('operating_system/new.html.twig', [
                     'operatingSystemForm' => $operatingSystemForm->createView(),
-                    'sizeLimit' => $maxUploadSize
+                    'sizeLimit' => UploadLimit::format($maxUploadSize)
                 ]);
             }
 
@@ -391,13 +391,11 @@ class OperatingSystemController extends Controller
             return $this->redirectToRoute('operating_systems');
         }
 
-        $maxUploadSize = min(
-            ini_get('upload_max_filesize'), ini_get('post_max_size')
-        );
+        $maxUploadSize = UploadLimit::maxBytes();
 
         return $this->render('operating_system/new.html.twig', [
             'operatingSystemForm' => $operatingSystemForm->createView(),
-            'sizeLimit' => $maxUploadSize
+            'sizeLimit' => UploadLimit::format($maxUploadSize)
         ]);
     }
 
@@ -519,13 +517,11 @@ class OperatingSystemController extends Controller
                         'submitted' => $filenameOnly,
                         'user' => $this->getUser()->getName()
                     ]);
-                    $maxUploadSize = min(
-                          ini_get('upload_max_filesize'), ini_get('post_max_size')
-                    );
+                    $maxUploadSize = UploadLimit::maxBytes();
                     return $this->render('operating_system/new.html.twig', [
                         'operatingSystem' => $operatingSystem,
                         'operatingSystemForm' => $operatingSystemForm->createView(),
-                        'sizeLimit' => $maxUploadSize,
+                        'sizeLimit' => UploadLimit::format($maxUploadSize),
                         'edit' => true
                     ]);
                 }
@@ -628,14 +624,12 @@ class OperatingSystemController extends Controller
             }
         }
             
-        $maxUploadSize = min(
-            ini_get('upload_max_filesize'), ini_get('post_max_size')
-        );
+        $maxUploadSize = UploadLimit::maxBytes();
 
         return $this->render('operating_system/new.html.twig', [
             'operatingSystem' => $operatingSystem,
             'operatingSystemForm' => $operatingSystemForm->createView(),
-            'sizeLimit' => $maxUploadSize,
+            'sizeLimit' => UploadLimit::format($maxUploadSize),
             'edit' => true  // Ajouter cette variable pour le template
         ]);
     }
@@ -1169,24 +1163,6 @@ class OperatingSystemController extends Controller
             'maxSize' => $maxUploadSize,
             'maxSizeHuman' => $maxUploadLabel,
         ], 413);
-    }
-
-    // Fonction utilitaire pour convertir la taille PHP en octets
-    private function convertPHPSizeToBytes($size)
-    {
-        $unit = strtolower(substr($size, -1));
-        $bytes = (int) $size;
-
-        switch($unit) {
-            case 'g':
-                $bytes *= 1024;
-            case 'm':
-                $bytes *= 1024;
-            case 'k':
-                $bytes *= 1024;
-        }
-
-        return $bytes;
     }
 
     private function convertOva2qcow2(string $tempDir,string $filename, string $newfilename): string

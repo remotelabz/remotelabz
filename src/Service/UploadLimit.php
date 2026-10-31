@@ -45,8 +45,16 @@ class UploadLimit
         }
 
         $decimals = ($unit > 0 && $value < 10) ? 1 : 0;
+        $formatted = number_format($value, $decimals, '.', '');
 
-        return rtrim(rtrim(number_format($value, $decimals, '.', ''), '0'), '.') . ' ' . $units[$unit];
+        // Strip the trailing zeros of the fractional part only ("2.0" => "2").
+        // Doing it unconditionally would also eat the zeros of an integer part
+        // ("100" => "1"), which is what turned "100 MB" into "1 MB".
+        if ($decimals > 0) {
+            $formatted = rtrim(rtrim($formatted, '0'), '.');
+        }
+
+        return $formatted . ' ' . $units[$unit];
     }
 
     /** Convert a PHP ini size shorthand ("2M", "512K", "1G", "1024") to bytes. */

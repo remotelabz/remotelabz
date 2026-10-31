@@ -17,6 +17,7 @@ use App\Repository\IsoRepository;
 use App\Service\DirectoryService;
 use App\Service\Files2WorkerManager;
 use App\Service\SshService;
+use App\Service\UploadLimit;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use SortDirection;
@@ -119,9 +120,7 @@ class IsoController extends AbstractController
         $iso = new Iso();
         $form = $this->createForm(IsoType::class, $iso);
         $form->handleRequest($request);
-        $maxUploadSize = min(
-            ini_get('upload_max_filesize'),ini_get('post_max_size')
-        );
+        $maxUploadSize = UploadLimit::maxBytes();
 
         if ($form->isSubmitted() && $form->isValid()) {
             $this->logger->info('Creating ISO entry by user: ' . $this->getUser()->getName());
@@ -149,7 +148,7 @@ class IsoController extends AbstractController
                     $this->addFlash('danger', 'No file was uploaded. Please upload a file first.');
                     return $this->render('iso/new.html.twig', [
                         'iso' => $iso,
-                        'sizeLimit' => $maxUploadSize,
+                        'sizeLimit' => UploadLimit::format($maxUploadSize),
                         'form' => $form,
                     ]);
                 }
@@ -180,7 +179,7 @@ class IsoController extends AbstractController
 
         return $this->render('iso/new.html.twig', [
             'iso' => $iso,
-            'sizeLimit' => $maxUploadSize,
+            'sizeLimit' => UploadLimit::format($maxUploadSize),
             'form' => $form,
         ]);
     }
@@ -252,7 +251,7 @@ class IsoController extends AbstractController
                         return $this->render('iso/new.html.twig', [
                             'iso' => $iso,
                             'form' => $form,
-                            'sizeLimit' => min(ini_get('upload_max_filesize'), ini_get('post_max_size'))
+                            'sizeLimit' => UploadLimit::format(UploadLimit::maxBytes())
                         ]);
                     }
                 }
@@ -324,12 +323,12 @@ class IsoController extends AbstractController
             }
         }
 
-        $maxUploadSize = min(ini_get('upload_max_filesize'), ini_get('post_max_size'));
+        $maxUploadSize = UploadLimit::maxBytes();
 
         return $this->render('iso/new.html.twig', [
             'iso' => $iso,
             'form' => $form,
-            'sizeLimit' => $maxUploadSize
+            'sizeLimit' => UploadLimit::format($maxUploadSize)
         ]);
     }
 
@@ -366,12 +365,9 @@ class IsoController extends AbstractController
         if ($file && $file->isValid()) {
             $this->logger->debug('[IsoController:upload]::The file to upload will be '.$file.' of size '.$file->getSize());
 
-            $maxUploadSize = min(
-                $this->convertPHPSizeToBytes(ini_get('upload_max_filesize')),
-                $this->convertPHPSizeToBytes(ini_get('post_max_size'))
-            );
+            $maxUploadSize = UploadLimit::maxBytes();
 
-            if ($file->getSize() > $maxUploadSize) {
+            if ($maxUploadSize > 0 && $file->getSize() > $maxUploadSize) {
                 return $this->json(['error' => 'File too large'], 413);
             }
 
@@ -566,23 +562,6 @@ class IsoController extends AbstractController
             $this->logger->error('ISO URL validation error: ' . $e->getMessage() . ' for URL: ' . $url);
             return ['valid' => false, 'error' => 'Network error or timeout'];
         }
-    }
-
-    private function convertPHPSizeToBytes($size)
-    {
-        $unit = strtolower(substr($size, -1));
-        $bytes = (int) $size;
-
-        switch($unit) {
-            case 'g':
-                $bytes *= 1024;
-            case 'm':
-                $bytes *= 1024;
-            case 'k':
-                $bytes *= 1024;
-        }
-
-        return $bytes;
     }
 
     #[Route('/api/directories/{id}/isos', name: 'api_directory_isos', methods: ['GET'])]
