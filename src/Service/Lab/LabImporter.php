@@ -4,6 +4,7 @@ namespace App\Service\Lab;
 
 use App\Entity\Device;
 use App\Entity\EditorData;
+use App\Entity\Flavor;
 use App\Entity\TextObject;
 use App\Entity\Picture;
 use App\Entity\Lab;
@@ -14,6 +15,7 @@ use App\Repository\FlavorRepository;
 use App\Repository\HypervisorRepository;
 use App\Repository\LabRepository;
 use App\Repository\OperatingSystemRepository;
+use App\Repository\ArchRepository;
 use App\Repository\ControlProtocolTypeRepository;
 use Doctrine\Common\Collections\Criteria;
 use Doctrine\ORM\EntityManagerInterface;
@@ -41,6 +43,7 @@ class LabImporter
     private $bannerDirectory;
     private $hypervisorRepository;
     private $controlProtocolTypeRepository;
+    private $archRepository;
 
     public function __construct(
         LoggerInterface $logger,
@@ -52,6 +55,7 @@ class LabImporter
         OperatingSystemRepository $operatingSystemRepository,
         HypervisorRepository $hypervisorRepository,
         ControlProtocolTypeRepository $controlProtocolTypeRepository,
+        ArchRepository $archRepository,
         BannerManager $bannerManager,
         string $rootDirectory,
         string $publicImageDirectory,
@@ -66,6 +70,7 @@ class LabImporter
         $this->operatingSystemRepository = $operatingSystemRepository;
         $this->hypervisorRepository = $hypervisorRepository;
         $this->controlProtocolTypeRepository = $controlProtocolTypeRepository;
+        $this->archRepository = $archRepository;
         $this->bannerManager = $bannerManager;
         $this->rootDirectory = $rootDirectory;
         $this->publicImageDirectory = $publicImageDirectory;
@@ -165,80 +170,134 @@ class LabImporter
             ->setIsInternetAuthorized(true)
         ;
 
-        if ($labJson["hasTimer"] && array_key_exists("timer",$labJson)) {
+        if (!empty($labJson["hasTimer"]) && array_key_exists("timer",$labJson)) {
             $lab
                 ->setHasTimer($labJson["hasTimer"])
                 ->setTimer($labJson["timer"]);
         }
 
 
-        foreach ($labJson['devices'] as $deviceJson) {
+        // Resolutions done during a single import, so that devices sharing the
+        // same image (or memory) are linked to a single OperatingSystem (or
+        // Flavor). Necessary because the repository lookups below go straight
+        // to the persister (through `matching()`/`findBy()`) and therefore do
+        // not see entities that are only persisted, not flushed yet.
+        $operatingSystemsByImage = [];
+        $flavorsByMemory = [];
+
+        foreach ($labJson['devices'] ?? [] as $deviceJson) {
             //$this->logger->debug('Lab Json', $deviceJson);
             // find similar operating system
-            $operatingSystemJson = $deviceJson['operatingSystem'];
-            $criteria = Criteria::create()
-                ->where(Criteria::expr()->eq('imageUrl', $operatingSystemJson['image']))
-                ->orWhere(Criteria::expr()->eq('imageFilename', $operatingSystemJson['image']))
-            ;
+            $operatingSystemJson = $deviceJson['operatingSystem'] ?? [];
+            $image = $operatingSystemJson['image'] ?? ($operatingSystemJson['name'] ?? '');
+            $operatingSystemKey = (string) $image;
 
-            $results = $this->operatingSystemRepository->matching($criteria);
+            if ('' !== $operatingSystemKey && isset($operatingSystemsByImage[$operatingSystemKey])) {
+                $operatingSystem = $operatingSystemsByImage[$operatingSystemKey];
 
-            if (count($results) > 0) {
-                $operatingSystem = $results[0];
-
-                $this->logger->info('Found similar operating system. Using this instead of creating a new one.', ['ID' => $operatingSystem->getId()]);
+                $this->logger->info('Reusing the operating system already resolved for this import.', ['ID' => $operatingSystem->getId(), 'image' => $operatingSystemKey]);
             } else {
-                $this->logger->info('No similar operating system found. Creating a new one.');
-
-                $operatingSystem = new OperatingSystem();
-                if (str_contains($operatingSystemJson['image'], '/')) {
-                    $operatingSystem->setImageUrl($operatingSystemJson['image']);
-                }
-                else {
-                    $operatingSystem->setImageFilename($operatingSystemJson['image']);
-                }
-                $operatingSystem
-                    ->setName($operatingSystemJson['name'])
-                    ->setImage($operatingSystemJson['image'])
+                $criteria = Criteria::create()
+                    ->where(Criteria::expr()->eq('imageUrl', $image))
+                    ->orWhere(Criteria::expr()->eq('imageFilename', $image))
                 ;
-                
 
-                $this->entityManager->persist($operatingSystem);
+                $results = $this->operatingSystemRepository->matching($criteria);
+
+                if (count($results) > 0) {
+                    $operatingSystem = $results[0];
+
+                    $this->logger->info('Found similar operating system. Using this instead of creating a new one.', ['ID' => $operatingSystem->getId()]);
+                } else {
+                    $this->logger->info('No similar operating system found. Creating a new one.');
+
+                    $operatingSystem = new OperatingSystem();
+                    if (str_contains((string) $image, '/')) {
+                        $operatingSystem->setImageUrl($image);
+                    }
+                    else {
+                        $operatingSystem->setImageFilename($image);
+                    }
+                    $operatingSystem
+                        ->setName($operatingSystemJson['name'] ?? $image)
+                        ->setImage($image)
+                    ;
+
+                    // An imported operating system must carry the same metadata as
+                    // an exported one (hypervisor, arch), otherwise a re-export or
+                    // a device start would lose/blank those fields.
+                    if (!empty($deviceJson['hypervisor']['id'])
+                        && $hypervisor = $this->hypervisorRepository->find($deviceJson['hypervisor']['id'])) {
+                        $operatingSystem->setHypervisor($hypervisor);
+                    }
+
+                    if (!empty($operatingSystemJson['arch']['name'])) {
+                        $arch = $this->archRepository->findByName($operatingSystemJson['arch']['name']);
+                        if (null !== $arch) {
+                            $operatingSystem->setArch($arch);
+                        }
+                    }
+
+                    if (!empty($operatingSystemJson['description'])) {
+                        $operatingSystem->setDescription($operatingSystemJson['description']);
+                    }
+
+                    $this->entityManager->persist($operatingSystem);
+                }
+
+                if ('' !== $operatingSystemKey) {
+                    $operatingSystemsByImage[$operatingSystemKey] = $operatingSystem;
+                }
             }
 
             // find similar flavor
-            $flavorJson = $deviceJson['flavor'];
-            $results = $this->flavorRepository->findBy([
-                'memory' => $flavorJson['memory'],
-                //'disk' => $flavorJson['disk']
-            ]);
+            $flavorJson = $deviceJson['flavor'] ?? [];
+            $flavorKey = (string) ($flavorJson['memory'] ?? '');
 
-            if (count($results) > 0) {
-                $flavor = $results[0];
+            if ('' !== $flavorKey && isset($flavorsByMemory[$flavorKey])) {
+                $flavor = $flavorsByMemory[$flavorKey];
 
-                $this->logger->info('Found similar flavor. Using this instead of creating a new one.', ['ID' => $flavor->getId()]);
+                $this->logger->info('Reusing the flavor already resolved for this import.', ['ID' => $flavor->getId(), 'memory' => $flavorKey]);
             } else {
-                $this->logger->info('No similar flavor found. Creating a new one.');
+                $results = $this->flavorRepository->findBy([
+                    'memory' => $flavorJson['memory'] ?? null,
+                    //'disk' => $flavorJson['disk']
+                ]);
 
-                $flavor = new OperatingSystem();
-                $flavor
-                    ->setName($flavorJson['name'])
-                    ->setImage($flavorJson['image'])
-                ;
+                if (count($results) > 0) {
+                    $flavor = $results[0];
 
-                $this->entityManager->persist($flavor);
+                    $this->logger->info('Found similar flavor. Using this instead of creating a new one.', ['ID' => $flavor->getId()]);
+                } else {
+                    $this->logger->info('No similar flavor found. Creating a new one.');
+
+                    $flavor = new Flavor();
+                    $flavor
+                        ->setName($flavorJson['name'] ?? ('flavor-' . ($flavorJson['memory'] ?? 0)))
+                        ->setMemory((int) ($flavorJson['memory'] ?? 0))
+                    ;
+
+                    $this->entityManager->persist($flavor);
+                }
+
+                if ('' !== $flavorKey) {
+                    $flavorsByMemory[$flavorKey] = $flavor;
+                }
             }
 
-            $editorDataJson = $deviceJson['editorData'];
+            $editorDataJson = $deviceJson['editorData'] ?? [];
             $editorData = new EditorData();
             $editorData
-                ->setX($editorDataJson['x'])
-                ->setY($editorDataJson['y'])
+                ->setX($editorDataJson['x'] ?? 0)
+                ->setY($editorDataJson['y'] ?? 0)
             ;
 
             $this->entityManager->persist($editorData);
 
-            if (!$hypervisor = $this->hypervisorRepository->find($deviceJson['hypervisor']['id'])) {
+            if (!empty($deviceJson['hypervisor']['id'])
+                && $hypervisor = $this->hypervisorRepository->find($deviceJson['hypervisor']['id'])) {
+                // found
+            } else {
                 $hypervisor = NULL;
             }
 
@@ -248,21 +307,21 @@ class LabImporter
             $device
                 ->setName($deviceJson['name'])
                 ->setAuthor($this->tokenStorage->getToken()->getUser())
-                ->setBrand($deviceJson['brand'])
-                ->setModel($deviceJson['model'])
-                ->setType($deviceJson['type'])
-                ->setIcon($deviceJson['icon'])
-                ->setVirtuality($deviceJson['virtuality'])
+                ->setBrand($deviceJson['brand'] ?? '')
+                ->setModel($deviceJson['model'] ?? '')
+                ->setType($deviceJson['type'] ?? 'vm')
+                ->setIcon($deviceJson['icon'] ?? '')
+                ->setVirtuality($deviceJson['virtuality'] ?? 1)
                 ->setHypervisor($hypervisor)
-                ->setNbCpu($deviceJson['nbCpu'])
+                ->setNbCpu($deviceJson['nbCpu'] ?? 1)
                 //->setVnc($deviceJson['vnc'])
                 ->setOperatingSystem($operatingSystem)
                 ->setFlavor($flavor)
                 ->setEditorData($editorData)
                 ->setIsTemplate(false)
-                ->setNetworkInterfaceTemplate($deviceJson['networkInterfaceTemplate'])
+                ->setNetworkInterfaceTemplate($deviceJson['networkInterfaceTemplate'] ?? 'eth')
             ;
-            if (array_key_exists("template",$deviceJson)) {
+            if (!empty($deviceJson['template']) && is_string($deviceJson['template'])) {
                 $device->setTemplate($deviceJson['template']);
             }
 
@@ -273,9 +332,11 @@ class LabImporter
             }
 
             
-            foreach($deviceJson["controlProtocolTypes"] as $controlProtocolTypeJson){
+            foreach($deviceJson["controlProtocolTypes"] ?? [] as $controlProtocolTypeJson){
                 $controlProtocolType = $this->controlProtocolTypeRepository->find($controlProtocolTypeJson["id"]);
-                $device->addControlProtocolType($controlProtocolType);
+                if (null !== $controlProtocolType) {
+                    $device->addControlProtocolType($controlProtocolType);
+                }
             }
 
             if(isset($deviceJson['nbSocket'])) {
@@ -290,7 +351,16 @@ class LabImporter
                 $device->setNbThread($deviceJson['nbThread']);
             }
 
-            foreach ($deviceJson['networkInterfaces'] as $networkInterfaceJson) {
+            // Startup configuration carried by the lab JSON (EVE-NG config_data
+            // is decoded to plain text by UnlParser).
+            if (isset($deviceJson['config_data']) && '' !== $deviceJson['config_data']) {
+                $device->setConfigData($deviceJson['config_data']);
+            }
+            if (isset($deviceJson['config'])) {
+                $device->setConfig((int) $deviceJson['config']);
+            }
+
+            foreach ($deviceJson['networkInterfaces'] ?? [] as $networkInterfaceJson) {
                 $networkInterface = new NetworkInterface();
 
                 $networkSettings = new NetworkSettings();
@@ -301,10 +371,10 @@ class LabImporter
 
                 $networkInterface
                     ->setName($networkInterfaceJson['name'])
-                    ->setType($networkInterfaceJson['type'])
-                    ->setVlan($networkInterfaceJson['vlan'])
-                    ->setConnection($networkInterfaceJson['connection'])
-                    ->setConnectorType($networkInterfaceJson['connectorType'])
+                    ->setType($networkInterfaceJson['type'] ?? 'tap')
+                    ->setVlan($networkInterfaceJson['vlan'] ?? 0)
+                    ->setConnection($networkInterfaceJson['connection'] ?? 0)
+                    ->setConnectorType($networkInterfaceJson['connectorType'] ?? 'Straight')
                     ->setSettings($networkSettings)
                     ->setIsTemplate(false)
                 ;

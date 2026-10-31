@@ -1,0 +1,121 @@
+# Catalogue de correspondance EVE-NG -> RemoteLabz.
+#
+# Ce fichier est lu par App\Service\Lab\Unl\EveNgMapper. Il decrit, pour chaque
+# "template" EVE-NG (attribut <node template="...">), le type de device
+# RemoteLabz vise, l'hyperviseur, l'icone par defaut et des indices de famille
+# d'OS utilises par l'heuristique de resolution des images (ImageResolver).
+#
+# `rlz_template` est un *indice* : si le driver indique existe reellement dans
+# config/templates/, il est utilise ; sinon EveNgMapper retombe sur le driver le
+# plus proche par (device_type, hypervisor), puis sur un device sans driver.
+# Les identifiants de drivers sont du type "<deviceId>-<camelCaseName>" (ex.
+# 1-linuxAlpine) : ils sont donc releves dynamiquement plutot que codes en dur.
+#
+# Les hyperviseurs RemoteLabz ont les ids suivants en base :
+#   3 = qemu, 4 = lxc, 5 = natif, 6 = physical
+
+# --- Routeurs / switches Cisco (images proprietaires) -----------------------
+vios:
+  device_type: vm
+  hypervisor: qemu
+  rlz_template: null
+  icon: Router.png
+  os_hint: [vios, iosv, ios]
+  suggested_action: upload
+
+viosl2:
+  device_type: switch
+  hypervisor: qemu
+  rlz_template: null
+  icon: Switch L3.png
+  os_hint: [viosl2, iosv, ios]
+  suggested_action: upload
+
+iol:
+  device_type: vm
+  hypervisor: qemu
+  rlz_template: null
+  icon: Router.png
+  os_hint: [iol, ios]
+  suggested_action: upload
+
+dynamips:
+  device_type: vm
+  hypervisor: qemu
+  rlz_template: null
+  icon: Router.png
+  os_hint: [dynamips, cisco, ios]
+  suggested_action: upload
+
+# --- PC sans image ----------------------------------------------------------
+vpcs:
+  device_type: switch
+  hypervisor: natif
+  rlz_template: null
+  icon: Desktop.png
+  os: Natif
+  os_hint: [natif, service]
+  suggested_action: not_applicable
+
+# --- VM Linux ---------------------------------------------------------------
+linux:
+  device_type: vm
+  hypervisor: qemu
+  rlz_template: null
+  icon: Desktop_linux.png
+  os_hint: [linux, ubuntu, debian, alpine, rocky, centos, fedora, arch, opensuse, kali, freebsd]
+  suggested_action: reuse
+
+# --- Conteneurs / Docker ----------------------------------------------------
+docker:
+  device_type: container
+  hypervisor: lxc
+  rlz_template: null
+  icon: Server_Linux.png
+  os_hint: [alpine, debian, ubuntu, centos, fedora]
+  suggested_action: reuse
+
+lxc:
+  device_type: container
+  hypervisor: lxc
+  rlz_template: null
+  icon: Server_Linux.png
+  os_hint: [alpine, debian, ubuntu, centos, fedora]
+  suggested_action: reuse
+
+# --- Windows ----------------------------------------------------------------
+win:
+  device_type: vm
+  hypervisor: qemu
+  rlz_template: null
+  icon: Desktop_Win.png
+  os_hint: [win, windows]
+  suggested_action: upload
+
+# --- Pare-feux --------------------------------------------------------------
+pfsense:
+  device_type: vm
+  hypervisor: qemu
+  rlz_template: null
+  icon: Firewall.png
+  os_hint: [pfsense]
+  suggested_action: reuse
+
+firewall:
+  device_type: vm
+  hypervisor: qemu
+  rlz_template: null
+  icon: Firewall.png
+  os_hint: [pfsense, firewall, forti, checkpoint]
+  suggested_action: reuse
+
+# --- Defaut -----------------------------------------------------------------
+# Utilise quand le template EVE-NG est inconnu : le type/hyperviseur est alors
+# deduit de l'attribut `type` du <node> (qemu/vpcs/docker/iol/dynamips).
+_default:
+  device_type: vm
+  hypervisor: qemu
+  rlz_template: null
+  icon: Server_Linux.png
+  os_hint: []
+  suggested_action: reuse

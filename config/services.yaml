@@ -162,6 +162,19 @@ services:
             $publicImageDirectory: '%directory.public.images%'
             $bannerDirectory: '%directory.public.upload.lab.banner%'
 
+    App\Service\Lab\Unl\ImageResolver:
+        arguments:
+            $workerPort: '%app.worker_port%'
+
+    App\Service\Lab\Unl\EveNgMapper:
+        arguments:
+            $projectDirectory: '%kernel.project_dir%'
+            $iconsDirectory: '%directory.public.images%/icons'
+
+    App\Service\Lab\Unl\DeviceTemplateFactory:
+        arguments:
+            $projectDirectory: '%kernel.project_dir%'
+
     App\Service\ImageFileUploader:
         arguments:
             $targetDirectory: '%image_directory%'
