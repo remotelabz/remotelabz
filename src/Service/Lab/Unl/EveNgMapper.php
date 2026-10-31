@@ -87,7 +87,7 @@ class EveNgMapper
      * Construit la liste des images requises par le lab (une entree par
      * identifiant d'image distinct).
      *
-     * @return array<int, array{eve_image: string, hypervisor: ?string, os_hint: string[], applicable: bool, suggested_action: string, used_by: int[]}>
+     * @return array<int, array{eve_image: string, hypervisor: ?string, arch: string, os_hint: string[], applicable: bool, suggested_action: string, used_by: int[]}>
      */
     public function buildRequirements(array $parsed): array
     {
@@ -109,12 +109,18 @@ class EveNgMapper
             if (!isset($requirements[$eveImage])) {
                 $requirements[$eveImage] = [
                     'eve_image' => $eveImage,
-                    'hypervisor' => $entry['hypervisor'] ?? null,
+                    // L'hyperviseur est deduit de l'attribut `type` du <node>
+                    // (qemu -> qemu, docker -> lxc...) avec repli sur le template.
+                    'hypervisor' => $this->hypervisorForNode($node, $entry),
+                    'arch' => $this->archForNode($node),
                     'os_hint' => $entry['os_hint'] ?? [],
                     'applicable' => $applicable,
                     'suggested_action' => $entry['suggested_action'] ?? 'reuse',
                     'used_by' => [],
                 ];
+            } elseif ('' === ($requirements[$eveImage]['arch'] ?? '') && '' !== $arch = $this->archForNode($node)) {
+                // Complete l'architecture si le premier noeud ne la fournissait pas.
+                $requirements[$eveImage]['arch'] = $arch;
             }
 
             $requirements[$eveImage]['used_by'][] = (int) $node['eve_id'];
@@ -169,18 +175,12 @@ class EveNgMapper
         // --- Annotations ----------------------------------------------------
         $textobjects = [];
         foreach ($parsed['textobjects'] as $textobject) {
-            $data = (string) $textobject['data'];
-            // TextObject.data is a VARCHAR(1500): EVE-NG annotation HTML can be
-            // slightly larger, so clip it rather than failing the whole import.
-            if (mb_strlen($data) > 1500) {
-                $data = mb_substr($data, 0, 1500);
-                $warnings[] = sprintf('The annotation "%s" was truncated to 1500 characters.', $textobject['name']);
-            }
-
+            // TextObject.data is a LONGTEXT: the full EVE-NG annotation HTML is
+            // kept, no matter its size.
             $textobjects[] = [
                 'name' => '' !== $textobject['name'] ? $textobject['name'] : 'text',
                 'type' => 'text',
-                'data' => $data,
+                'data' => (string) $textobject['data'],
             ];
         }
 
@@ -216,7 +216,7 @@ class EveNgMapper
 
     private function mapNode(array $node, array $entry, array $images, array $connections, array &$usedConnections): array
     {
-        $hypervisorId = $this->hypervisorId($entry['hypervisor'] ?? 'qemu');
+        $hypervisorId = $this->hypervisorId($this->hypervisorForNode($node, $entry));
         $deviceType = $entry['device_type'] ?? 'vm';
         $osId = $images[$node['image']]['os_id'] ?? null;
         $template = $this->pickDriver($deviceType, $hypervisorId, $entry['rlz_template'] ?? null, $osId);
@@ -322,24 +322,34 @@ class EveNgMapper
     private function operatingSystemJson(array $node, array $entry, array $images): array
     {
         $eveImage = $node['image'];
+        $hypervisor = ['id' => $this->hypervisorId($this->hypervisorForNode($node, $entry))];
 
         if (isset($images[$eveImage]) && null !== ($images[$eveImage]['os_image'] ?? null)) {
-            return [
+            $osJson = [
                 'name' => $images[$eveImage]['os_name'] ?? $eveImage,
                 'image' => $images[$eveImage]['os_image'],
-                'hypervisor' => ['id' => $this->hypervisorId($entry['hypervisor'] ?? 'qemu')],
+                'hypervisor' => $hypervisor,
+            ];
+        } else {
+            // Pas de resolution : on laisse LabImporter creer un OS "placeholder"
+            // portant l'identifiant EVE-NG (a corriger plus tard dans l'IHM).
+            $image = '' !== $eveImage ? $eveImage : ($entry['os'] ?? 'Natif');
+            $osJson = [
+                'name' => $image,
+                'image' => $image,
+                'hypervisor' => $hypervisor,
             ];
         }
 
-        // Pas de resolution : on laisse LabImporter creer un OS "placeholder"
-        // portant l'identifiant EVE-NG (a corriger plus tard dans l'IHM).
-        $image = '' !== $eveImage ? $eveImage : ($entry['os'] ?? 'Natif');
+        // L'architecture (qemu_arch) n'est portee que par l'OS cree : on la
+        // transmet pour que l'OperatingSystem cree depuis l'import soit conforme
+        // (x86_64, arm64...) au lieu de tomber sur la valeur par defaut.
+        $arch = $this->archForNode($node);
+        if ('' !== $arch) {
+            $osJson['arch'] = ['name' => $arch];
+        }
 
-        return [
-            'name' => $image,
-            'image' => $image,
-            'hypervisor' => ['id' => $this->hypervisorId($entry['hypervisor'] ?? 'qemu')],
-        ];
+        return $osJson;
     }
 
     private function isImageLessNode(array $node, array $entry): bool
@@ -446,6 +456,47 @@ class EveNgMapper
     }
 
     /**
+     * Deduit l'hyperviseur RemoteLabz de l'attribut `type` du <node> EVE-NG :
+     *   - qemu / iol / dynamips -> qemu ;
+     *   - docker / lxc          -> lxc ;
+     *   - vpcs                  -> natif.
+     * Un type inconnu retombe sur l'hyperviseur du catalogue (template).
+     */
+    private function hypervisorForNode(array $node, array $entry): string
+    {
+        switch (mb_strtolower(trim((string) ($node['type'] ?? '')))) {
+            case 'qemu':
+            case 'iol':
+            case 'dynamips':
+                return 'qemu';
+            case 'docker':
+            case 'lxc':
+                return 'lxc';
+            case 'vpcs':
+                return 'natif';
+        }
+
+        return (string) ($entry['hypervisor'] ?? 'qemu');
+    }
+
+    /**
+     * Normalise l'architecture EVE-NG (`qemu_arch`) vers un nom d'`Arch`
+     * RemoteLabz valide (x86, x86_64, arm, arm64), ou "" si inconnue.
+     */
+    private function archForNode(array $node): string
+    {
+        $arch = mb_strtolower(trim((string) ($node['arch'] ?? '')));
+
+        return match ($arch) {
+            'x86_64', 'amd64', 'x86-64' => 'x86_64',
+            'x86', 'i386', 'i486', 'i586', 'i686' => 'x86',
+            'arm', 'armv7', 'armv7l', 'armhf' => 'arm',
+            'arm64', 'aarch64', 'armv8' => 'arm64',
+            default => '',
+        };
+    }
+
+    /**
      * @return array<int, array{name: ?string, memory: int}>
      */
     private function loadFlavors(): array
@@ -511,12 +562,11 @@ class EveNgMapper
             case 'rdp':
                 $wanted[] = 'vnc';
                 break;
-            case 'serial':
-                $wanted[] = 'serial';
-                $wanted[] = 'login';
-                break;
             case 'telnet':
-                $wanted[] = 'login';
+            case 'serial':
+                // Une console EVE-NG serie/telnet est exposee cote RemoteLabz
+                // comme un acces serie.
+                $wanted[] = 'serial';
                 break;
             default:
                 $wanted[] = 'login';
@@ -534,12 +584,18 @@ class EveNgMapper
     }
 
     /**
-     * Choisit un driver (Device.template) parmi config/templates/ :
+     * Choisit un driver (Device.template) parmi config/templates/.
+     *
+     * L'hyperviseur (qemu/lxc) prime sur l'image : un driver conteneur ne doit
+     * jamais etre affecte a une VM (et inversement), meme si c'est le seul dont
+     * l'operatingSystem correspond, car le lancement du device en dependrait.
+     *
      *   1. l'indice du catalogue s'il existe ;
-     *   2. sinon le premier driver dont l'operatingSystem correspond a l'image
-     *      resolue (evite d'affecter un driver Alpine a une VM Ubuntu) ;
-     *   3. sinon le premier driver de meme (type, hyperviseur) ;
-     *   4. sinon aucun driver.
+     *   2. un driver de meme operatingSystem ET de meme (type, hyperviseur) ;
+     *   3. un driver de meme operatingSystem ET de meme hyperviseur ;
+     *   4. un driver de meme (type, hyperviseur) ;
+     *   5. a defaut seulement, un driver de meme operatingSystem ;
+     *   6. sinon aucun driver.
      */
     private function pickDriver(string $deviceType, int $hypervisorId, ?string $rlzHint, ?int $osId = null): ?string
     {
@@ -552,16 +608,36 @@ class EveNgMapper
         }
 
         if (null !== $osId) {
+            // 2. Meme OS et compatible (type, hyperviseur).
             foreach ($this->drivers as $driver) {
-                if (null !== $driver['os_id'] && (int) $driver['os_id'] === $osId) {
+                if (null !== $driver['os_id'] && (int) $driver['os_id'] === $osId
+                    && $driver['type'] === $deviceType && (int) $driver['hypervisor'] === $hypervisorId) {
+                    return $driver['template'];
+                }
+            }
+
+            // 3. Meme OS et meme hyperviseur.
+            foreach ($this->drivers as $driver) {
+                if (null !== $driver['os_id'] && (int) $driver['os_id'] === $osId
+                    && (int) $driver['hypervisor'] === $hypervisorId) {
                     return $driver['template'];
                 }
             }
         }
 
+        // 4. Meme (type, hyperviseur) : compatible a defaut d'OS identique.
         foreach ($this->drivers as $driver) {
             if ($driver['type'] === $deviceType && (int) $driver['hypervisor'] === $hypervisorId) {
                 return $driver['template'];
+            }
+        }
+
+        // 5. Dernier recours : meme OS seul.
+        if (null !== $osId) {
+            foreach ($this->drivers as $driver) {
+                if (null !== $driver['os_id'] && (int) $driver['os_id'] === $osId) {
+                    return $driver['template'];
+                }
             }
         }
 

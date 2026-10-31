@@ -17,8 +17,8 @@ use ZipArchive;
  *   'nodes' => [
  *      ['eve_id'=>int, 'name'=>string, 'type'=>string, 'template'=>string,
  *       'image'=>string, 'icon'=>string, 'left'=>int, 'top'=>int, 'ram'=>int,
- *       'cpu'=>int, 'console'=>string, 'ethernet'=>int, 'config_data'=>string,
- *       'config'=>int,
+ *       'cpu'=>int, 'console'=>string, 'arch'=>string, 'ethernet'=>int,
+ *       'config_data'=>string, 'config'=>int,
  *       'interfaces'=>[['id'=>int,'name'=>string,'type'=>string,'network_id'=>int]]],
  *   ],
  *   'networks' => [['id'=>int,'type'=>string,'name'=>string,'left'=>int,'top'=>int,
@@ -231,6 +231,7 @@ class UnlParser
             'ram' => $this->int((string) ($attributes['ram'] ?? 0)),
             'cpu' => $this->int((string) ($attributes['cpu'] ?? 1), 1),
             'console' => $this->string((string) ($attributes['console'] ?? '')),
+            'arch' => $this->string((string) ($attributes['qemu_arch'] ?? '')),
             'ethernet' => $this->int((string) ($attributes['ethernet'] ?? count($interfaces))),
             'config' => $this->int((string) ($attributes['config'] ?? 0)),
             'config_data' => $this->decodeBase64((string) ($attributes['config_data'] ?? '')),

@@ -318,7 +318,7 @@ function ImageRow({ image, decision, operatingSystems, uploadLimit, onChange, on
             </tr>
             {showResolution && image.status !== 'not_applicable' && (
                 <tr>
-                    <td colSpan={4} className="bg-light">
+                    <td colSpan={4} className="bg-body-tertiary">
                         <ResolutionFields
                             image={image}
                             decision={decision}

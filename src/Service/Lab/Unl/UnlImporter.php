@@ -201,7 +201,7 @@ class UnlImporter
         $eveImage = (string) $requirement['eve_image'];
         $action = strtolower((string) ($decision['action'] ?? ''));
         $hypervisor = $this->resolveHypervisor($requirement['hypervisor'] ?? null);
-        $arch = $this->archRepository->findByName('x86_64');
+        $arch = $this->resolveArch($requirement['arch'] ?? null);
 
         switch ($action) {
             case 'reuse':
@@ -362,6 +362,22 @@ class UnlImporter
         }
 
         return $hypervisor;
+    }
+
+    /**
+     * Resout l'architecture (`qemu_arch` de l'EVE-NG) vers un `Arch` RemoteLabz.
+     * Repli sur x86_64 si l'architecture est absente ou inconnue en base.
+     */
+    private function resolveArch(?string $name): ?\App\Entity\Arch
+    {
+        $name = null !== $name && '' !== $name ? $name : 'x86_64';
+
+        $arch = $this->archRepository->findByName($name);
+        if (null === $arch) {
+            $arch = $this->archRepository->findByName('x86_64');
+        }
+
+        return $arch;
     }
 
     private function resolveFlavorDisk(mixed $value): ?\App\Entity\FlavorDisk

@@ -103,7 +103,8 @@ Attributs déterminants pour la conversion :
 | `ram` | mémoire (Mo) → flavour RemoteLabz |
 | `cpu` | nombre de vCPU |
 | `ethernet` | nombre d'interfaces Ethernet |
-| `console` | `telnet`, `vnc`, `rdp`, `serial` |
+| `console` | `telnet`, `vnc`, `rdp`, `serial` → protocole de contrôle RLZ (§4.2) |
+| `qemu_arch` | architecture de l'image (`x86_64`, `arm64`…) → `OperatingSystem.arch` |
 | `config_data` | startup-config **base64** |
 | `<interface network_id>` | rattache l'interface à un `<network>` |
 
@@ -261,7 +262,8 @@ Extrait de `lab_<uuid>.json` :
 | `cpu` | `Device.nbCpu` | |
 | `icon` | `Device.icon` | table §4.5 |
 | `left`/`top` | `EditorData.x` / `.y` | direct |
-| `console=telnet` | `ControlProtocolType` login/serial | `vnc` si `console=vnc` |
+| `console` | `ControlProtocolType` | `vnc`/`rdp` → `vnc` (id 4) ; `telnet`/`serial` → `serial` (id 6) ; sinon `login` (id 5) |
+| `qemu_arch` | `OperatingSystem.arch` | `x86_64`, `x86`, `arm`, `arm64` (normalisé ; ignoré si inconnu) |
 | `config_data` (base64) | `Device.config_data` | base64 → texte ; champ non exporté aujourd'hui (§11) |
 | `ethernet=N` + `<interface>` | `NetworkInterface[]` | §4.3 |
 | — | `networkInterfaceTemplate = "eth"` | défaut RLZ |
@@ -378,6 +380,14 @@ Le `rlz_template` doit correspondre à un driver **existant** dans
 (a) réutiliser le driver le plus proche par `device_type`/`hypervisor`, ou
 (b) proposer de le créer (l'admin étant `ROLE_ADMINISTRATOR`) — à trancher en
 phase 2.
+
+La sélection effective (`EveNgMapper::pickDriver()`) reste **contrainte par
+l'hyperviseur** : l'`operatingSystem` d'un driver ne peut l'emporter que si son
+`hypervisor` (et, à défaut, son `type`) est compatible avec le nœud. Concrètement,
+l'ordre est : (1) `rlz_template` du catalogue, (2) même OS **et** même
+`type`/`hyperviseur`, (3) même OS **et** même hyperviseur, (4) même
+`type`/`hyperviseur`, (5) même OS seul en dernier recours, (6) aucun driver. Un
+driver conteneur (`hypervisor=lxc`) n'est donc jamais affecté à une VM `qemu`.
 
 ### 4.5 Table d'icônes
 

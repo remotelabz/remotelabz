@@ -108,6 +108,7 @@ class ImageResolver
             'candidates' => [],
             'suggested_action' => $requirement['suggested_action'] ?? 'reuse',
             'hypervisor' => $requirement['hypervisor'] ?? null,
+            'arch' => $requirement['arch'] ?? null,
         ];
 
         if (!($requirement['applicable'] ?? true)) {
