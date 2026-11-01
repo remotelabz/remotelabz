@@ -62,8 +62,7 @@ class WorkerManager
                 $content['worker'] = $worker->getIPv4();
                 array_push($usage, $content);
             } catch (Exception $exception) {
-                $this->logger->error("Usage resources error - Web service or Worker ".$worker->getIPv4()." is not available");               
-                
+                $this->logger->error("Usage resources error - Web service or Worker ".$worker->getIPv4()." is not available");
             }
         }
         $this->logger->info('Usage of each worker:',$usage);
