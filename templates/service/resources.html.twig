@@ -55,6 +55,7 @@
                         {% elseif vg_name=="lib-lxc" %} Template LXC
                         {% elseif vg_name=="rlz-lv" %} User VM
                         {% elseif vg_name=="rlz-vg" %} All RLZ system
+                        {% else %} {{ vg_name }}
                         {% endif %}">
                         </div>
                         <p class="card-text flex-grow-1 text-center" id="disk-{{ vg_name }}" name="disk" style="display: none;">
