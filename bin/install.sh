@@ -676,11 +676,28 @@ EOF
         ./easyrsa gen-req RemoteLabz-VPNServer nopass
         
         # Ensure we have the CA passphrase available for signing
-        if [ -z "$PEM_PASS" ] && [ -n "$SSL_CA_KEY_PASSPHRASE" ]; then
-            PEM_PASS="$SSL_CA_KEY_PASSPHRASE"
-            PEM_PASS_1="$SSL_CA_KEY_PASSPHRASE"
-            CA_PASS="$SSL_CA_KEY_PASSPHRASE"
-            CA_PASS_1="$SSL_CA_KEY_PASSPHRASE"
+        if [ -z "$CA_PASS" ]; then
+            if [ -n "$SSL_CA_KEY_PASSPHRASE" ]; then
+                CA_PASS="$SSL_CA_KEY_PASSPHRASE"
+            else
+                while true; do
+                    read -r -s -p "Enter CA passphrase (used at build-ca): " CA_PASS
+                    echo
+                    if [ "${#CA_PASS}" -lt 4 ]; then
+                        echo "⚠️ Passphrase is too short, must be at least 4"
+                        continue
+                    fi
+
+                    read -r -s -p "Re-enter CA passphrase: " CA_PASS_CONFIRM
+                    echo
+                    if [ "$CA_PASS" != "$CA_PASS_CONFIRM" ]; then
+                        echo "⚠️ Passphrases don't match, try again..."
+                        continue
+                    fi
+                    break
+                done
+                unset CA_PASS_CONFIRM
+            fi
         fi
         
         print_info "Signing server certificate (enter CA password)..."
@@ -689,7 +706,7 @@ set timeout 30
 spawn ./easyrsa sign-req server RemoteLabz-VPNServer
 expect {
     -re "Enter pass phrase for .*ca.key:" {
-        send "${PEM_PASS}\r"
+        send "${CA_PASS}\r"
         exp_continue
     }
     eof {
