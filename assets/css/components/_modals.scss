@@ -22,3 +22,9 @@
     max-width: 800px;
     width: 90%;
 }
+
+// The EVE-NG import wizard (topology + image review tables) needs more room
+// than the default modal width.
+.import-lab-modal .modal-dialog {
+    max-width: 75%;
+}

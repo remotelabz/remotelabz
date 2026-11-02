@@ -173,7 +173,7 @@ class UnlImporter
             'devices' => count($mapped['labJson']['devices']),
         ]);
 
-        return $this->labImporter->import(json_encode($mapped['labJson'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+        return $this->labImporter->import(json_encode($mapped['labJson'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), $user);
     }
 
     /**
