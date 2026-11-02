@@ -986,16 +986,27 @@ final_configuration() {
     print_step "STEP 6: Final Configuration"
     
 	#Configure Mercure Hub
-    print_info "Configuration de Mercure Hub"
-    apt install ./mercure_1.0.2_linux_amd64.deb
-    cp -f "${SCRIPT_DIR}/mercure_1.0.2_linux_amd64.deb" /tmp/
-    apt install -y /tmp/mercure_1.0.2_linux_amd64.deb
+    if ! dpkg -s mercure >/dev/null 2>&1; then
+        if [ ! -f "$MERCURE_DEB_PATH" ]; then
+            print_error "Mercure package not found: $MERCURE_DEB_PATH"
+            exit 1
+        fi
+        cp -f "$MERCURE_DEB_PATH" /tmp/mercure_1.0.2_linux_amd64.deb
+        chmod 644 /tmp/mercure_1.0.2_linux_amd64.deb
+        apt install -y /tmp/mercure_1.0.2_linux_amd64.deb || {
+            print_error "Mercure installation failed"
+            exit 1
+        }
+    else
+        print_info "Mercure already installed, skipping"
+    fi
+
     cp -f "${SCRIPT_DIR}/.env.mercure" /opt/remotelabz/.env.mercure.local 2>/dev/null || true
-    cp /opt/remotelabz/bin/systemd/remotelabz-mercure.service /etc/systemd/system
+    cp /opt/remotelabz/bin/systemd/remotelabz-mercure.service /etc/systemd/system/
     systemctl daemon-reload
     systemctl enable --now remotelabz-mercure
-    rm mercure_1.0.2_linux_amd64.deb checksums.txt
-    rm -f /tmp/mercure_1.0.2_linux_amd64.deb
+
+    rm -f "$MERCURE_DEB_PATH" "${SCRIPT_DIR}/checksums.txt" /tmp/mercure_1.0.2_linux_amd64.deb
 
     # Configure HAProxy and Apache symlinks if not already done
     if [ -f $REMOTELABZ_PATH/config/haproxy/haproxy.cfg ]; then
