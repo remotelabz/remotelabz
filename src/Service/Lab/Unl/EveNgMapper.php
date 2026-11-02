@@ -352,7 +352,9 @@ class EveNgMapper
                 'vlan' => 0,
                 'connection' => $connection,
                 'connectorType' => 'Straight',
-                'connectorLabel' => $interface['name'] ?: null,
+                // EVE-NG n'affiche pas le nom des interfaces sur les liens :
+                // on n'importe pas de libelle (l'editeur RLZ l'afficherait).
+                'connectorLabel' => '',
                 'settingsName' => 'eth' . $index . '_settings',
             ];
             ++$index;
@@ -370,9 +372,13 @@ class EveNgMapper
             'nbCpu' => max(1, (int) $node['cpu']),
             'operatingSystem' => $osJson,
             'flavor' => $flavor,
+            // RemoteLabz stocke la coordonnee verticale dans `EditorData.x` et
+            // l'horizontale dans `EditorData.y` (voir DeviceController : il
+            // expose `left => getY()` et `top => getX()`). EVE-NG fournit
+            // `left`/`top` naturellement : on echange donc les deux a l'import.
             'editorData' => [
-                'x' => (int) $node['left'],
-                'y' => (int) $node['top'],
+                'x' => (int) $node['top'],
+                'y' => (int) $node['left'],
             ],
             'networkInterfaceTemplate' => $networkInterfaceTemplate,
             'template' => $template,
@@ -406,8 +412,8 @@ class EveNgMapper
             ],
             'flavor' => $this->resolveFlavor(256),
             'editorData' => [
-                'x' => (int) $network['left'],
-                'y' => (int) $network['top'],
+                'x' => (int) $network['top'],
+                'y' => (int) $network['left'],
             ],
             'networkInterfaceTemplate' => 'eth',
             'template' => $template,

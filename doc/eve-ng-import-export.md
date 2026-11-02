@@ -99,7 +99,7 @@ Attributs déterminants pour la conversion :
 | `image` | **identifiant d'image** (le point critique pour l'import) |
 | `name` | nom du device |
 | `icon` | icône du schéma (`Router.png`, `Desktop.png`, `cloud.png`…) |
-| `left` / `top` | position dans le canevas (≈ `editorData.x` / `.y`) |
+| `left` / `top` | position dans le canevas (→ `EditorData.y` / `.x`, voir §4.1) |
 | `ram` | mémoire (Mo) → flavour RemoteLabz |
 | `cpu` | nombre de vCPU |
 | `ethernet` | nombre d'interfaces Ethernet |
@@ -261,7 +261,7 @@ Extrait de `lab_<uuid>.json` :
 | `ram` (Mo) | `Flavor.memory` | arrondi à la flavour ≥ la plus proche |
 | `cpu` | `Device.nbCpu` | |
 | `icon` | `Device.icon` | table §4.5 |
-| `left`/`top` | `EditorData.x` / `.y` | direct |
+| `left`/`top` | `EditorData.y` / `EditorData.x` | **permuté** : RLZ stocke la coordonnée verticale (`top`) dans `.x` et l'horizontale (`left`) dans `.y` (cf. `DeviceController` : `left => getY()`, `top => getX()`) |
 | `console` | `ControlProtocolType` | `vnc`/`rdp` → `vnc` (id 4) ; `telnet`/`serial` → `serial` (id 6) ; sinon `login` (id 5) |
 | `qemu_arch` | `OperatingSystem.arch` | `x86_64`, `x86`, `arm`, `arm64` (normalisé ; ignoré si inconnu) |
 | `config_data` (base64) | `Device.config_data` | base64 → texte ; champ non exporté aujourd'hui (§11) |
@@ -347,10 +347,10 @@ pour chaque nœud, pour chaque <interface> :
 
 Remarques :
 
-- Le **nom** des interfaces EVE-NG (`e0`, `e0/0`, `Gi0/0`) n'a pas à être
+- Le **nom** des interfaces EVE-NG (`e0`, `e0/0`, `Gi0/0`) n'est pas
   conservé : RemoteLabz renomme selon `networkInterfaceTemplate` (`eth0`,
-  `eth1`, …). On peut toutefois le stocker en `connectorLabel` pour
-  l'affichage.
+  `eth1`, …). Aucun `connectorLabel` n'est importé (`''`) : l'éditeur
+  afficherait sinon le nom EVE-NG sur chaque lien, ce que EVE-NG ne fait pas.
 - Deux interfaces sur le **même** `network_id` obtiennent **le même**
   `connection` → RemoteLabz dessine le lien automatiquement
   (`NetworkInterfaceRepository::getTopology` fait un `GROUP BY connection`).
@@ -876,7 +876,7 @@ Réseaux : 52 `bridge` → autant de `connection` distinctes ; le `nat0` « Net 
     {
       "eve_id": 1, "name": "PE1", "eve_template": "vios", "type": "vm",
       "hypervisor": "qemu", "nbCpu": 1, "ram": 1024, "icon": "Router.png",
-      "editorData": { "x": 339, "y": 309 },
+      "editorData": { "x": 309, "y": 339 },
       "interfaces": [ { "name": "eth0", "connection": 1 }, { "name": "eth1", "connection": 2 } ]
     },
     { "eve_id": 4, "name": "PC_A1", "eve_template": "vpcs", "type": "vm", "hypervisor": "natif", "icon": "Desktop.png" }
@@ -914,7 +914,7 @@ Réseaux : 52 `bridge` → autant de `connection` distinctes ; le `nat0` « Net 
 | `node.template` | driver (`Device.template` / `config/templates/*.yaml`) |
 | `node.image` | `OperatingSystem` (`imageUrl`/`imageFilename`) |
 | `node.ram` | `Flavor.memory` |
-| `node.left/top` | `EditorData.x/y` |
+| `node.left/top` | `EditorData.y/x` (permuté) |
 | `network` (bridge) | `NetworkInterface.connection` (lien) |
 | `network` (nat0/pnet0) | accès Internet / device `Service` |
 | `interface network_id` | `NetworkInterface.connection` |

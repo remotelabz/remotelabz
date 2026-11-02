@@ -8,6 +8,7 @@ use App\Entity\Flavor;
 use App\Entity\TextObject;
 use App\Entity\Picture;
 use App\Entity\Lab;
+use App\Entity\User;
 use App\Entity\NetworkInterface;
 use App\Entity\NetworkSettings;
 use App\Entity\OperatingSystem;
@@ -90,13 +91,39 @@ class LabImporter
     }
 
     /**
-     * Creates a new lab using a JSON representation
-     * 
-     * @param string $json JSON data of the lab
+     * Returns the currently authenticated user, or throws when the import is
+     * attempted without an authenticated user (an imported lab must always
+     * have an owner).
      */
-    public function import(string $json): int
+    private function currentUser(): User
+    {
+        $token = $this->tokenStorage->getToken();
+        $user = null !== $token ? $token->getUser() : null;
+
+        if (!$user instanceof User) {
+            throw new InvalidArgumentException('An imported lab must belong to an authenticated user.');
+        }
+
+        return $user;
+    }
+
+    /**
+     * Creates a new lab using a JSON representation
+     *
+     * @param string $json   JSON data of the lab
+     * @param User|null $author Owner of the created lab. When omitted, the
+     *                          currently authenticated user is used.
+     */
+    public function import(string $json, ?User $author = null): int
     {
         $this->logger->debug("[LabImporter:import]::JSON import", ["string" => $json]);
+
+        // The author of an imported lab must always be the user who performs
+        // the import. It is passed explicitly by the controllers so that the
+        // result does not depend on the security token being available in the
+        // service (e.g. when the import runs from a context where the token
+        // storage has no authenticated user).
+        $author = $author ?? $this->currentUser();
 
         $labJson = json_decode($json, true, 4096, JSON_OBJECT_AS_ARRAY);
 
@@ -162,7 +189,7 @@ class LabImporter
         }
         $lab
             ->setName($labJson['name'])
-            ->setAuthor($this->tokenStorage->getToken()->getUser())
+            ->setAuthor($author)
             ->setIsTemplate(false)
             ->setVirtuality($labJson['virtuality'])
             //->setDescription($labJson['description'])
@@ -306,7 +333,7 @@ class LabImporter
 
             $device
                 ->setName($deviceJson['name'])
-                ->setAuthor($this->tokenStorage->getToken()->getUser())
+                ->setAuthor($author)
                 ->setBrand($deviceJson['brand'] ?? '')
                 ->setModel($deviceJson['model'] ?? '')
                 ->setType($deviceJson['type'] ?? 'vm')

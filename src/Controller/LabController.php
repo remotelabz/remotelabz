@@ -1628,7 +1628,7 @@ class LabController extends Controller
         #$json = $request->request->get('json');
         $json = $request->request->all()['json'] ?? [];
 
-        $data = $labImporter->import($json);
+        $data = $labImporter->import($json, $this->getUser());
 
         return $this->redirectToRoute('show_lab', ['id' => $data]);
     }
