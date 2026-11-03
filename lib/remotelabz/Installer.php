@@ -224,14 +224,23 @@ class Installer
             throw new Exception("Error enabling RemoteLabz services: " . $e->getMessage());
         }
 
-        // Step 10: Configure sudoers
-        echo "👮 Configuring sudoers file... ";
-        try {
-            copy("config/sudo/remotelabz", "/etc/sudoers.d/remotelabz");
-            echo "OK ✔️\n";
-        } catch (Exception $e) {
-            throw new Exception("Error configuring sudoers: " . $e->getMessage());
-        }
+	// Step 10: Configure sudoers
+	echo "👮 Configuring sudoers file... ";
+
+	if (!is_file("config/sudo/remotelabz")) {
+    		throw new Exception("Source file not found: config/sudo/remotelabz");
+	}
+
+	if (! copy("config/sudo/remotelabz", "/etc/sudoers.d/remotelabz")) {
+    		$err = error_get_last();
+    		throw new Exception("Error configuring sudoers: " . ($err['message'] ?? 'unknown error'));
+	}
+
+	chmod("/etc/sudoers.d/remotelabz", 0440);
+	chown("/etc/sudoers.d/remotelabz", 'root');
+	chgrp("/etc/sudoers.d/remotelabz", 'root');
+
+	echo "OK ✔️\n";
 
         // Step 11: Configure JWT
         echo "🔐 Configuring JWT...\n";
