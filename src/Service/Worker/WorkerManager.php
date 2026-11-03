@@ -14,6 +14,19 @@ use Doctrine\Persistence\ManagerRegistry;
 
 class WorkerManager
 {
+    /**
+     * Partitions hébergeant les charges utilisateurs, seules pertinentes pour
+     * le calcul de l'occupation disque :
+     *  - rlz-lxc-pool : pool thin des rootfs des instances LXC (conteneurs) ;
+     *  - rlz-lv       : LV monté sur /opt, hébergeant les VMs QEMU.
+     *
+     * rlz-vg est volontairement ignoré : avec le thin provisioning, l'espace
+     * libre du VG ne reflète pas le remplissage réel (cf. guide de
+     * partitionnement du worker, §5).
+     */
+    private const DISK_KEY_LXC_POOL = 'rlz-lxc-pool';
+    private const DISK_KEY_VM = 'rlz-lv';
+
     private $publicAddress;
     private $workerPort;
     private $workerServer;
@@ -212,7 +225,8 @@ class WorkerManager
                 continue;
             }
 
-            $val=$this->loadBalancing($adjustedMemory, $usage['disk']['rlz-vg'], $usage['cpu'], $memory, $usage['memory_total'],$usage['worker'], $usage['lxcfs']);
+            $diskUsage = $this->computeDiskUsage($usage['disk'] ?? []);
+            $val=$this->loadBalancing($adjustedMemory, $diskUsage, $usage['cpu'], $memory, $usage['memory_total'],$usage['worker'], $usage['lxcfs']);
             $this->logger->debug("[WorkerManager:getFreeWorker]::Score for worker ".$usage["worker"]." is ".$val);
             if ($val>$min) {
                 $min=$val;
@@ -221,6 +235,33 @@ class WorkerManager
         }
 
         return $result;
+    }
+
+    /*
+    Calcule le taux d'occupation disque (%) à retenir pour le placement, à
+    partir des stats disque remontées par le worker.
+
+    Seules les partitions hébergeant les charges utilisateurs sont prises en
+    compte (voir DISK_KEY_LXC_POOL / DISK_KEY_VM) ; rlz-vg et les autres
+    entrées sont ignorées. On retient le taux le plus élevé des deux : un
+    worker est pénalisé dès que l'une de ses deux partitions utilisateurs
+    approche de la saturation.
+
+    Les entrées absentes ou non numériques (worker ne remontant pas la
+    mesure) sont ignorées ; si aucune n'est disponible, 0 est retourné.
+
+    $disk : tableau des entrées disque du worker (clé => % d'occupation)
+    */
+    private function computeDiskUsage(array $disk): float
+    {
+        $usages = [];
+        foreach ([self::DISK_KEY_LXC_POOL, self::DISK_KEY_VM] as $key) {
+            if (isset($disk[$key]) && is_numeric($disk[$key])) {
+                $usages[] = (float) $disk[$key];
+            }
+        }
+
+        return empty($usages) ? 0.0 : max($usages);
     }
 
     /*

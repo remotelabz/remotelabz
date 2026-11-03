@@ -132,6 +132,24 @@ class WorkerManagerPlacementTest extends TestCase
         $this->assertSame('', $workerManager->getFreeWorker($this->lab));
     }
 
+    public function testPlacementUsesTheUserPartitionsInsteadOfTheVolumeGroup(): void
+    {
+        // Placement must rely on the partitions hosting the user workloads
+        // (rlz-lxc-pool for LXC, rlz-lv for QEMU) and ignore rlz-vg: with thin
+        // provisioning the VG's free space says nothing about real occupancy.
+        $workerManager = $this->createWorkerManager([
+            // rlz-vg looks saturated but the user partitions are empty: this
+            // is the worker that should be chosen.
+            $this->usage('10.0.0.1', diskOverrides: ['rlz-vg' => 99, 'rlz-lxc-pool' => 0, 'rlz-lv' => 0]),
+            // rlz-vg is empty but the LXC thin pool is nearly full.
+            $this->usage('10.0.0.2', diskOverrides: ['rlz-vg' => 0, 'rlz-lxc-pool' => 95, 'rlz-lv' => 0]),
+            // rlz-vg is empty but the QEMU LV is nearly full.
+            $this->usage('10.0.0.3', diskOverrides: ['rlz-vg' => 0, 'rlz-lxc-pool' => 0, 'rlz-lv' => 95]),
+        ]);
+
+        $this->assertSame('10.0.0.1', $workerManager->getFreeWorker($this->lab));
+    }
+
     public function testBatchStopsOnceEveryWorkerIsFull(): void
     {
         $workerManager = $this->createWorkerManager($this->usages());
@@ -212,13 +230,23 @@ class WorkerManagerPlacementTest extends TestCase
     /**
      * Stats as returned by GET /stats/hardwarelight on a worker.
      *
+     * @param array<string, int|null> $diskOverrides
+     *
      * @return array<string, mixed>
      */
-    private function usage(string $workerIp, float $memory = 10, float $cpu = 2, float $disk = 1, float $lxcfs = 0): array
+    private function usage(string $workerIp, float $memory = 10, float $cpu = 2, float $disk = 1, float $lxcfs = 0, array $diskOverrides = []): array
     {
         return [
             'cpu' => $cpu,
-            'disk' => ['rlz-vg' => $disk, 'ubuntu-vg' => 75],
+            // Entrées disque telles qu'exposées par /stats/hardwarelight.
+            // $disk s'applique par défaut aux deux partitions utilisateurs.
+            'disk' => array_merge([
+                'rlz-vg' => 0,
+                'lib-lxc' => 0,
+                'rlz-lxc-pool' => $disk,
+                'rlz-lv' => $disk,
+                'ubuntu-lv' => 75,
+            ], $diskOverrides),
             'lxcfs' => $lxcfs,
             'memory' => $memory,
             'memory_total' => self::MEMORY_TOTAL,

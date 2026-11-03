@@ -25,7 +25,9 @@ Voir aussi `README-ScheduleAction.md` : un démarrage groupé planifié
 `WorkerManager::getFreeWorker($lab)` :
 
 1. interroge chaque worker disponible (`GET /stats/hardwarelight`) pour obtenir
-   `memory`, `memory_total`, `cpu`, `disk['rlz-vg']`, `lxcfs` ;
+   `memory`, `memory_total`, `cpu`, `disk['rlz-lxc-pool']`, `disk['rlz-lv']`,
+   `lxcfs` ; pour le disque, c'est le plus rempli des deux LV utilisateurs
+   (conteneurs LXC / VMs QEMU) qui est retenu, et non `rlz-vg` ;
 2. calcule un score pour chacun (`loadBalancing()`) ;
 3. renvoie le worker au score le plus élevé.
 
