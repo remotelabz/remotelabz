@@ -150,8 +150,11 @@ class UnlImporter
      * @param array<int, array>    $deviceChoices Device de remplacement choisi
      *                                            ({ eve_id, template }), pour les
      *                                            noeuds sans image (vpcs/PC)
+     * @param bool                 $withSandboxTemplate Creer en plus une copie
+     *                                            template du lab, visible sur la
+     *                                            page Sandbox
      */
-    public function import(string $path, array $mapping = [], array $deviceChoices = [], ?User $user = null): int
+    public function import(string $path, array $mapping = [], array $deviceChoices = [], ?User $user = null, bool $withSandboxTemplate = false): int
     {
         $parsed = $this->parser->parseFile($path);
         $requirements = $this->mapper->buildRequirements($parsed);
@@ -173,7 +176,7 @@ class UnlImporter
             'devices' => count($mapped['labJson']['devices']),
         ]);
 
-        return $this->labImporter->import(json_encode($mapped['labJson'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), $user);
+        return $this->labImporter->import(json_encode($mapped['labJson'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), $user, $withSandboxTemplate);
     }
 
     /**

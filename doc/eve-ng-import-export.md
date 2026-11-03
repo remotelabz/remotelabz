@@ -506,6 +506,13 @@ Services et classes à créer :
 | Routes | `POST /api/labs/import/eve-ng/analyze`, `POST /api/labs/import/eve-ng/commit`, `GET /api/eve-ng/images/mappings` |
 | React | `assets/js/components/Lab/EveNgImporter.jsx` (modal, jumeau de `LabImporter.jsx`) |
 
+> **Import et sandbox.** Le commit passe par `LabImporter::import(..., $withSandboxTemplate: true)` :
+> en plus du lab normal (visible sur la page Lab), une **copie indépendante**
+> portant `isTemplate = true` est créée pour la page Sandbox (qui ne liste que
+> les labs `isTemplate = true`). Les deux labs ne partagent ni device ni
+> annotation. Le même comportement s'applique à l'import JSON depuis
+> `templates/lab/index.html.twig` et `templates/device_sandbox/index.html.twig`.
+
 ---
 
 ## 6. Fenêtre de revue (assistant d'import)

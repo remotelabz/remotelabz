@@ -16,6 +16,11 @@
         <h1>{{ 'Sandbox'|trans }}</h1>
     </div>
     <div class="content-title-actions">
+        {% if (is_granted('ROLE_ADMINISTRATOR') or is_granted('ROLE_TEACHER')) %}
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#importLabModal">
+                {{ svg('upload') }} {{ 'Import Lab'|trans }}
+            </button>
+        {% endif %}
         <a class="btn btn-success"  href="{{path('new_lab_template') }}">{{ 'New Lab'|trans }}</a>
     </div>
 </div>
@@ -38,6 +43,22 @@
     </form>
 </div>
 <div {{ react_component('SandboxManager', props|json_decode(true)) }}></div>
+
+<div class="modal fade import-lab-modal" tabindex="-1" id="importLabModal" aria-labelledby="importLabModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="importLabModalLabel">Import a Lab</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>
+                    <div {{ react_component('LabImporter', { redirectUrl: path('sandbox') }) }}></div>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block javascripts %}

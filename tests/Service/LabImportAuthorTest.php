@@ -19,6 +19,7 @@ class LabImportAuthorTest extends WebTestCase
 {
     private const JSON_LAB_NAME = 'Tmp Json Import Author Regression';
     private const EVE_LAB_NAME = 'Tmp Eve Import Author Regression';
+    private const SANDBOX_LAB_NAME = 'Tmp Sandbox Import Regression';
 
     /**
      * The importer must use the explicitly provided author even when the
@@ -86,13 +87,15 @@ class LabImportAuthorTest extends WebTestCase
             $client->request('POST', '/api/labs/import', ['json' => $json]);
             self::assertSame(302, $client->getResponse()->getStatusCode());
 
-            $lab = $em->getRepository(Lab::class)->findOneBy(['name' => self::JSON_LAB_NAME]);
-            self::assertNotNull($lab, 'The lab must have been created.');
-            self::assertSame(
-                $teacher->getId(),
-                $lab->getAuthor()?->getId(),
-                'The lab author must be the connected user.'
-            );
+            $labs = $em->getRepository(Lab::class)->findBy(['name' => self::JSON_LAB_NAME]);
+            self::assertNotEmpty($labs, 'The lab must have been created.');
+            foreach ($labs as $lab) {
+                self::assertSame(
+                    $teacher->getId(),
+                    $lab->getAuthor()?->getId(),
+                    'The lab author must be the connected user.'
+                );
+            }
         } finally {
             $this->deleteLab($em, self::JSON_LAB_NAME);
         }
@@ -135,17 +138,61 @@ XML);
 
             self::assertSame(200, $client->getResponse()->getStatusCode(), $client->getResponse()->getContent());
 
-            $lab = $em->getRepository(Lab::class)->findOneBy(['name' => $this->eveLabName()]);
-            self::assertNotNull($lab, 'The lab must have been created.');
-            self::assertSame(
-                $teacher->getId(),
-                $lab->getAuthor()?->getId(),
-                'The lab author must be the connected user.'
-            );
+            $labs = $em->getRepository(Lab::class)->findBy(['name' => $this->eveLabName()]);
+            self::assertNotEmpty($labs, 'The lab must have been created.');
+            foreach ($labs as $lab) {
+                self::assertSame(
+                    $teacher->getId(),
+                    $lab->getAuthor()?->getId(),
+                    'The lab author must be the connected user.'
+                );
+            }
         } finally {
             @unlink($tmp);
             $this->deleteLab($em, $this->eveLabName());
             $this->deleteOperatingSystem($em, 'tmp-author-regression.qcow2');
+        }
+    }
+
+    /**
+     * An import must create the normal lab (visible on the lab page) and an
+     * independent sandbox template (visible on the sandbox page).
+     */
+    public function testImportCreatesNormalLabAndSandboxTemplate(): void
+    {
+        self::bootKernel();
+        $container = static::getContainer();
+        $em = $container->get(EntityManagerInterface::class);
+        $importer = $container->get(LabImporter::class);
+
+        $teacher = $this->teacher($em);
+
+        try {
+            $importer->import(json_encode([
+                'name' => self::SANDBOX_LAB_NAME,
+                'virtuality' => 1,
+                'devices' => [],
+                'textobjects' => [],
+                'pictures' => [],
+                'shortDescription' => '',
+                'description' => '',
+            ]), $teacher, true);
+
+            $labs = $em->getRepository(Lab::class)->findBy(['name' => self::SANDBOX_LAB_NAME]);
+            self::assertCount(2, $labs, 'Both the normal lab and the sandbox template must be created.');
+
+            $templates = array_filter($labs, static fn (Lab $lab): bool => (bool) $lab->getIsTemplate());
+            self::assertCount(1, $templates, 'Exactly one lab must be the sandbox template.');
+
+            foreach ($labs as $lab) {
+                self::assertSame(
+                    $teacher->getId(),
+                    $lab->getAuthor()?->getId(),
+                    'Both the lab and its sandbox template must belong to the importer.'
+                );
+            }
+        } finally {
+            $this->deleteLab($em, self::SANDBOX_LAB_NAME);
         }
     }
 
@@ -166,17 +213,17 @@ XML);
     {
         $em->clear();
 
-        $lab = $em->getRepository(Lab::class)->findOneBy(['name' => $name]);
-        if (null === $lab) {
-            return;
+        // An import now creates both the normal lab and a sandbox template
+        // sharing the same name, so every matching lab has to be removed.
+        foreach ($em->getRepository(Lab::class)->findBy(['name' => $name]) as $lab) {
+            foreach ($lab->getDevices() as $device) {
+                $lab->removeDevice($device);
+                $em->remove($device);
+            }
+
+            $em->remove($lab);
         }
 
-        foreach ($lab->getDevices() as $device) {
-            $lab->removeDevice($device);
-            $em->remove($device);
-        }
-
-        $em->remove($lab);
         $em->flush();
     }
 

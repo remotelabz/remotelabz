@@ -113,8 +113,11 @@ class LabImporter
      * @param string $json   JSON data of the lab
      * @param User|null $author Owner of the created lab. When omitted, the
      *                          currently authenticated user is used.
+     * @param bool $withSandboxTemplate When true, an independent template copy
+     *                                  of the lab is created as well, so the
+     *                                  import also shows up on the sandbox page.
      */
-    public function import(string $json, ?User $author = null): int
+    public function import(string $json, ?User $author = null, bool $withSandboxTemplate = false): int
     {
         $this->logger->debug("[LabImporter:import]::JSON import", ["string" => $json]);
 
@@ -134,6 +137,31 @@ class LabImporter
             throw new InvalidArgumentException("Invalid JSON was provided!");
         }
 
+        $lab = $this->buildLab($labJson, $author, false);
+
+        // An imported lab must also be usable as a sandbox lab: the sandbox
+        // page lists `isTemplate = true` labs, which the lab created above
+        // (a normal lab) can never be. A second, independent lab is therefore
+        // created as a template, so the two copies never share a device and
+        // editing one cannot alter the other.
+        if ($withSandboxTemplate) {
+            $this->buildLab($labJson, $author, true);
+        }
+
+        return $lab->getId();
+    }
+
+    /**
+     * Builds and persists a Lab (devices, annotations, pictures) from its JSON
+     * representation.
+     *
+     * @param array<string, mixed> $labJson
+     * @param bool                 $isTemplate When true, the lab is a sandbox
+     *                                          template (visible on the sandbox
+     *                                          page) instead of a normal lab.
+     */
+    private function buildLab(array $labJson, User $author, bool $isTemplate): Lab
+    {
         $lab = new Lab();
         if (array_key_exists("description",$labJson)) {
             $this->logger->debug("Lab description found");
@@ -190,7 +218,7 @@ class LabImporter
         $lab
             ->setName($labJson['name'])
             ->setAuthor($author)
-            ->setIsTemplate(false)
+            ->setIsTemplate($isTemplate)
             ->setVirtuality($labJson['virtuality'])
             //->setDescription($labJson['description'])
             //->setShortDescription($labJson['shortDescription'])
@@ -447,6 +475,6 @@ class LabImporter
 
         $createdLab = $this->labRepository->findOneBy(['uuid' => $lab->getUuid()]);
 
-        return $createdLab->getId();
+        return $createdLab ?? $lab;
     }
 }

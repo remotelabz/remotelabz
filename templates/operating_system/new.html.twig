@@ -114,10 +114,7 @@
                                 {{ form_errors(operatingSystemForm.hypervisor) }}
                                 <div class="form-text">
                                     <i class="fa fa-info-circle text-info"></i> {{ 'Select the hypervisor type (affects available image options)'|trans }}
-                                </div>
-        
-                                
-        
+                                </div>      
                             </div>
                             
                             <!-- QEMU Image Options -->
@@ -316,7 +313,7 @@
 
                         <!-- Champ Description -->
                         <div class="mb-4">
-                            <div class="form-floating">
+                            <div>
                                 <label class="form-label fw-bold">{{ 'Description'|trans }}</label>
                                 {{ form_widget(operatingSystemForm.description, {'attr': {'class': 'form-control', 'placeholder': 'Description'|trans}}) }}
                             </div>

@@ -8,12 +8,29 @@ import { toast } from 'react-toastify';
 import EveNgImporter from './EveNgImporter';
 
 
-export default function LabImporter()
+/**
+ * Import wizard shared by the lab page and the sandbox page.
+ *
+ * `redirectUrl` is the page the import was started from (lab list or sandbox
+ * list). Once the import is done the success panel sends the user back there
+ * instead of to the freshly created lab.
+ */
+export default function LabImporter({ redirectUrl = null })
 {
     const [success, setSuccess] = useState({
         wasCreated: false,
         redirect: ''
     });
+
+    // Marks the import as finished and resolves the URL the success button
+    // should lead to: the page that started the import when known, otherwise
+    // the URL returned by the import endpoint.
+    const finishImport = (fallbackUrl) => {
+        setSuccess({
+            wasCreated: true,
+            redirect: redirectUrl || fallbackUrl
+        });
+    };
     const [fileContent, setFileContent] = useState('');
     const[labTemplateList, setLabTemplateList] = useState([]);
     const [eveNgFile, setEveNgFile] = useState(null);
@@ -90,10 +107,7 @@ export default function LabImporter()
 
             Remotelabz.labs.import(JSON.stringify(lab)).then(response => {
                 //console.log(response.request)
-                setSuccess({
-                    wasCreated: true,
-                    redirect: response.request.responseURL
-                });
+                finishImport(response.request.responseURL);
             }).catch(err => {
                 //new Noty({ text: 'An error happened while importing lab. Please try again later or contact an administrator.', type: 'error' }).show();
                 toast.error('An error happened while importing lab. Please try again later or contact an administrator.', {
@@ -111,7 +125,7 @@ export default function LabImporter()
             <div className="text-center">
                 <h4>Your lab has been imported.</h4>
 
-                <a href={success.redirect} className="btn btn-primary mt-2">View</a>
+                <a href={success.redirect} className="btn btn-primary mt-2">Back</a>
             </div>
             :
             eveNgFile ?
@@ -119,7 +133,10 @@ export default function LabImporter()
                 file={eveNgFile}
                 onCancel={() => setEveNgFile(null)}
                 onImported={(data) => {
-                    if (data?.url) {
+                    if (redirectUrl) {
+                        // Send the user back to the page that started the import.
+                        finishImport(redirectUrl);
+                    } else if (data?.url) {
                         setSuccess({ wasCreated: true, redirect: data.url });
                     } else {
                         window.location.reload();
@@ -150,10 +167,7 @@ export default function LabImporter()
                     actions.setSubmitting(true);
                     Remotelabz.labs.import(values.json).then(response => {
                         //console.log(response.request)
-                        setSuccess({
-                            wasCreated: true,
-                            redirect: response.request.responseURL
-                        });
+                        finishImport(response.request.responseURL);
                     }).catch(err => {
                         new Noty({ text: 'An error happened while importing lab. Please try again later or contact an administrator.', type: 'error' }).show();
                     }).finally(() => {

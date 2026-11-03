@@ -1628,7 +1628,9 @@ class LabController extends Controller
         #$json = $request->request->get('json');
         $json = $request->request->all()['json'] ?? [];
 
-        $data = $labImporter->import($json, $this->getUser());
+        // An imported lab is also exposed on the sandbox page through an
+        // independent template copy (see LabImporter::import()).
+        $data = $labImporter->import($json, $this->getUser(), true);
 
         return $this->redirectToRoute('show_lab', ['id' => $data]);
     }
@@ -1728,7 +1730,9 @@ class LabController extends Controller
         $temporaryPath = $this->storeTemporaryUpload($file);
 
         try {
-            $labId = $unlImporter->import($temporaryPath, $decisions, $deviceMapping, $this->getUser());
+            // The imported lab is also exposed on the sandbox page through an
+            // independent template copy (see LabImporter::import()).
+            $labId = $unlImporter->import($temporaryPath, $decisions, $deviceMapping, $this->getUser(), true);
         } catch (\Throwable $exception) {
             $this->logger->error('[LabController:eveNgCommitAction]::'.$exception->getMessage());
 
