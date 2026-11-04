@@ -5,6 +5,7 @@ import InstanceList from './InstanceList';
 import { GroupRoles } from '../Groups/Groups';
 import React, { useState, useEffect, useRef } from 'react';
 import InstanceOwnerSelect from './InstanceOwnerSelect';
+import { is_internet_switch } from './deviceProtocolHelpers';
 import JitsiCallButton from '../JitsiCall/JitsiCallButton';
 import ChatWindow from '../Chat/ChatWindow';
 import { ListGroup, ListGroupItem, Button, Modal, Spinner } from 'react-bootstrap';
@@ -223,8 +224,10 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
 
     function hasInstancesStillRunning() {
         // Hidden devices run in background and must not block the "Leave lab"
-        // button: the user cannot see them nor control them.
-        return labInstance.deviceInstances.some(i => !isHiddenDeviceInstance(i) && (i.state !== 'stopped' && i.state !== 'exported' && i.state !== 'error' && i.state !== 'reset'));
+        // button: the user cannot see them nor control them. The Internet
+        // switch (a native "switch" device) is never controlled by the user
+        // either, so its state is ignored for the same reason.
+        return labInstance.deviceInstances.some(i => !isHiddenDeviceInstance(i) && !is_internet_switch(i) && (i.state !== 'stopped' && i.state !== 'exported' && i.state !== 'error' && i.state !== 'reset'));
     }
 
     async function onInstanceStateUpdate() {
