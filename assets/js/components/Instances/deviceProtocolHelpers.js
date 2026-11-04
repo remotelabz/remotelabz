@@ -68,6 +68,17 @@ export const is_native = (instance) => {
 };
 
 /**
+ * Vérifie si le device est le switch Internet : un device de type "switch"
+ * avec un système d'exploitation natif. The user never controls it, so its
+ * state must not block actions such as leaving the lab.
+ * @param {Object} instance - L'instance du device
+ * @returns {boolean}
+ */
+export const is_internet_switch = (instance) => {
+  return instance?.device?.type === 'switch' && is_native(instance);
+};
+
+/**
  * Obtient tous les protocoles disponibles pour une instance
  * @param {Object} instance - L'instance du device
  * @returns {Object} Objet contenant les drapeaux pour chaque protocole
