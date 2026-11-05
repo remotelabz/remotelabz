@@ -34,6 +34,16 @@ RABBITMQ_USER=""
 RABBITMQ_PASS=""
 SSL_CA_KEY_PASSPHRASE=""
 
+# Global variables pour les workers
+WORKER_COUNT=0
+declare -a WORKER_IPS=()
+declare -a WORKER_TOPOLOGIES=()
+declare -a WORKER_SSH_PWS=()
+declare -a WORKER_SSH_USERS=()
+declare -a WORKER_SSH_USERS_PW=()
+declare -a WORKER_EXISTING_PWS=()
+WORKER_ANSIBLE_PLAYBOOK="${SCRIPT_DIR}/bin/install_worker.yml"
+
 # Functions for colored output
 print_info() {
     echo -e "${GREEN}🔥 $1${NC}"
@@ -242,22 +252,24 @@ setup_env_file() {
 # Set env mercure
 # ============================================================================
 
-setup_mercure_env_file() {
-    local MERCURE_ENV_FILE="${REMOTELABZ_PATH}/.env.mercure.local"
-    local JWT_KEY=""
 
-    mkdir -p "$REMOTELABZ_PATH"
-    print_info "Your .env.mercure.local used is ${MERCURE_ENV_FILE}"
+setup_mercure_env_file() {
+    local MERCURE_ENV_FILE="${SCRIPT_DIR}/.env.mercure"
+
+    print_info "Your .env.mercure used is ${MERCURE_ENV_FILE}"
 
     if [ -f "$MERCURE_ENV_FILE" ]; then
-        JWT_KEY=$(grep -E '^MERCURE_PUBLISHER_JWT_KEY=' "$MERCURE_ENV_FILE" | head -n1 | cut -d= -f2- | tr -d '"')
-        [ -n "$JWT_KEY" ] && print_info "Existing Mercure key found in $MERCURE_ENV_FILE"
+        print_info "Environment file .env.mercure already exists, loading it"
+        source "$MERCURE_ENV_FILE"
+        return 0
     fi
 
-    if [ -z "$JWT_KEY" ] && [ -f "$ENV_FILE" ]; then
+    print_info "Environment file .env.mercure not found, creating it..."
+
+    local JWT_KEY=""
+    if [ -f "$ENV_FILE" ]; then
         JWT_KEY=$(grep -E '^MERCURE_JWT_SECRET=' "$ENV_FILE" | head -n1 | cut -d= -f2- | tr -d '"')
     fi
-
     if [ -z "$JWT_KEY" ] || [ "$JWT_KEY" == "!ChangeThisMercureHubJWTSecretKey!" ]; then
         JWT_KEY=$(openssl rand -hex 32)
         print_info "✅ New JWT key generated"
@@ -268,7 +280,7 @@ MERCURE_PUBLISHER_JWT_KEY="${JWT_KEY}"
 MERCURE_SUBSCRIBER_JWT_KEY="${JWT_KEY}"
 EOF
     chmod 600 "$MERCURE_ENV_FILE"
-    print_info "✅ $MERCURE_ENV_FILE ready"
+    print_info "✅ $MERCURE_ENV_FILE created"
 
     if [ -f "$ENV_FILE" ]; then
         if grep -q "^MERCURE_JWT_SECRET=" "$ENV_FILE"; then
@@ -277,12 +289,11 @@ EOF
             echo "MERCURE_JWT_SECRET=\"${JWT_KEY}\"" >> "$ENV_FILE"
         fi
         print_info "✅ MERCURE_JWT_SECRET synchronized in $ENV_FILE"
-    else
-        print_warning "$ENV_FILE not found: MERCURE_JWT_SECRET not synchronized"
     fi
 
     source "$MERCURE_ENV_FILE"
 }
+
 # ============================================================================
 # Set sysctl parameter helper function
 # ============================================================================
@@ -366,6 +377,8 @@ install_requirements() {
         npm install -g configurable-http-proxy@5.0.1
     fi
     
+    MERCURE_DEB_PATH="${SCRIPT_DIR}/mercure_1.0.2_linux_amd64.deb"
+
     # Install and configure MySQL
     print_info "Installing and configuring MySQL..."
     apt-get install -y mysql-server
@@ -462,9 +475,9 @@ install_requirements() {
     systemctl restart rabbitmq-server
     
     print_info "Installation de Mercure Hub"
-    wget https://github.com/dunglas/mercure/releases/download/v1.0.2/mercure_1.0.2_linux_amd64.deb
-    wget https://github.com/dunglas/mercure/releases/download/v1.0.2/checksums.txt
-    sha256sum -c checksums.txt --ignore-missing 
+    wget -O "$MERCURE_DEB_PATH" https://github.com/dunglas/mercure/releases/download/v1.0.2/mercure_1.0.2_linux_amd64.deb
+    wget -O "${MERCURE_DEB_PATH}.sha256" https://github.com/dunglas/mercure/releases/download/v1.0.2/checksums.txt
+    sha256sum -c "${MERCURE_DEB_PATH}.sha256" --ignore-missing
 
     print_info "System requirements installation completed! ✅"
 }
@@ -847,9 +860,9 @@ EOF
     fi
     
     # If cert.cnf exists in the RemoteLabz config, use it
-    if [ -f /home/${SUDO_USER:-root}/remotelabz/config/apache/cert.cnf ]; then
+    if [ -f "$SCRIPT_DIR/config/apache/cert.cnf" ]; then
         print_info "Using RemoteLabz certificate configuration..."
-        cp /home/${SUDO_USER:-root}/remotelabz/config/apache/cert.cnf .
+        cp "$SCRIPT_DIR/config/apache/cert.cnf" .
     elif [ -f $REMOTELABZ_PATH/config/apache/cert.cnf ]; then
         cp $REMOTELABZ_PATH/config/apache/cert.cnf .
     fi
@@ -865,7 +878,7 @@ EOF
         openssl req -x509 -nodes -days 365 -sha512 -newkey rsa:2048 \
             -keyout RemoteLabz-WebServer.key \
             -out RemoteLabz-WebServer.crt \
-            -config /home/${SUDO_USER:-root}/remotelabz/config/apache/cert.cnf
+            -config "$SCRIPT_DIR/config/apache/cert.cnf"
     fi
     
     # Install certificates
@@ -938,7 +951,7 @@ install_remotelabz_app() {
     if [ ! -d "$SCRIPT_DIR/lib/remotelabz-message-bundle" ]; then
         git clone https://github.com/remotelabz/remotelabz-message-bundle.git "$SCRIPT_DIR/lib/remotelabz-message-bundle"
         git -C "$SCRIPT_DIR/lib/remotelabz-message-bundle" fetch --tags
-        git -C "$SCRIPT_DIR/lib/remotelabz-message-bundle" checkout 1.0.8
+        git -C "$SCRIPT_DIR/lib/remotelabz-message-bundle" checkout 1.0.10
     fi
 
     # Build install command
@@ -969,13 +982,13 @@ final_configuration() {
     
 	#Configure Mercure Hub
     print_info "Configuration de Mercure Hub"
-    if ! dpkg -s mercure >/dev/null 2>&1; then
-    	dpkg -i "${SCRIPT_DIR}/mercure_1.0.2_linux_amd64.deb" || apt-get install -f -y
-    fi
+    cp -f "${SCRIPT_DIR}/mercure_1.0.2_linux_amd64.deb" /tmp/
+    apt install -y /tmp/mercure_1.0.2_linux_amd64.deb
+    cp -f "${SCRIPT_DIR}/.env.mercure" /opt/remotelabz/.env.mercure.local 2>/dev/null || true
     cp /opt/remotelabz/bin/systemd/remotelabz-mercure.service /etc/systemd/system
     systemctl daemon-reload
     systemctl enable --now remotelabz-mercure
-    rm -f "${SCRIPT_DIR}/mercure_1.0.2_linux_amd64.deb" "${SCRIPT_DIR}/checksums.txt"
+    rm -f /tmp/mercure_1.0.2_linux_amd64.deb
 
     # Configure HAProxy and Apache symlinks if not already done
     if [ -f $REMOTELABZ_PATH/config/haproxy/haproxy.cfg ]; then
@@ -1000,18 +1013,27 @@ final_configuration() {
         a2ensite 200-remotelabz-ssl.conf 2>/dev/null || true
     fi
 
-	# Configure SSH for the front
+	# Configure SSH for the front (generate keys as remotelabz user)
 	if [ ! -d /home/remotelabz/.ssh ]; then
-        print_info "Configuring SSH directory..."
+        print_info "Configuring SSH directory and generating keys as remotelabz user..."
 		mkdir -p /home/remotelabz/.ssh
 		chown remotelabz:remotelabz /home/remotelabz/.ssh
-
         chmod 700 /home/remotelabz/
 		chmod 700 /home/remotelabz/.ssh
-        mkdir /opt/remotelabz/config/system/keys
-		ssh-keygen -m PEM -t rsa -f /opt/remotelabz/config/system/keys/myremotelabzfront -N ""
-        chown www-data:www-data /opt/remotelabz/config/system/keys/*
+		ssh-keygen -m PEM -t rsa -f /home/remotelabz/.ssh/myremotelabzfront -N ""
+		chown remotelabz:remotelabz /home/remotelabz/.ssh/myremotelabzfront
+		chown remotelabz:remotelabz /home/remotelabz/.ssh/myremotelabzfront.pub
+		chmod 600 /home/remotelabz/.ssh/myremotelabzfront
 	fi
+
+	# Copy public key to system keys directory for PHP app (SshService)
+	mkdir -p /opt/remotelabz/config/system/keys
+	if [ ! -f /opt/remotelabz/config/system/keys/myremotelabzfront.pub ]; then
+		cp /home/remotelabz/.ssh/myremotelabzfront.pub /opt/remotelabz/config/system/keys/myremotelabzfront.pub
+	fi
+	cp /home/remotelabz/.ssh/myremotelabzfront /opt/remotelabz/config/system/keys/myremotelabzfront 2>/dev/null || true
+	chmod 600 /opt/remotelabz/config/system/keys/myremotelabzfront 2>/dev/null || true
+	chmod 644 /opt/remotelabz/config/system/keys/myremotelabzfront.pub 2>/dev/null || true
 
     # Restart all services
     print_info "Restarting services..."
@@ -1027,6 +1049,443 @@ final_configuration() {
     fi
     
     print_info "Final configuration completed! ✅"
+}
+
+# ============================================================================
+# STEP 6b: Deploy Workers with Ansible
+# ============================================================================
+configure_workers() {
+    echo ""
+    print_step "Worker Deployment Configuration"
+    echo ""
+    
+    # Check if ansible is installed
+    if ! command -v ansible-playbook &> /dev/null; then
+        print_warning "Ansible is not installed. Installing..."
+        apt-get update
+        apt-get install -y ansible
+        print_info "Ansible installed ✅"
+    fi
+    
+    # Check if sshpass is installed (required for SSH key deployment)
+    if ! command -v sshpass &> /dev/null; then
+        print_warning "sshpass is not installed. Installing..."
+        apt-get update
+        apt-get install -y sshpass
+        print_info "sshpass installed ✅"
+    fi
+    
+    # Disable host key checking for Ansible
+    export ANSIBLE_HOST_KEY_CHECKING=False
+    
+    # Ensure SUDO_USER is set (fallback to current user if not running with sudo)
+    export SUDO_USER="${SUDO_USER:-$USER}"
+    
+    # Generate current user SSH key if it doesn't exist
+    local current_user="$SUDO_USER"
+    local current_key="${HOME}/.ssh/id_ed25519"
+    if [ ! -f "$current_key" ] || [ ! -f "${current_key}.pub" ]; then
+        print_info "No SSH key found, generating ed25519 keypair for $current_user..."
+        mkdir -p "${HOME}/.ssh"
+        chmod 700 "${HOME}/.ssh"
+        ssh-keygen -t ed25519 -f "$current_key" -N "" -C "$current_user@remotelabz" -q
+        # Fix ownership if running as root
+        chown "$current_user:$current_user" "${HOME}/.ssh/id_ed25519" "${HOME}/.ssh/id_ed25519.pub" 2>/dev/null || true
+        chmod 600 "${HOME}/.ssh/id_ed25519" 2>/dev/null || true
+        chmod 644 "${HOME}/.ssh/id_ed25519.pub" 2>/dev/null || true
+        print_info "SSH key generated at ${current_key} ✅"
+    fi
+    
+    # Generate remotelabz SSH key if it doesn't exist
+    if ! sudo -u remotelabz test -f /home/remotelabz/.ssh/myremotelabzfront 2>/dev/null; then
+        print_info "No SSH key found for remotelabz user, generating keypair..."
+        sudo -u remotelabz mkdir -p /home/remotelabz/.ssh
+        sudo -u remotelabz chmod 700 /home/remotelabz/.ssh
+        sudo -u remotelabz ssh-keygen -m PEM -t rsa -f /home/remotelabz/.ssh/myremotelabzfront -N "" -q
+        sudo -u remotelabz chmod 600 /home/remotelabz/.ssh/myremotelabzfront
+        print_info "SSH key generated for remotelabz user ✅"
+    fi
+    
+    # Copy public key to system keys directory for PHP app (SshService)
+    mkdir -p /opt/remotelabz/config/system/keys
+    if [ ! -f /opt/remotelabz/config/system/keys/myremotelabzfront.pub ]; then
+        cp /home/remotelabz/.ssh/myremotelabzfront.pub /opt/remotelabz/config/system/keys/myremotelabzfront.pub
+    fi
+    cp /home/remotelabz/.ssh/myremotelabzfront /opt/remotelabz/config/system/keys/myremotelabzfront 2>/dev/null || true
+    chmod 600 /opt/remotelabz/config/system/keys/myremotelabzfront 2>/dev/null || true
+    chmod 644 /opt/remotelabz/config/system/keys/myremotelabzfront.pub 2>/dev/null || true
+    
+    # Check if playbook exists
+    if [ ! -f "$WORKER_ANSIBLE_PLAYBOOK" ]; then
+        print_error "Ansible playbook not found at $WORKER_ANSIBLE_PLAYBOOK"
+        print_error "Please ensure install_worker.yml is in the bin/ directory"
+        return 1
+    fi
+    
+    # Ask if user wants to deploy workers
+    read -p "Do you want to deploy RemoteLabz workers? (y/n) [n]: " deploy_workers
+    deploy_workers=${deploy_workers:-n}
+    
+    if [[ ! "$deploy_workers" =~ ^[Yy]$ ]]; then
+        print_info "Skipping worker deployment"
+        return 0
+    fi
+    
+    # Ask how many workers
+    read -p "How many workers? [0]: " worker_count
+    worker_count=${worker_count:-0}
+    
+    if [ "$worker_count" -eq 0 ]; then
+        print_info "No workers to deploy"
+        return 0
+    fi
+    
+    # Create temporary inventory and vars directory
+    local tmp_inventory="/tmp/worker_inventory_$$.yml"
+    local tmp_vars_dir="/tmp/worker_vars_$$.d"
+    mkdir -p "$tmp_vars_dir"
+    
+    cat > "$tmp_inventory" <<'EOF'
+all:
+  children:
+    workers:
+      hosts:
+EOF
+    
+    # Collect config for each worker
+    for (( i=1; i<=worker_count; i++ )); do
+        print_info "─────────────────────────────────────────"
+        print_info "Worker $i of $worker_count"
+        print_info "─────────────────────────────────────────"
+        echo ""
+        
+        local worker_name="worker-$i"
+        local worker_ip=""
+        local vars_file="${tmp_vars_dir}/worker_${i}.yml"
+        local worker_topology=1
+        local adm_ip=""
+        local worker_user="$SUDO_USER"
+        
+        read -p "Worker user account [$worker_user]: " worker_user
+        worker_user=${worker_user:-$SUDO_USER}
+        
+        read -p "Deployment topology (1=single-server, 2=multi-server) [1]: " topology
+        topology=${topology:-1}
+        
+        if [ "$topology" -eq 2 ]; then
+            read -p "Worker IP address: " worker_ip
+            if [ -z "$worker_ip" ]; then
+                print_error "Worker IP is required for multi-server deployment"
+                return 1
+            fi
+            
+            echo ""
+            print_info "Front server interfaces (for reference only):"
+            ip -br addr show 2>/dev/null | grep -E 'UP' | awk '{print "  - " $1 ": " $3}'
+            echo ""
+            read -p "Worker administration interface [ensX]: " adm_iface
+            adm_iface=${adm_iface:-"ensX"}
+            
+            adm_ip=$(ip -4 addr show "$adm_iface" 2>/dev/null | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | head -1)
+            
+            read -p "Worker data interface (or Enter to use $adm_iface): " data_iface
+            data_iface=${data_iface:-$adm_iface}
+            
+            read -p "Worker internet access interface (or Enter to use $data_iface): " int_iface
+            int_iface=${int_iface:-$data_iface}
+        else
+            
+            echo ""
+            print_info "Available network interfaces:"
+            ip -br addr show 2>/dev/null | grep -E 'UP' | awk '{print "  - " $1 ": " $3}'
+            echo ""
+            
+            local default_adm_iface=$(ip route show default 2>/dev/null | awk '{print $5}' | head -1)
+            default_adm_iface=${default_adm_iface:-"ensX"}
+            if [ -n "$default_adm_iface" ]; then
+                local nat_ip=$(ip -4 addr show "$default_adm_iface" 2>/dev/null | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | head -1)
+                case "$nat_ip" in
+                    10.0.2.*) # VirtualBox NAT - skip it
+                        default_adm_iface=$(ip -br addr show 2>/dev/null | grep -E 'UP' | grep -v 'lo' | grep -v '10\.0\.2\.' | head -1 | awk '{print $1}')
+                        ;;
+                esac
+            fi
+            default_adm_iface=${default_adm_iface:-"ensX"}
+            read -p "Administration interface [$default_adm_iface]: " adm_iface
+            adm_iface=${adm_iface:-$default_adm_iface}
+            
+            adm_ip=$(ip -4 addr show "$adm_iface" 2>/dev/null | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | head -1)
+            
+            worker_ip="$adm_ip"
+            print_info "Worker IP: $worker_ip (same as front on this interface)"
+            
+            read -p "Data interface (or Enter to use $adm_iface): " data_iface
+            data_iface=${data_iface:-$adm_iface}
+            
+            read -p "Internet access interface (or Enter to use $data_iface): " int_iface
+            int_iface=${int_iface:-$data_iface}
+        fi
+        
+        if [ "$topology" -eq 1 ] && [ -n "$adm_ip" ]; then
+            front_ip="$adm_ip"
+        fi
+        read -p "Front server IP [${front_ip:-$adm_ip}]: " front_ip
+        front_ip=${front_ip:-${adm_ip:-127.0.0.1}}
+        
+        # 6. Data network
+        read -p "Data network [10.22.128.0/24]: " data_network
+        data_network=${data_network:-"10.22.128.0/24"}
+        
+        # 8. Internal data IP
+        read -p "Internal data IP [10.22.128.2/24]: " data_ip
+        data_ip=${data_ip:-"10.22.128.2"}
+        
+        # 9. Data network gateway
+        read -p "Data network gateway [10.22.128.254]: " data_gw
+        data_gw=${data_gw:-"10.22.128.254"}
+        
+        # 10. VPN
+        read -p "Is the VPN hosted on this worker? (y/n) [y]: " vpn_local
+        vpn_local=${vpn_local:-y}
+        
+        # 11. SSH passwords
+        echo ""
+        print_warning "IMPORTANT: Change default passwords for security!"
+        
+        # Password for the user that already exists on the worker (e.g., giz)
+        local existing_user_pw=""
+        if [ "$topology" -eq 2 ]; then
+            read -s -r -p "Password for user '${worker_user}' on worker [leave empty if none]: " existing_user_pw
+            echo ""
+        else
+            existing_user_pw=""
+        fi
+        
+        # Password for the remotelabz-worker user that will be created by Ansible
+        read -p "Password for remotelabz-worker user [leave empty for default]: " ssh_pw
+        read -p "Password for remotelabz (front) user [leave empty for default]: " front_pw
+        
+        # 12. WSS
+        read -p "Enable WSS (Secure WebSocket)? (y/n) [y]: " wss
+        wss=${wss:-y}
+        
+        # 13. Contact email
+        local contact_email=""
+        if [ -f "$ENV_FILE" ]; then
+            contact_email=$(grep -E '^CONTACT_MAIL=' "$ENV_FILE" | head -n1 | cut -d= -f2- | tr -d '"')
+        fi
+        read -p "Contact email [$contact_email]: " contact_mail
+        contact_mail=${contact_mail:-$contact_email}
+        
+        # Generate Ansible vars file for this worker
+        cat > "$vars_file" <<EOF
+    worker_topology: "$topology"
+    worker_user: "$worker_user"
+    worker_adm_interface: "$adm_iface"
+    worker_data_interface: "$data_iface"
+    worker_ip: "$worker_ip"
+    worker_internet_interface: "$int_iface"
+    worker_front_ip: "$front_ip"
+    worker_data_network: "$data_network"
+    worker_data_ip: "$data_ip"
+    worker_data_gateway: "$data_gw"
+    worker_vpn_local: "$vpn_local"
+    worker_ssh_password: "$ssh_pw"
+    worker_front_password: "$front_pw"
+    worker_wss: "$wss"
+    worker_contact_mail: "$contact_mail"
+EOF
+        
+        cat >> "$tmp_inventory" <<EOF
+        $worker_name:
+          ansible_host: $worker_ip
+EOF
+        
+        WORKER_IPS+=("$worker_ip")
+        WORKER_TOPOLOGIES+=("$topology")
+        WORKER_VARS_FILES+=("$vars_file")
+        WORKER_NAMES+=("$worker_name")
+        WORKER_SSH_PWS+=("$ssh_pw")
+        WORKER_SSH_USERS+=("$worker_user")
+        WORKER_SSH_USERS_PW+=("$ssh_pw")
+        WORKER_EXISTING_PWS+=("$existing_user_pw")
+        
+        print_info "Worker $i configuration saved ✅"
+        echo ""
+    done
+    
+    local has_single=0
+    local has_multi=0
+    for t in "${WORKER_TOPOLOGIES[@]}"; do
+        if [ "$t" -eq 1 ]; then has_single=1; fi
+        if [ "$t" -eq 2 ]; then has_multi=1; fi
+    done
+    
+    if [ "$has_single" -eq 0 ] && [ "$has_multi" -eq 0 ]; then
+        return 0
+    fi
+    
+    # Ask for worker password FIRST (needed for inventory and SSH setup)
+    if [ "$has_multi" -eq 1 ]; then
+        print_info "─────────────────────────────────────────"
+        print_info "SSH Access Configuration"
+        print_info "─────────────────────────────────────────"
+        echo ""
+        
+        # Auto-detect worker password from .env.local or .env
+        local default_worker_pass=""
+        local env_candidate=""
+        if [ -f "$ENV_FILE" ]; then
+            env_candidate="$ENV_FILE"
+        elif [ -f "${SCRIPT_DIR}/.env" ]; then
+            env_candidate="${SCRIPT_DIR}/.env"
+        fi
+        
+        if [ -n "$env_candidate" ]; then
+            default_worker_pass=$(grep -E '^SSH_USER_PASSWD=' "$env_candidate" | head -n1 | cut -d= -f2- | tr -d '"')
+        fi
+        
+        if [ -n "$default_worker_pass" ]; then
+            read -s -p "Password for user remotelabz-worker [${default_worker_pass}]: " worker_pass
+            worker_pass=${worker_pass:-$default_worker_pass}
+        else
+            read -s -p "Password for user remotelabz-worker: " worker_pass
+        fi
+        echo ""
+        
+        if [ -z "$worker_pass" ]; then
+            print_error "Password is required to access workers"
+            return 1
+        fi
+    fi
+    
+    # ========================================================================
+    # Deploy workers with Ansible (single = localhost, multi = SSH)
+    # ========================================================================
+    print_step "Deploying Workers with Ansible"
+    echo ""
+    
+    # Build a unified inventory for all workers
+    local final_inventory="/tmp/worker_inventory_final_$$.yml"
+    cat > "$final_inventory" <<'EOF'
+all:
+  children:
+    workers:
+      hosts:
+EOF
+    
+    # Add localhost for single-server workers, remote IPs for multi-server workers
+    for (( i=0; i<worker_count; i++ )); do
+        local wname="${WORKER_NAMES[$i]}"
+        local wip="${WORKER_IPS[$i]}"
+        local wtopo="${WORKER_TOPOLOGIES[$i]}"
+        
+        if [ "$wtopo" -eq 1 ]; then
+            # Single-server: add as localhost with local connection
+            cat >> "$final_inventory" <<EOF
+        $wname:
+          ansible_connection: local
+          ansible_user: $SUDO_USER
+EOF
+        else
+            # Multi-server: connect as existing user (giz) who will create remotelabz-worker
+            local wuser="${WORKER_SSH_USERS[$i]}"
+            local wpw="${WORKER_EXISTING_PWS[$i]}"
+            cat >> "$final_inventory" <<EOF
+        $wname:
+          ansible_host: $wip
+          ansible_user: $wuser
+          ansible_password: "${wpw}"
+          ansible_become_pass: "${wpw}"
+          ansible_become_method: sudo
+          ansible_become_flags: "-S"
+EOF
+        fi
+    done
+    
+    echo "Inventory:"
+    cat "$final_inventory"
+    echo ""
+    
+    # Deploy each worker with Ansible
+    local ansible_ssh_key="${HOME}/.ssh/id_ed25519"
+    
+    for (( i=0; i<worker_count; i++ )); do
+        if [ "${WORKER_TOPOLOGIES[$i]}" -eq 0 ]; then continue; fi
+        
+        local worker_name="${WORKER_NAMES[$i]}"
+        local wtopo="${WORKER_TOPOLOGIES[$i]}"
+        local vars_file="${WORKER_VARS_FILES[$i]}"
+        
+        print_info "─────────────────────────────────────────"
+        print_info "Deploying $worker_name (topology: $wtopo)..."
+        print_info "─────────────────────────────────────────"
+        echo ""
+        
+        # Multi-server: set become pass for sudo
+        if [ "$wtopo" -eq 2 ]; then
+            local wexistingpw="${WORKER_EXISTING_PWS[$i]}"
+            echo "  Worker existing user: ${WORKER_SSH_USERS[$i]}"
+            echo "  Worker existing password length: ${#wexistingpw}"
+            export ANSIBLE_BECOME_PASS="$wexistingpw"
+        fi
+
+        # Read the SSH public key from remotelabz user
+        local ssh_key_content=""
+        if [ -f "/home/remotelabz/.ssh/myremotelabzfront.pub" ]; then
+            ssh_key_content=$(cat /home/remotelabz/.ssh/myremotelabzfront.pub)
+        fi
+
+        ansible-playbook "$WORKER_ANSIBLE_PLAYBOOK" \
+            -i "$final_inventory" \
+            --private-key "$ansible_ssh_key" \
+            -e "target_hosts=${worker_name}" \
+            -e "@${vars_file}" \
+            -e ansible_become_method=sudo \
+            2>&1 | tee /tmp/worker_install_${worker_name}.log
+
+        unset ANSIBLE_BECOME_PASS
+        
+        if [ ${PIPESTATUS[0]} -ne 0 ]; then
+            print_error "Failed to deploy $worker_name (check /tmp/worker_install_${worker_name}.log)"
+        else
+            print_info "$worker_name deployed successfully ✅"
+        fi
+
+        # Single-server: send SSH key to localhost
+        if [ "$wtopo" -eq 1 ] && [ -f "/home/remotelabz/.ssh/myremotelabzfront.pub" ]; then
+            local worker_user="${WORKER_SSH_USERS[$i]}"
+            sudo -u remotelabz ssh-copy-id -i /home/remotelabz/.ssh/myremotelabzfront.pub "${worker_user}@127.0.0.1" 2>&1 || true
+            print_info "SSH key sent to $worker_name (single-server) ✅"
+        fi
+        echo ""
+    done
+    
+    rm -f "$final_inventory"
+    
+    # Update .env.local with worker IPs
+    if [ ${#WORKER_IPS[@]} -gt 0 ]; then
+        print_info "Updating .env.local with worker IPs..."
+        local workers_str=$(IFS=,; echo "${WORKER_IPS[*]}")
+        
+        if grep -q "^WORKER_SERVER=" "$ENV_FILE"; then
+            sed -i "s|^WORKER_SERVER=.*|WORKER_SERVER=\"${workers_str}\"|g" "$ENV_FILE"
+        else
+            echo "WORKER_SERVER=\"${workers_str}\"" >> "$ENV_FILE"
+        fi
+        
+        # Disable single-server mode if workers are configured
+        if grep -q "^DEPLOY_SINGLE_SERVER=1" "$ENV_FILE"; then
+            sed -i "s|^DEPLOY_SINGLE_SERVER=.*|DEPLOY_SINGLE_SERVER=0|g" "$ENV_FILE"
+        fi
+        
+        print_info "Workers configured: $workers_str ✅"
+    fi
+    
+    # Cleanup temporary files
+    rm -rf "$tmp_inventory" "$tmp_vars_dir"
+    
+    print_info "Worker deployment completed ✅"
 }
 
 # ============================================================================
@@ -1103,13 +1562,14 @@ show_menu() {
     echo ""
     echo "Installation options:"
     echo ""
-    echo "1) Full automatic installation (recommended)"
-    echo "2) Install system requirements only"
-    echo "3) Setup OpenVPN only"
-    echo "4) Configure SSL only"
-    echo "5) Install RemoteLabz application only"
+    echo "1) Install system requirements only"
+    echo "2) Setup OpenVPN only"
+    echo "3) Configure SSL only"
+    echo "4) Install RemoteLabz application only"
+    echo "5) Configure workers deployment"
     echo "6) Custom installation (select steps)"
-    echo "7) Exit"
+    echo "7) Full automatic installation (recommended)"
+    echo "8) Exit"
     echo ""
     echo "============================================================"
 }
@@ -1169,6 +1629,7 @@ full_installation() {
     install_ssl
     
     if install_remotelabz_app; then
+        configure_workers
         final_configuration
         show_completion_message
     else
@@ -1227,31 +1688,31 @@ main() {
     # Interactive menu
     while true; do
         show_menu
-        read -p "Enter your choice [1-7]: " choice
+        read -p "Enter your choice [1-9]: " choice
         
         case $choice in
             1)
-                full_installation
-                exit 0
-                ;;
-            2)
                 install_requirements
                 read -p "Press Enter to continue..."
                 ;;
-            3)
+            2)
                 setup_openvpn
                 read -p "Press Enter to continue..."
                 ;;
-            4)
+            3)
                 setup_env_file
                 install_ssl
                 read -p "Press Enter to continue..."
                 ;;
-            5)
+            4)
                 setup_env_file
                 if install_remotelabz_app; then
                     final_configuration
                 fi
+                read -p "Press Enter to continue..."
+                ;;
+            5)
+                configure_workers
                 read -p "Press Enter to continue..."
                 ;;
             6)
@@ -1259,11 +1720,15 @@ main() {
                 exit 0
                 ;;
             7)
+                full_installation
+                exit 0
+                ;;
+            8)
                 print_info "Exiting..."
                 exit 0
                 ;;
             *)
-                print_error "Invalid option. Please choose 1-7."
+                print_error "Invalid option. Please choose 1-8."
                 sleep 2
                 ;;
         esac

@@ -15,43 +15,43 @@ class InstanceStateBadge extends Component {
 
         switch (this.props.state) {
             case 'stopped':
-                badge = <Badge variant="default" {...this.props}>Stopped</Badge>
+                badge = <Badge bg="default" {...this.props}>Stopped</Badge>
                 break;
 
             case 'starting':
-                badge = <Badge variant="warning" {...this.props}>Starting</Badge>
+                badge = <Badge bg="warning" text="white" {...this.props}>Starting</Badge>
                 break;
 
             case 'stopping':
-                badge = <Badge variant="warning" {...this.props}>Stopping</Badge>
+                badge = <Badge bg="warning" text="white" {...this.props}>Stopping</Badge>
                 break;
 
             case 'resetting':
-                badge = <Badge variant="warning" {...this.props}>Resetting</Badge>
+                badge = <Badge bg="warning" text="white" {...this.props}>Resetting</Badge>
                 break;
 
             case 'reset':
-                badge = <Badge variant="info" {...this.props}>Reset</Badge>
+                badge = <Badge bg="info" text="white" {...this.props}>Reset</Badge>
                 break;
 
             case 'started':
-                badge = <Badge variant="success" {...this.props}>Started</Badge>
+                badge = <Badge bg="success" text="white" {...this.props}>Started</Badge>
                 break;
 
             case 'exporting':
-                badge = <Badge variant="warning" {...this.props}>Exporting</Badge>
+                badge = <Badge bg="warning" text="white" {...this.props}>Exporting</Badge>
                 break;
 
             case 'exported':
-                    badge = <Badge variant="success" {...this.props}>Exported</Badge>
+                    badge = <Badge bg="success" text="white" {...this.props}>Exported</Badge>
                     break;
 
             case 'error':
-                badge = <Badge variant="danger" {...this.props}>Error</Badge>
+                badge = <Badge bg="danger" text="white" {...this.props}>Error</Badge>
                 break;
 
             default:
-                badge = <Badge variant="default" {...this.props}>{this.state.state}</Badge>
+                badge = <Badge bg="default" {...this.props}>{this.state.state}</Badge>
         }
 
         return badge;

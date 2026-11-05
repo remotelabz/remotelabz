@@ -127,6 +127,23 @@ class LabInstance extends Instance
     }
 
     /**
+     * Replaces the device instances collection.
+     *
+     * Used by LabInstanceSerializationListener to temporarily hide the
+     * device instances of hidden devices while serializing for a lab user.
+     * The owning side (DeviceInstance::$labInstance) is not touched, so a
+     * later flush cannot be impacted.
+     *
+     * @return Collection|DeviceInstance[]
+     */
+    public function setDeviceInstances(Collection $deviceInstances): self
+    {
+        $this->deviceInstances = $deviceInstances;
+
+        return $this;
+    }
+
+    /**
      * Get device instance associated to this lab instance and the current user.
      *
      * @return DeviceInstance

@@ -206,6 +206,8 @@ class Installer
             $this->configureRouteMonitorTimerService();
             $this->configureCleanNotificationService();
             $this->configureCleanNotificationTimerService();
+            $this->configureInstanceIpsService();
+            $this->configureInstanceIpsTimerService();
             $this->configureGitVersionService();
             $this->configureGitVersionTimerService();
             echo "OK ✔️\n";
@@ -225,7 +227,26 @@ class Installer
         // Step 10: Configure sudoers
         echo "👮 Configuring sudoers file... ";
         try {
-            copy("config/sudo/remotelabz", "/etc/sudoers.d/remotelabz");
+            $source = "config/sudo/remotelabz";
+            $dest = "/etc/sudoers.d/remotelabz";
+
+            if (!file_exists($source)) {
+                throw new Exception("Source file not found: {$source}");
+            }
+            if (!is_dir('/etc/sudoers.d')) {
+                throw new Exception("Directory /etc/sudoers.d does not exist");
+            }
+
+            if (!copy($source, $dest)) {
+                $error = error_get_last();
+                throw new Exception("Failed to copy {$source} to {$dest}: " . ($error['message'] ?? 'unknown error'));
+            }
+
+            // Sudoers files must be 0440 or sudo will ignore them
+            if (!chmod($dest, 0440)) {
+                throw new Exception("Failed to chmod {$dest} to 0440");
+            }
+
             echo "OK ✔️\n";
         } catch (Exception $e) {
             throw new Exception("Error configuring sudoers: " . $e->getMessage());
@@ -284,7 +305,8 @@ class Installer
             'remotelabz-proxy',
             'remotelabz-clean-notification.timer',
             'remotelabz-route-monitor.timer',
-            'remotelabz-route-monitor.service'
+            'remotelabz-route-monitor.service',
+            'remotelabz-instance-ips.timer'
         ];
 
         foreach ($services as $service) {
@@ -563,6 +585,30 @@ class Installer
         $returnCode = symlink($this->installPath . '/bin/systemd/remotelabz-route-monitor.timer', '/etc/systemd/system/remotelabz-route-monitor.timer');
         if (!$returnCode) {
             throw new Exception("Could not symlink route monitor timer service.");
+        }
+    }
+
+    private function configureInstanceIpsService()
+    {
+        chdir($this->installPath);
+        if (file_exists('/etc/systemd/system/remotelabz-instance-ips.service')) {
+            unlink('/etc/systemd/system/remotelabz-instance-ips.service');
+        }
+        $returnCode = symlink($this->installPath . '/bin/systemd/remotelabz-instance-ips.service', '/etc/systemd/system/remotelabz-instance-ips.service');
+        if (!$returnCode) {
+            throw new Exception("Could not symlink instance ips service.");
+        }
+    }
+
+    private function configureInstanceIpsTimerService()
+    {
+        chdir($this->installPath);
+        if (file_exists('/etc/systemd/system/remotelabz-instance-ips.timer')) {
+            unlink('/etc/systemd/system/remotelabz-instance-ips.timer');
+        }
+        $returnCode = symlink($this->installPath . '/bin/systemd/remotelabz-instance-ips.timer', '/etc/systemd/system/remotelabz-instance-ips.timer');
+        if (!$returnCode) {
+            throw new Exception("Could not symlink instance ips timer service.");
         }
     }
 

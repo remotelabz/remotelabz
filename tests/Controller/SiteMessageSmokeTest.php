@@ -61,4 +61,23 @@ class SiteMessageSmokeTest extends \Symfony\Bundle\FrameworkBundle\Test\WebTestC
         $general->setType(SiteMessage::TYPE_GENERAL);
         $this->assertTrue($general->targetsUser(1, []));
     }
+
+    public function testSiteMessageToHtmlFilter()
+    {
+        $kernel = self::bootKernel();
+        $extension = $kernel->getContainer()->get('test.service_container')->get('twig')->getExtension(\App\Twig\AppExtension::class);
+
+        // Markdown, emoji shortcodes and single line breaks are rendered
+        $html = $extension->siteMessageToHtml("Hello **world** :smile:\nSecond line");
+        $this->assertStringContainsString('<strong>world</strong>', $html);
+        $this->assertStringContainsString('😄', $html);
+        $this->assertStringContainsString('<br>', $html);
+
+        // Raw HTML and unsafe links are neutralized
+        $html = $extension->siteMessageToHtml('<script>alert(1)</script>[x](javascript:alert(1))');
+        $this->assertStringNotContainsString('<script>', $html);
+        $this->assertStringNotContainsString('javascript:', $html);
+
+        $this->assertSame('', $extension->siteMessageToHtml(null));
+    }
 }

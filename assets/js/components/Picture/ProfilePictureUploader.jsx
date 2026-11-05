@@ -50,7 +50,7 @@ export default class ProfilePictureUploader extends Component {
 
         return (
             <div>
-                <img src={"/profile/picture?size=160&hash=" + Date.now()} className="img-xl rounded-circle mr-4 float-left"></img>
+                <img src={"/profile/picture?size=160&hash=" + Date.now()} className="img-xl rounded-circle me-4 float-left"></img>
                 <h5>Upload new avatar</h5>
                 <p className="text-muted">The maximum file size allowed is 200KB.</p>
                 <div className="file-upload">

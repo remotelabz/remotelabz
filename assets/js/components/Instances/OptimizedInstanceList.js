@@ -5,9 +5,20 @@ import SVG from '../Display/SVG';
 import { ListGroupItem, Button, Spinner, Modal } from 'react-bootstrap';
 import { toast } from 'react-toastify';
 import { is_vnc, is_login, is_serial, is_real, is_native } from './deviceProtocolHelpers';
+import { canViewAdmin } from './viewAdminPermissions';
 import InstanceStateBadge from './InstanceStateBadge';
 import { fetchDeviceLogs, startLogsPolling, stopLogsPolling, formatLogEntry, getLastLogs } from './deviceLogsHelpers';
 import DeviceLogs from './DeviceLogs';
+
+// Toutes les adresses connues de l'instance (IPv4 puis IPv6), pour l'info-bulle.
+function formatInstanceIps(instance) {
+  if (!Array.isArray(instance.ips)) {
+    return '';
+  }
+  return instance.ips
+    .reduce((addresses, iface) => addresses.concat(iface.ipv4 || [], iface.ipv6 || []), [])
+    .join('\n');
+}
 
 const VirtualizedInstanceRow = React.memo((props) => {
   const { 
@@ -47,7 +58,7 @@ const VirtualizedInstanceRow = React.memo((props) => {
         <div className="instance-uuid">{instance.uuid}</div>
         <div className="instance-meta">
           <span>Owner: {labInfo.ownerName || 'N/A'}</span>
-          <span className="ml-2">Worker: {labInfo.workerIp || 'N/A'}</span>
+          <span className="ms-2">Worker: {labInfo.workerIp || 'N/A'}</span>
         </div>
       </div>
 
@@ -300,7 +311,7 @@ const DetailsModal = ({ selectedInstance, onClose, sharedStates, onStateUpdate, 
                   <h4 style={{ marginBottom: 0 }}>
                     {labInfo.name || 'Lab'}
                     &nbsp;
-                    <span className={`badge badge-${selectedInstance.state === 'created' ? 'success' : selectedInstance.state === 'creating' ? 'warning' : 'secondary'}`}>
+                    <span className={`badge text-bg-${selectedInstance.state === 'created' ? 'success' : selectedInstance.state === 'creating' ? 'warning' : 'secondary'}`}>
                       {selectedInstance.state}
                     </span>
                   </h4>
@@ -444,6 +455,11 @@ const DetailsModal = ({ selectedInstance, onClose, sharedStates, onStateUpdate, 
                             <small style={{ color: '#6c757d', display: 'block' }}> 
                               {deviceInstance.uuid}
                             </small>
+                            {deviceInstance.ip && (
+                              <div className="text-muted small" title={formatInstanceIps(deviceInstance)}>
+                                IP: {deviceInstance.ip}
+                              </div>
+                            )}
                           </div>
 
                           {/* Right side: Action buttons */}
@@ -467,20 +483,17 @@ const DetailsModal = ({ selectedInstance, onClose, sharedStates, onStateUpdate, 
                                 {deviceStates[deviceInstance.uuid] === 'start' ? <Spinner animation="border" size="sm" /> : <SVG name="play" />}
                               </button>
                             )}
-                            {(deviceInstance.state == 'started' && is_login(deviceInstance) && !is_real(deviceInstance) && !is_native(deviceInstance) && user.roles
-                              && ( user.roles.includes("ROLE_ADMINISTRATOR") || user.roles.includes("ROLE_SUPER_ADMINISTRATOR") || ((user.roles.includes("ROLE_TEACHER") || user.roles.includes("ROLE_TEACHER_EDITOR")
-                                ) 
-                              ))
-                              )
+                            {(deviceInstance.state == 'started' && is_login(deviceInstance) && !is_real(deviceInstance) && !is_native(deviceInstance)
+                              && canViewAdmin(user, selectedInstance?.lab))
                               &&
                                   <a
                                       target="_blank"
                                       rel="noopener noreferrer"
                                       href={"/instances/" + deviceInstance.uuid + "/view/admin"}
-                                      className="btn btn-primary ml-3"
+                                      className="btn btn-primary ms-3"
                                       title="Open admin console"
-                                      data-toggle="tooltip"
-                                      data-placement="top"
+                                      data-bs-toggle="tooltip"
+                                      data-bs-placement="top"
                                   >
                                       <SVG name="incognito" />
                                   </a>

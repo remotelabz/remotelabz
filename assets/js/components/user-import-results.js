@@ -31,7 +31,7 @@
         
         toggleButtons.forEach(function(button) {
             button.addEventListener('click', function() {
-                const targetId = this.getAttribute('data-target');
+                const targetId = this.getAttribute('data-bs-target');
                 const input = document.getElementById(targetId);
                 const icon = this.querySelector('i');
                 
@@ -58,7 +58,7 @@
         
         copyButtons.forEach(function(button) {
             button.addEventListener('click', function() {
-                const targetId = this.getAttribute('data-target');
+                const targetId = this.getAttribute('data-bs-target');
                 const input = document.getElementById(targetId);
                 
                 if (!input) return;

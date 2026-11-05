@@ -4,36 +4,61 @@ namespace App\Service;
 
 use App\Entity\IpReputation;
 use App\Repository\IpReputationRepository;
+use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpClient\HttpClient;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mime\Email;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class IpReputationService
 {
     private EntityManagerInterface $entityManager;
     private IpReputationRepository $repository;
+    private UserRepository $userRepository;
+    private MailerInterface $mailer;
+    private \Twig\Environment $twig;
     private HttpClientInterface $httpClient;
     private string $apiKey;
     private int $ttl;
     private string $apiUrl;
     private string $checkUrlBase;
+    private string $contactMail;
+    private string $mailSubject;
+    private int $alertThreshold;
+    private int $alertCooldown;
 
     public function __construct(
         EntityManagerInterface $entityManager,
         IpReputationRepository $repository,
+        UserRepository $userRepository,
+        MailerInterface $mailer,
+        \Twig\Environment $twig,
         #[\SensitiveParameter] string $apiKey = '',
         int $ttl = 86400,
         string $apiUrl = 'https://api.abuseipdb.com/api/v2/check',
-        string $checkUrlBase = 'https://www.abuseipdb.com/check'
+        string $checkUrlBase = 'https://www.abuseipdb.com/check',
+        #[\SensitiveParameter] string $contactMail = '',
+        string $mailSubject = 'RemoteLabz',
+        int $alertThreshold = 20,
+        int $alertCooldown = 604800,
+        ?HttpClientInterface $httpClient = null
     ) {
         $this->entityManager = $entityManager;
         $this->repository = $repository;
+        $this->userRepository = $userRepository;
+        $this->mailer = $mailer;
+        $this->twig = $twig;
         $this->apiKey = $apiKey;
         $this->ttl = $ttl;
         $this->apiUrl = $apiUrl;
         $this->checkUrlBase = rtrim($checkUrlBase, '/');
+        $this->contactMail = $contactMail;
+        $this->mailSubject = $mailSubject;
+        $this->alertThreshold = $alertThreshold;
+        $this->alertCooldown = $alertCooldown;
 
-        $this->httpClient = HttpClient::create([
+        $this->httpClient = $httpClient ?? HttpClient::create([
             'timeout' => 5,
             'headers' => [
                 'Accept' => 'application/json',
@@ -72,6 +97,8 @@ class IpReputationService
             $this->applyData($reputation, $data);
             $this->entityManager->flush();
 
+            $this->sendAlertIfNeeded($reputation, $data);
+
             return $reputation;
         } catch (\Throwable $e) {
             error_log('Failed to update IP reputation for ' . $ip . ': ' . $e->getMessage());
@@ -97,6 +124,102 @@ class IpReputationService
         }
 
         return (time() - $lastChecked->getTimestamp()) > $this->ttl;
+    }
+
+    /**
+     * Envoie une alerte aux administrateurs lorsque l'IP est signalée sur
+     * AbuseIPDB (score >= seuil), au plus une fois par IP et par période de
+     * cooldown.
+     *
+     * @param array<string, mixed>|null $data Données fraîches renvoyées par l'API
+     */
+    private function sendAlertIfNeeded(IpReputation $reputation, ?array $data): void
+    {
+        $score = $reputation->getAbuseScore();
+        if (!$data || $score === null || $score < $this->alertThreshold) {
+            return;
+        }
+
+        if (!$this->isAlertCooldownExpired($reputation)) {
+            return;
+        }
+
+        try {
+            $recipients = $this->getAdministratorEmails();
+            if (!$recipients) {
+                error_log('IP reputation alert skipped for ' . $reputation->getIp() . ': no administrator recipient');
+                return;
+            }
+
+            $ip = $reputation->getIp();
+            $email = (new Email())
+                ->from($this->contactMail)
+                ->to(...$recipients)
+                ->subject(sprintf(
+                    '%s - Suspicious IP detected: %s (score %d/100)',
+                    $this->mailSubject,
+                    $ip,
+                    $score
+                ))
+                ->html(
+                    $this->twig->render('emails/ip_reputation_alert.html.twig', [
+                        'ip' => $ip,
+                        'score' => $score,
+                        'threshold' => $this->alertThreshold,
+                        'totalReports' => $reputation->getTotalReports(),
+                        'countryCode' => $reputation->getCountryCode(),
+                        'checkedAt' => $reputation->getLastCheckedAt()
+                            ? $reputation->getLastCheckedAt()->format('d/m/Y H:i')
+                            : '-',
+                        'checkUrl' => $this->getCheckUrl($ip),
+                        'cooldownDays' => (int) ceil($this->alertCooldown / 86400),
+                    ])
+                );
+
+            $this->mailer->send($email);
+        } catch (\Throwable $e) {
+            error_log('Failed to send IP reputation alert for ' . $reputation->getIp() . ': ' . $e->getMessage());
+            return;
+        }
+
+        $reputation->setLastAlertedAt(new \DateTime());
+
+        try {
+            $this->entityManager->flush();
+        } catch (\Throwable $e) {
+            error_log('Failed to store IP reputation alert date for ' . $reputation->getIp() . ': ' . $e->getMessage());
+        }
+    }
+
+    private function isAlertCooldownExpired(IpReputation $reputation): bool
+    {
+        $lastAlerted = $reputation->getLastAlertedAt();
+        if (!$lastAlerted) {
+            return true;
+        }
+
+        return (time() - $lastAlerted->getTimestamp()) >= $this->alertCooldown;
+    }
+
+    /**
+     * @return array<string>
+     */
+    private function getAdministratorEmails(): array
+    {
+        $emails = [];
+
+        foreach ($this->userRepository->findByRole('%ADMIN%') as $user) {
+            if (!$user->isAdministrator()) {
+                continue;
+            }
+
+            $email = $user->getEmail();
+            if ($email && !in_array($email, $emails, true)) {
+                $emails[] = $email;
+            }
+        }
+
+        return $emails;
     }
 
     /**

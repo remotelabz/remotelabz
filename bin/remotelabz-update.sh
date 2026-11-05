@@ -3,6 +3,10 @@
 #    rm package-lock.json
 #fi;
 cd /opt/remotelabz
+mv /opt/remotelabz/config/packages/messenger.yaml ~/
+git restore /opt/remotelabz/config/packages/messenger.yaml
+mv /opt/remotelabz/config/packages/dev/web_profiler.yaml ~/
+git restore /opt/remotelabz/config/packages/dev/web_profiler.yaml
 git fetch
 WORK_DIR=$(pwd)
 if [ ! -d "lib/network-bundle" ]; then
@@ -23,23 +27,40 @@ if [ ! -d "lib/remotelabz-message-bundle" ]; then
     echo "Clonage de remotelabz-message-bundle"
     git clone https://github.com/remotelabz/remotelabz-message-bundle "$WORK_DIR/lib/remotelabz-message-bundle"
     git -C "$WORK_DIR/lib/remotelabz-message-bundle" fetch --tags
-    git -C "$WORK_DIR/lib/remotelabz-message-bundle" checkout 1.0.8
+    git -C "$WORK_DIR/lib/remotelabz-message-bundle" checkout 1.0.10
     git config --global --add safe.directory "$WORK_DIR/lib/remotelabz-message-bundle"
 else
     echo "lib/remotelabz-message-bundle existe déjà, mise à jour."
     git config --global --add safe.directory "$WORK_DIR/lib/remotelabz-message-bundle"
     git -C "$WORK_DIR/lib/remotelabz-message-bundle" fetch --tags
-    git -C "$WORK_DIR/lib/remotelabz-message-bundle" checkout 1.0.8
+    git -C "$WORK_DIR/lib/remotelabz-message-bundle" checkout 1.0.10
 fi
-mv /opt/remotelabz/config/packages/messenger.yaml ~/
-git restore /opt/remotelabz/config/packages/messenger.yaml
-mv /opt/remotelabz/config/packages/dev/web_profiler.yaml ~/
-git restore /opt/remotelabz/config/packages/dev/web_profiler.yaml
+
 git pull
 mv ~/messenger.yaml /opt/remotelabz/config/packages/messenger.yaml
 mv ~/web_profiler.yaml /opt/remotelabz/config/packages/dev/web_profiler.yaml
+# Le messenger.yaml local est conserve pendant la mise a jour : on s'assure que
+# le routage de SecurityMessage (topologie des labs partages) y figure bien,
+# sinon le front ne peut plus diffuser vers les workers.
+MESSAGER_CFG=/opt/remotelabz/config/packages/messenger.yaml
+if ! grep -q 'SecurityMessage: worker' "$MESSAGER_CFG"; then
+    sed -i '/^[[:space:]]*routing:$/a\            Remotelabz\\Message\\Message\\SecurityMessage: worker' "$MESSAGER_CFG"
+fi
+if ! grep -q 'SecurityMessage: worker' "$MESSAGER_CFG"; then
+    echo "ATTENTION: routage SecurityMessage absent de $MESSAGER_CFG, a ajouter manuellement sous \"routing:\""
+fi
+# Idem pour la collecte d'IP d'instance (requete front -> worker, reponse worker -> front).
+if ! grep -qE 'DeviceInfoRequestMessage.{0,2}: +worker' "$MESSAGER_CFG"; then
+    sed -i '/^[[:space:]]*routing:$/a\            Remotelabz\\Message\\Message\\DeviceInfoRequestMessage: worker' "$MESSAGER_CFG"
+fi
+if ! grep -qE 'DeviceInfoMessage.{0,2}: +front' "$MESSAGER_CFG"; then
+    sed -i '/^[[:space:]]*routing:$/a\            Remotelabz\\Message\\Message\\DeviceInfoMessage: front' "$MESSAGER_CFG"
+fi
+if ! grep -qE 'DeviceInfoRequestMessage.{0,2}: +worker' "$MESSAGER_CFG"; then
+    echo "ATTENTION: routage DeviceInfoRequestMessage absent de $MESSAGER_CFG, a ajouter manuellement sous \"routing:\""
+fi
 composer update
-yarn
+yarn exec update-browserslist-db
 yarn encore prod
 php bin/console doctrine:migrations:migrate -n
 #npx browserslist@latest --update-db

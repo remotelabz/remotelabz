@@ -19,7 +19,7 @@
 import {DEBUG, TIMEOUT, LAB, NAME, ROLE, AUTHOR, UPDATEID, LOCK, EDITION, TEMPLATE, ISGROUPOWNER, HASGROUPACCESS, VIRTUALITY,
        setLab, setLang, setLock, setUserName, setEmail, setRole, setTenant, setUpdateId, setTemplate, setIsGroupOwner, setHasGroupAccess,
        STATUSINTERVAL, ATTACHMENTS, isIE, setEditon, setAuthor,
-      setVirtuality} from './javascript';
+      setVirtuality, setIsInternetAuthorized, setIsInternetConnected} from './javascript';
 import {MESSAGES} from './messages_en';
 import 'jquery';
 import '../bootstrap/js/tinytools.toggleswitch.min';
@@ -41,6 +41,7 @@ import {ObjectPosUpdate} from './actions';
 import { node } from 'prop-types';
 import EasyMDE from 'easymde';
 import 'easymde/dist/easymde.min.css';
+import {emojiShortcodeToUnicode} from './emoji';
 import Dropzone from 'dropzone';
 import Remotelabz from '../../../../API';
 
@@ -49,6 +50,12 @@ import Remotelabz from '../../../../API';
 // Basename: given /a/b/c return c
 export function basename(path) {
     return path.replace(/\\/g, '/').replace(/.*\//, '');
+}
+
+// Whether the current user may see and edit hidden devices
+// (lab author or system admin only, see LabVoter::SEE_HIDDEN_DEVICE).
+export function canSeeHiddenDevices() {
+    return AUTHOR == 1 || ROLE == 'ROLE_ADMINISTRATOR' || ROLE == 'ROLE_SUPER_ADMINISTRATOR';
 }
 
 // Dirname: given /a/b/c return /a/b
@@ -396,6 +403,9 @@ export function getLabInfo(labId) {
         success: function (data) {
             if (data['status'] == 'success') {
                 //logger(1, 'DEBUG: lab "' + labId + '" found.');
+                setIsInternetAuthorized(!(data['data']['isInternetAuthorized'] === false || data['data']['isInternetAuthorized'] === 'false' || data['data']['isInternetAuthorized'] === 0 || data['data']['isInternetAuthorized'] === '0'));
+                // The connected state defaults to false: it is absent from old payloads.
+                setIsInternetConnected(data['data']['isInternetConnected'] === true || data['data']['isInternetConnected'] === 'true' || data['data']['isInternetConnected'] === 1 || data['data']['isInternetConnected'] === '1');
                 deferred.resolve(data['data']);
             } else {
                 // Application error
@@ -1292,7 +1302,6 @@ export function printFormLab(action, values) {
     }).render({
         name: (values['name'] != null) ? values['name'] : '',
         version: (values['version'] != null) ? values['version'] : '',
-        scripttimeout: (values['scripttimeout'] != null) ? values['scripttimeout'] : '300',
         author: (values['author'] != null) ? values['author'] : '',
         authorId: (values['author_id'] != null) ? values['author_id'] : '',
         description: (values['description'] != null) ? values['description'] : '',
@@ -1300,7 +1309,7 @@ export function printFormLab(action, values) {
         banner: (values['banner'] != null) ? values['banner'] : '',
         timer: (values['timer'] != null) ? values['timer'] : '0',
         chatEnabled: (values['chatEnabled'] === true || values['chatEnabled'] === 'true' || values['chatEnabled'] === 1 || values['chatEnabled'] === '1'),
-        shared: (values['shared'] === true || values['shared'] === 'true' || values['shared'] === 1 || values['shared'] === '1'),
+        isInternetAuthorized: !(values['isInternetAuthorized'] === false || values['isInternetAuthorized'] === 'false' || values['isInternetAuthorized'] === 0 || values['isInternetAuthorized'] === '0'),
         virtuality: VIRTUALITY,
         srcBanner : '/labs/'+id+'/banner?'+ currentTime,
         title: title,
@@ -1315,12 +1324,17 @@ export function printFormLab(action, values) {
 
     if (action == 'edit') {
         // Fill the author select with users allowed to own a lab
-        // (teacher editors, administrators and super administrators)
+        // (teachers, teacher editors, administrators and super administrators)
         var currentAuthorId = (values['author_id'] != null) ? String(values['author_id']) : '';
         var currentAuthorName = (values['author'] != null) ? values['author'] : '';
         // Remember the author at the time the form was opened, so that the
         // submit handler can detect an author change.
         $('#form-lab-edit').attr('data-original-author', currentAuthorId);
+        // Sharing rules and their valid (group, target lab) pairs are kept as
+        // objects on the form, so that no JSON has to travel through the DOM.
+        var labShareForm = $('#form-lab-edit').last();
+        labShareForm.data('labShareChoices', (values['shareChoices'] != null) ? values['shareChoices'] : []);
+        labShareForm.data('labShareRules', (values['shares'] != null) ? values['shares'] : []);
         $.ajax({
             cache: false,
             timeout: TIMEOUT,
@@ -1352,6 +1366,9 @@ export function printFormLab(action, values) {
                 logger(1, 'DEBUG: server error on GET /api/users (' + message + ').');
             }
         });
+
+        // Fill the sharing rules section (plan §2.5)
+        initLabShareRules();
     }
 
     // ATTENDRE que la modal soit complètement affichée
@@ -1395,6 +1412,192 @@ export function printFormLab(action, values) {
     validateLabInfo();
 }
 
+// ---------------------------------------------------------------------------
+// Sharing rules (shared-labs-front-plan.md §2.5)
+//
+// A rule is a (group, target lab) pair. The form offers every group of the
+// current user with the labs of that group (data.shareChoices). The shared lab
+// does not have to belong to the group: that is what allows it to stay hidden
+// from the members of the group (plan §2.3). A saved rule whose pair is not
+// valid anymore is displayed but flagged, so that the user can remove it.
+// ---------------------------------------------------------------------------
+
+// Groups of the current user:
+// [{group: {uuid, name}, labs: [{id, name}]}]
+function getLabShareChoices() {
+    var choices = $('#form-lab-edit').last().data('labShareChoices');
+    return (choices != null) ? choices : [];
+}
+
+function labShareLabsOfGroup(shareChoices, groupUuid) {
+    for (var i = 0; i < shareChoices.length; i++) {
+        if (String(shareChoices[i]['group']['uuid']) === String(groupUuid)) {
+            return shareChoices[i]['labs'];
+        }
+    }
+    return [];
+}
+
+// Refresh the target lab select of a row from its selected group.
+// rule != null when rendering a saved rule (keeps an invalid target visible).
+function refreshLabShareTargets(row, rule) {
+    var shareChoices = getLabShareChoices();
+    var targetSelect = row.find('.lab-share-target');
+    var preferred = targetSelect.val();
+    if (rule != null && rule['sharedWith'] != null) {
+        preferred = String(rule['sharedWith']);
+    }
+
+    var labs = labShareLabsOfGroup(shareChoices, row.find('.lab-share-group').val());
+    targetSelect.empty();
+    var found = false;
+    for (var i = 0; i < labs.length; i++) {
+        var option = $('<option></option>').val(String(labs[i]['id'])).text(labs[i]['name']);
+        if (preferred != null && String(labs[i]['id']) === String(preferred)) {
+            option.prop('selected', true);
+            found = true;
+        }
+        targetSelect.append(option);
+    }
+
+    if (!found && rule != null && preferred != null) {
+        var name = (rule['sharedWithName'] != null) ? rule['sharedWithName'] : preferred;
+        targetSelect.append($('<option></option>')
+            .val(String(preferred))
+            .text(name + ' - ' + MESSAGES[247])
+            .prop('selected', true));
+    }
+
+    var value = targetSelect.val();
+    targetSelect.prop('disabled', value == null || value === '');
+    return value;
+}
+
+function buildLabShareRow(shareChoices, rule) {
+    var row = $('<div class="row lab-share-rule" style="margin-bottom: 5px;"></div>');
+    var groupSelect = $('<select class="form-control lab-share-group"></select>');
+    var targetSelect = $('<select class="form-control lab-share-target"></select>');
+    var removeButton = $('<button type="button" class="btn btn-flat lab-share-remove" title="' + MESSAGES[248] + '">&times;</button>');
+
+    // Every group of the user is listed: the shared lab does not have to be
+    // available in the group (this is what allows it to stay hidden from its
+    // members), only the target lab does.
+    var selectedGroup = (rule != null && rule['group'] != null) ? String(rule['group']) : null;
+    var groupFound = false;
+    var defaultGroup = null;
+    for (var i = 0; i < shareChoices.length; i++) {
+        var choice = shareChoices[i];
+        var uuid = String(choice['group']['uuid']);
+        var option = $('<option></option>').val(uuid).text(choice['group']['name']);
+        if (selectedGroup != null && uuid === selectedGroup) {
+            option.prop('selected', true);
+            groupFound = true;
+        }
+        if (selectedGroup == null && defaultGroup == null &&
+                choice['labs'] != null && choice['labs'].length > 0) {
+            defaultGroup = uuid;
+        }
+        groupSelect.append(option);
+    }
+    if (!groupFound && selectedGroup != null) {
+        var groupName = (rule['groupName'] != null) ? rule['groupName'] : selectedGroup;
+        groupSelect.append($('<option></option>')
+            .val(selectedGroup)
+            .text(groupName + ' - ' + MESSAGES[247])
+            .prop('selected', true));
+    }
+    if (defaultGroup != null) {
+        groupSelect.val(defaultGroup);
+    }
+
+    row.append($('<div class="col-md-5"></div>').append(groupSelect));
+    row.append($('<div class="col-md-5"></div>').append(targetSelect));
+    row.append($('<div class="col-md-2"></div>').append(removeButton));
+
+    refreshLabShareTargets(row, rule);
+
+    groupSelect.on('change', function () {
+        refreshLabShareTargets(row, null);
+    });
+
+    return row;
+}
+
+// Build the sharing section of the lab edit form.
+export function initLabShareRules() {
+    var labShareForm = $('#form-lab-edit').last();
+    var container = labShareForm.find('#lab-share-rules');
+    if (!container.length) {
+        return;
+    }
+
+    var shareChoices = getLabShareChoices();
+    var rules = labShareForm.data('labShareRules') || [];
+
+    var header = labShareForm.find('#lab-share-header');
+    var buttons = labShareForm.find('#lab-share-buttons');
+    header.empty();
+    container.empty();
+    buttons.empty();
+
+    if (shareChoices.length > 0) {
+        header.append($('<div class="row"></div>')
+            .append($('<div class="col-md-5"></div>').append($('<label class="control-label"></label>').text(MESSAGES[245])))
+            .append($('<div class="col-md-5"></div>').append($('<label class="control-label"></label>').text(MESSAGES[246]))));
+    }
+
+    for (var i = 0; i < rules.length; i++) {
+        container.append(buildLabShareRow(shareChoices, rules[i]));
+    }
+
+    var hasTarget = false;
+    for (var j = 0; j < shareChoices.length; j++) {
+        if (shareChoices[j]['labs'] != null && shareChoices[j]['labs'].length > 0) {
+            hasTarget = true;
+            break;
+        }
+    }
+
+    if (shareChoices.length === 0) {
+        buttons.append($('<p class="text-muted"></p>').text(MESSAGES[243]));
+    } else if (!hasTarget) {
+        buttons.append($('<p class="text-muted"></p>').text(MESSAGES[244]));
+    }
+
+    if (hasTarget) {
+        var addButton = $('<button type="button" class="btn btn-flat" id="lab-share-add"></button>').text(MESSAGES[242]);
+        buttons.append(addButton);
+        addButton.on('click', function () {
+            container.append(buildLabShareRow(shareChoices, null));
+        });
+    }
+
+    container.off('click', '.lab-share-remove').on('click', '.lab-share-remove', function () {
+        $(this).closest('.lab-share-rule').remove();
+    });
+}
+
+// Sharing rules of the form, ready for the lab update API.
+export function collectLabShareRules(form) {
+    var scope = (form != null) ? $(form) : $(document);
+    var rules = [];
+    var seen = {};
+    scope.find('.lab-share-rule').each(function () {
+        var group = $(this).find('.lab-share-group').val();
+        var target = $(this).find('.lab-share-target').val();
+        if (!group || !target) {
+            return;
+        }
+        var key = group + '|' + target;
+        if (seen[key]) {
+            return;
+        }
+        seen[key] = true;
+        rules.push({ sharedWith: parseInt(target, 10), group: group });
+    });
+    return rules;
+}
+
 // Shared EasyMDE configuration for the in-modal Markdown editors.
 // EasyMDE's fullscreen mode uses a z-index below the Bootstrap modal's, so it
 // cannot work inside a modal: the toolbar offers side-by-side instead.
@@ -1407,7 +1610,13 @@ export function createEasyMDEEditor(element) {
         sideBySideFullscreen: false,
         toolbar: ['bold', 'italic', 'strikethrough', 'heading', '|', 'code', 'quote', '|',
                   'unordered-list', 'ordered-list', 'clean-block', '|', 'link', 'image',
-                  'table', '|', 'preview', 'side-by-side']
+                  'table', '|', 'preview', 'side-by-side'],
+        // Interpret :emoji: shortcodes (GitHub style) in the preview. The
+        // conversion happens on the raw markdown, outside code blocks, before
+        // the usual EasyMDE/marked rendering.
+        previewRender: function (text, previewElement) {
+            return this.parent.markdown(emojiShortcodeToUnicode(text));
+        }
     });
 }
 
@@ -1608,6 +1817,7 @@ export function printFormNode(action, values, fromNodeList) {
                                     widthClass = ' col-sm-4 ';
                                     if (action == 'add') value_set = '';
                                 }
+                                if (key == 'network_card_type') widthClass = ' col-sm-6 '
                                 if (key.startsWith('slot')) widthClass = ' col-sm-6 '
                                 
                                 html_data += '<div class="form-group ' + widthClass + '">' +
@@ -1667,6 +1877,8 @@ export function printFormNode(action, values, fromNodeList) {
                                     } else if (key == 'ram' || key == 'nvram') widthClass = ' col-sm-6 '
                                     
                                     if (bothConnTypes && (key == 'ethernet' || key == 'serial')) widthClass = ' col-sm-6 '
+
+                                    if (key == 'minimum_network_interfaces') widthClass = ' col-sm-6 '
                                     
                                     var tpl = '';
                                     if (key == 'other_options' && value_set == '') value_set = template_values['options'][key]['value'];
@@ -1699,12 +1911,30 @@ export function printFormNode(action, values, fromNodeList) {
                             '<input class="form-control" name="node[top]" value="' + top + '" type="text"/>' +
                             '</div>';
 
+                        // Hidden device: only the lab author and the admins may hide a device
+                        if (canSeeHiddenDevices()) {
+                            var hiddenValue = (node_values != null && node_values['hidden']) ? 1 : 0;
+                            html_data += '<div class="form-group col-sm-12">' +
+                                '<label class="control-label" style="margin-bottom: 8px;">' +
+                                '<input type="checkbox" id="node-hidden-checkbox" ' + (hiddenValue ? 'checked' : '') + ' ' + (EDITION == 1 && LOCK == 0 ? '' : 'disabled') + ' style="width: 16px;"/>' +
+                                '&nbsp;' + MESSAGES[249] +
+                                '</label>' +
+                                '<input type="hidden" name="node[hidden]" id="node-hidden-value" value="' + hiddenValue + '"/>' +
+                                '<div class="text-muted small">' + MESSAGES[250] + '</div>' +
+                                '</div>';
+                        }
+
                         // Show the buttons
                         $('#form-node-buttons').html('<div class="form-group"><div class="col-md-5 col-md-offset-3"><button type="submit" class="btn btn-success">' + MESSAGES[47] + '</button> <button type="button" class="btn" data-dismiss="modal">' + MESSAGES[18] + '</button></div>');
 
                         // Show the form
                         $('#form-node-data').html(html_data);
                         $('.selectpicker').selectpicker('refresh');
+
+                        // Keep the hidden input in sync with the "hidden device" checkbox
+                        $('#node-hidden-checkbox').off('change').on('change', function () {
+                            $('#node-hidden-value').val(this.checked ? 1 : 0);
+                        });
                         
                         $(document).off('click', '.reset-to-template').on('click', '.reset-to-template', function(e) {
                             e.preventDefault();
@@ -2086,6 +2316,11 @@ export function printLabTopology() {
                 hrefbuf = '<a href="javascript:void(0)" >' ;
             }
 
+            var hiddenBadge = '';
+            if (value['hidden'] && canSeeHiddenDevices()) {
+                hiddenBadge = ' <i class="fa fa-eye-slash node-hidden-badge" title="' + MESSAGES[249] + '"></i>';
+            }
+
             $labViewport.append(
                 '<div id="node' + value['id'] + '" ' +
                 'class="context-menu node node' + value['id'] + ' node_frame "' +
@@ -2093,13 +2328,14 @@ export function printLabTopology() {
                 'data-path="' + value['id'] + '" ' +
                 'data-status="' + value['status'] + '" ' +
                 'data-type="' + value['type'] + '" ' +
+                'data-hidden="' + (value['hidden'] ? 1 : 0) + '" ' +
                 'data-name="' + value['name'] + '">' +
                 '<div class="tag  hidden" title="Connect to another node">'+
                 '<i class="fa fa-plug plug-icon dropdown-toggle ep"></i>'+
                 '</div>'+
                 hrefbuf +
                 '</a>' +
-                '<div class="node_name"><i class="node' + value['id'] + '_status"></i> ' + value['name'] + '</div>' +
+                '<div class="node_name"><i class="node' + value['id'] + '_status"></i> ' + value['name'] + hiddenBadge + '</div>' +
                 '</div>');
             nodesImgs.push($.Deferred(function (defer) {
                 var img = new Image();

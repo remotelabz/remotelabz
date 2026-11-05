@@ -9,24 +9,25 @@
 [theme=dark] {
     .tooltip {
         .tooltip-inner {
-            background-color: theme-color('dark-lighter');
-            border-color: lighten(map-get($theme-colors, "dark-lighter"), 7.5%);
+            background-color: theme-color('light');
+            border-color: theme-color('light');
+            color: theme-color('dark');
         }
     }
 
-    .bs-tooltip-top .arrow::before {
-        border-top-color: theme-color('dark-lighter');
+    .bs-tooltip-top .tooltip-arrow::before {
+        border-top-color: theme-color('light');
     }
 
-    .bs-tooltip-bottom .arrow::before {
-        border-bottom-color: theme-color('dark-lighter');
+    .bs-tooltip-bottom .tooltip-arrow::before {
+        border-bottom-color: theme-color('light');
     }
 
-    .bs-tooltip-left .arrow::before {
-        border-left-color: theme-color('dark-lighter');
+    .bs-tooltip-start .tooltip-arrow::before {
+        border-left-color: theme-color('light');
     }
 
-    .bs-tooltip-right .arrow::before {
-        border-right-color: theme-color('dark-lighter');
+    .bs-tooltip-end .tooltip-arrow::before {
+        border-right-color: theme-color('light');
     }
 }

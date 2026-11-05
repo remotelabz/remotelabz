@@ -9,10 +9,13 @@ use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use App\Repository\LabInstanceRepository;
 use App\Repository\DeviceInstanceRepository;
+use App\Entity\DeviceInstance;
 use App\Repository\DeviceRepository;
 use App\Repository\UserRepository;
 use App\Repository\OperatingSystemRepository;
 use App\Service\Instance\InstanceManager;
+use App\Service\Instance\DeviceInfoCache;
+use App\Service\SharedLabSecurityManager;
 use App\Service\Worker\LabPlacementCache;
 use App\Controller\OperatingSystemController;
 //To redirect to a route
@@ -38,6 +41,8 @@ class InstanceStateMessageHandler
     private ManagerRegistry $managerRegistry;
     private UserRepository $userRepository;
     private LabPlacementCache $placementCache;
+    private SharedLabSecurityManager $securityManager;
+    private DeviceInfoCache $deviceInfoCache;
 
     public function __construct(
         DeviceInstanceRepository $deviceInstanceRepository,
@@ -51,7 +56,9 @@ class InstanceStateMessageHandler
         NotificationService $notificationService,
         ManagerRegistry $managerRegistry,
         UserRepository $userRepository,
-        LabPlacementCache $placementCache
+        LabPlacementCache $placementCache,
+        SharedLabSecurityManager $securityManager,
+        DeviceInfoCache $deviceInfoCache
     ) {
         $this->deviceInstanceRepository = $deviceInstanceRepository;
         $this->labInstanceRepository = $labInstanceRepository;
@@ -65,6 +72,8 @@ class InstanceStateMessageHandler
         $this->managerRegistry = $managerRegistry;
         $this->userRepository = $userRepository;
         $this->placementCache = $placementCache;
+        $this->securityManager = $securityManager;
+        $this->deviceInfoCache = $deviceInfoCache;
     }
 
     /**
@@ -83,7 +92,18 @@ class InstanceStateMessageHandler
 
         try {
             $userIds = [];
-            
+
+            // Hidden device: only the lab author is notified. The other lab
+            // users must not even know that the device exists.
+            if ($instance instanceof DeviceInstance && $this->isHiddenDeviceInstance($instance)) {
+                $author = $instance->getLabInstance()?->getLab()?->getAuthor();
+                if ($author) {
+                    $this->logger->debug('[InstanceStateMessageHandler:getUserIdFromInstance]::Instance '.$instance->getUuid().' belongs to a hidden device; notifying only the lab author '.$author->getId());
+                    return [(string) $author->getId()];
+                }
+                return [];
+            }
+
             // Check if instance is owned by a group
             if (method_exists($instance, 'getGroup')) {
                 $group = $instance->getGroup();
@@ -140,6 +160,16 @@ class InstanceStateMessageHandler
         }
 
         return [];
+    }
+
+    /**
+     * A DeviceInstance is "hidden" when it runs a hidden device.
+     */
+    private function isHiddenDeviceInstance(DeviceInstance $deviceInstance): bool
+    {
+        $device = $deviceInstance->getDevice();
+
+        return null !== $device && $device->getHidden();
     }
 
 
@@ -199,6 +229,22 @@ class InstanceStateMessageHandler
                 $this->logger->debug("[InstanceStateMessageHandler:__invoke]::User id of the instance is ",$userIds);
             }
 
+            // L'IP mise en cache n'est plus fiable des que l'instance n'est plus
+            // en marche : on l'oublie (arret, suppression, erreur, redemarrage).
+            if ($instance instanceof DeviceInstance
+                && in_array($message->getState(), [
+                    InstanceStateMessage::STATE_STOPPED,
+                    InstanceStateMessage::STATE_DELETED,
+                    InstanceStateMessage::STATE_ERROR,
+                    InstanceStateMessage::STATE_STARTING,
+                    InstanceStateMessage::STATE_STOPPING,
+                    InstanceStateMessage::STATE_RESET,
+                    InstanceStateMessage::STATE_RESETTING,
+                ], true)
+            ) {
+                $this->deviceInfoCache->forget($instance->getUuid());
+            }
+
             // The lab instance reached its final state on the worker: stop reserving
             // its memory in the placement cache.
             if (!is_null($instance)
@@ -215,6 +261,12 @@ class InstanceStateMessageHandler
                 $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Options received :', $options);
                 if (key_exists('user_id',$options))
                     $userIds=array($options['user_id']);
+            }
+
+            // The options may carry an explicit user_id: re-apply the hidden
+            // device rule so it cannot bypass the restriction above.
+            if (!is_null($instance) && $instance instanceof DeviceInstance && $this->isHiddenDeviceInstance($instance)) {
+                $userIds = $this->getUserIdFromInstance($instance);
             }
 
             // if an error happened, set device instance in its previous state
@@ -386,7 +438,7 @@ class InstanceStateMessageHandler
                     case InstanceStateMessage::STATE_STARTED:
                         //$this->logger->debug("[InstanceStateMessageHandler:__invoke]::Options received ",$options);
 
-                        if (!array_key_exists("state",$options)) {
+                        if (!isset($options["state"])) {
                             //$this->logger->debug("[InstanceStateMessageHandler:__invoke]::Not already running");
                             $this->notificationService->success($userIds, 'Instance '.$uuid.' started successfully.', $uuid);
                         }
@@ -429,12 +481,27 @@ class InstanceStateMessageHandler
                     break;
 
                     case InstanceStateMessage::STATE_DELETED:                
-                        if ($message->getType() === InstanceStateMessage::TYPE_LAB) {
+                        // L'instance peut avoir deja ete supprimee de la base
+                        // (suppression directe quand aucun worker n'a ete
+                        // assigne) : dans ce cas, le message DELETED du worker
+                        // n'a plus rien a finaliser.
+                        if ($message->getType() === InstanceStateMessage::TYPE_LAB && !is_null($instance)) {
                             $this->logger->debug("[InstanceStateMessageHandler:__invoke]::\"Deleted\" Instance state message is type Lab");
                             $lab=$instance->getLab();
+                            $group=$instance->getGroup();
                             
                             $this->entityManager->remove($instance);
                             $this->entityManager->flush();
+
+                            if (!is_null($group)) {
+                                $group->removeLabInstance($instance);
+                            }
+
+                            try {
+                                $this->securityManager->syncLabInstance($instance);
+                            } catch (\Throwable $e) {
+                                $this->logger->error('[InstanceStateMessageHandler:__invoke]::Could not sync the shared lab topology of lab '.$lab->getName().': '.$e->getMessage());
+                            }
 
                             if (strstr($lab->getName(),"Sandbox_")) {
                                 $this->logger->debug("[InstanceStateMessageHandler:__invoke]::\"Deleted\" Instance state message from Sandbox: ".$lab->getName());

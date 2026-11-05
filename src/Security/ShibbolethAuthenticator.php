@@ -376,8 +376,8 @@ class ShibbolethAuthenticator extends AbstractAuthenticator
                 'x_forwarded_for' => $request->server->get('HTTP_X_FORWARDED_FOR', 'unknown'),
             ]);
             if ($this->loginNotificationService) {
-                $this->loginNotificationService->logLogin($user, $user->getEmail(), $ip, $userAgent, 'shibboleth');
-                $this->loginNotificationService->sendNotificationEmail($user, $ip, $userAgent, 'shibboleth', new DateTime());
+                $this->loginNotificationService->logLogin($user->getEmail(), $user->getFirstName(), $user->getLastName(), $ip, $userAgent, 'shibboleth');
+                $this->loginNotificationService->sendNotificationEmail($user->getEmail(), $user->getFirstName(), $ip, $userAgent, 'shibboleth', new DateTime());
             }
 
             return $response;

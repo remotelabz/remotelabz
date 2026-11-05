@@ -29,19 +29,19 @@
                 <span class="font-weight-bold">
                     {{ status.label | default('Worker ' ~ status.worker) }}
                     {% if not status.available %}
-                        <span class="badge badge-secondary">disabled</span>
+                        <span class="badge text-bg-secondary">disabled</span>
                     {% elseif status.reachable %}
                         {% if status.has_error %}
-                            <span class="badge badge-danger">{{ status.running }}/{{ status.total }} running</span>
+                            <span class="badge text-bg-danger">{{ status.running }}/{{ status.total }} running</span>
                         {% elseif status.running == status.total %}
-                            <span class="badge badge-success">{{ status.running }}/{{ status.total }} running</span>
+                            <span class="badge text-bg-success">{{ status.running }}/{{ status.total }} running</span>
                         {% elseif status.running > 0 %}
-                            <span class="badge badge-warning">{{ status.running }}/{{ status.total }} running</span>
+                            <span class="badge text-bg-warning">{{ status.running }}/{{ status.total }} running</span>
                         {% else %}
-                            <span class="badge badge-danger">0/{{ status.total }} running</span>
+                            <span class="badge text-bg-danger">0/{{ status.total }} running</span>
                         {% endif %}
                     {% else %}
-                        <span class="badge badge-danger">unreachable</span>
+                        <span class="badge text-bg-danger">unreachable</span>
                     {% endif %}
                 </span>
                 {% if status.generated_at is not null %}

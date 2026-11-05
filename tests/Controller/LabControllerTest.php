@@ -37,6 +37,121 @@ class LabControllerTest extends AuthenticatedWebTestCase
     /**
      * @depends testCreateLab
      */
+    public function testLabInfoExposesShareFields($labId)
+    {
+        $this->client->request('GET', '/api/labs/info/'.$labId);
+        $this->assertResponseIsSuccessful();
+
+        $data = json_decode($this->client->getResponse()->getContent(), true);
+
+        $this->assertSame('success', $data['status']);
+        $this->assertArrayHasKey('shares', $data['data']);
+        $this->assertIsArray($data['data']['shares']);
+
+        // Every group of the current user is proposed as a scope of a rule,
+        // with the labs of that group as possible targets
+        $this->assertArrayHasKey('shareChoices', $data['data']);
+        $this->assertIsArray($data['data']['shareChoices']);
+        $this->assertNotEmpty($data['data']['shareChoices']);
+
+        foreach ($data['data']['shareChoices'] as $choice) {
+            $this->assertArrayHasKey('uuid', $choice['group']);
+            $this->assertArrayHasKey('name', $choice['group']);
+            $this->assertIsArray($choice['labs']);
+            foreach ($choice['labs'] as $lab) {
+                $this->assertArrayHasKey('id', $lab);
+                $this->assertArrayHasKey('name', $lab);
+                $this->assertNotEquals($labId, $lab['id']);
+            }
+        }
+    }
+
+    /**
+     * @depends testCreateLab
+     */
+    public function testEditLabSharesAreValidatedAtomically($labId)
+    {
+        $payload = [
+            'name' => 'Edited Lab',
+            'description' => 'This is a new description',
+            'version' => '1',
+            'scripttimeout' => '300',
+            'timer' => '0',
+            'shares' => [
+                ['sharedWith' => 123456789, 'group' => 'does-not-exist'],
+            ],
+        ];
+
+        $this->client->request(
+            'PUT',
+            '/api/labs/test/'.$labId,
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            json_encode($payload)
+        );
+
+        $data = json_decode($this->client->getResponse()->getContent(), true);
+
+        $this->assertSame('error', $data['status']);
+        $this->assertNotEmpty($data['errors']);
+
+        // The rejection is atomic: not a single rule has been written
+        $this->client->request('GET', '/api/labs/info/'.$labId);
+        $info = json_decode($this->client->getResponse()->getContent(), true);
+        $this->assertSame([], $info['data']['shares']);
+
+        // A rule is accepted even though the shared lab is available in no
+        // group: only the target lab has to belong to the group, which is what
+        // allows the shared lab to stay hidden from its members
+        $choice = null;
+        foreach ($info['data']['shareChoices'] as $candidate) {
+            if (!empty($candidate['labs'])) {
+                $choice = $candidate;
+                break;
+            }
+        }
+        $this->assertNotNull($choice, 'The user owns at least one group with a shareable lab.');
+
+        $payload['shares'] = [
+            ['sharedWith' => $choice['labs'][0]['id'], 'group' => $choice['group']['uuid']],
+        ];
+        $this->client->request(
+            'PUT',
+            '/api/labs/test/'.$labId,
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            json_encode($payload)
+        );
+
+        $data = json_decode($this->client->getResponse()->getContent(), true);
+        $this->assertSame('success', $data['status']);
+
+        $this->client->request('GET', '/api/labs/info/'.$labId);
+        $info = json_decode($this->client->getResponse()->getContent(), true);
+        $this->assertCount(1, $info['data']['shares']);
+        $this->assertSame($choice['labs'][0]['id'], $info['data']['shares'][0]['sharedWith']);
+        $this->assertSame($choice['group']['uuid'], $info['data']['shares'][0]['group']);
+
+        // An empty list is a valid payload (all rules removed)
+        $payload['shares'] = [];
+        $this->client->request(
+            'PUT',
+            '/api/labs/test/'.$labId,
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            json_encode($payload)
+        );
+
+        $data = json_decode($this->client->getResponse()->getContent(), true);
+        $this->assertSame('success', $data['status']);
+    }
+
+    /**
+     * @depends testCreateLab
+     */
     public function testAddDeviceToLab($labId)
     {
         $device = [

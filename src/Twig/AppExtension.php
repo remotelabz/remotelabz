@@ -10,15 +10,25 @@ use Twig\Extension\AbstractExtension;
 use Doctrine\ORM\PersistentCollection;
 use Symfony\Component\Asset\VersionStrategy\EmptyVersionStrategy;
 use League\CommonMark\GithubFlavoredMarkdownConverter;
+use League\CommonMark\Util\HtmlFilter;
 
 class AppExtension extends AbstractExtension
 {
     private $rootDirectory;
     private $gfmConverter;
+    private $siteMessageConverter;
     public function __construct(string $rootDirectory)
     {
         $this->rootDirectory = $rootDirectory;
         $this->gfmConverter = new GithubFlavoredMarkdownConverter();
+        // Site messages are shown to everyone (including on the login page):
+        // raw HTML is stripped and unsafe links are rejected. Soft breaks are
+        // rendered as <br> so plain-text messages keep their line breaks.
+        $this->siteMessageConverter = new GithubFlavoredMarkdownConverter([
+            'html_input' => HtmlFilter::STRIP,
+            'allow_unsafe_links' => false,
+            'renderer' => ['soft_break' => '<br>'],
+        ]);
     }
 
     public function getFilters(): array
@@ -31,7 +41,21 @@ class AppExtension extends AbstractExtension
             // GFM (tables, strikethrough, autolinks, task lists) so the
             // server-side rendering matches the EasyMDE preview
             new TwigFilter('markdown_gfm_to_html', [$this, 'markdownGfmToHtml'], ['is_safe' => ['html']]),
+            // Converts :shortcodes: to emoji without markdown rendering, for
+            // plain-text content rendered with nl2br
+            new TwigFilter('emoji_shortcodes', [$this, 'emojiShortcodeToUnicode']),
+            // Full rendering for site messages (Markdown + emoji + <br> on
+            // single line breaks), with raw HTML stripped
+            new TwigFilter('site_message_to_html', [$this, 'siteMessageToHtml'], ['is_safe' => ['html']]),
         ];
+    }
+
+    public function siteMessageToHtml(?string $text): string
+    {
+        if ($text === null || trim($text) === '') {
+            return '';
+        }
+        return (string) $this->siteMessageConverter->convert($this->emojiShortcodeToUnicode($text));
     }
 
     public function markdownGfmToHtml(?string $text): string
@@ -39,7 +63,46 @@ class AppExtension extends AbstractExtension
         if ($text === null || trim($text) === '') {
             return '';
         }
-        return (string) $this->gfmConverter->convert($text);
+        return (string) $this->gfmConverter->convert($this->emojiShortcodeToUnicode($text));
+    }
+
+    private static ?array $emojiShortcodes = null;
+
+    private static function getEmojiShortcodes(): array
+    {
+        if (self::$emojiShortcodes === null) {
+            self::$emojiShortcodes = require __DIR__ . '/emoji-shortcodes.php';
+        }
+        return self::$emojiShortcodes;
+    }
+
+    /**
+     * Replace :shortcodes: (GitHub style) by emoji characters, leaving code
+     * blocks and inline code untouched. Mirrors the EasyMDE preview so the
+     * server-side rendering matches the editor.
+     */
+    public function emojiShortcodeToUnicode(string $text): string
+    {
+        if (!str_contains($text, ':')) {
+            return $text;
+        }
+        $map = self::getEmojiShortcodes();
+        $segments = preg_split('/(```[\\s\\S]*?```|~~~[\\s\\S]*?~~~|`[^`\\n]*`)/u', $text, -1, PREG_SPLIT_DELIM_CAPTURE);
+        if ($segments === false) {
+            return $text;
+        }
+        foreach ($segments as $i => $segment) {
+            if ($i % 2 === 0) {
+                $segments[$i] = preg_replace_callback(
+                    '/:([a-z0-9_+-]+):/i',
+                    static function (array $m) use ($map): string {
+                        return $map[strtolower($m[1])] ?? $m[0];
+                    },
+                    $segment
+                );
+            }
+        }
+        return implode('', $segments);
     }
 
     public function getFunctions(): array

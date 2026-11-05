@@ -13,6 +13,7 @@ class LabVoter extends Voter
     const SEE_TEXTOBJECT = 'see_textobject';
     const EDIT_TEXTOBJECT = 'edit_textobject';
     const SEE_DEVICE = 'see_device';
+    const SEE_HIDDEN_DEVICE = 'see_hidden_device';
     const EDIT_DEVICE = 'edit_device';
     const SEE_INTERFACE = 'see_interface';
     const EDIT_INTERFACE = 'edit_interface';
@@ -49,6 +50,8 @@ class LabVoter extends Voter
                 return $this->canEditTextObject($lab, $user);
             case self::SEE_DEVICE:
                 return $this->canSeeDevice($lab, $user);
+            case self::SEE_HIDDEN_DEVICE:
+                return $this->canSeeHiddenDevice($lab, $user);
             case self::EDIT_DEVICE:
                 return $this->canEditDevice($lab, $user);
             case self::SEE_INTERFACE:
@@ -84,6 +87,17 @@ class LabVoter extends Voter
     private function canSeeDevice(Lab $lab, $user)
     {
         return $this->canHaveAccess($lab, $user);
+    }
+
+    /**
+     * Hidden devices are only visible to the lab author and system admins.
+     */
+    private function canSeeHiddenDevice(Lab $lab, $user)
+    {
+        if (!$user instanceof User) {
+            return false;
+        }
+        return $user->isAdministrator() || $user == $lab->getAuthor();
     }
 
     private function canEditDevice(Lab $lab, $user)

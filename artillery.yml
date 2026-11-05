@@ -1,0 +1,8 @@
+config:
+  target: http://127.0.0.1
+  engines:
+    playwright: {}
+  processor: "./e2e/artillery/install.js"
+scenarios:
+  - engine: playwright
+    testFunction: "artilleryScript"

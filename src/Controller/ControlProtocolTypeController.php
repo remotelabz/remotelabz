@@ -152,9 +152,7 @@ class ControlProtocolTypeController extends Controller
 
             $this->addFlash('success', 'Control Protocol has been edited.');
             
-            return $this->redirectToRoute('show_controlProtocolType', [
-                        'id' => $id
-            ]);
+            return $this->redirectToRoute('controlProtocolType');
 
         }
 

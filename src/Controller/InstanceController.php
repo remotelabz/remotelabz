@@ -122,6 +122,7 @@ class InstanceController extends Controller
         // Récupérer les paramètres
         $instanceParams = $request->query->all('instance');
         $searchUuid = $instanceParams['searchUuid'] ?? '';
+        $limit = $this->normalizeLimit($request->query->get('limit', 10));
         
         if ($user->getHighestRole() != "ROLE_USER") {
             $filter = $instanceParams['filter'] ?? 'none';
@@ -147,7 +148,8 @@ class InstanceController extends Controller
             'labInstances' => [], // Tableau vide
             'user' => $user,
             'filter' => $filter,
-            'subFilter' => $subFilter
+            'subFilter' => $subFilter,
+            'limit' => $limit
         ], 'json', SerializationContext::create()->setGroups(['api_get_lab_instance']));
 
         return $this->render('instance/index.html.twig', [
@@ -156,11 +158,23 @@ class InstanceController extends Controller
             'addFilterForm' => $addFilterForm ? $addFilterForm->createView() : "",
             'count' => 0,
             'page' => 1,
-            'limit' => 10,
+            'limit' => $limit,
             'searchUuid' => $searchUuid,
             'filter' => $filter,
             'subFilter' => $subFilter,
         ]);
+    }
+
+    /**
+     * Normalise la valeur "limit" (nombre d'instances par page) reçue en query
+     * string. Seules les valeurs 10, 20 et 50 sont acceptées afin d'éviter
+     * qu'un utilisateur ne force un chargement massif d'instances.
+     */
+    private function normalizeLimit($limit): int
+    {
+        $limit = (int) $limit;
+
+        return in_array($limit, [10, 20, 50], true) ? $limit : 10;
     }
 
     #[Get('/api/instances', name: 'api_get_instances')]
@@ -174,28 +188,32 @@ class InstanceController extends Controller
             $filter = $instance ? $instance['filter'] : "none";
             $subFilter = $instance ? $instance['subFilter'] : "allInstances";
             $searchUuid = $instance ? ($instance['searchUuid'] ?? '') : '';
-            $page = (int)$request->query->get('page', 1);
-            $limit = 10;
+            $page = max(1, (int)$request->query->get('page', 1));
+            $limit = $this->normalizeLimit($request->query->get('limit', 10));
 
-            $this->logger->debug("[InstanceController:apiIndexAction]::filter=$filter, subfilter=$subFilter, searchUuid=$searchUuid");
+            $this->logger->debug("[InstanceController:apiIndexAction]::filter=$filter, subfilter=$subFilter, searchUuid=$searchUuid, page=$page, limit=$limit");
 
             // PRIORITÉ 1 : Si un UUID est fourni, rechercher par UUID
             if (!empty($searchUuid)) {
                 $instances = $this->searchInstancesByUuid($searchUuid);
-                
+
                 if (empty($instances)) {
                     $this->logger->warning("[InstanceController:apiIndexAction]::No instances found for UUID: $searchUuid");
                 } else {
                     $this->logger->info("[InstanceController:apiIndexAction]::Found " . count($instances) . " instance(s) for UUID: $searchUuid");
                 }
-                
-                return $this->json($instances, 200, [], ['api_get_lab_instance']);
+
+                return $this->paginatedJsonResponse($instances, $page, $limit);
             }
 
             // PRIORITÉ 2 : Sinon, utiliser les filtres normaux
             if ($subFilter == "allInstances") {
                 if ($user->isAdministrator()) {
-                    $instances = $this->labInstanceRepository->findAll();
+                    // Pagination au niveau SQL : seules les instances de la page
+                    // demandée sont hydratées.
+                    $result = $this->labInstanceRepository->findPageAll($page, $limit);
+
+                    return $this->jsonWithTotal(array_values($result['instances']), $result['total']);
                 } else {
                     $instances = $this->labInstanceRepository->findByUserAndAllMembersGroups($user);
                 }
@@ -207,19 +225,44 @@ class InstanceController extends Controller
                 }
             }
 
-            $AllLabInstances = [];
-            foreach ($instances as $instance) {
-                array_push($AllLabInstances, $instance);
-            }
+            $this->logger->debug("[InstanceController:apiIndexAction]::Returning page $page (limit $limit) out of " . count($instances) . " instances");
 
-            $count = count($AllLabInstances);
-
-            $this->logger->debug("[InstanceController:apiIndexAction]::Returning JSON with " . count($AllLabInstances) . " instances");
-
-            return $this->json($AllLabInstances, 200, [], ['api_get_lab_instance']);
+            return $this->paginatedJsonResponse($instances, $page, $limit);
         }
         else 
             return $this->json("", 200, [], ['api_get_lab_instance']);
+    }
+
+    /**
+     * Sérialise uniquement la page demandée d'instances et expose le nombre
+     * total d'instances via l'en-tête HTTP `X-Total-Count`.
+     *
+     * La découpe (array_slice) est effectuée AVANT la sérialisation JMS, ce qui
+     * évite de charger/sérialiser toutes les instances en mémoire (source du
+     * "Allowed memory size exhausted" sur les grosses installations).
+     *
+     * @param \App\Entity\LabInstance[] $instances
+     */
+    private function paginatedJsonResponse(array $instances, int $page, int $limit): JsonResponse
+    {
+        $total = count($instances);
+        $pageInstances = array_slice($instances, ($page - 1) * $limit, $limit);
+
+        return $this->jsonWithTotal(array_values($pageInstances), $total);
+    }
+
+    /**
+     * Sérialise la page fournie (déjà découpée) et expose le total via
+     * l'en-tête `X-Total-Count`.
+     *
+     * @param \App\Entity\LabInstance[] $instances
+     */
+    private function jsonWithTotal(array $instances, int $total): JsonResponse
+    {
+        $response = $this->json($instances, 200, [], ['api_get_lab_instance']);
+        $response->headers->set('X-Total-Count', (string) $total);
+
+        return $response;
     }
 
     private function getLabInstances($filter, $subFilter)
@@ -1209,6 +1252,7 @@ class InstanceController extends Controller
         }
 
         $port_number = $this->isRemoteAccess($deviceInstance, $type);
+        $proxyError = false;
         if ($port_number) {
             $this->logger->debug("[InstanceController:viewInstanceAction]::Creation proxy rule to port " . $port_number);
             try {
@@ -1236,36 +1280,60 @@ class InstanceController extends Controller
             } catch (ServerException $exception) {
                 $this->logger->error($exception->getResponse()->getBody()->getContents());
                 $this->addFlash('danger', 'Cannot forward ' . $type . ' connection to client. Please try again later or contact an administrator.');
+                $proxyError = true;
             } catch (RequestException $exception) {
                 $this->logger->error($exception);
                 $this->addFlash('danger', 'Cannot forward ' . $type . ' connection to client. Please try again later or contact an administrator.');
+                $proxyError = true;
             } catch (ConnectException $exception) {
                 $this->logger->error($exception);
                 $this->addFlash('danger', 'Cannot forward ' . $type . ' connection to client. Please try again later or contact an administrator.');
+                $proxyError = true;
             }
-        }
-
-        if ($request->get('size') == "fullscreen") {
-            $fullscreen = true;
         } else {
-            $fullscreen = false;
+            $this->logger->debug("[InstanceController:viewInstanceAction]::No " . $type . " access for " . $deviceInstance->getUuid());
+            $this->addFlash('danger', 'No ' . $type . ' console available for this device.');
+            $proxyError = true;
         }
 
-        $this->logger->debug("[InstanceController:viewInstanceAction]::Want a fullscreen ?" . $fullscreen);
+        if ($proxyError) {
+            // Le referer est contrôlé par le client : on ne le suit que s'il pointe
+            // vers le même hôte, sinon on retombe sur la page d'accueil.
+            $referer = $request->headers->get('referer');
+            if ($referer && $request->getHost() === parse_url($referer, PHP_URL_HOST)) {
+                return $this->redirect($referer);
+            }
+
+            return $this->redirectToRoute('index');
+        }
+
+        // La console VNC est servie par le client noVNC intégré : pas d'intermédiaire,
+        // on redirige directement vers la page fullscreen.
+        if ($type == "vnc") {
+            if ($request->get('size') != "fullscreen") {
+                return $this->redirectToRoute('view_instance', [
+                    'uuid' => $uuid,
+                    'type' => 'vnc',
+                    'size' => 'fullscreen',
+                ]);
+            }
+
+            $this->logger->debug("[InstanceController:viewInstanceAction]::Render VNC fullscreen");
+            return $this->render('lab/vm_view_fullscreen.html.twig', [
+                'lab' => $lab,
+                'device' => $device,
+                'protocol' => $this->remotelabzProxyUseWss ? 'wss' : 'ws',
+                'host' => $this->proxyManager->getRemotelabzProxyServer(),
+                'path' => 'device/' . $deviceInstance->getUuid(),
+            ]);
+        }
+
+        // Console login / serial / admin : la page ttyd est déjà servie par le proxy,
+        // on y redirige directement.
         $ssl = ($this->remotelabzProxyUseWss ? 'https' : 'http');
-        $this->logger->debug("[InstanceController:viewInstanceAction]::Is proxy using SSL ? " . $ssl);
-        return $this->render(($fullscreen ? 'lab/vm_view_fullscreen.html.twig' : 'lab/vm_view.html.twig'), [
-            'lab' => $lab,
-            'uuid' => $uuid,
-            'device' => $device,
-            'deviceInstance' => $deviceInstance,
-            'ssl' => $ssl,
-            'type_control_access' => $type,
-            'protocol' => $request->get('protocol') ?: ($this->proxyManager->getRemotelabzProxyUseWss() ? 'wss' : 'ws'),
-            'host' => $request->get('host') ?: $this->proxyManager->getRemotelabzProxyServer(),
-            //'port' => $request->get('port') ?: $this->proxyManager->getRemotelabzProxyPort(),
-            'path' => $request->get('path') ?: 'device/' . $deviceInstance->getUuid()
-        ]);
+        $host = $this->proxyManager->getRemotelabzProxyServer();
+        $this->logger->debug("[InstanceController:viewInstanceAction]::Redirect to " . $ssl . "://" . $host . " for type " . $type);
+        return $this->redirect($ssl . '://' . $host . '/device/' . $uuid . '/');
     }
 
 
@@ -1312,10 +1380,17 @@ class InstanceController extends Controller
         $user = $data['user'];
         $labInstance = $data['labInstance'];
 
+        // Same lab-level Internet aggregate as LabController::showAction():
+        // the header is rebuilt by InstanceManager while the page stays open,
+        // so the Connect/Disconnect button follows the live state instead of
+        // the one computed when the page was rendered.
+        $labEntity = is_array($lab) && !empty($lab['id']) ? $this->labRepository->find($lab['id']) : null;
+
         $html = $this->renderView('editButtonDisplay.html.twig', [
             'lab' => $lab,
             'user' => $user,
-            'labInstance' => $labInstance
+            'labInstance' => $labInstance,
+            'internetConnected' => $labEntity ? $this->labInstanceRepository->isLabInternetConnected($labEntity) : false
         ]);
         $response = new Response();
         $response->setContent(json_encode([

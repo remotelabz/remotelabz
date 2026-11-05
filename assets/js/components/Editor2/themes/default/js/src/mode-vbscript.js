@@ -16,7 +16,7 @@ var VBScriptHighlightRules = function() {
         "support.class.asp": "Application|ObjectContext|Request|Response|Server|Session",
         "support.class.collection.asp": "Contents|StaticObjects|ClientCertificate|Cookies|Form|QueryString|ServerVariables",
         "support.constant.asp": "TotalBytes|Buffer|CacheControl|Charset|ContentType|Expires|ExpiresAbsolute"
-            + "|IsClientConnected|PICS|Status|ScriptTimeout|CodePage|LCID|SessionID|Timeout",
+            + "|IsClientConnected|PICS|Status|CodePage|LCID|SessionID|Timeout",
         "support.function.asp": "Lock|Unlock|SetAbort|SetComplete|BinaryRead|AddHeader|AppendToLog"
             + "|BinaryWrite|Clear|Flush|Redirect|Write|CreateObject|HTMLEncode|MapPath|URLEncode|Abandon|Convert|Regex",
         "support.function.event.asp": "Application_OnEnd|Application_OnStart"

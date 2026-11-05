@@ -10,6 +10,31 @@ import ChatWindow from '../Chat/ChatWindow';
 import { ListGroup, ListGroupItem, Button, Modal, Spinner } from 'react-bootstrap';
 import moment from 'moment/moment';
 
+function netmaskToCidr(netmask) {
+    if (!netmask) return null;
+    return netmask.split('.').map(o => Number(o).toString(2).padStart(8, '0')).join('').replace(/0+$/, '').length;
+}
+
+function ipToInt(ip) {
+  return ip.split('.').reduce((acc, octet) => (acc << 8) + parseInt(octet, 10), 0) >>> 0;
+}
+
+function intToIp(int) {
+  return [24, 16, 8, 0].map(shift => (int >>> shift) & 255).join('.');
+}
+
+function getLastUsableAddress(networkAddr, netmask) {
+  const net = (ipToInt(networkAddr) & ipToInt(netmask)) >>> 0;
+  const broadcast = (net | ~ipToInt(netmask)) >>> 0;
+  return intToIp(broadcast - 1);
+}
+
+function getReservedAddress(networkAddr, netmask) {
+  const net = (ipToInt(networkAddr) & ipToInt(netmask)) >>> 0;
+  const broadcast = (net | ~ipToInt(netmask)) >>> 0;
+  return intToIp(broadcast - 2);
+}
+
 function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCallEnabled: false, isSandbox: false, hasBooking: false, chatAccessible: false}) {
     const [labInstance, setLabInstance] = useState(props.labInstance);
     const [showLeaveLabModal, setShowLeaveLabModal] = useState(false);
@@ -19,6 +44,7 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
     const [timerCountDown, setTimerCountDown] = useState("");
     const isSandbox = props.isSandbox;
     const timerRef = useRef(null);
+    const instanceButtonsKeyRef = useRef(instanceButtonsKey(props.labInstance));
 
     //console.log("InstanceManager props",props);
     //console.log("InstanceManager isSandbox",props.isSandbox);
@@ -125,11 +151,13 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
                 ...response.data,
                 deviceInstances: response.data.deviceInstances
             });
+            refreshInstanceButtons(response.data);
         }).catch(error => {
             if (error.response) {
                 if (error.response.status <= 500) {
                     setLabInstance(null);
                     setLoadingInstanceState(false);
+                    refreshInstanceButtons(null);
                 } else {
                     
                     toast.error('An error happened while fetching instance state. If this error persists, please contact an administrator.', {
@@ -144,6 +172,39 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
         return role === GroupRoles.Owner || role === GroupRoles.Admin;
     }
 
+    // The "#instanceButtons" header is rendered server side (lab/view.html.twig)
+    // and rebuilt through /api/editButton/display whenever the information it
+    // depends on changes: existence of the instance and its Internet state.
+    function instanceButtonsKey(instance) {
+        if (!instance || instance.state === 'deleting' || instance.state === 'deleted') {
+            return 'none';
+        }
+
+        return instance.isInternetConnected ? 'connected' : 'disconnected';
+    }
+
+    function refreshInstanceButtons(instance) {
+        if (isSandbox || !document.getElementById('instanceButtons')) {
+            return;
+        }
+
+        const key = instanceButtonsKey(instance);
+        if (instanceButtonsKeyRef.current === key) {
+            return;
+        }
+        instanceButtonsKeyRef.current = key;
+
+        $.ajax({
+            type: "POST",
+            url: `/api/editButton/display`,
+            data: JSON.stringify({ user: props.user, lab: props.lab, labInstance: instance }),
+            dataType: "json",
+            success: function (response) {
+                $("#instanceButtons").html(response.data.html);
+            }
+        });
+    }
+
     function isCurrentUserGroupAdmin(group) {
         if (group.type === 'user') return true;
         if (props.user.code) return true;
@@ -156,8 +217,14 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
         return labInstance.ownedBy === "group";
     }
 
+    function isHiddenDeviceInstance(instance) {
+        return instance.device && instance.device.hidden;
+    }
+
     function hasInstancesStillRunning() {
-        return labInstance.deviceInstances.some(i => (i.state !== 'stopped' && i.state !== 'exported' && i.state !== 'error' && i.state !== 'reset'));
+        // Hidden devices run in background and must not block the "Leave lab"
+        // button: the user cannot see them nor control them.
+        return labInstance.deviceInstances.some(i => !isHiddenDeviceInstance(i) && (i.state !== 'stopped' && i.state !== 'exported' && i.state !== 'error' && i.state !== 'reset'));
     }
 
     async function onInstanceStateUpdate() {
@@ -174,17 +241,7 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
             const response = await Remotelabz.instances.lab.create(props.lab.uuid, viewAs.uuid, viewAs.type, false);
             setLabInstance(response.data);
             setLoadingInstanceState(false);
-            if (!isSandbox) {
-                $.ajax({
-                    type: "POST",
-                    url: `/api/editButton/display`,
-                    data: JSON.stringify({ user: props.user, lab: props.lab, labInstance: response.data }),
-                    dataType: "json",
-                    success: function (response) {
-                        $("#instanceButtons").html(response.data.html);
-                    }
-                });
-            }
+            refreshInstanceButtons(response.data);
         } catch (error) {
             setLoadingInstanceState(false); 
             if (error.response?.data?.message.includes("No worker available")) {
@@ -212,17 +269,7 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
         try {
             await Remotelabz.instances.lab.delete(labInstance.uuid);
             setLabInstance({ ...labInstance, state: "deleting" });
-            if (!isSandbox) {
-                $.ajax({
-                    type: "POST",
-                    url: `/api/editButton/display`,
-                    data: JSON.stringify({ user: props.user, lab: props.lab, labInstance: null }),
-                    dataType: "json",
-                    success: function (response) {
-                        $("#instanceButtons").html(response.data.html);
-                    }
-                });
-            }
+            refreshInstanceButtons(null);
             if (isSandbox) {
                 setTimeout(() => { window.location.href = "/admin/sandbox"; }, 1500);
             }
@@ -255,7 +302,7 @@ useEffect(() => {
         {!isSandbox && props.user.name && 
             <div className="d-flex align-items-center mb-2">
                 <div>View as : </div>
-                <div className="flex-grow-1 ml-2">
+                <div className="flex-grow-1 ms-2">
                     <InstanceOwnerSelect
                     user={props.user.id}
                     onChange={onViewAsChange}
@@ -273,8 +320,19 @@ useEffect(() => {
                         <h4 className="mb-0">Instances</h4>
                         <span>Started: { moment(labInstance.createdAt).format("DD/MM/YYYY hh:mm A") }</span>
                         <div className="text-muted small">
-                            {props.lab.uuid}
+                            {labInstance.uuid}
                         </div>
+                    </div>
+                    <div>
+                        {labInstance.network?.ip?.addr && labInstance.network.netmask?.addr && (
+                            <>
+                                <h4 className="mb-0">Network: {labInstance.network.ip.addr}/{netmaskToCidr(labInstance.network.netmask.addr)}</h4>
+                                <span>Gateway :  {getLastUsableAddress(labInstance.network.ip.addr,labInstance.network.netmask.addr)}</span>
+                                <div className="text-muted small">
+                                    IP {getReservedAddress(labInstance.network.ip.addr,labInstance.network.netmask.addr)} is reserved
+                                </div>
+                            </>
+                        )}
                     </div>
                     <div>
                         {props.lab.virtuality == 1 && props.lab.hasTimer == true && <span id="timer">{timerCountDown}</span>
@@ -286,18 +344,18 @@ useEffect(() => {
                     {labInstance.state === "created" &&
                         <Button href="/profile/vpn" variant="primary">
                             <SVG name="download" className="v-sub image-sm"></SVG>
-                            <span className="ml-1">OpenVPN file</span>
+                            <span className="ms-1">OpenVPN file</span>
                         </Button>
                     }
                     {props.lab.chatEnabled === true && props.chatAccessible === true && !props.user.code && labInstance.state === "created" &&
-                        <Button variant="primary" className="ml-2" onClick={() => setShowChatModal(true)}>
+                        <Button variant="primary" className="ms-2" onClick={() => setShowChatModal(true)}>
                             <SVG name="comment" className="v-sub image-sm"></SVG>
-                            <span className="ml-1">Chat</span>
+                            <span className="ms-1">Chat</span>
                         </Button>
                     }
                     {(props.isJitsiCallEnabled && isOwnedByGroup()) &&
                         <JitsiCallButton
-                            className="mr-2"
+                            className="me-2"
                             isOwnedByGroup={isOwnedByGroup()}
                             isCurrentUserGroupAdmin={isCurrentUserGroupAdmin(viewAs)}
                             onStartCall={onJitsiCallStarted}
@@ -305,14 +363,14 @@ useEffect(() => {
                     }
                     {
                         (!props.lab.name.startsWith('Sandbox_Device')) && labInstance.state === "created" && (viewAs.type === "user" || viewAs.type === "group") &&
-                        <Button variant="danger" className="ml-2" href={`/labs/${props.lab.id}/see/${labInstance.id}`}>See Lab</Button>
+                        <Button variant="danger" className="ms-2" href={`/labs/${props.lab.id}/see/${labInstance.id}`}>See Lab</Button>
                     }
                     {
                         (!props.lab.name.startsWith('Sandbox_Device')) && labInstance.state === "created" && viewAs.type === "guest" &&
-                        <Button variant="danger" className="ml-2" href={`/labs/guest/${props.lab.id}/see/${labInstance.id}`}>See Lab</Button>
+                        <Button variant="danger" className="ms-2" href={`/labs/guest/${props.lab.id}/see/${labInstance.id}`}>See Lab</Button>
                     }
                     {isCurrentUserGroupAdmin(viewAs) &&
-                        <Button variant="danger" className="ml-2" onClick={() => setShowLeaveLabModal(true)} disabled={hasInstancesStillRunning() || labInstance.state === "creating" || labInstance.state === "deleting"}>Leave lab</Button>
+                        <Button variant="danger" className="ms-2" onClick={() => setShowLeaveLabModal(true)} disabled={hasInstancesStillRunning() || labInstance.state === "creating" || labInstance.state === "deleting"}>Leave lab</Button>
                     }
                     </div>
                 </ListGroupItem>

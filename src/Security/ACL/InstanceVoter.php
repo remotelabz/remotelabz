@@ -61,11 +61,17 @@ class InstanceVoter extends Voter
 
     private function canView($instance, $user)
     {
+        if (!$this->canSeeHiddenDeviceInstance($instance, $user)) {
+            return false;
+        }
         return $this->canHaveAccess($instance, $user);
     }
 
     private function canStopDevice($instance, $user)
     {
+        if (!$this->canSeeHiddenDeviceInstance($instance, $user)) {
+            return false;
+        }
         if ($instance instanceof DeviceInstance) {
             if ($instance->getOwnedBy() == "group" && !$instance->getOwner()->isElevatedUser($user)) {
                 return false;
@@ -76,6 +82,9 @@ class InstanceVoter extends Voter
 
     private function canStartDevice($instance, $user)
     {
+        if (!$this->canSeeHiddenDeviceInstance($instance, $user)) {
+            return false;
+        }
         if ($instance instanceof DeviceInstance) {
             /*if ($instance->getDevice()->getType() == "switch") {
                 return false;
@@ -91,6 +100,9 @@ class InstanceVoter extends Voter
     {
         $result=true;
         if (!$user instanceof User) {
+            $result=false;
+        }
+        if (!$this->canSeeHiddenDeviceInstance($instance, $user)) {
             $result=false;
         }
         if ($instance->getOwnedBy() == "group" && !$instance->getOwner()->isElevatedUser($user)) {
@@ -110,7 +122,34 @@ class InstanceVoter extends Voter
 
     private function canGetLogs($instance, $user)
     {
+        if (!$this->canSeeHiddenDeviceInstance($instance, $user)) {
+            return false;
+        }
         return $this->canHaveAccess($instance, $user);
+    }
+
+    /**
+     * The instance of a hidden device is only visible to the lab author and
+     * the system admins.
+     */
+    private function canSeeHiddenDeviceInstance($instance, $user): bool
+    {
+        if (!$instance instanceof DeviceInstance) {
+            return true;
+        }
+
+        $device = $instance->getDevice();
+        if (null === $device || !$device->getHidden()) {
+            return true;
+        }
+
+        if (!$user instanceof User) {
+            return false;
+        }
+
+        $lab = $instance->getLabInstance()->getLab();
+
+        return $user->isAdministrator() || $user == $lab->getAuthor();
     }
 
     private function canDelete($instance, $user)

@@ -42,6 +42,8 @@ export var TEMPLATE;
 export var ISGROUPOWNER;
 export var HASGROUPACCESS;
 export var VIRTUALITY;
+export var IS_INTERNET_AUTHORIZED = true;
+export var IS_INTERNET_CONNECTED = false;
 
 export function setFolder(value){
 	FOLDER = value;
@@ -100,6 +102,14 @@ export function setHasGroupAccess(value) {
 
 export function setVirtuality(value) {
 	VIRTUALITY = value;
+}
+
+export function setIsInternetAuthorized(value) {
+	IS_INTERNET_AUTHORIZED = value;
+}
+
+export function setIsInternetConnected(value) {
+	IS_INTERNET_CONNECTED = value;
 }
 
 $(document).ready(function() {

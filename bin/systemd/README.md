@@ -13,6 +13,10 @@ et timers de RemoteLabz.
 | **Service** | `remotelabz-git-version-update.service` | Met à jour le cache de version | Déclenché par le timer |
 | **Timer** | `remotelabz-route-monitor.timer` | Monitoring des routes des labs | Toutes les 5 minutes |
 | **Service** | `remotelabz-route-monitor.service` | Vérifie la disponibilité des endpoints | Déclenché par le timer |
+| **Timer** | `remotelabz-instance-reconcile.timer` | Récupération des devices bloqués en `starting` | Toutes les 5 minutes |
+| **Service** | `remotelabz-instance-reconcile.service` | Exécute `app:instance:reconcile-starting` | Déclenché par le timer |
+| **Timer** | `remotelabz-instance-ips.timer` | Collecte de l'IP des instances démarrées | Toutes les minutes |
+| **Service** | `remotelabz-instance-ips.service` | Exécute `app:instance:collect-ips` | Déclenché par le timer |
 | **Timer** | `remotelabz-login-logs.timer` | Nettoyage des logs de connexion | Quotidien à 2h00 UTC |
 | **Service** | `remotelabz-login-logs.service` | Exécute `app:login-logs:clean` | Déclenché par le timer |
 | **Timer** | `remotelabz-scheduled-actions.timer` | Exécution des actions planifiées (démarrage/arrêt de groupes, etc.) | Toutes les minutes |
@@ -39,6 +43,10 @@ sudo cp remotelabz-git-version-update.service /etc/systemd/system/
 sudo cp remotelabz-git-version-update.timer /etc/systemd/system/
 sudo cp remotelabz-route-monitor.service /etc/systemd/system/
 sudo cp remotelabz-route-monitor.timer /etc/systemd/system/
+sudo cp remotelabz-instance-reconcile.service /etc/systemd/system/
+sudo cp remotelabz-instance-reconcile.timer /etc/systemd/system/
+sudo cp remotelabz-instance-ips.service /etc/systemd/system/
+sudo cp remotelabz-instance-ips.timer /etc/systemd/system/
 sudo cp remotelabz-login-logs.service /etc/systemd/system/
 sudo cp remotelabz-login-logs.timer /etc/systemd/system/
 sudo cp remotelabz-scheduled-actions.service /etc/systemd/system/
@@ -68,6 +76,8 @@ sudo systemctl enable --now remotelabz-proxy.service
 sudo systemctl enable --now remotelabz-clean-notification.timer
 sudo systemctl enable --now remotelabz-git-version-update.timer
 sudo systemctl enable --now remotelabz-route-monitor.timer
+sudo systemctl enable --now remotelabz-instance-reconcile.timer
+sudo systemctl enable --now remotelabz-instance-ips.timer
 sudo systemctl enable --now remotelabz-login-logs.timer
 sudo systemctl enable --now remotelabz-scheduled-actions.timer
 ```
@@ -102,6 +112,7 @@ sudo systemctl status remotelabz-route-monitor.service
 sudo systemctl status remotelabz-clean-notification.timer
 sudo systemctl status remotelabz-git-version-update.timer
 sudo systemctl status remotelabz-route-monitor.timer
+sudo systemctl status remotelabz-instance-reconcile.timer
 sudo systemctl status remotelabz-login-logs.timer
 sudo systemctl status remotelabz-scheduled-actions.timer
 ```
@@ -118,6 +129,9 @@ sudo systemctl status remotelabz-proxy.service
 # Logs du monitoring des routes
 sudo journalctl -u remotelabz-route-monitor.service -f
 
+# Logs de la récupération des devices bloqués en starting
+sudo journalctl -u remotelabz-instance-reconcile.service --since "1 hour ago"
+
 # Logs du nettoyage des notifications
 sudo journalctl -u remotelabz-clean-notification.service --since yesterday
 
@@ -126,6 +140,9 @@ sudo journalctl -u remotelabz-login-logs.service --since yesterday
 
 # Logs des actions planifiées (exécutions de chaque minute)
 sudo journalctl -u remotelabz-scheduled-actions.service --since "1 hour ago"
+
+# Logs de la collecte d'IP (exécutions de chaque minute)
+sudo journalctl -u remotelabz-instance-ips.service --since "1 hour ago"
 
 # Logs de la mise à jour de version
 sudo journalctl -u remotelabz-git-version-update.service --since yesterday
@@ -145,6 +162,12 @@ sudo systemctl start remotelabz-scheduled-actions.service
 
 # Mise à jour de version (immédiat)
 sudo systemctl start remotelabz-git-version-update.service
+
+# Récupération des devices bloqués en starting (immédiat)
+sudo systemctl start remotelabz-instance-reconcile.service
+
+# Collecte des IP d'instance (immédiat)
+sudo systemctl start remotelabz-instance-ips.service
 ```
 
 ---
@@ -168,6 +191,8 @@ sudo systemctl disable --now remotelabz.service
 sudo systemctl disable --now remotelabz-clean-notification.timer
 sudo systemctl disable --now remotelabz-git-version-update.timer
 sudo systemctl disable --now remotelabz-route-monitor.timer
+sudo systemctl disable --now remotelabz-instance-reconcile.timer
+sudo systemctl disable --now remotelabz-instance-ips.timer
 sudo systemctl disable --now remotelabz-login-logs.timer
 sudo systemctl disable --now remotelabz-scheduled-actions.timer
 
@@ -292,6 +317,54 @@ Exécute les actions planifiées arrivées à échéance
 - Pas de rattrapage après un arrêt : la commande retrouve de toute façon
   les actions en attente au prochain passage
 - `TimeoutStartSec=30min` : sécurité pour un gros démarrage de groupe
+
+### 9. remotelabz-instance-reconcile.timer/service — Devices bloqués en starting
+
+```ini
+Type=oneshot
+ExecStart=/usr/bin/php /opt/remotelabz/bin/console app:instance:reconcile-starting --no-interaction
+```
+
+```ini
+OnBootSec=1min
+OnUnitActiveSec=5min
+Unit=remotelabz-instance-reconcile.service
+```
+
+Détecte les device instances bloqués en `starting` (le worker n'a jamais
+renvoyé d'état) et les passe en `error` avec une notification à l'utilisateur.
+- Exécute la commande : `php bin/console app:instance:reconcile-starting --no-interaction`
+- Délai par défaut : un device est considéré bloqué après 10 minutes en
+  `starting` (`--min-age=N` pour le modifier, `--dry-run` pour simuler)
+- Relancé toutes les 5 minutes par le timer
+- Nécessite la migration `device_instance.state_changed_at`
+
+### 10. remotelabz-instance-ips.timer/service — Collecte de l'IP des instances
+
+```ini
+Type=oneshot
+ExecStart=/usr/bin/php /opt/remotelabz/bin/console app:instance:collect-ips --no-interaction
+```
+
+```ini
+OnBootSec=2min
+OnUnitActiveSec=1min
+Unit=remotelabz-instance-ips.service
+```
+
+Demande au worker l'IP des instances démarrées (couple de messages
+`DeviceInfoRequestMessage` / `DeviceInfoMessage`) et la conserve dans Redis.
+L'IP n'est jamais persistée en base.
+- Exécute la commande : `php bin/console app:instance:collect-ips --no-interaction`
+  (`--dry-run` pour simuler, `--max-age=N` pour changer la péremption)
+- 2 min après le boot, puis toutes les minutes
+- Le timer passe toutes les minutes, mais une entrée n'est redemandée que si
+  elle est absente ou périmée : `INSTANCE_IP_MAX_AGE` secondes (600 = 10 min
+  par défaut). La première IP arrive donc moins d'une minute après un démarrage.
+- Un verrou anti-spam de 10 s empêche d'empiler les demandes sur une même
+  instance
+- Nécessite que le worker réponde au `DeviceInfoRequestMessage` (voir
+  `doc/instance-ip-collection.md`)
 
 ---
 

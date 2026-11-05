@@ -12,6 +12,7 @@ use Lexik\Bundle\JWTAuthenticationBundle\Event\AuthenticationSuccessEvent;
 use Lexik\Bundle\JWTAuthenticationBundle\Response\JWTAuthenticationSuccessResponse;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
+use App\Entity\User;
 use App\Service\LoginNotificationService;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Psr\Log\LoggerInterface;
@@ -64,8 +65,15 @@ class AuthenticationSuccessHandler implements AuthenticationSuccessHandlerInterf
             $this->logger->debug('[AuthenticationSuccessHandler:onAuthenticationSuccess]::IP stored in login notification: ' . $ip, [
                 'x_forwarded_for' => $request->server->get('HTTP_X_FORWARDED_FOR', 'unknown'),
             ]);
-            $this->loginNotificationService->logLogin($user, $user->getUserIdentifier(), $ip, $userAgent, 'api');
-            $this->loginNotificationService->sendNotificationEmail($user, $ip, $userAgent, 'api', new \DateTime());
+            $this->loginNotificationService->logLogin(
+                $user->getUserIdentifier(),
+                $user instanceof User ? $user->getFirstName() : null,
+                $user instanceof User ? $user->getLastName() : null,
+                $ip,
+                $userAgent,
+                'api'
+            );
+            $this->loginNotificationService->sendNotificationEmail($user->getUserIdentifier(), $user instanceof User ? $user->getFirstName() : null, $ip, $userAgent, 'api', new \DateTime());
         }
 
         return $response;

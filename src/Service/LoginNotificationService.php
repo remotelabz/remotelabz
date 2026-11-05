@@ -37,11 +37,12 @@ class LoginNotificationService
         $this->mailSubject = $mailSubject;
     }
 
-    public function logLogin(?User $user, string $email, string $ip, string $userAgent, string $loginType): void
+    public function logLogin(string $email, ?string $firstName, ?string $lastName, string $ip, string $userAgent, string $loginType): void
     {
         $log = new LoginLog();
-        $log->setUser($user);
         $log->setEmail($email);
+        $log->setFirstName($firstName);
+        $log->setLastName($lastName);
         $log->setIp($ip);
         $log->setUserAgent($userAgent);
 
@@ -61,7 +62,7 @@ class LoginNotificationService
         }
     }
 
-    public function sendNotificationEmail(User $user, string $ip, string $userAgent, string $loginType, \DateTime $loginDate): void
+    public function sendNotificationEmail(string $email, ?string $firstName, string $ip, string $userAgent, string $loginType, \DateTime $loginDate): void
     {
         $parsed = $this->parseUserAgent($userAgent);
 
@@ -76,12 +77,12 @@ class LoginNotificationService
 
         $email = (new Email())
             ->from($this->contactMail)
-            ->to($user->getEmail())
+            ->to($email)
             ->subject($this->mailSubject)
             ->html(
                 $this->twig->render('emails/login_notification.html.twig', [
-                    'firstName' => $user->getFirstName(),
-                    'email' => $user->getEmail(),
+                    'firstName' => $firstName,
+                    'email' => $email,
                     'loginDate' => $loginDate->format('d/m/Y H:i'),
                     'loginType' => $loginTypeLabel,
                     'ip' => $ip,
@@ -102,10 +103,10 @@ class LoginNotificationService
     {
         $recentLogs = $this->entityManager->getRepository(LoginLog::class)
             ->createQueryBuilder('l')
-            ->where('l.user = :user')
+            ->where('l.email = :email')
             ->andWhere('l.login_type = :type')
             ->andWhere('l.created_at > :since')
-            ->setParameter('user', $user)
+            ->setParameter('email', $user->getEmail())
             ->setParameter('type', $loginType)
             ->setParameter('since', $since)
             ->setMaxResults(1)

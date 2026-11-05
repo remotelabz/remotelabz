@@ -19,6 +19,7 @@
                     </div>
 
                     {{ form_row(form.message) }}
+                    <span id="site-message-required-text" class="d-none">{{ 'This value should not be blank.'|trans }}</span>
 
                     <div class="site-message-information-fields">
                         {{ form_row(form.targetUsers) }}
@@ -33,10 +34,10 @@
                     {{ form_row(form.active) }}
 
                     <div class="d-flex gap-3 justify-content-end mt-4 pt-3 border-top">
-                        <a href="{{ path('app_site_message_index') }}" class="btn btn-danger btn-lg px-3">
+                        <a href="{{ path('app_site_message_index') }}" class="btn btn-danger px-3">
                             <i class="fa fa-times me-1"></i> {{ 'Cancel'|trans }}
                         </a>
-                        <button type="submit" class="btn btn-primary btn-lg px-4">
+                        <button type="submit" class="btn btn-primary px-4">
                             <i class="fa fa-save me-1"></i> {{ 'Save'|trans }}
                         </button>
                     </div>

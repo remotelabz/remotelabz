@@ -63,7 +63,7 @@ class OperatingSystemFixtures extends Fixture implements DependentFixtureInterfa
         $operatingSystem = new OperatingSystem();
         $operatingSystem->setName('Alpine-stable');
 		$operatingSystem
-            ->setImageFilename('Alpine-Stable')
+            ->setImageFilename('AlpineEdge')
             ->setHypervisor($this->getReference('lxc', Hypervisor::class))
             ->setArch($arch)            
         ;
@@ -86,6 +86,7 @@ class OperatingSystemFixtures extends Fixture implements DependentFixtureInterfa
     public function getDependencies(): array
     {
         return [
+            ArchFixtures::class,
             HypervisorFixtures::class
         ];
     }

@@ -4,12 +4,39 @@
     height: 150px;
 }
 
+// Lab cards grid (templates/lab/index.html.twig): a bit more compact
+// so that more cards fit on screen, especially on smaller viewports.
+.lab-cards {
+    .card-img-top {
+        height: 110px;
+    }
+
+    .card-body {
+        padding: 0.75rem;
+    }
+
+    .card-title {
+        font-size: 1rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .card-footer {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.8125rem;
+    }
+}
+
 .see-more-card {
     background: #f6f6f6;
     color: #979797;
     border-radius: 5px;
     font-size: 1.5rem;
     font-weight: 600;
+}
+
+.card-footer {
+    padding: 0.75rem 1.25rem;
+    background-color: theme-color("light-darker");    
 }
 
 [theme="dark"] {

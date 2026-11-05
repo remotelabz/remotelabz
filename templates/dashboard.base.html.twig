@@ -97,9 +97,9 @@
                   <div>
                     <small class="text-muted">{{ 'Published on'|trans }} <span class="site-message-date" data-date="{{ site_message.createdAt|date('c') }}">{{ site_message.createdAt|date('d/m/Y H:i') }}</span></small><br>
                     {% if site_message.title is not empty %}
-                      <strong>{{ site_message.title }}</strong><br>
+                      <strong>{{ site_message.title|emoji_shortcodes }}</strong><br>
                     {% endif %}
-                    {{ site_message.message|nl2br }}
+                    {{ site_message.message|site_message_to_html }}
                   </div>
                 </div>
               </div>
@@ -120,9 +120,7 @@
           {%- for label, messages in app.flashes -%}
             {%- for message in messages -%}
               <div class="flash-notice alert alert-{{ label }} alert-dismissible fade show">
-                <button aria-label="Close" class="close" data-dismiss="alert" type="dismiss">
-                  <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 {{ message }}
               </div>
             {%- endfor -%}

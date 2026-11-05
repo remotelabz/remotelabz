@@ -18,7 +18,7 @@
                     {% if category in ['flavors', 'flavor-disk', 'controlProtocolType', 'hypervisor', 'architectures', 'operating_systems', 'isos', 'devices', 'directories'] %}
                         parent-active
                     {% endif %}"
-                    href="#deviceSubmenu" data-toggle="collapse" aria-expanded="
+                    href="#deviceSubmenu" data-bs-toggle="collapse" aria-expanded="
                     {% if category in ['flavors', 'flavor_disk', 'controlProtocolType', 'hypervisor', 'architectures', 'operating_systems', 'isos', 'devices', 'directories'] %}
                         true
                     {% else %}
@@ -50,7 +50,7 @@
             {{ sidebar.link("Codes", 'codes', null, 'doc-text', 'codes', _context) }}
             {{ sidebar.link("Messages", 'app_site_message_index', null, 'bullhorn', 'messages', _context) }}
             <li class="nav-item">
-                <a class="nav-link dropdown-toggle {% if category in ['config', 'services', 'resources', 'database', 'login_logs'] %}parent-active{% endif %}" href="#systemSubmenu" data-toggle="collapse" aria-expanded="{% if category in ['config', 'services', 'resources', 'database', 'login_logs'] %}true{% else %}false{% endif %}">
+                <a class="nav-link dropdown-toggle {% if category in ['config', 'services', 'resources', 'database', 'login_logs'] %}parent-active{% endif %}" href="#systemSubmenu" data-bs-toggle="collapse" aria-expanded="{% if category in ['config', 'services', 'resources', 'database', 'login_logs'] %}true{% else %}false{% endif %}">
                     {{- svg('api', 'image-sm') -}}
                     <span class="menu-title">System</span>
                 </a>

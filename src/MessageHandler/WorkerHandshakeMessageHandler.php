@@ -8,6 +8,7 @@ use Remotelabz\Message\Message\InstanceActionMessage;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Repository\DeviceInstanceRepository;
 use App\Repository\DeviceRepository;
+use App\Service\SharedLabSecurityManager;
 use JMS\Serializer\SerializationContext;
 use JMS\Serializer\SerializerInterface;
 use Remotelabz\Message\Message\WorkerHandshakeMessage;
@@ -24,6 +25,7 @@ class WorkerHandshakeMessageHandler
     private SerializerInterface $serializer;
     private LoggerInterface $logger;
     private MessageBusInterface $bus;
+    private SharedLabSecurityManager $securityManager;
 
     public function __construct(
         DeviceInstanceRepository $deviceInstanceRepository,
@@ -31,6 +33,7 @@ class WorkerHandshakeMessageHandler
         EntityManagerInterface $entityManager,
         SerializerInterface $serializer,
         MessageBusInterface $bus,
+        SharedLabSecurityManager $securityManager,
         LoggerInterface $logger
     ) {
         $this->deviceInstanceRepository = $deviceInstanceRepository;
@@ -39,6 +42,7 @@ class WorkerHandshakeMessageHandler
         $this->serializer = $serializer;
         $this->logger = $logger;
         $this->bus = $bus;
+        $this->securityManager = $securityManager;
     }
 
     public function __invoke(WorkerHandshakeMessage $message)
@@ -49,6 +53,10 @@ class WorkerHandshakeMessageHandler
 
         $deviceInstances = $this->deviceInstanceRepository->findAllStartingOrStarted();
 
+        // Groups with instances placed on this worker: their shared lab topology
+        // must be re-applied (iptables, routes and local state are lost on reboot)
+        $groupsToSync = [];
+
         foreach ($deviceInstances as $deviceInstance) {
             $this->logger->debug('Device in started find');
 
@@ -58,44 +66,67 @@ class WorkerHandshakeMessageHandler
             $workerIp = $deviceInstance->getLabInstance()->getWorkerIp();
             if ($workerIp == $message->getId()) {         
                 $this->logger->debug('Same IP detected for device instance '.$uuid);
-                $deviceInstance->setState(InstanceState::STARTING);
-                $this->entityManager->flush();
-                
-                $context = SerializationContext::create()->setGroups('worker');
-                $device = $deviceInstance->getDevice();
-                $deviceJson = $this->serializer->serialize($deviceInstance->getLabInstance(), 'json', $context);
+                $previousState = $deviceInstance->getState();
+                try {
+                    $deviceInstance->setState(InstanceState::STARTING);
+                    $this->entityManager->flush();
 
-                if ($device->getVirtuality() == 0) {
-                    $this->logger->info($device->getTemplate());
-                    preg_match_all('!\d+!', $device->getTemplate(), $templateNumber);
-                    $this->logger->info(json_encode($templateNumber, true));
-                    $template = $this->deviceRepository->find($templateNumber[0][0]);
-                    
-                    $tmp = json_decode($deviceJson, true, 4096, JSON_OBJECT_AS_ARRAY);
-                    foreach ($tmp['deviceInstances'] as $key => $tmpDeviceInstance) {
-                        if ($tmpDeviceInstance['uuid'] == $uuid) {
-                            if ($template->getOutlet()) {
-                                $tmp['deviceInstances'][$key]['device']['outlet'] = [
-                                    'outlet' => $template->getOutlet()->getOutlet(),
-                                    'pdu' => [
-                                        'ip' => $template->getOutlet()->getPdu()->getIp(),
-                                        'model' => $template->getOutlet()->getPdu()->getModel(),
-                                        'brand' => $template->getOutlet()->getPdu()->getBrand()
-                                    ]
-                                ];
+                    $group = $deviceInstance->getLabInstance()->getGroup();
+                    if (!is_null($group)) {
+                        $groupsToSync[$group->getId()] = $group;
+                    }
+
+                    $context = SerializationContext::create()->setGroups('worker');
+                    $device = $deviceInstance->getDevice();
+                    $deviceJson = $this->serializer->serialize($deviceInstance->getLabInstance(), 'json', $context);
+
+                    if ($device->getVirtuality() == 0) {
+                        $this->logger->info($device->getTemplate());
+                        preg_match_all('!\d+!', $device->getTemplate(), $templateNumber);
+                        $this->logger->info(json_encode($templateNumber, true));
+                        $template = $this->deviceRepository->find($templateNumber[0][0]);
+                        
+                        $tmp = json_decode($deviceJson, true, 4096, JSON_OBJECT_AS_ARRAY);
+                        foreach ($tmp['deviceInstances'] as $key => $tmpDeviceInstance) {
+                            if ($tmpDeviceInstance['uuid'] == $uuid) {
+                                if ($template->getOutlet()) {
+                                    $tmp['deviceInstances'][$key]['device']['outlet'] = [
+                                        'outlet' => $template->getOutlet()->getOutlet(),
+                                        'pdu' => [
+                                            'ip' => $template->getOutlet()->getPdu()->getIp(),
+                                            'model' => $template->getOutlet()->getPdu()->getModel(),
+                                            'brand' => $template->getOutlet()->getPdu()->getBrand()
+                                        ]
+                                    ];
+                                }
                             }
                         }
+                        $deviceJson = json_encode($tmp, 0, 4096);
                     }
-                    $deviceJson = json_encode($tmp, 0, 4096);
-                }
 
-                $this->logger->info('Sending start message to '.$workerIp.' for device instance '.$uuid);
-                //$this->logger->debug('Sending device instance '.$uuid.' start message.', json_decode($deviceJson, true));
-                $this->bus->dispatch(
-                    new InstanceActionMessage($deviceJson, $uuid, InstanceActionMessage::ACTION_START), [
-                        new AmqpStamp($workerIp, AMQP_NOPARAM, []),
-                    ]
-                );
+                    $this->logger->info('Sending start message to '.$workerIp.' for device instance '.$uuid);
+                    //$this->logger->debug('Sending device instance '.$uuid.' start message.', json_decode($deviceJson, true));
+                    $this->bus->dispatch(
+                        new InstanceActionMessage($deviceJson, $uuid, InstanceActionMessage::ACTION_START), [
+                            new AmqpStamp($workerIp, AMQP_NOPARAM, []),
+                        ]
+                    );
+                } catch (\Throwable $e) {
+                    // Never leave the device in "starting" without a message
+                    // actually sent to the worker: the watchdog would only
+                    // catch it later. Restore the previous state instead.
+                    $this->logger->error('[WorkerHandshakeMessageHandler]::Could not send the start message to '.$workerIp.' for device instance '.$uuid.': '.$e->getMessage());
+                    $deviceInstance->setState($previousState);
+                    $this->entityManager->flush();
+                }
+            }
+        }
+
+        foreach ($groupsToSync as $group) {
+            try {
+                $this->securityManager->syncGroup($group);
+            } catch (\Throwable $e) {
+                $this->logger->error('[WorkerHandshakeMessageHandler]::Could not sync the shared lab topology of group '.$group->getPath().': '.$e->getMessage());
             }
         }
     }

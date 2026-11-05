@@ -103,6 +103,12 @@
                     {{ form_row(form.cdrom_bus_type) }}
                     {{ form_row(form.isos) }}
                 </div>
+
+                {# Carte réseau QEMU et minimum d'interfaces - affichés seulement pour un OS qemu #}
+                <div id="qemu-nic-fields-container" style="display: none">
+                    {{ form_row(form.network_card_type) }}
+                    {{ form_row(form.minimum_network_interfaces) }}
+                </div>
                 
                 {{ form_row(form.flavor) }}
                 

@@ -1,17 +1,69 @@
 <html>
     <head>
-        <title>{{lab.name}} - {{device.name}}</title>
+        <title>{{ lab.name }} - {{ device.name }}</title>
+        <style>
+            html, body {
+                margin: 0;
+                padding: 0;
+                width: 100%;
+                height: 100%;
+                background: #000;
+            }
+            body {
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+            }
+            #noVNCScreen {
+                flex: 1 1 auto;
+                min-height: 0;
+                width: 100%;
+                background: #000;
+            }
+            #consoleToolbar {
+                flex: 0 0 auto;
+                display: flex;
+                justify-content: flex-end;
+                gap: 6px;
+                box-sizing: border-box;
+                padding: 6px 8px;
+                background: #f8f9fa;
+                border-bottom: 1px solid #ced4da;
+                font-family: sans-serif;
+                font-size: 13px;
+            }
+            .js-user-rating {
+                display: none;
+            }
+            #consoleToolbar button {
+                padding: 4px 10px;
+                border: 1px solid #ced4da;
+                border-radius: 4px;
+                background: #3176ba;
+                color: #e2e6ea;
+                cursor: pointer;
+            }
+            #consoleToolbar button:hover:not([disabled]) {
+                background: #e2e6ea;
+                color: #3176ba;
+            }
+            #consoleToolbar button[disabled] {
+                opacity: 0.5;
+                cursor: default;
+            }
+        </style>
     </head>
-    <body style="margin:0;">
-        <div id="noVNCScreen">
-
+    <body>
+        <div id="consoleToolbar">
+            <button type="button" id="ReconnectButton" disabled>Reconnect</button>
+            <button type="button" id="CtrlAltDelButton">Send CTRL+ALT+DEL</button>
         </div>
-        <div class="js-user-rating" data-protocol="{{protocol}}" data-host="{{host}}" data-path="{{path}}"></div>
 
-        </div>
+        <div id="noVNCScreen"></div>
+        <div class="js-user-rating" data-protocol="{{ protocol }}" data-host="{{ host }}" data-path="{{ path }}"></div>
+
+        {% block javascripts %}
+            {{ encore_entry_script_tags('vnc') }}
+        {% endblock %}
     </body>
 </html>
-
-{% block javascripts %}
-    {{ encore_entry_script_tags('vnc') }}
-{% endblock %}

@@ -11,9 +11,9 @@
 
 import '../css/style.scss';
 
-import 'datatables.net-bs4/css/dataTables.bootstrap4.css';
-import 'datatables.net-buttons-bs4/css/buttons.bootstrap4.css';
-import 'datatables.net-select-bs4/css/select.bootstrap4.css';
+import 'datatables.net-bs5/css/dataTables.bootstrap5.min.css';
+import 'datatables.net-buttons-bs5/css/buttons.bootstrap5.min.css';
+import 'datatables.net-select-bs5/css/select.bootstrap5.min.css';
 import 'flag-icons/sass/flag-icons.scss';
 //import 'noty/src/noty.scss';
 //import 'noty/src/themes/mint.scss';
@@ -27,9 +27,15 @@ import $ from 'jquery';
 global.$ = global.jQuery = $;
 import 'popper.js';
 import 'bootstrap';
-import 'datatables.net-bs4';
-import 'datatables.net-buttons-bs4';
-import 'datatables.net-select-bs4';
+import * as bootstrap from 'bootstrap';
+import { Tooltip, Collapse } from 'bootstrap';
+
+// Expose the Bootstrap namespace for inline template scripts (UMD parity)
+window.bootstrap = bootstrap;
+import './datatables-compat';
+import 'datatables.net-bs5';
+import 'datatables.net-buttons-bs5';
+import 'datatables.net-select-bs5';
 import '@novnc/novnc/lib/rfb.js';
 import 'select2';
 import 'select2/dist/css/select2.css';
@@ -52,16 +58,23 @@ const Cookies = require('js-cookie');
 
 let theme = Cookies.get('theme');
 
+// Sets both the custom "theme" attribute (used by our own CSS) and
+// Bootstrap 5.3's "data-bs-theme" so its color mode variables switch too.
+const setTheme = (t) => {
+    document.documentElement.setAttribute('theme', t);
+    document.documentElement.setAttribute('data-bs-theme', t);
+};
+
 if (theme !== undefined) {
-    document.documentElement.setAttribute('theme', theme);
+    setTheme(theme);
 } else { // first visit
-    if (window.matchMedia('(prefers-color-scheme: dark)')) {
+    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
         theme = 'dark';
     } else {
         theme = 'light';
     }
 
-    document.documentElement.setAttribute('theme', theme);
+    setTheme(theme);
     Cookies.set('theme', theme, {
         expires: 3650
     });
@@ -127,11 +140,7 @@ $(function() {
             e.stopPropagation();
             document.getElementById("themeSwitcher").checked = !document.getElementById("themeSwitcher").checked;
 
-            if (document.getElementById("themeSwitcher").checked) {
-                document.documentElement.setAttribute('theme', 'dark');
-            } else {
-                document.documentElement.setAttribute('theme', 'light');
-            }
+            setTheme(document.getElementById("themeSwitcher").checked ? 'dark' : 'light');
 
             document.getElementById("themeSwitcher").dispatchEvent(new Event('change'));
 
@@ -245,7 +254,9 @@ $(function() {
         //Close other submenu in sidebar on opening any
 
         sidebar.on('show.bs.collapse', '.collapse', function() {
-            sidebar.find('.collapse.show').collapse('hide');
+            sidebar.find('.collapse.show').each(function () {
+                Collapse.getOrCreateInstance(this, { toggle: false }).hide();
+            });
         });
 
         let sidebarCollapsed = Cookies.get('sidebar_collapsed');
@@ -284,7 +295,9 @@ $(function() {
 
     /* Enable tooltips */
     $(function () {
-        $('[data-toggle="tooltip"]').tooltip()
+        $('[data-bs-toggle="tooltip"]').each(function () {
+            new Tooltip(this);
+        });
     })
 
     $('.custom-file input').change(function (e) {

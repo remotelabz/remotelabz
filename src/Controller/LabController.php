@@ -43,6 +43,9 @@ use App\Repository\NetworkInterfaceRepository;
 use App\Service\ChatService;
 use App\Service\Lab\LabImporter;
 use App\Service\Lab\BannerManager;
+use App\Service\LabInternetManager;
+use App\Service\LabShareManager;
+use App\Service\SharedLabSecurityManager;
 use App\Repository\FlavorRepository;
 use App\Service\LabBannerFileUploader;
 use App\Repository\PracticalSubjectRepository;
@@ -107,6 +110,7 @@ class LabController extends Controller
     private $hypervisorRepository;
     private $entityManager;
     private $chatService;
+    private $labInternetManager;
     /**
      * LabController constructor.
      *
@@ -136,9 +140,11 @@ class LabController extends Controller
         BookingRepository $bookingRepository,
         ConfigWorkerRepository $configWorkerRepository,
         EntityManagerInterface $entityManager,
-        ChatService $chatService)
+        ChatService $chatService,
+        LabInternetManager $labInternetManager)
     {
         $this->chatService = $chatService;
+        $this->labInternetManager = $labInternetManager;
         $this->workerServer = (string) getenv('WORKER_SERVER');
         $this->workerPort = (int) getenv('WORKER_PORT');
         $this->workerAddress = $this->workerServer . ":" . $this->workerPort;
@@ -400,6 +406,9 @@ class LabController extends Controller
             'deviceStarted' => $deviceStarted,
             'user' => $user,
             'props' => $props,
+            // Lab-level Internet state: the Connect/Disconnect button follows
+            // it, but only when the lab is internet authorized.
+            'internetConnected' => $labInstanceRepository->isLabInternetConnected($lab),
         ]);
     }
 
@@ -509,6 +518,47 @@ class LabController extends Controller
         $this->denyAccessUnlessGranted(LabVoter::SEE, $lab);
 
         $labInfo = $labRepository->findLabInfoById($id);
+
+        $shares = [];
+        $shareChoices = [];
+        if (!is_null($lab)) {
+            foreach ($lab->getShares() as $share) {
+                $shares[] = [
+                    'id' => $share->getId(),
+                    'sharedWith' => $share->getSharedWith()?->getId(),
+                    'sharedWithUuid' => $share->getSharedWith()?->getUuid(),
+                    'sharedWithName' => $share->getSharedWith()?->getName(),
+                    'group' => $share->getGroup()?->getUuid(),
+                    'groupName' => $share->getGroup()?->getName()
+                ];
+            }
+
+            // Every group the current user belongs to is offered as a scope of a
+            // sharing rule, with the labs of that group as possible targets.
+            // The shared lab does not have to be available in that group: this
+            // is what allows it to stay hidden from the members of the group.
+            $userGroups = (method_exists($user, 'getGroupsInfo')) ? $user->getGroupsInfo() : [];
+            foreach ($userGroups as $userGroup) {
+                $targets = [];
+                foreach ($userGroup->getLabs() as $target) {
+                    if ($target->getId() === $lab->getId()) {
+                        continue;
+                    }
+                    $targets[] = ['id' => $target->getId(), 'name' => (string) $target->getName()];
+                }
+                usort($targets, fn (array $a, array $b) => strcasecmp($a['name'], $b['name']));
+
+                $shareChoices[] = [
+                    'group' => [
+                        'uuid' => $userGroup->getUuid(),
+                        'name' => (string) $userGroup->getName()
+                    ],
+                    'labs' => $targets
+                ];
+            }
+            usort($shareChoices, fn (array $a, array $b) => strcasecmp($a['group']['name'], $b['group']['name']));
+        }
+
         $data = [
             "id"=>$labInfo["id"],
             "name"=>$labInfo["name"],
@@ -517,12 +567,14 @@ class LabController extends Controller
             "author"=>$labInfo["author"],
             "author_id"=>$labInfo["authorId"] ?? null,
             "version"=>$labInfo["version"],
-            "scripttimeout"=>$labInfo["scripttimeout"],
             "lock"=>$labInfo["locked"],
             "banner"=>$labInfo["banner"],
             "timer"=>$labInfo["timer"],
             "chatEnabled"=>$labInfo["chatEnabled"] ?? false,
-            "shared"=>$labInfo["shared"] ?? false
+            "isInternetAuthorized"=>$labInfo["isInternetAuthorized"] ?? true,
+            "isInternetConnected"=>$labInstanceRepository->isLabInternetConnected($lab),
+            "shares"=>$shares,
+            "shareChoices"=>$shareChoices
         ];
 
         $response = new Response();
@@ -1039,6 +1091,9 @@ class LabController extends Controller
         $newDevice->setNbCore($device->getNbCore());
         $newDevice->setNbThread($device->getNbThread());
         $newDevice->setDelay($device->getDelay());
+        $newDevice->setNetworkCardType($device->getNetworkCardType());
+        $newDevice->setMinimumNetworkInterfaces($device->getMinimumNetworkInterfaces());
+        $newDevice->setHidden($device->getHidden());
         $newDevice->setIsTemplate(true);
         $newDevice->setAuthor($this->getUser());
         
@@ -1143,7 +1198,6 @@ class LabController extends Controller
         $new_lab->setDescription($lab->getDescription());
         $new_lab->setTasks($lab->getTasks());
         $new_lab->setVersion($lab->getVersion());
-        $new_lab->setScripttimeout($lab->getScripttimeout());
         $new_lab->setIsInternetAuthorized($lab->isInternetAuthorized());
         $new_lab->setHasTimer($lab->getHasTimer());
         $new_lab->setTimer($lab->getTimer());
@@ -1215,16 +1269,62 @@ class LabController extends Controller
 
     
 	#[Put('/api/labs/test/{id<\d+>}', name: 'api_edit_lab_test')]
-    public function updateActionTest(Request $request, int $id, LabBannerFileUploader $fileUploader, UserRepository $userRepository)
+    public function updateActionTest(
+        Request $request,
+        int $id,
+        LabBannerFileUploader $fileUploader,
+        UserRepository $userRepository,
+        LabShareManager $labShareManager,
+        SharedLabSecurityManager $securityManager)
     {
         $lab = $this->labRepository->find($id);
         $this->denyAccessUnlessGranted(LabVoter::EDIT, $lab);
 
         $data = json_decode($request->getContent(), true);
 
+        // Share rules are validated first: an invalid payload changes nothing
+        // (atomic replacement, see shared-labs-front-plan.md §2.5)
+        $impactedGroups = [];
+        if (array_key_exists('shares', $data)) {
+            foreach ($lab->getShares() as $share) {
+                if (!is_null($share->getGroup())) {
+                    $impactedGroups[$share->getGroup()->getId()] = $share->getGroup();
+                }
+            }
+
+            if (!is_array($data['shares'])) {
+                $response = new Response();
+                $response->setContent(json_encode([
+                    'code' => 400,
+                    'status' => 'error',
+                    'message' => 'The shares field must be an array.']));
+                $response->headers->set('Content-Type', 'application/json');
+                return $response;
+            }
+
+            $errors = $labShareManager->replaceShares($lab, $data['shares']);
+
+            if ($errors) {
+                $response = new Response();
+                $response->setContent(json_encode([
+                    'code' => 400,
+                    'status' => 'error',
+                    'message' => implode(' ', $errors),
+                    'errors' => $errors]));
+                $response->headers->set('Content-Type', 'application/json');
+                return $response;
+            }
+
+            foreach ($lab->getShares() as $share) {
+                if (!is_null($share->getGroup())) {
+                    $impactedGroups[$share->getGroup()->getId()] = $share->getGroup();
+                }
+            }
+        }
+
         if (isset($data['author']) && $data['author'] !== '' && $data['author'] !== null) {
             $newAuthor = $userRepository->find((int) $data['author']);
-            if ($newAuthor === null || !($newAuthor->isAdministrator() || $newAuthor->isEditor())) {
+            if ($newAuthor === null || !($newAuthor->isAdministrator() || $newAuthor->isEditor() || $newAuthor->isTeacher())) {
                 $this->logger->warning("Lab named ".$lab->getName()." author change denied: user id ".$data['author']." is not eligible.");
                 $response = new Response();
                 $response->setContent(json_encode([
@@ -1240,13 +1340,25 @@ class LabController extends Controller
 
         $lab->setName($data['name']);
         $lab->setVersion($data['version']);
-        $lab->setShortDescription($data['description']);
-        $lab->setScripttimeout($data['scripttimeout']);
+        $lab->setShortDescription($data['description']);    
         if (array_key_exists('chatEnabled', $data)) {
             $lab->setChatEnabled((bool) $data['chatEnabled']);
         }
-        if (array_key_exists('shared', $data)) {
-            $lab->setShared((bool) $data['shared']);
+        if (array_key_exists('isInternetAuthorized', $data)) {
+            $internetAuthorized = (bool) $data['isInternetAuthorized'];
+            // The flag is the permission of the lab: enabling it also connects
+            // the instances that already exist and disabling it disconnects
+            // them (see LabInternetManager). The Connect/Disconnect buttons of
+            // the lab page and of the editor never write this flag.
+            $changed = $internetAuthorized !== $lab->isInternetAuthorized();
+            $lab->setIsInternetAuthorized($internetAuthorized);
+            if ($changed) {
+                if ($internetAuthorized) {
+                    $this->labInternetManager->connectLab($lab);
+                } else {
+                    $this->labInternetManager->disconnectLab($lab);
+                }
+            }
         }
         if ($lab->getVirtuality() == 1 && $data['timer'] !== "" && $data['timer'] != "0") {
             $lab->setHasTimer(true);
@@ -1262,13 +1374,25 @@ class LabController extends Controller
         $entityManager->persist($lab);
         $entityManager->flush();
 
+        foreach ($impactedGroups as $impactedGroup) {
+            try {
+                $securityManager->syncGroup($impactedGroup);
+            } catch (\Throwable $e) {
+                $this->logger->error('Could not sync the shared lab topology of group '.$impactedGroup->getPath().': '.$e->getMessage());
+            }
+        }
+
         $this->logger->info("Lab named" . $lab->getName() . " modified");
 
         $response = new Response();
         $response->setContent(json_encode([
             'code' => 201,
             'status'=> 'success',
-            'message' => 'Lab has been saved (60023).']));
+            'message' => 'Lab has been saved (60023).',
+            // Lets the editor refresh the Connect/Disconnect entry of the
+            // "More actions" menu right after the permission was changed.
+            'isInternetAuthorized' => $lab->isInternetAuthorized(),
+            'isInternetConnected' => $this->labInstanceRepository->isLabInternetConnected($lab)]));
         $response->headers->set('Content-Type', 'application/json');
         return $response;
     }
@@ -1679,15 +1803,12 @@ class LabController extends Controller
     public function connectLabInstanceAction(int $id, UserInterface $user)
     {
         $lab = $this->labRepository->find($id);
-        $labInstanceTemp = $this->labInstanceRepository->findByUserAndLab($user, $lab);
-
-        if (count($labInstanceTemp) > 0) {
-            $labInstance = $labInstanceTemp[0];
-        } else {
-            $labInstance = null;
+        if (!$lab) {
+            throw new NotFoundHttpException("Lab " . $id . " does not exist.");
         }
+        $this->denyAccessUnlessGranted(LabVoter::EDIT, $lab);
 
-        $this->connectLabInstance($labInstance);
+        $this->labInternetManager->connectLab($lab);
         $this->addFlash('success', 'The lab ' . $lab->getName() . ' is connected to the internet.');
 
         return $this->redirectToRoute('show_lab', [
@@ -1699,19 +1820,52 @@ class LabController extends Controller
     public function disconnectLabInstanceAction(int $id, UserInterface $user)
     {
         $lab = $this->labRepository->find($id);
-        $labInstanceTemp = $this->labInstanceRepository->findByUserAndLab($user, $lab);
-
-        if (count($labInstanceTemp) > 0) {
-            $labInstance = $labInstanceTemp[0];
-        } else {
-            $labInstance = null;
+        if (!$lab) {
+            throw new NotFoundHttpException("Lab " . $id . " does not exist.");
         }
+        $this->denyAccessUnlessGranted(LabVoter::EDIT, $lab);
 
-        $this->disconnectLabInstance($labInstance);
+        $this->labInternetManager->disconnectLab($lab);
         $this->addFlash('success', 'The lab ' . $lab->getName() . ' is disconnected from the internet.');
 
         return $this->redirectToRoute('show_lab', [
             'id' => $id
+        ]);
+    }
+
+    #[Post('/api/labs/{id<\d+>}/internet/connect', name: 'api_connect_internet')]
+    public function apiConnectLabInternetAction(int $id)
+    {
+        $lab = $this->labRepository->find($id);
+        if (!$lab) {
+            return $this->json(['message' => 'Lab not found'], 404);
+        }
+        $this->denyAccessUnlessGranted(LabVoter::EDIT, $lab);
+
+        $this->labInternetManager->connectLab($lab);
+
+        return $this->json([
+            'status' => 'success',
+            'isInternetAuthorized' => $lab->isInternetAuthorized(),
+            'isInternetConnected' => $this->labInstanceRepository->isLabInternetConnected($lab),
+        ]);
+    }
+
+    #[Post('/api/labs/{id<\d+>}/internet/disconnect', name: 'api_disconnect_internet')]
+    public function apiDisconnectLabInternetAction(int $id)
+    {
+        $lab = $this->labRepository->find($id);
+        if (!$lab) {
+            return $this->json(['message' => 'Lab not found'], 404);
+        }
+        $this->denyAccessUnlessGranted(LabVoter::EDIT, $lab);
+
+        $this->labInternetManager->disconnectLab($lab);
+
+        return $this->json([
+            'status' => 'success',
+            'isInternetAuthorized' => $lab->isInternetAuthorized(),
+            'isInternetConnected' => $this->labInstanceRepository->isLabInternetConnected($lab),
         ]);
     }
 
@@ -1752,71 +1906,6 @@ class LabController extends Controller
 
         return $this->redirectToRoute('show_lab', [
             'id' => $id
-        ]);
-    }
-
-    private function connectLabInstance(LabInstance $labInstance)
-    {
-        $client = new Client();
-        $serializer = $this->container->get('jms_serializer');
-        $workerUrl = $labInstance->getWorketIp();
-        $workerPort = (string) getenv('WORKER_PORT');
-
-        $context = SerializationContext::create()->setGroups("start_lab");
-        $serialized = $serializer->serialize($labInstance, 'json', $context);
-
-        $url = "http://{$workerUrl}:{$workerPort}/lab/connect/internet";
-        $headers = ['Content-Type' => 'application/json'];
-        try {
-            $response = $client->post($url, [
-                'body' => $serialized,
-                'headers' => $headers
-            ]);
-            $labInstance->setInternetConnected(true);
-            $this->entityManager->persist($labInstance);
-            $this->entityManager->flush();
-        } catch (RequestException $exception) {
-            dd($exception->getResponse()->getBody()->getContents());
-        }
-    }
-
-    private function disconnectLabInstance(LabInstance $labInstance)
-    {
-        $this->logger->debug("[LabController:]Lab requested to disconnect from the Internet by user.", [
-            "lab" => $labInstance->getLab()->getUuid(),
-            "instance" => $labInstance->getUuid(),
-            "user" => $this->getUser()->getEmail(),
-        ]);
-
-        $entityManager = $this->entityManager;
-        $user = $this->getUser();
-        $client = new Client();
-        $workerUrl = $labInstance->getWorketIp();
-        $workerPort = (string) getenv('WORKER_PORT');
-
-        $context = SerializationContext::create()->setGroups("start_lab");
-        $serialized = $this->serializer->serialize($labInstance, 'json', $context);
-
-        $url = "http://{$workerUrl}:{$workerPort}/lab/disconnect/internet";
-        $headers = ['Content-Type' => 'application/json'];
-        try {
-            $response = $client->post($url, [
-                'body' => $serialized,
-                'headers' => $headers
-            ]);
-            $labInstance->setInternetConnected(false);
-            $entityManager->persist($labInstance);
-            $entityManager->flush();
-        } catch (ServerException $exception) {
-            throw new WorkerException("Cannot disconnect lab instance from the Internet.", $labInstance, $exception->getResponse());
-            // dd($exception->getResponse()->getBody()->getContents(), $labXml, $lab->getInstances());
-            // dd($exception->getResponse()->getBody()->getContents());
-        }
-
-        $this->logger->debug("[LabController:]Lab disconnected from the Internet by user.", [
-            "lab" => $labInstance->getLab()->getUuid(),
-            "instance" => $labInstance->getUuid(),
-            "user" => $this->getUser()->getEmail(),
         ]);
     }
 

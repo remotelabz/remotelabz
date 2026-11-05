@@ -15,6 +15,11 @@ class LoginLogController extends Controller
 {
     private const PAGE_LIMIT = 25;
 
+    private const SCORE_THRESHOLDS = [
+        'suspicious' => 20,
+        'dangerous' => 50,
+    ];
+
     private $loginLogRepository;
     private $ipReputationRepository;
     private $ipReputationService;
@@ -37,10 +42,12 @@ class LoginLogController extends Controller
     {
         [$start, $end] = $this->getDateRange($request);
         $userFilter = trim($request->query->get('user', ''));
+        $scoreFilter = $request->query->get('score', '');
+        $minScore = self::SCORE_THRESHOLDS[$scoreFilter] ?? null;
         $page = $request->query->getInt('page', 1);
 
         $pagination = $this->paginator->paginate(
-            $this->loginLogRepository->createQueryBuilderForRange($start, $end, $userFilter),
+            $this->loginLogRepository->createQueryBuilderForRange($start, $end, $userFilter, $minScore),
             $page,
             self::PAGE_LIMIT
         );
@@ -57,6 +64,8 @@ class LoginLogController extends Controller
             'start' => $start,
             'end' => $end,
             'userFilter' => $userFilter,
+            'scoreFilter' => $minScore !== null ? $scoreFilter : '',
+            'scoreThresholds' => self::SCORE_THRESHOLDS,
             'total' => $pagination->getTotalItemCount(),
             'reputations' => $this->ipReputationRepository->findByIps($ips),
             'abuseipdbCheckBase' => $this->ipReputationService->getCheckUrlBase(),

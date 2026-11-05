@@ -41,26 +41,34 @@ class SshConnectionMonitor implements ServiceMonitorInterface
     }
 
     /**
-     * Check SSH connectivity to all workers
+     * Check SSH connectivity to all enabled workers
+     * Disabled workers are not tested, they are reported with a 'disabled' status
      * Returns an array with worker IPs as keys and connection status as values
      */
     public function isStarted()
     {
         $results = [];
         
-        // Get all unique worker IPs from lab instances
+        // Get all unique worker IPs from the worker configuration
         $configWorkers = $this->configWorkerRepository->findAll();
-        $workerIps = [];
         
         foreach ($configWorkers as $configWorker) {
             $workerIp = $configWorker->getIPv4();
-            if ($workerIp && !in_array($workerIp, $workerIps)) {
-                $workerIps[] = $workerIp;
+            if (!$workerIp || isset($results[$workerIp])) {
+                continue;
             }
-        }
 
-        // Test SSH connection to each worker
-        foreach ($workerIps as $workerIp) {
+            // Disabled workers must not be probed
+            if (!$configWorker->getAvailable()) {
+                $results[$workerIp] = [
+                    'status' => null,
+                    'disabled' => true,
+                    'method' => null,
+                    'error' => null
+                ];
+                continue;
+            }
+
             $results[$workerIp] = $this->testSshConnection($workerIp);
         }
 
@@ -73,7 +81,8 @@ class SshConnectionMonitor implements ServiceMonitorInterface
     private function testSshConnection(string $host): array
     {
         try {
-            $connection = ssh2_connect($host, $this->sshPort, null, ['timeout' => 5]);
+            // @ silences the "Unable to connect" warning raised by ssh2_connect
+            $connection = @ssh2_connect($host, $this->sshPort, null, ['timeout' => 5]);
             
             if (!$connection) {
                 $this->logger->warning("SSH connection failed to {$host}");
@@ -87,7 +96,7 @@ class SshConnectionMonitor implements ServiceMonitorInterface
             // Try public key authentication first
             if (file_exists($this->publicKeyFile) && file_exists($this->privateKeyFile)) {
                 try {
-                    if (ssh2_auth_pubkey_file($connection, $this->sshUser, $this->publicKeyFile, $this->privateKeyFile)) {
+                    if (@ssh2_auth_pubkey_file($connection, $this->sshUser, $this->publicKeyFile, $this->privateKeyFile)) {
                         $this->logger->info("SSH connection successful to {$host} using public key");
                         ssh2_disconnect($connection);
                         return [
@@ -103,7 +112,7 @@ class SshConnectionMonitor implements ServiceMonitorInterface
 
             // Try password authentication as fallback
             try {
-                if (ssh2_auth_password($connection, $this->sshUser, $this->sshPassword)) {
+                if (@ssh2_auth_password($connection, $this->sshUser, $this->sshPassword)) {
                     $this->logger->info("SSH connection successful to {$host} using password");
                     ssh2_disconnect($connection);
                     return [

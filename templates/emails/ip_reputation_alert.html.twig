@@ -1,0 +1,21 @@
+<html>
+    <body>
+        <p>
+            Hello,<br><br>
+            An IP address was flagged as abusive on AbuseIPDB and was seen on RemoteLabz:<br><br>
+            <ul>
+                <li><strong>IP address:</strong> {{ ip }}</li>
+                <li><strong>Abuse confidence score:</strong> {{ score }}/100 (alert threshold: {{ threshold }}/100)</li>
+                <li><strong>Total reports:</strong> {{ totalReports|default(0) }}</li>
+                <li><strong>Country:</strong> {{ countryCode|default('Unknown') }}</li>
+                <li><strong>Last checked:</strong> {{ checkedAt }}</li>
+            </ul>
+            <br>
+            AbuseIPDB report: <a href="{{ checkUrl }}">{{ checkUrl }}</a><br>
+            Login logs: <a href="{{ url('login_logs') }}">{{ url('login_logs') }}</a><br><br>
+            This alert is sent at most once per IP every {{ cooldownDays }} day(s) while the score stays above the threshold.<br><br>
+            Regards,<br>
+            The RemoteLabz team.
+        </p>
+    </body>
+</html>

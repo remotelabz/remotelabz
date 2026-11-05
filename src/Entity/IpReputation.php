@@ -27,6 +27,9 @@ class IpReputation
     #[ORM\Column(type: 'datetime', nullable: true)]
     private $last_checked_at;
 
+    #[ORM\Column(type: 'datetime', nullable: true)]
+    private $last_alerted_at;
+
     #[ORM\Column(type: 'datetime')]
     private $created_at;
 
@@ -87,6 +90,17 @@ class IpReputation
     public function setLastCheckedAt(?\DateTimeInterface $last_checked_at): self
     {
         $this->last_checked_at = $last_checked_at;
+        return $this;
+    }
+
+    public function getLastAlertedAt(): ?\DateTimeInterface
+    {
+        return $this->last_alerted_at;
+    }
+
+    public function setLastAlertedAt(?\DateTimeInterface $last_alerted_at): self
+    {
+        $this->last_alerted_at = $last_alerted_at;
         return $this;
     }
 

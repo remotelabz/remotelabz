@@ -10,6 +10,7 @@ use App\Entity\Group;
 use App\Entity\GroupUser;
 use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Remotelabz\Message\Message\InstanceStateMessage;
 
 /**
  * @method LabInstance|null find($id, $lockMode = null, $lockVersion = null)
@@ -36,6 +37,36 @@ class LabInstanceRepository extends ServiceEntityRepository
             ->getQuery()
             ->getOneOrNullResult()
         ;
+    }
+
+    /**
+     * Returns one page of every lab instance (newest first) plus the total row
+     * count.
+     *
+     * Pagination is done at the SQL level (LIMIT/OFFSET) so that only the
+     * requested number of instances is hydrated, instead of loading the whole
+     * table in memory.
+     *
+     * @return array{instances: LabInstance[], total: int}
+     */
+    public function findPageAll(int $page, int $limit): array
+    {
+        $page  = max(1, $page);
+        $limit = max(1, $limit);
+
+        $total = (int) $this->createQueryBuilder('l')
+            ->select('COUNT(l.id)')
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        $instances = $this->createQueryBuilder('l')
+            ->addOrderBy('l.id', 'DESC')
+            ->setFirstResult(($page - 1) * $limit)
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+
+        return ['instances' => $instances, 'total' => $total];
     }
 
     public function findByGuestAndLab(InvitationCode $guest, Lab $lab)
@@ -150,6 +181,32 @@ class LabInstanceRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult()
         ;
+    }
+
+    /**
+     * Whether the lab currently has at least one instance connected to the
+     * Internet. Instances being deleted, deleted or in error are ignored: they
+     * keep a stale isInternetConnected flag.
+     */
+    public function isLabInternetConnected(Lab $lab): bool
+    {
+        $count = $this->createQueryBuilder('l')
+            ->select('COUNT(l.id)')
+            ->andWhere('l.lab = :lab')
+            ->andWhere('l.isInternetConnected = :connected')
+            ->andWhere('l.state NOT IN (:excludedStates)')
+            ->setParameter('lab', $lab)
+            ->setParameter('connected', true)
+            ->setParameter('excludedStates', [
+                InstanceStateMessage::STATE_DELETING,
+                InstanceStateMessage::STATE_DELETED,
+                InstanceStateMessage::STATE_ERROR,
+            ])
+            ->getQuery()
+            ->getSingleScalarResult()
+        ;
+
+        return (int) $count > 0;
     }
 
     public function findByWorkerIP(string $workerIP) {

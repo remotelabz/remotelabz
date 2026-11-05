@@ -12,6 +12,16 @@
     {{ parent() }}
 {% endblock %}
 
+{% block stylesheets %}
+    {{ parent() }}
+    {{ encore_entry_link_tags('site-message-form') }}
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {{ encore_entry_script_tags('site-message-form') }}
+{% endblock %}
+
 {% block wrapper %}
     <div class="content-title">
         <div class="content-title-infos">

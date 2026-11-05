@@ -153,9 +153,7 @@ class HypervisorController extends Controller
 
             $this->addFlash('success', 'Hypervisor has been edited.');
             
-            return $this->redirectToRoute('show_hypervisor', [
-                        'id' => $id
-            ]);
+            return $this->redirectToRoute('hypervisor');
 
         }
 

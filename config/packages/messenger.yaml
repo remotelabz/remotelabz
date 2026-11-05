@@ -1,7 +1,6 @@
 framework:
     messenger:
         transports:
-            async: '%env(MESSENGER_TRANSPORT_DSN)%'
             worker:
                 dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
                 options:
@@ -11,8 +10,6 @@ framework:
                     queues:
                         messages_worker1:
                             binding_keys: [192.168.11.132]
-                        messages_worker2:
-                            binding_keys: [192.168.11.133]
                 retry_strategy:
                     max_retries: 3
                     delay: 5000
@@ -27,6 +24,10 @@ framework:
                         messages_front: null
             failed: 'doctrine://default?queue_name=failed'
         routing:
+            Remotelabz\Message\Message\SecurityMessage: worker
             Remotelabz\Message\Message\InstanceActionMessage: worker
             Remotelabz\Message\Message\InstanceStateMessage: front
             Remotelabz\Message\Message\LabLaunchRequestMessage: front
+            # Collecte d'IP d'instance : requete front -> worker, reponse worker -> front
+            Remotelabz\Message\Message\DeviceInfoRequestMessage: worker
+            Remotelabz\Message\Message\DeviceInfoMessage: front

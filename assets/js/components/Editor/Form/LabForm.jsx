@@ -59,11 +59,11 @@ export default class LabForm extends React.Component
                     <Form noValidate onSubmit={handleSubmit}>
                         <Form.Control type="hidden" name="id" value={values.id} onChange={handleChange} />
                         <label>
-                            <Field type="checkbox" name="isInternetAuthorized" className="mr-2" />
+                            <Field type="checkbox" name="isInternetAuthorized" className="me-2" />
                             Can connect to Internet
                         </label>
                         <label className="d-block">
-                            <Field type="checkbox" name="chatEnabled" className="mr-2" />
+                            <Field type="checkbox" name="chatEnabled" className="me-2" />
                             Enable chat
                         </label>
                         <Button variant="success" type="submit" block {...(dirty || {disabled: true})}>

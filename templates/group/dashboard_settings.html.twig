@@ -176,7 +176,7 @@
                         {% embed 'modal-delete-group.html.twig' with {'title': 'Delete group'|trans, 'class': 'delete-group-modal'} %}
                             {% block content %}Do you confirm to delete this group ?{% endblock %}
                         {% endembed %}
-                        <button class="btn btn-danger" data-target={{'.delete-group-modal'}} data-toggle="modal" type="button">
+                        <button class="btn btn-danger" data-bs-target={{'.delete-group-modal'}} data-bs-toggle="modal" type="button">
                                {{ 'Delete'|trans }}
                         </button>
                     </div>

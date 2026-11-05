@@ -175,8 +175,7 @@ class UserController extends Controller
                 break;
                 case 'labauthor':
                     $users = $users->filter(function ($user) {
-                        $role = $user->getHighestRole();
-                        return $role === 'ROLE_TEACHER_EDITOR' || $role === 'ROLE_ADMINISTRATOR' || $role === 'ROLE_SUPER_ADMINISTRATOR';
+                        return $user->isAdministrator() || $user->isEditor() || $user->isTeacher();
                     });
                 break;
             }
@@ -242,7 +241,25 @@ class UserController extends Controller
     }   
 
         if ('json' === $request->getRequestFormat()) {
-            return $this->json($users->slice($page * $limit - $limit, $limit), 200, [], [$request->get('_route')]);
+            // Re-index the sliced collection so that the JSON response is a
+            // proper array. Doctrine's filter() and slice() keep the original
+            // keys, which would make json_encode() produce an object with
+            // non-sequential keys (e.g. {"0": ..., "105": ...}) and break JS
+            // consumers expecting an array.
+            $slicedUsers = array_values($users->slice($page * $limit - $limit, $limit));
+
+            if ('labauthor' === $role) {
+                // The editor's author select only needs the id and the name.
+                $slicedUsers = array_map(function ($user) {
+                    return [
+                        'id'        => $user->getId(),
+                        'firstName' => $user->getFirstName(),
+                        'lastName'  => $user->getLastName(),
+                    ];
+                }, $slicedUsers);
+            }
+
+            return $this->json($slicedUsers, 200, [], [$request->get('_route')]);
         }
 
         $currentUser=$this->serializer->serialize(

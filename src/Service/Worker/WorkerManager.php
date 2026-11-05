@@ -174,6 +174,16 @@ class WorkerManager
     
     
     /*
+    Whether at least one worker is flagged as available in the database.
+    Cheap database check, used to fail fast before running the placement
+    (which queries the stats of every available worker over HTTP).
+    */
+    public function hasAvailableWorker(): bool
+    {
+        return $this->configWorkerRepository->count(['available' => true]) > 0;
+    }
+
+    /*
     $item : the device or the lab we want to execute
     */
     public function getFreeWorker($item)

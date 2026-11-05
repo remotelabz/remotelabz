@@ -60,6 +60,15 @@ class DeviceInstance extends Instance
     #[Serializer\Groups(['api_get_lab_instance', 'api_get_device_instance', 'worker', 'sandbox'])]
     private $state;
 
+    /**
+     * Date of the last state change. Used by the reconcile watchdog to detect
+     * device instances stuck in "starting" (worker never replied).
+     * Internal only, never serialized.
+     */
+    #[ORM\Column(type: 'datetime', nullable: true)]
+    #[Serializer\Exclude]
+    private ?\DateTime $stateChangedAt = null;
+
      #[ORM\OneToMany(targetEntity: 'App\Entity\ControlProtocolTypeInstance', mappedBy: 'deviceInstance', cascade: ['persist'])]
     #[Serializer\Groups(['api_get_lab_instance', 'api_get_device_instance', 'worker', 'sandbox'])]
     private $controlProtocolTypeInstances;
@@ -73,6 +82,7 @@ class DeviceInstance extends Instance
     {
         parent::__construct();
         $this->state = InstanceState::STOPPED;
+        $this->stateChangedAt = new \DateTime();
         $this->networkInterfaceInstances = new ArrayCollection();
         $this->controlProtocolTypeInstances = new ArrayCollection();
     }
@@ -227,9 +237,17 @@ class DeviceInstance extends Instance
 
     public function setState(?string $state): self
     {
-        $this->state = $state;
+        if ($this->state !== $state) {
+            $this->state = $state;
+            $this->stateChangedAt = new \DateTime();
+        }
 
         return $this;
+    }
+
+    public function getStateChangedAt(): ?\DateTime
+    {
+        return $this->stateChangedAt;
     }
 
     public function isStarted(): ?bool

@@ -55,9 +55,11 @@ use Symfony\Component\Yaml\Yaml;
 use function Symfony\Component\String\u;
 use JMS\Serializer\SerializationContext;
 use App\Service\DirectoryService;
+use App\Service\Instance\DeviceInfoCache;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Common\Collections\Order;
+use Knp\Component\Pager\PaginatorInterface;
 
 
 class DeviceController extends Controller
@@ -76,6 +78,8 @@ class DeviceController extends Controller
     private EntityManagerInterface $entityManager;
     private IsoRepository $isoRepository;
     private FlavorDiskRepository $flavorDiskRepository;   
+    private PaginatorInterface $paginator;
+    private DeviceInfoCache $deviceInfoCache;
 
     /** @var LoggerInterface $logger */
     private $logger;
@@ -95,7 +99,9 @@ class DeviceController extends Controller
         ManagerRegistry $managerRegistry,
         EntityManagerInterface $entityManager,
         IsoRepository $isoRepository,
-        FlavorDiskRepository $flavorDiskRepository)
+        FlavorDiskRepository $flavorDiskRepository,
+        PaginatorInterface $paginator,
+        DeviceInfoCache $deviceInfoCache)
     {
         $this->deviceRepository = $deviceRepository;
         $this->deviceInstanceRepository = $deviceInstanceRepository;
@@ -112,6 +118,8 @@ class DeviceController extends Controller
         $this->entityManager = $entityManager;
         $this->isoRepository = $isoRepository;
         $this->flavorDiskRepository = $flavorDiskRepository;
+        $this->paginator = $paginator;
+        $this->deviceInfoCache = $deviceInfoCache;
     }
 
     
@@ -179,8 +187,23 @@ class DeviceController extends Controller
             return $this->json($devices->getValues(), 200, [], ['api_get_device']);
         }
 
+        $page = $request->query->getInt('page', 1);
+        $limit = $request->query->getInt('limit', 10);
+
+        $osFilterOptions = [];
+        foreach ($devices as $device) {
+            $operatingSystem = $device->getOperatingSystem();
+            if ($operatingSystem !== null && !in_array($operatingSystem->getName(), $osFilterOptions, true)) {
+                $osFilterOptions[] = $operatingSystem->getName();
+            }
+        }
+
+        $pagination = $this->paginator->paginate($devices->getValues(), $page, $limit);
+
         return $this->render('device/index.html.twig', [
-            'devices' => $devices,
+            'devices' => $pagination->getItems(),
+            'pagination' => $pagination,
+            'osFilterOptions' => $osFilterOptions,
             'count' => [
                 'total' => $count,
                 'vms' => $vmCount,
@@ -220,6 +243,28 @@ class DeviceController extends Controller
         return $this->redirect($directoryService->getReturnTo($request, $this->generateUrl('devices')));
     }
 
+    /**
+     * Premiere adresse IPv4 des interfaces renvoyees par le worker (repli
+     * IPv6), ou null si aucune adresse n'est encore connue.
+     *
+     * @param array<int, array{name?: string, mac?: ?string, ipv4?: string[], ipv6?: string[]}> $interfaces
+     */
+    private function firstIp(array $interfaces): ?string
+    {
+        foreach ($interfaces as $interface) {
+            if (is_array($interface) && !empty($interface['ipv4'][0])) {
+                return $interface['ipv4'][0];
+            }
+        }
+        foreach ($interfaces as $interface) {
+            if (is_array($interface) && !empty($interface['ipv6'][0])) {
+                return $interface['ipv6'][0];
+            }
+        }
+
+        return null;
+    }
+
     // Used in lab editor
 	#[Post('/api/labs/{id<\d+>}/nodes', name: 'api_get_devices')]
     #[Route(path: '/devices', name: 'get_devices')]
@@ -234,9 +279,12 @@ class DeviceController extends Controller
         $response = new Response();
         $response->headers->set('Content-Type', 'application/json');
 
+        // Hidden devices are only visible to the lab author and system admins
+        $includeHidden = $this->isGranted(LabVoter::SEE_HIDDEN_DEVICE, $lab);
+
         if($nodeData['edition'] == 0 && $nodeData['labInstance'] != null) {
             $labInstance = $this->labInstanceRepository->find($nodeData['labInstance']);
-            $devices = $this->deviceRepository->findByLabInstance($labInstance);
+            $devices = $this->deviceRepository->findByLabInstance($labInstance, $includeHidden);
         }
         if($nodeData['edition'] == 0 && $nodeData['labInstance'] == null) {
             $response->setContent(json_encode([
@@ -246,7 +294,7 @@ class DeviceController extends Controller
                 return $response;
         }
         if($nodeData['edition'] == 1) {
-            $devices = $this->deviceRepository->findByLab($lab);
+            $devices = $this->deviceRepository->findByLab($lab, $includeHidden);
         }
         $data = [];
         foreach($devices as $device){
@@ -315,6 +363,19 @@ class DeviceController extends Controller
                 $finalControlProtocolType = null;
             }
 
+            // IP de l'instance : lue dans le cache Redis (jamais en base).
+            // Absente si le worker n'a pas encore repondu (VM en cours de
+            // demarrage, agent absent...) : le champ vaut alors null.
+            $ips = [];
+            $ip = null;
+            if ($nodeData['edition'] == 0 && isset($uuid)) {
+                $cached = $this->deviceInfoCache->get($uuid);
+                if (null !== $cached) {
+                    $ips = $cached['ips'] ?? [];
+                    $ip = $this->firstIp($ips);
+                }
+            }
+
             $data[$device->getId()] = [
                 "id"=> $device->getId(),
                 "name"=> $device->getName(),
@@ -330,8 +391,11 @@ class DeviceController extends Controller
                 "template"=> $device->getTemplate(),
                 "status"=> $status,
                 "ethernet"=> $device->getEthernet(),
+                "hidden"=> $device->getHidden(),
                 "console" => $controlProtocolTypes,
-                "networkInterfaceTemplate"=> $device->getNetworkInterfaceTemplate()
+                "networkInterfaceTemplate"=> $device->getNetworkInterfaceTemplate(),
+                "ip"=> $ip,
+                "ips"=> $ips
             ];
 
             if (isset($uuid)) {
@@ -365,7 +429,8 @@ class DeviceController extends Controller
         if ($user instanceof InvitationCode) {
             foreach ($user->getLab()->getDevices() as $userDevice) {
                 if ($userDevice == $device) {
-                    $canViewDevice = true;
+                    // Hidden devices are never exposed to guests
+                    $canViewDevice = !$device->getHidden();
                 }
             }
         }
@@ -400,6 +465,22 @@ class DeviceController extends Controller
             if ($user->isAdministrator() || $user->isEditor()) {
                 $canViewDevice = true;
             }
+
+            // A hidden device is only visible to the lab authors of the labs it
+            // belongs to and to the system admins.
+            if ($canViewDevice && $device->getHidden()) {
+                $canViewDevice = false;
+                if ($user->isAdministrator()) {
+                    $canViewDevice = true;
+                } else {
+                    foreach ($device->getLabs() as $deviceLab) {
+                        if ($user == $deviceLab->getAuthor()) {
+                            $canViewDevice = true;
+                            break;
+                        }
+                    }
+                }
+            }
         }
 
         if ($canViewDevice == false) {
@@ -433,6 +514,11 @@ class DeviceController extends Controller
         $this->logger->debug('[DeviceController:showActionTest]::Device id request '.$id);
         $nodeData = json_decode($request->getContent(), true);
         if (!$device) {
+            throw new NotFoundHttpException("Device " . $id . " does not exist.");
+        }
+
+        // Hidden devices are only visible to the lab author and system admins
+        if ($device->getHidden() && !$this->isGranted(LabVoter::SEE_HIDDEN_DEVICE, $lab)) {
             throw new NotFoundHttpException("Device " . $id . " does not exist.");
         }
 
@@ -531,13 +617,25 @@ class DeviceController extends Controller
             "other_options"=>$device->getOtherOptions(),
             "isos" => $device->getIsos(),
             "cdrom_bus_type" => $device->getCdromBusType(),
-            "bios_type" => $device->getBiosType()
+            "bios_type" => $device->getBiosType(),
+            "network_card_type" => $device->getNetworkCardType(),
+            "minimum_network_interfaces" => $device->getMinimumNetworkInterfaces(),
+            "hidden" => $device->getHidden(),
+            "ip" => null,
+            "ips" => []
         ];
         if (!is_null($device->getOperatingSystem()->getArch()))
             $data["qemu_arch"]=$device->getOperatingSystem()->getArch()->getId();
 
         if (isset($uuid)) {
             $data['uuid'] = $uuid;
+
+            // IP de l'instance : lue dans le cache Redis (jamais en base).
+            $cached = $this->deviceInfoCache->get($uuid);
+            if (null !== $cached) {
+                $data['ips'] = $cached['ips'] ?? [];
+                $data['ip'] = $this->firstIp($data['ips']);
+            }
         }
 
         $response = new Response();
@@ -657,7 +755,9 @@ class DeviceController extends Controller
                     "other_options"=>$device->getOtherOptions(),
                     "isos" => $isos,
                     "cdrom_bus_type" => $device->getCdromBusType(),
-                    "bios_type" => $device->getBiosType()
+                    "bios_type" => $device->getBiosType(),
+                    "network_card_type" => $device->getNetworkCardType(),
+                    "minimum_network_interfaces" => $device->getMinimumNetworkInterfaces()
                 ];
                 
                 if (!is_null($device->getOperatingSystem()->getArch())){
@@ -915,6 +1015,18 @@ class DeviceController extends Controller
 
         if(isset($data['cdrom_bus_type'])) {
             $device->setCdromBusType($data['cdrom_bus_type']);
+        }
+
+        if(isset($data['network_card_type'])) {
+            $device->setNetworkCardType($data['network_card_type']);
+        }
+
+        if(isset($data['minimum_network_interfaces'])) {
+            $device->setMinimumNetworkInterfaces((int) $data['minimum_network_interfaces']);
+        }
+
+        if(isset($data['hidden'])) {
+            $device->setHidden((bool) $data['hidden']);
         }
 
         
@@ -1328,6 +1440,8 @@ class DeviceController extends Controller
                 "virtuality"=> $device->getVirtuality(),
                 "other_options" => $device->getOtherOptions(),
                 "cdrom_bus_type" => $device->getCdromBusType(),
+                "network_card_type" => $device->getNetworkCardType(),
+                "minimum_network_interfaces" => $device->getMinimumNetworkInterfaces(),
                 "isos" => $isos
         ];
         
@@ -1400,6 +1514,19 @@ class DeviceController extends Controller
 
         if(isset($data['other_options'])) {
             $device->setOtherOptions($data['other_options']);
+        }
+
+        if(isset($data['network_card_type'])) {
+            $device->setNetworkCardType($data['network_card_type']);
+        }
+
+        if(isset($data['minimum_network_interfaces'])) {
+            $device->setMinimumNetworkInterfaces((int) $data['minimum_network_interfaces']);
+        }
+
+        // Only the lab author / system admins reach this point (LabVoter::EDIT_DEVICE)
+        if(isset($data['hidden'])) {
+            $device->setHidden((bool) $data['hidden']);
         }
 
         if(isset($data['name'])) {
@@ -1848,6 +1975,11 @@ class DeviceController extends Controller
 
         if (!$device = $this->deviceRepository->find($deviceId)){
             throw new NotFoundHttpException("Device ".$id. " does not exist.");
+        }
+
+        // Hidden devices are only visible to the lab author and system admins
+        if ($device->getHidden() && !$this->isGranted(LabVoter::SEE_HIDDEN_DEVICE, $lab)) {
+            throw new NotFoundHttpException("Device ".$deviceId. " does not exist.");
         }
 
         if (!$lab->getDevices()->contains($device)){

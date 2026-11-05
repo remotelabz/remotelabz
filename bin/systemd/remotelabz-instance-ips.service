@@ -1,0 +1,17 @@
+[Unit]
+Description=RemoteLabz Collect Instance IPs Service
+After=network.target
+
+[Service]
+# La commande se termine après son exécution : c'est le timer
+# (remotelabz-instance-ips.timer) qui relance la périodicité
+Type=oneshot
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/remotelabz
+ExecStart=/usr/bin/php /opt/remotelabz/bin/console app:instance:collect-ips --no-interaction
+StandardOutput=journal
+StandardError=journal
+TimeoutStartSec=5min
+
+PrivateTmp=true

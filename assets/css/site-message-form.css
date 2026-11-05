@@ -1,0 +1,40 @@
+/* Layout of the Markdown editor used by the site message form. */
+
+/* The "table" toolbar button carries Bootstrap's `.table` class, which sets
+   width: 100% and breaks the toolbar onto several lines: force a compact,
+   inline button and keep the whole toolbar on a single line. */
+.site-message-editor .editor-toolbar {
+    padding-left: 6px;
+    padding-right: 6px;
+    white-space: nowrap;
+    overflow-x: auto;
+}
+
+.site-message-editor .editor-toolbar button {
+    width: auto;
+    max-width: none;
+    min-width: 24px;
+    padding: 0 3px;
+    margin-bottom: 0;
+}
+
+.site-message-editor .editor-toolbar i.separator {
+    margin: 0 2px;
+}
+
+/* Side-by-side preview: render it inline, on the right of the editor, and
+   give the split view the full width of the message field. */
+.site-message-editor .editor-preview-side {
+    box-sizing: border-box;
+    padding: 10px;
+    background: #fafafa;
+}
+
+.form-group:has(.site-message-editor.sided--no-fullscreen) > label {
+    display: none;
+}
+
+.form-group:has(.site-message-editor.sided--no-fullscreen) > div {
+    flex: 0 0 100%;
+    max-width: 100%;
+}

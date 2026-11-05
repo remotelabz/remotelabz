@@ -23,6 +23,7 @@ use Remotelabz\Message\Message\InstanceActionMessage;
 use Remotelabz\Message\Message\InstanceStateMessage;
 use Remotelabz\Message\Message\LabLaunchRequestMessage;
 use App\Service\Worker\LabPlacementCache;
+use App\Service\Instance\DeviceInfoCache;
 use App\Repository\DeviceRepository;
 use App\Repository\TextObjectRepository;
 use App\Repository\PictureRepository;
@@ -35,6 +36,7 @@ use App\Repository\ControlProtocolTypeInstanceRepository;
 use App\Repository\OperatingSystemRepository;
 use App\Service\Network\NetworkManager;
 use App\Service\Proxy\ProxyManager;
+use App\Service\SharedLabSecurityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use GuzzleHttp\Client;
@@ -94,6 +96,8 @@ class InstanceManager
     ];
     protected $tokenStorage;
     protected $singleServer = true;
+    protected SharedLabSecurityManager $securityManager;
+    protected DeviceInfoCache $deviceInfoCache;
 
     public function __construct(
         LoggerInterface $logger,
@@ -120,7 +124,9 @@ class InstanceManager
         WorkerManager $workerManager,
         BannerManager $bannerManager,
         TokenStorageInterface $tokenStorage,
-        LabPlacementCache $placementCache
+        LabPlacementCache $placementCache,
+        SharedLabSecurityManager $securityManager,
+        DeviceInfoCache $deviceInfoCache
     ) {
         $this->bus = $bus;
         $this->logger = $logger;
@@ -147,6 +153,8 @@ class InstanceManager
         $this->tokenStorage = $tokenStorage;
         $this->singleServer = $singleServer;
         $this->placementCache = $placementCache;
+        $this->securityManager = $securityManager;
+        $this->deviceInfoCache = $deviceInfoCache;
     }
 
     /**
@@ -190,6 +198,13 @@ class InstanceManager
         }     
 
         if (is_null($is_exist_labinstance)) {
+
+            // Refuse the join when no worker is flagged as available: the instance
+            // would only be created to fail in the async placement handler.
+            if (!$this->workerManager->hasAvailableWorker()) {
+                $this->logger->error('[InstanceManager:create]::Could not create instance. No worker available');
+                throw new BadRequestHttpException('No worker available');
+            }
 
             $labInstance = LabInstance::create()
                 ->setLab($lab)
@@ -345,6 +360,9 @@ class InstanceManager
                 }
 
                 $deviceInstance->setState(InstanceState::STARTING);
+                // Une instance qui (re)demarre change d'IP : on oublie l'ancienne
+                // immediatement, la collecte la repeuplera apres le demarrage.
+                $this->deviceInfoCache->forget($uuid);
                 $this->entityManager->flush();
 
                 $context = SerializationContext::create()->setGroups($this->workerSerializationGroups);           
@@ -414,6 +432,7 @@ class InstanceManager
                         new AmqpStamp($workerIP, AMQP_NOPARAM, []),
                     ]
                 );
+                $this->securityManager->syncLabInstance($deviceInstance->getLabInstance());
 
                 return $labJson;
             }
@@ -479,6 +498,8 @@ class InstanceManager
                     new AmqpStamp($workerIP, AMQP_NOPARAM, []),
                 ]
             );
+
+            $this->securityManager->syncLabInstance($deviceInstance->getLabInstance());
         }
         else {
             $this->logger->error('Could not stop device instance '.$uuid.'. Worker '.$workerIP.' is suspended.');
@@ -811,7 +832,6 @@ class InstanceManager
         $newLab->setIsTemplate(true);
         $newLab->setTasks($lab->getTasks());
         $newLab->setVersion($lab->getVersion());
-        $newLab->setScripttimeout($lab->getScripttimeout());
         $newLab->setLocked($lab->getLocked());
         $newLab->setBanner($lab->getBanner());
         $newLab->setIsInternetAuthorized($lab->isInternetAuthorized());
@@ -880,6 +900,8 @@ class InstanceManager
         $newDevice->setNbSocket($device->getNbSocket());
         $newDevice->setNbCore($device->getNbCore());
         $newDevice->setNbThread($device->getNbThread());
+        $newDevice->setNetworkCardType($device->getNetworkCardType());
+        $newDevice->setMinimumNetworkInterfaces($device->getMinimumNetworkInterfaces());
         $newDevice->setIsTemplate(true);
 
         $i=0;
