@@ -214,7 +214,7 @@ while (ob_get_level() > 0) { ob_end_flush(); }
             //Param1 : type d'installation (1 = auto install)
             //Param2 : review conf file : ne pas mettre y sinon bloquage
             //param3 : selfsigned certificat
-            $input[0] = "1\n";
+            $input[0] = "7\n";
             $input[1] = "n\n";
             $input[2] = $selfSigned."\n";
 
@@ -222,7 +222,7 @@ while (ob_get_level() > 0) { ob_end_flush(); }
 
             break;
         case 'requirements':
-            $input[0] = "2\n";
+            $input[0] = "1\n";
             $input[1] = "\n";
             $input[2] = "7\n";
             break;
@@ -233,7 +233,7 @@ while (ob_get_level() > 0) { ob_end_flush(); }
             // (la clé d'origine "SL_CA_KEY_PASSPHRASE" était une faute de frappe)
             editEnv("SSL_CA_KEY_PASSPHRASE", post("openvpn_ssl_ca_key_password"));
 
-            $input[0] = "3\n";
+            $input[0] = "2\n";
             $input[1] = "\n";
             $input[2] = "7\n";
 
@@ -258,7 +258,7 @@ while (ob_get_level() > 0) { ob_end_flush(); }
 
             $selfSigned = (post("ssl_self_signed") === "yes") ? "y" : "n";
 
-            $input[0] = "4\n";
+            $input[0] = "3\n";
             $input[1] = "n\n";
             $input[2] = $selfSigned."\n";
             $input[3] = "\n";
@@ -286,7 +286,7 @@ while (ob_get_level() > 0) { ob_end_flush(); }
             // (l'ancien code lisait "ssl_self_signed" au lieu de "rl_self_signed")
             $selfSigned = (post("rl_self_signed") === "yes") ? "y" : "n";
 
-            $input[0] = "5\n";
+            $input[0] = "4\n";
             $input[1] = "n\n";
             $input[2] = $selfSigned."\n";
 
@@ -303,7 +303,7 @@ while (ob_get_level() > 0) { ob_end_flush(); }
             $workers = readWorkers("workers", "workers_count");
 
             // Hypothèse : 6 = "Configure worker deployments" dans le menu d'install.sh
-            $input[0] = "6\n";
+            $input[0] = "5\n";
             $input[1] = "\n";
             $input[2] = "7\n";
 
