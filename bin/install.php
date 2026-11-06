@@ -1,15 +1,170 @@
 <?php
 
+/* =====================================================================
+   RÉGLAGES À ADAPTER À install.sh
+   Les textes ci-dessous sont recherchés (sans tenir compte de la casse)
+   dans la sortie d'install.sh : dès qu'une ligne en contient un, la
+   réponse correspondante est envoyée sur son entrée standard.
+   Ce sont des hypothèses : remplacez-les par le texte exact des prompts.
+   ===================================================================== */
+const WORKER_MARKERS = [
+    'deploy'          => 'deploy workers',          // "Déploiement de workers ? (y/n)"
+    'count'           => 'number of workers',       // nombre de workers
+    'user'            => 'worker user account',     // début des questions d'un worker
+    'topology'        => 'topology',
+    'vpn'             => 'vpn hosted',
+    'worker_password' => 'worker password',
+    'front_password'  => 'front password',
+    'done'            => 'Worker deployment completed', // fin (type "workers" seul)
+];
+
+// Réponse envoyée à install.sh pour la topologie
+const TOPOLOGY_ANSWERS = [
+    'single_server' => '1',
+    'multiserver'   => '2',
+];
+
+const MAX_WORKERS = 20;
 
 
+/* ===================== Fonctions utilitaires ===================== */
 
-function editEnv($key,$newVal){
-    $cmd = 'sed -i "s|^'.$key.'=.*|'.$key.'='.$newVal.'|g" "/opt/remotelabz/.env.local"';
-    shell_exec($cmd);
+function fail($msg){
+    http_response_code(400);
+    echo '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Erreur</title></head>'
+       . '<body><pre>' . htmlspecialchars($msg) . '</pre></body></html>';
+    exit;
 }
 
-print_r($_POST);
+// Lit un champ POST texte. Refuse les retours à la ligne : la valeur est envoyée
+// sur stdin d'install.sh ou écrite dans .env.local, un \n permettrait d'injecter
+// d'autres réponses ou d'autres variables.
+function post($key){
+    if(!isset($_POST[$key]) || !is_string($_POST[$key])){
+        fail("Champ manquant : $key");
+    }
+    $v = $_POST[$key];
+    if(preg_match('/[\r\n\0]/', $v)){
+        fail("Valeur invalide pour : $key");
+    }
+    return $v;
+}
 
+// Modifie une variable existante de .env.local sans passer par le shell
+// (le sed d'origine cassait avec |, &, \ ou " dans un mot de passe
+// et permettait l'injection de commandes).
+function editEnv($key, $newVal){
+    if(preg_match('/[\r\n\0]/', $newVal)){
+        fail("Valeur invalide pour $key");
+    }
+    $file = '/opt/remotelabz/.env.local';
+    $content = file_get_contents($file);
+    if($content === false){
+        return;
+    }
+    $line = $key . '=' . $newVal;
+    $content = preg_replace_callback(
+        '/^' . preg_quote($key, '/') . '=.*$/m',
+        function () use ($line) { return $line; },
+        $content
+    );
+    file_put_contents($file, $content, LOCK_EX);
+}
+
+// Lit et valide les workers envoyés par le formulaire
+// ($prefix = nom du tableau POST, $countKey = champ "nombre de workers")
+function readWorkers($prefix, $countKey){
+    $count = (int) post($countKey);
+    if($count < 1 || $count > MAX_WORKERS){
+        fail("Nombre de workers invalide (1 à " . MAX_WORKERS . ").");
+    }
+    $list = $_POST[$prefix] ?? null;
+    if(!is_array($list)){
+        fail("Informations des workers manquantes.");
+    }
+
+    $workers = [];
+    for($i = 0; $i < $count; $i++){
+        $w = $list[$i] ?? null;
+        if(!is_array($w)){
+            fail("Worker " . ($i + 1) . " : informations manquantes.");
+        }
+        $row = [];
+        foreach(['user', 'topology', 'vpn', 'worker_password', 'front_password'] as $f){
+            $v = $w[$f] ?? '';
+            if(!is_string($v) || $v === '' || preg_match('/[\r\n\0]/', $v)){
+                fail("Worker " . ($i + 1) . " : champ « $f » invalide.");
+            }
+            $row[$f] = $v;
+        }
+        if(!isset(TOPOLOGY_ANSWERS[$row['topology']])){
+            fail("Worker " . ($i + 1) . " : topologie invalide.");
+        }
+        if(!in_array($row['vpn'], ['yes', 'no'], true)){
+            fail("Worker " . ($i + 1) . " : valeur VPN invalide.");
+        }
+        $workers[] = $row;
+    }
+    return $workers;
+}
+
+// Répond aux questions d'install.sh sur les workers, dans l'ordre où elles arrivent.
+// Chaque réponse n'est envoyée qu'une fois.
+function answerWorkerPrompts($line, $stdin, &$st){
+    if(!$st['enabled']){
+        return;
+    }
+    $has = function ($key) use ($line) {
+        return stripos($line, WORKER_MARKERS[$key]) !== false;
+    };
+    $total = count($st['workers']);
+
+    if(!$st['deploy_done'] && $has('deploy')){
+        fwrite($stdin, ($total > 0 ? "y" : "n") . "\n");
+        $st['deploy_done'] = true;
+        return;
+    }
+    if($total === 0){
+        return;
+    }
+    if(!$st['count_done'] && $has('count')){
+        fwrite($stdin, $total . "\n");
+        $st['count_done'] = true;
+        return;
+    }
+    if($has('user')){
+        $st['index']++;
+        if($st['index'] < $total){
+            fwrite($stdin, $st['workers'][$st['index']]['user'] . "\n");
+            $st['answered'][$st['index']]['user'] = true;
+        }
+        return;
+    }
+
+    $i = $st['index'];
+    if($i < 0 || $i >= $total){
+        return;
+    }
+    foreach(['front_password', 'worker_password', 'vpn', 'topology'] as $f){
+        if($has($f)){
+            if(!empty($st['answered'][$i][$f])){
+                return;
+            }
+            $value = $st['workers'][$i][$f];
+            if($f === 'vpn'){
+                $value = ($value === 'yes') ? 'y' : 'n';
+            }elseif($f === 'topology'){
+                $value = TOPOLOGY_ANSWERS[$value];
+            }
+            fwrite($stdin, $value . "\n");
+            $st['answered'][$i][$f] = true;
+            return;
+        }
+    }
+}
+
+
+/* ============================ Traitement ============================ */
 
 if($_SERVER['REQUEST_METHOD'] == 'POST'){
 
@@ -19,11 +174,13 @@ while (ob_get_level() > 0) { ob_end_flush(); }
 
 
     shell_exec("mkdir /opt/remotelabz");
-    
-    $installType = $_POST["install_type"];
+
+    $installType = post("install_type");
 
     $input = [];
     $continueLink = "/";
+    $workers = [];
+    $workersEnabled = false;
 
     switch($installType){
         case 'auto_install':
@@ -31,28 +188,28 @@ while (ob_get_level() > 0) { ob_end_flush(); }
             if(!file_exists("/opt/remotelabz/.env.local")){
                 shell_exec("cp ../.env /opt/remotelabz/.env.local");
             }
-            
-            
-            editEnv("PUBLIC_ADDRESS",$_POST["ip_public"]);
-            if($_POST['server_mode'] === "single_server"){
+
+            editEnv("PUBLIC_ADDRESS", post("ip_public"));
+            if(post('server_mode') === "single_server"){
                 editEnv("DEPLOY_SINGLE_SERVER", "1");
                 editEnv("IP_ADDRESS","127.0.0.1");
             }else{
                 editEnv("DEPLOY_SINGLE_SERVER", "0");
-                editEnv("IP_ADDRESS",$_POST["ip_public"]);
+                editEnv("IP_ADDRESS", post("ip_public"));
             }
 
-            editEnv("MYSQL_PASSWORD", $_POST["mysql_password"]);
-            editEnv("SSL_CA_KEY_PASSPHRASE",$_POST["ssl_ca_key_password"]);
+            editEnv("MYSQL_PASSWORD", post("mysql_password"));
+            editEnv("SSL_CA_KEY_PASSPHRASE", post("ssl_ca_key_password"));
 
-            editEnv("CONTACT_MAIL",$_POST["contact_email"]);
+            editEnv("CONTACT_MAIL", post("contact_email"));
 
-            $selfSigned = "n";
+            $selfSigned = (post("self_signed") === "yes") ? "y" : "n";
 
-            if($_POST["self_signed"] === "yes"){$continueLink = "https://".$_POST["ip_public"];
-                $selfSigned = "y";
+            // Déploiement de workers
+            $workersEnabled = true;
+            if(post("deploy_workers") === "yes"){
+                $workers = readWorkers("auto_workers", "auto_workers_count");
             }
-
 
             //Param1 : type d'installation (1 = auto install)
             //Param2 : review conf file : ne pas mettre y sinon bloquage
@@ -60,9 +217,8 @@ while (ob_get_level() > 0) { ob_end_flush(); }
             $input[0] = "1\n";
             $input[1] = "n\n";
             $input[2] = $selfSigned."\n";
-            
-            $continueLink = "https://".$_POST["ip_public"];
 
+            $continueLink = "https://".post("ip_public");
 
             break;
         case 'requirements':
@@ -74,7 +230,8 @@ while (ob_get_level() > 0) { ob_end_flush(); }
             if(!file_exists("/opt/remotelabz/.env.local")){
                 shell_exec("cp ../.env /opt/remotelabz/.env.local");
             }
-            editEnv("SL_CA_KEY_PASSPHRASE",$_POST["openvpn_ssl_ca_key_password"]);
+            // (la clé d'origine "SL_CA_KEY_PASSPHRASE" était une faute de frappe)
+            editEnv("SSL_CA_KEY_PASSPHRASE", post("openvpn_ssl_ca_key_password"));
 
             $input[0] = "3\n";
             $input[1] = "\n";
@@ -85,63 +242,70 @@ while (ob_get_level() > 0) { ob_end_flush(); }
             if(!file_exists("/opt/remotelabz/.env.local")){
                 shell_exec("cp ../.env /opt/remotelabz/.env.local");
             }
-            editEnv("PUBLIC_ADDRESS",$_POST["ssl_ip_public"]);
-            if($_POST['ssl_server_mode'] === "single_server"){
+            editEnv("PUBLIC_ADDRESS", post("ssl_ip_public"));
+            if(post('ssl_server_mode') === "single_server"){
                 editEnv("DEPLOY_SINGLE_SERVER", "1");
                 editEnv("IP_ADDRESS","127.0.0.1");
             }else{
                 editEnv("DEPLOY_SINGLE_SERVER", "0");
-                editEnv("IP_ADDRESS",$_POST["ssl_ip_public"]);
+                editEnv("IP_ADDRESS", post("ssl_ip_public"));
             }
 
-            editEnv("MYSQL_PASSWORD", $_POST["ssl_mysql_password"]);
-            editEnv("SSL_CA_KEY_PASSPHRASE",$_POST["ssl_ssl_ca_key_password"]);
+            editEnv("MYSQL_PASSWORD", post("ssl_mysql_password"));
+            editEnv("SSL_CA_KEY_PASSPHRASE", post("ssl_ssl_ca_key_password"));
 
-            editEnv("CONTACT_MAIL",$_POST["ssl_contact_email"]);
+            editEnv("CONTACT_MAIL", post("ssl_contact_email"));
 
-            $selfSigned = "n";
+            $selfSigned = (post("ssl_self_signed") === "yes") ? "y" : "n";
 
-            if($_POST["ssl_self_signed"] === "yes"){
-                $selfSigned = "y";
-            }
             $input[0] = "4\n";
             $input[1] = "n\n";
             $input[2] = $selfSigned."\n";
             $input[3] = "\n";
             $input[4] = "7\n";
 
-            
-
             break;
         case 'remotelabz':
             if(!file_exists("/opt/remotelabz/.env.local")){
                 shell_exec("cp ../.env /opt/remotelabz/.env.local");
             }
-            editEnv("PUBLIC_ADDRESS",$_POST["rl_ip_public"]);
-            if($_POST['rl_server_mode'] === "single_server"){
+            editEnv("PUBLIC_ADDRESS", post("rl_ip_public"));
+            if(post('rl_server_mode') === "single_server"){
                 editEnv("DEPLOY_SINGLE_SERVER", "1");
                 editEnv("IP_ADDRESS","127.0.0.1");
             }else{
                 editEnv("DEPLOY_SINGLE_SERVER", "0");
-                editEnv("IP_ADDRESS",$_POST["rl_ip_public"]);
+                editEnv("IP_ADDRESS", post("rl_ip_public"));
             }
 
-            editEnv("MYSQL_PASSWORD", $_POST["rl_mysql_password"]);
-            editEnv("SSL_CA_KEY_PASSPHRASE",$_POST["rl_ssl_ca_key_password"]);
+            editEnv("MYSQL_PASSWORD", post("rl_mysql_password"));
+            editEnv("SSL_CA_KEY_PASSPHRASE", post("rl_ssl_ca_key_password"));
 
-            editEnv("CONTACT_MAIL",$_POST["rl_contact_email"]);
+            editEnv("CONTACT_MAIL", post("rl_contact_email"));
 
-            $selfSigned = "n";
+            // (l'ancien code lisait "ssl_self_signed" au lieu de "rl_self_signed")
+            $selfSigned = (post("rl_self_signed") === "yes") ? "y" : "n";
 
-            if($_POST["ssl_self_signed"] === "yes"){
-                $selfSigned = "y";
-            }
             $input[0] = "5\n";
             $input[1] = "n\n";
             $input[2] = $selfSigned."\n";
 
-            $continueLink = "https://".$_POST["rl_ip_public"];
+            $continueLink = "https://".post("rl_ip_public");
 
+
+            break;
+        case 'workers':
+            if(!file_exists("/opt/remotelabz/.env.local")){
+                shell_exec("cp ../.env /opt/remotelabz/.env.local");
+            }
+
+            $workersEnabled = true;
+            $workers = readWorkers("workers", "workers_count");
+
+            // Hypothèse : 6 = "Configure worker deployments" dans le menu d'install.sh
+            $input[0] = "6\n";
+            $input[1] = "\n";
+            $input[2] = "7\n";
 
             break;
         case 'custom':
@@ -150,6 +314,15 @@ while (ob_get_level() > 0) { ob_end_flush(); }
         default:
             die();
     }
+
+    $workerState = [
+        'enabled'     => $workersEnabled,
+        'workers'     => $workers,
+        'deploy_done' => false,
+        'count_done'  => false,
+        'index'       => -1,
+        'answered'    => [],
+    ];
 
 
 
@@ -187,143 +360,167 @@ while (ob_get_level() > 0) { ob_end_flush(); }
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Installation en cours...</title>
+<title>RemoteLabz – Installation en cours...</title>
 <style>
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
+    /* Même palette que la page du formulaire (installer.html) */
+    :root {
+        --bg: #f4f6fa;
+        --surface: #ffffff;
+        --text: #212529;
+        --muted: #6c757d;
+        --border: #dee2e6;
+        --nav: #1f2a3c;
+        --primary: #2f6fdb;
+        --primary-soft: #e8f0fd;
+        --success: #198754;
+        --success-soft: #e6f4ec;
+        --danger: #dc3545;
+        --danger-soft: #fbe9eb;
+        --warning: #b7791f;
+        --warning-soft: #fff6e0;
+        --radius: 6px;
     }
 
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
     body {
-        font-family: 'Segoe UI', Tahoma, sans-serif;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        font-family: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        font-size: 15px;
+        line-height: 1.5;
         min-height: 100vh;
         display: flex;
         flex-direction: column;
-        justify-content: center;
+    }
+
+    /* ===== Barre de navigation ===== */
+    .navbar {
+        background: var(--nav);
+        color: #fff;
+        display: flex;
         align-items: center;
-        padding: 30px;
+        gap: 16px;
+        padding: 0 24px;
+        height: 56px;
+    }
+    .navbar img { height: 28px; display: block; }
+    .navbar .brand { font-weight: 600; font-size: 18px; }
+    .navbar .spacer { flex: 1; }
+
+    /* ===== En-tête ===== */
+    .jumbotron {
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        padding: 28px 24px;
+    }
+    .jumbotron .inner { max-width: 960px; margin: 0 auto; }
+    .jumbotron h1 { font-size: 30px; font-weight: 300; }
+    .jumbotron p { color: var(--muted); margin-top: 4px; }
+
+    main { flex: 1; width: 100%; max-width: 960px; margin: 0 auto; padding: 28px 24px; }
+
+    /* ===== Bandeau d'avertissement ===== */
+    .warning-banner {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 20px;
+        padding: 14px 16px;
+        background: var(--warning-soft);
+        border-left: 4px solid var(--warning);
+        border-radius: var(--radius);
+        color: var(--text);
+        font-size: 14px;
+    }
+    .warning-banner .icon { font-size: 20px; line-height: 1.2; flex-shrink: 0; }
+
+    /* ===== Cartes ===== */
+    .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        margin-bottom: 20px;
     }
 
     /* ===== Carte d'étape ===== */
-    .step-card {
-        background: white;
-        border-radius: 16px;
-        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
-        padding: 36px 48px;
-        width: 100%;
-        max-width: 520px;
-        text-align: center;
-        z-index: 2;
-    }
+    .step-card { text-align: center; padding: 32px 20px; }
 
     .step-spinner {
-        width: 56px;
-        height: 56px;
-        margin: 0 auto 20px;
-        border: 5px solid #ede7fb;
-        border-top-color: #764ba2;
+        width: 48px;
+        height: 48px;
+        margin: 0 auto 18px;
+        border: 4px solid var(--primary-soft);
+        border-top-color: var(--primary);
         border-radius: 50%;
         animation: spin 0.9s linear infinite;
     }
-
     .step-card.done .step-spinner {
         animation: none;
         border: none;
         width: auto;
         height: auto;
-        font-size: 52px;
+        font-size: 48px;
         line-height: 1;
+        color: var(--success);
     }
-
-    .step-card.done .step-spinner { content: ''; }
+    .step-card.done.failed .step-spinner { color: var(--danger); }
 
     .step-number {
         font-size: 12px;
         font-weight: 700;
         letter-spacing: 2px;
         text-transform: uppercase;
-        color: #a08cd6;
+        color: var(--primary);
         margin-bottom: 6px;
     }
-
-    .step-title {
-        font-size: 24px;
-        font-weight: 600;
-        color: #333;
-        margin-bottom: 10px;
-    }
-
+    .step-title { font-size: 22px; font-weight: 600; margin-bottom: 8px; }
     .step-description {
         font-size: 14px;
-        color: #777;
+        color: var(--muted);
         line-height: 1.5;
+        word-break: break-word;
     }
 
     .progress-bar {
-        margin-top: 24px;
+        margin: 22px auto 0;
+        max-width: 420px;
         height: 6px;
-        background: #ede7fb;
+        background: var(--primary-soft);
         border-radius: 3px;
         overflow: hidden;
     }
-
     .progress-fill {
         height: 100%;
         width: 0%;
-        background: linear-gradient(90deg, #764ba2, #667eea);
+        background: var(--primary);
         border-radius: 3px;
         transition: width 0.4s ease;
     }
+    .progress-label { margin-top: 8px; font-size: 12px; color: var(--muted); }
 
-    .progress-label {
-        margin-top: 8px;
-        font-size: 12px;
-        color: #999;
-    }
-
-    @keyframes spin {
-        to { transform: rotate(360deg); }
-    }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
     /* ===== Terminal repliable ===== */
-    .terminal-wrapper {
-        width: 100%;
-        max-width: 720px;
-        margin-top: 28px;
-        z-index: 2;
-    }
-
     .terminal-toggle {
         display: flex;
         align-items: center;
         justify-content: center;
         gap: 10px;
         width: 100%;
-        padding: 13px;
-        background: rgba(30, 30, 46, 0.55);
-        backdrop-filter: blur(6px);
-        color: #d8d4ee;
-        font-size: 14px;
+        padding: 11px;
+        font: inherit;
         font-weight: 500;
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        border-radius: 10px;
+        color: var(--text);
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
         cursor: pointer;
-        transition: background 0.2s;
     }
-
-    .terminal-toggle:hover {
-        background: rgba(30, 30, 46, 0.75);
-    }
-
-    .terminal-toggle .arrow {
-        transition: transform 0.3s ease;
-    }
-
-    .terminal-wrapper.open .terminal-toggle .arrow {
-        transform: rotate(180deg);
-    }
+    .terminal-toggle:hover { border-color: var(--primary); }
+    .terminal-toggle:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+    .terminal-toggle .arrow { transition: transform 0.3s ease; }
+    .terminal-wrapper.open .terminal-toggle .arrow { transform: rotate(180deg); }
 
     /* Replié par défaut */
     .terminal-content {
@@ -331,14 +528,11 @@ while (ob_get_level() > 0) { ob_end_flush(); }
         flex-direction: column;
         margin-top: 10px;
         background: #1e1e2e;
-        border-radius: 12px;
-        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.45);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
         overflow: hidden;
     }
-
-    .terminal-wrapper.open .terminal-content {
-        display: flex;
-    }
+    .terminal-wrapper.open .terminal-content { display: flex; }
 
     .terminal-header {
         display: flex;
@@ -347,17 +541,11 @@ while (ob_get_level() > 0) { ob_end_flush(); }
         padding: 10px 14px;
         background: #181825;
     }
-
     .dot { width: 11px; height: 11px; border-radius: 50%; }
     .dot.red    { background: #ff5f57; }
     .dot.yellow { background: #febc2e; }
     .dot.green  { background: #28c840; }
-
-    .terminal-title {
-        margin-left: 10px;
-        color: #a6adc8;
-        font-size: 12px;
-    }
+    .terminal-title { margin-left: 10px; color: #a6adc8; font-size: 12px; }
 
     .terminal-body {
         height: 340px;
@@ -370,67 +558,38 @@ while (ob_get_level() > 0) { ob_end_flush(); }
         white-space: pre-wrap;
         word-break: break-word;
     }
-
     .terminal-body::-webkit-scrollbar { width: 8px; }
     .terminal-body::-webkit-scrollbar-track { background: transparent; }
     .terminal-body::-webkit-scrollbar-thumb { background: #45475a; border-radius: 4px; }
 
-    /* ===== Bandeau final ===== */
+    /* ===== Résultat final ===== */
     .status-banner {
-        display: none;
-        width: 100%;
-        max-width: 520px;
-        margin-top: 28px;
-        padding: 16px 20px;
-        border-radius: 12px;
-        font-size: 15px;
+        margin-top: 20px;
+        padding: 14px 16px;
+        border-left: 4px solid;
+        border-radius: var(--radius);
         font-weight: 600;
-        text-align: center;
-        z-index: 2;
     }
+    .status-banner.success { background: var(--success-soft); border-color: var(--success); color: var(--success); }
+    .status-banner.error   { background: var(--danger-soft);  border-color: var(--danger);  color: var(--danger); }
 
-    .status-banner.success { display: block; background: #1e3a2f; color: #a6e3a1; }
-    .status-banner.error   { display: block; background: #3b2229; color: #f38ba8; }
-
+    .actions { display: flex; justify-content: flex-end; margin-top: 16px; }
     .btn-continue {
         display: inline-block;
-        margin-top: 24px;
-        padding: 14px 48px;
-        background: linear-gradient(135deg, #764ba2, #667eea);
-        color: white;
+        padding: 10px 22px;
+        color: #fff;
+        background: var(--primary);
+        border: 1px solid var(--primary);
+        border-radius: var(--radius);
+        font-weight: 500;
         text-decoration: none;
-        border-radius: 10px;
-        font-weight: 600;
-        transition: transform 0.2s;
     }
+    .btn-continue:hover { filter: brightness(1.1); }
+    .btn-continue:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 
-    .btn-continue:hover { transform: translateY(-2px); }
-
-    .warning-banner {
-    width: 100%;
-    max-width: 520px;
-    margin-bottom: 24px;
-    padding: 14px 20px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    background: rgba(255, 220, 120, 0.15);
-    border: 1px solid rgba(230, 170, 60, 0.5);
-    border-radius: 12px;
-    color: #ffd08a;
-    font-size: 14px;
-    font-weight: 500;
-    line-height: 1.5;
-    z-index: 2;
-    backdrop-filter: blur(6px);
-}
-
-.warning-banner .icon {
-    font-size: 20px;
-    line-height: 1;
-    flex-shrink: 0;
-}
-
+    @media (max-width: 600px) {
+        main { padding: 16px 12px; }
+    }
 </style>
 <script>
 /* IMPORTANT : ce script est AVANT le <pre> dans le flux HTML.
@@ -488,12 +647,13 @@ while (ob_get_level() > 0) { ob_end_flush(); }
                 document.getElementById('progressFill').style.width = options.progress + '%';
                 document.getElementById('progressLabel').textContent = Math.round(options.progress) + '% effectué';
             }
-            card.className = 'step-card'; // retire l'état "done"
+            card.className = 'card step-card'; // retire l'état "done"
         },
 
         done: function (message) {
             var card = document.getElementById('stepCard');
             card.classList.add('done');
+            card.classList.toggle('failed', message === false);
             document.getElementById('stepSpinner').innerHTML = message === false ? '✗' : '✓';
             document.getElementById('stepTitle').textContent =
                 message === false ? 'Échec de l\'installation' : 'Installation terminée';
@@ -512,23 +672,38 @@ while (ob_get_level() > 0) { ob_end_flush(); }
 </head>
 <body>
 
+<nav class="navbar">
+    <img src="/build/images/RemoteLabz_logo_white.png" alt="">
+    <span class="brand">RemoteLabz</span>
+</nav>
 
-<div class="warning-banner" id="warningBanner">
-    <span class="icon">⚠️</span>
-    <span>
-        <strong>Ne fermez pas cette page</strong> pendant l'installation.
-        Le processus d'installation s'exécute via cette page : la fermer
-        ou rafraîchir interromprait l'opération et pourrait laisser le
-        système dans un état incohérent.
-    </span>
-</div>
+<header class="jumbotron">
+    <div class="inner">
+        <h1>Installation de RemoteLabz</h1>
+        <p>Suivi de l'installation en cours.</p>
+    </div>
+</header>
 
-    <!-- Carte d'étape (au centre) -->
-    <div class="step-card" id="stepCard">
+<main>
+
+    <div class="warning-banner" id="warningBanner">
+        <span class="icon">⚠️</span>
+        <span>
+            <strong>Ne fermez pas cette page</strong> pendant l'installation.
+            Le processus d'installation s'exécute via cette page : la fermer
+            ou rafraîchir interromprait l'opération et pourrait laisser le
+            système dans un état incohérent.
+        </span>
+    </div>
+
+    <!-- Carte d'étape -->
+    <div class="card step-card" id="stepCard">
         <div class="step-spinner" id="stepSpinner"></div>
+        <div class="step-number" id="stepNumber"></div>
         <div class="step-title" id="stepTitle"></div>
-        <div class="step-description" id="stepDescription">
-        </div>
+        <div class="step-description" id="stepDescription"></div>
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="progress-label" id="progressLabel"></div>
     </div>
 
     <!-- Terminal replié par défaut -->
@@ -547,15 +722,18 @@ while (ob_get_level() > 0) { ob_end_flush(); }
                 <span class="terminal-title">install.sh</span>
             </div>
             <pre id="terminal" class="terminal-body"><?php
-                
-                    while ($s = fgets($pipes[1])) {
+
+                    while (false !== ($s = fgets($pipes[1]))) {
+
+                        // Ligne sans codes couleur, pour la recherche des prompts
+                        $plain = preg_replace('/\x1b?\[[0-9;]*m/', '', $s);
 
                         switch($installType){
                             case 'auto_install':
                                 if(str_contains($s,"Existing environment file loaded")){
                                     fwrite($pipes[0],$input[1]);
                                 }
-                                
+
                                 if(str_contains($s,"Enabling WSS")){
                                     fwrite($pipes[0],$input[2]);
                                 }
@@ -585,15 +763,21 @@ while (ob_get_level() > 0) { ob_end_flush(); }
                                 if(str_contains($s,"SSL configuration completed")){
                                     fwrite($pipes[0],$input[3]);
                                     fwrite($pipes[0],$input[4]);
-                                    
+
                                 }
-                                
+
                                 break;
                             case 'remotelabz':
                                 if(str_contains($s,"Existing environment file loaded")){
                                     fwrite($pipes[0],$input[1]);
                                 }
-                               
+
+                                break;
+                            case 'workers':
+                                if(stripos($plain, WORKER_MARKERS['done']) !== false){
+                                    fwrite($pipes[0],$input[1]);
+                                    fwrite($pipes[0],$input[2]);
+                                }
                                 break;
                             case 'custom':
                                 echo "custom";
@@ -601,6 +785,9 @@ while (ob_get_level() > 0) { ob_end_flush(); }
                             default:
                                 die();
                         }
+
+                        // Questions sur les workers (auto_install et workers)
+                        answerWorkerPrompts($plain, $pipes[0], $workerState);
 
                         if(str_contains($s,"Installing System Requirements")){
                             echo '<script>InstallUI.setStep({"title":"Installing System Requirements"})</script>';
@@ -617,37 +804,41 @@ while (ob_get_level() > 0) { ob_end_flush(); }
                         if(str_contains($s,"Installing RemoteLabz Application")){
                             echo '<script>InstallUI.setStep({"title":"Installing RemoteLabz Application"})</script>';
                         }
+                        if(str_contains($s,"Deploying Workers") || str_contains($s,"Configuring Worker")){
+                            echo '<script>InstallUI.setStep({"title":"Configuring Worker Deployments"})</script>';
+                        }
                         if(str_contains($s,"Final Configuration")){
                             echo '<script>InstallUI.setStep({"title":"Final Configuration"})</script>';
                         }
 
                         if(str_contains($s, "[0;32m")){
-                            $s = str_replace("[0;32m","",$s);
-                            $s = str_replace("[0m","",$s);
-                            echo '<script>InstallUI.setStep({"description":"'.json_encode($s).'"})</script>';
+                            // json_encode ajoute déjà les guillemets : on encode l'objet entier
+                            echo '<script>InstallUI.setStep('
+                                . json_encode(['description' => trim($plain)], JSON_HEX_TAG | JSON_UNESCAPED_UNICODE)
+                                . ')</script>';
                         }
 
-                        $s = preg_replace('/\[\d\d?;?\d?\d?m/',"",$s);
+                        print htmlspecialchars($plain, ENT_SUBSTITUTE);
 
-
-                        print $s;
-                        
                         flush();
                     }
 
                     fclose($pipes[0]);
 
                     $status = proc_close($process);
-                
+
             ?></pre>
         </div>
     </div>
+
     <?php if ($status === 0): ?>
         <div class="status-banner success">✓ Installation terminée avec succès</div>
-        <a class="btn-continue" href="<?php echo $continueLink ?>">Continuer →</a>
+        <div class="actions"><a class="btn-continue" href="<?php echo htmlspecialchars($continueLink) ?>">Continuer →</a></div>
     <?php else: ?>
         <div class="status-banner error">✗ Échec de l'installation (code <?php echo (int)$status; ?>)</div>
     <?php endif; ?>
+
+</main>
 
     <script>
         // Passe la carte en état "terminé" quand la page est entièrement chargée
@@ -656,7 +847,7 @@ while (ob_get_level() > 0) { ob_end_flush(); }
         });
     </script>
 
-    
+
 </body>
 </html>
 
@@ -664,6 +855,5 @@ while (ob_get_level() > 0) { ob_end_flush(); }
 
 header("Location: /");
 die();
-    
-}?>
 
+}?>
