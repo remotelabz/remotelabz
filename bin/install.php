@@ -1,30 +1,58 @@
 <?php
 
 /* =====================================================================
-   RÉGLAGES À ADAPTER À install.sh
-   Les textes ci-dessous sont recherchés (sans tenir compte de la casse)
-   dans la sortie d'install.sh : dès qu'une ligne en contient un, la
-   réponse correspondante est envoyée sur son entrée standard.
-   Ce sont des hypothèses : remplacez-les par le texte exact des prompts.
+   Numéros du menu d'install.sh (d'après le log d'installation)
    ===================================================================== */
-const WORKER_MARKERS = [
-    'deploy'          => 'Do you want to deploy RemoteLabz workers?',          // "Déploiement de workers ? (y/n)"
-    'count'           => 'How many workers?',       // nombre de workers
-    'user'            => 'Worker user account',     // début des questions d'un worker
-    'topology'        => 'Deployment topology',
-    'vpn'             => 'Is the VPN hosted on this worker?',
-    'worker_password' => 'Password for remotelabz-worker user',
-    'front_password'  => 'Password for remotelabz (front) user',
-    'done'            => 'Worker deployment completed', // fin (type "workers" seul)
-];
+const MENU_REQUIREMENTS = '1';
+const MENU_OPENVPN      = '2';
+const MENU_SSL          = '3';
+const MENU_REMOTELABZ   = '4';
+const MENU_WORKERS      = '5';
+const MENU_FULL_AUTO    = '7';
+const MENU_EXIT         = '8';
 
-// Réponse envoyée à install.sh pour la topologie
+// Réponse envoyée à "Deployment topology (1=single-server, 2=multi-server)"
 const TOPOLOGY_ANSWERS = [
     'single_server' => '1',
     'multiserver'   => '2',
 ];
 
 const MAX_WORKERS = 20;
+
+/* =====================================================================
+   Questions posées par install.sh : [expression sur la ligne en cours, clé].
+   Les prompts (read -p) n'ont pas de retour à la ligne : on les reconnaît
+   donc sur le début de ligne affiché, avant que l'utilisateur ne réponde.
+   Une réponse vide envoie simplement Entrée (valeur par défaut du script).
+   ===================================================================== */
+const PROMPTS = [
+    ['/^Enter your choice \[[^\]]*\]:\s*$/i',                          'menu'],
+    ['/review\/edit the existing configuration\?.*:\s*$/i',            'review'],
+    ['/^Is your certificate self-signed\?.*:\s*$/i',                   'self_signed'],
+    ['/^Do you want to deploy RemoteLabz workers\?.*:\s*$/i',          'deploy'],
+    ['/^How many workers\?.*:\s*$/i',                                  'count'],
+    ['/^Worker user account \[.*\]:\s*$/i',                            'w_user'],
+    ['/^Deployment topology .*:\s*$/i',                                'w_topology'],
+    ['/^Worker IP address:\s*$/i',                                     'w_ip'],
+    ['/^(Worker )?administration interface \[.*\]:\s*$/i',             'w_admin_if'],
+    ['/^(Worker )?data interface \(or Enter.*:\s*$/i',                 'w_data_if'],
+    ['/^(Worker )?internet access interface \(or Enter.*:\s*$/i',      'w_internet_if'],
+    ['/^Front server IP \[.*\]:\s*$/i',                                'w_front_ip'],
+    ['/^Data network \[.*\]:\s*$/i',                                   'w_data_network'],
+    ['/^Internal data IP \[.*\]:\s*$/i',                               'w_internal_ip'],
+    ['/^Data network gateway \[.*\]:\s*$/i',                           'w_gateway'],
+    ['/^Is the VPN hosted on this worker\?.*:\s*$/i',                  'w_vpn'],
+    ['/^Password for user \'.*\' on worker \[.*\]:\s*$/i',             'w_user_password'],
+    ['/^Password for remotelabz-worker user \[.*\]:\s*$/i',            'w_worker_password'],
+    ['/^Password for remotelabz \(front\) user \[.*\]:\s*$/i',         'w_front_password'],
+    ['/^Enable WSS \(Secure WebSocket\)\?.*:\s*$/i',                   'w_wss'],
+    ['/^Contact email \[.*\]:\s*$/i',                                  'contact_email'],
+    ['/^Password for user remotelabz-worker \[.*\]:\s*$/i',            'ssh_password'],
+    ['/(press|appuyez).*(enter|entr)/i',                               'enter'],
+];
+
+// Clés dont la réponse est un mot de passe (masquée dans le terminal affiché)
+const SECRET_PROMPTS = ['w_user_password', 'w_worker_password', 'w_front_password', 'ssh_password'];
 
 
 /* ===================== Fonctions utilitaires ===================== */
@@ -36,23 +64,32 @@ function fail($msg){
     exit;
 }
 
-// Lit un champ POST texte. Refuse les retours à la ligne : la valeur est envoyée
-// sur stdin d'install.sh ou écrite dans .env.local, un \n permettrait d'injecter
-// d'autres réponses ou d'autres variables.
-function post($key){
-    if(!isset($_POST[$key]) || !is_string($_POST[$key])){
-        fail("Champ manquant : $key");
+// Lit un champ texte d'un tableau (retour à la ligne interdit : la valeur est
+// envoyée sur stdin d'install.sh ou écrite dans .env.local).
+function field($arr, $key, $label, $required = false){
+    $v = $arr[$key] ?? '';
+    if(!is_string($v) || preg_match('/[\r\n\0]/', $v)){
+        fail("$label : valeur invalide.");
     }
-    $v = $_POST[$key];
-    if(preg_match('/[\r\n\0]/', $v)){
-        fail("Valeur invalide pour : $key");
+    if($required && $v === ''){
+        fail("$label : champ obligatoire.");
     }
     return $v;
 }
 
+function post($key){
+    if(!isset($_POST[$key])){
+        fail("Champ manquant : $key");
+    }
+    return field($_POST, $key, $key, true);
+}
+
+// Champ POST facultatif ('' si absent)
+function optPost($key){
+    return field($_POST, $key, $key);
+}
+
 // Modifie une variable existante de .env.local sans passer par le shell
-// (le sed d'origine cassait avec |, &, \ ou " dans un mot de passe
-// et permettait l'injection de commandes).
 function editEnv($key, $newVal){
     if(preg_match('/[\r\n\0]/', $newVal)){
         fail("Valeur invalide pour $key");
@@ -72,7 +109,6 @@ function editEnv($key, $newVal){
 }
 
 // Lit et valide les workers envoyés par le formulaire
-// ($prefix = nom du tableau POST, $countKey = champ "nombre de workers")
 function readWorkers($prefix, $countKey){
     $count = (int) post($countKey);
     if($count < 1 || $count > MAX_WORKERS){
@@ -85,88 +121,225 @@ function readWorkers($prefix, $countKey){
 
     $workers = [];
     for($i = 0; $i < $count; $i++){
+        $n = $i + 1;
         $w = $list[$i] ?? null;
         if(!is_array($w)){
-            fail("Worker " . ($i + 1) . " : informations manquantes.");
+            fail("Worker $n : informations manquantes.");
         }
-        $row = [];
-        foreach(['user', 'topology', 'vpn', 'worker_password', 'front_password'] as $f){
-            $v = $w[$f] ?? '';
-            if(!is_string($v) || $v === '' || preg_match('/[\r\n\0]/', $v)){
-                fail("Worker " . ($i + 1) . " : champ « $f » invalide.");
-            }
-            $row[$f] = $v;
-        }
+
+        $row = [
+            'user'     => field($w, 'user',     "Worker $n : compte utilisateur", true),
+            'topology' => field($w, 'topology', "Worker $n : topologie", true),
+            'vpn'      => field($w, 'vpn',      "Worker $n : VPN", true),
+            'wss'      => field($w, 'wss',      "Worker $n : WSS") ?: 'yes',
+        ];
         if(!isset(TOPOLOGY_ANSWERS[$row['topology']])){
-            fail("Worker " . ($i + 1) . " : topologie invalide.");
+            fail("Worker $n : topologie invalide.");
         }
-        if(!in_array($row['vpn'], ['yes', 'no'], true)){
-            fail("Worker " . ($i + 1) . " : valeur VPN invalide.");
+        if(!in_array($row['vpn'], ['yes', 'no'], true) || !in_array($row['wss'], ['yes', 'no'], true)){
+            fail("Worker $n : valeur oui/non invalide.");
+        }
+
+        // Champs facultatifs : vide = Entrée (valeur par défaut d'install.sh)
+        foreach(['worker_password', 'front_password', 'worker_user_password'] as $f){
+            $row[$f] = field($w, $f, "Worker $n : $f");
+        }
+        foreach(['admin_if', 'data_if', 'internet_if'] as $f){
+            $row[$f] = field($w, $f, "Worker $n : $f");
+            if($row[$f] !== '' && !preg_match('/^[A-Za-z0-9_.:@-]+$/', $row[$f])){
+                fail("Worker $n : nom d'interface invalide ($f).");
+            }
+        }
+        foreach(['worker_ip', 'front_ip', 'gateway'] as $f){
+            $row[$f] = field($w, $f, "Worker $n : $f");
+            if($row[$f] !== '' && !filter_var($row[$f], FILTER_VALIDATE_IP)){
+                fail("Worker $n : adresse IP invalide ($f).");
+            }
+        }
+        foreach(['data_network', 'internal_ip'] as $f){
+            $row[$f] = field($w, $f, "Worker $n : $f");
+            if($row[$f] !== '' && !preg_match('/^[0-9a-fA-F:.\/]+$/', $row[$f])){
+                fail("Worker $n : réseau invalide ($f).");
+            }
+        }
+
+        if($row['topology'] === 'multiserver'){
+            if($row['worker_ip'] === ''){
+                fail("Worker $n : l'IP du worker est obligatoire en multiserveur.");
+            }
+            if($row['admin_if'] === ''){
+                fail("Worker $n : l'interface d'administration est obligatoire en multiserveur.");
+            }
         }
         $workers[] = $row;
     }
     return $workers;
 }
 
-// Répond aux questions d'install.sh sur les workers, dans l'ordre où elles arrivent.
-// Chaque réponse n'est envoyée qu'une fois.
-function answerWorkerPrompts($line, $stdin, &$st){
-    if(!$st['enabled']){
-        return;
-    }
-    $has = function ($key) use ($line) {
-        return stripos($line, WORKER_MARKERS[$key]) !== false;
-    };
-    $total = count($st['workers']);
-
-    if(!$st['deploy_done'] && $has('deploy')){
-        fwrite($stdin, ($total > 0 ? "y" : "n") . "\n");
-        $st['deploy_done'] = true;
-        return;
-    }
-    if($total === 0){
-        return;
-    }
-    if(!$st['count_done'] && $has('count')){
-        fwrite($stdin, $total . "\n");
-        $st['count_done'] = true;
-        return;
-    }
-    if($has('user')){
-        $st['index']++;
-        if($st['index'] < $total){
-            fwrite($stdin, $st['workers'][$st['index']]['user'] . "\n");
-            $st['answered'][$st['index']]['user'] = true;
+// Calcule la réponse (sans retour à la ligne) à un prompt reconnu
+function promptAnswer($key, &$ctx){
+    $w = null;
+    if(strpos($key, 'w_') === 0){
+        if($key === 'w_user'){
+            $ctx['index']++;
         }
-        return;
-    }
-
-    $i = $st['index'];
-    if($i < 0 || $i >= $total){
-        return;
-    }
-    foreach(['front_password', 'worker_password', 'vpn', 'topology'] as $f){
-        if($has($f)){
-            if(!empty($st['answered'][$i][$f])){
-                return;
-            }
-            $value = $st['workers'][$i][$f];
-            if($f === 'vpn'){
-                $value = ($value === 'yes') ? 'y' : 'n';
-            }elseif($f === 'topology'){
-                $value = TOPOLOGY_ANSWERS[$value];
-            }
-            fwrite($stdin, $value . "\n");
-            $st['answered'][$i][$f] = true;
-            return;
+        $w = $ctx['workers'][$ctx['index']] ?? null;
+        if($w === null){
+            return '';
         }
     }
+
+    switch($key){
+        case 'menu':
+            $ctx['menus']++;
+            return $ctx['menus'] === 1 ? $ctx['menu'] : MENU_EXIT;
+        case 'review':          return 'n';
+        case 'self_signed':     return $ctx['self_signed'];
+        case 'deploy':          return count($ctx['workers']) > 0 ? 'y' : 'n';
+        case 'count':           return (string) count($ctx['workers']);
+        case 'contact_email':   return $ctx['contact_email'];
+        case 'ssh_password':    return $ctx['ssh_password'];
+        case 'enter':           return '';
+
+        case 'w_user':          return $w['user'];
+        case 'w_topology':      return TOPOLOGY_ANSWERS[$w['topology']];
+        case 'w_ip':            return $w['worker_ip'];
+        case 'w_admin_if':      return $w['admin_if'];
+        case 'w_data_if':       return $w['data_if'];
+        case 'w_internet_if':   return $w['internet_if'];
+        case 'w_front_ip':      return $w['front_ip'] !== '' ? $w['front_ip'] : $ctx['front_ip'];
+        case 'w_data_network':  return $w['data_network'];
+        case 'w_internal_ip':   return $w['internal_ip'];
+        case 'w_gateway':       return $w['gateway'];
+        case 'w_vpn':           return $w['vpn'] === 'yes' ? 'y' : 'n';
+        case 'w_wss':           return $w['wss'] === 'yes' ? 'y' : 'n';
+        case 'w_user_password':   return $w['worker_user_password'];
+        case 'w_worker_password': return $w['worker_password'];
+        case 'w_front_password':  return $w['front_password'];
+    }
+    return '';
+}
+
+// Envoie une commande JS à la carte d'étape de la page
+function ui($options){
+    echo '<script>InstallUI.setStep('
+        . json_encode($options, JSON_HEX_TAG | JSON_UNESCAPED_UNICODE)
+        . ')</script>';
+}
+
+// Masque la réponse (écho du terminal) qui suit un mot de passe
+function maskEcho($text, &$mask){
+    if(!$mask){
+        return $text;
+    }
+    $pos = strpos($text, "\n");
+    if($pos === false){
+        return str_repeat('*', strlen($text));
+    }
+    $mask = false;
+    return str_repeat('*', $pos) . substr($text, $pos);
+}
+
+// Lit la sortie d'install.sh en continu, l'affiche, et répond aux prompts.
+// Retourne le code de sortie.
+function streamInstall($process, $pipes, &$ctx){
+    stream_set_blocking($pipes[1], false);
+    stream_set_blocking($pipes[2], false);
+
+    $pending   = '';     // ligne en cours (sans retour à la ligne final)
+    $mask      = false;
+    $finishing = false;
+    $lastData  = time();
+    $warned    = '';
+
+    while(true){
+        $read = [$pipes[1], $pipes[2]];
+        $w = $e = null;
+        @stream_select($read, $w, $e, 1);
+
+        $text = '';
+        foreach($read as $r){
+            $chunk = fread($r, 8192);
+            if($chunk !== false && $chunk !== ''){
+                $text .= $chunk;
+            }
+        }
+
+        if($text === ''){
+            if($finishing){
+                break;
+            }
+            $st = proc_get_status($process);
+            if(!$st['running']){
+                $finishing = true;     // dernier passage pour vider les tubes
+                continue;
+            }
+            // Prompt non reconnu ? On le signale dans le terminal.
+            if($pending !== '' && time() - $lastData > 20 && $warned !== $pending
+               && preg_match('/[:?\]\)]\s*$/', $pending)){
+                echo htmlspecialchars("\n[install.php] En attente sur : « " . trim($pending) . " » (prompt non reconnu ?)\n", ENT_SUBSTITUTE);
+                flush();
+                $warned = $pending;
+            }
+            continue;
+        }
+        $lastData = time();
+
+        // Nettoyage : séquences ANSI / OSC, fins de ligne
+        $text = preg_replace('/\x1b\][^\x07\x1b]*(\x07|\x1b\\\\)/', '', $text);
+        $text = preg_replace('/\x1b\[[0-9;?]*[A-Za-z]/', '', $text);
+        $text = str_replace("\r\n", "\n", $text);
+
+        // Lignes complètes -> étapes / description ; reste = ligne en cours
+        $pending .= $text;
+        $lines = explode("\n", $pending);
+        $pending = array_pop($lines);
+        foreach($lines as $line){
+            $line = trim(substr(strrchr("\r" . $line, "\r"), 1));
+            if(preg_match('/^STEP (\d+): (.+)$/', $line, $m)){
+                ui(['number' => 'Étape ' . $m[1] . '/6', 'title' => $m[2],
+                    'progress' => ((int) $m[1] - 1) / 6 * 100]);
+            }elseif($line === 'Worker Deployment Configuration'){
+                ui(['title' => 'Configuring Worker Deployments']);
+            }elseif($line === 'Deploying Workers with Ansible'){
+                ui(['title' => 'Deploying Workers']);
+            }elseif(preg_match('/^🔥\s*(.+)$/u', $line, $m) && strpos($m[1], '───') === false){
+                ui(['description' => $m[1]]);
+            }
+        }
+        $pending = substr(strrchr("\r" . $pending, "\r"), 1);   // après le dernier \r
+
+        // Affichage (sans \r, mots de passe masqués)
+        echo htmlspecialchars(maskEcho(str_replace("\r", '', $text), $mask), ENT_SUBSTITUTE);
+        flush();
+
+        // Prompt reconnu ? -> réponse
+        foreach(PROMPTS as $p){
+            if(preg_match($p[0], $pending)){
+                $answer = promptAnswer($p[1], $ctx);
+                fwrite($pipes[0], $answer . "\n");
+                if(in_array($p[1], SECRET_PROMPTS, true)){
+                    $mask = true;
+                }
+                $pending = '';
+                break;
+            }
+        }
+    }
+
+    fclose($pipes[0]);
+    fclose($pipes[1]);
+    fclose($pipes[2]);
+    return proc_close($process);
 }
 
 
 /* ============================ Traitement ============================ */
 
 if($_SERVER['REQUEST_METHOD'] == 'POST'){
+
+set_time_limit(0);
+ignore_user_abort(true);   // l'installation continue même si la page est fermée
 
 while (ob_get_level() > 0) { ob_end_flush(); }
 @ini_set('zlib.output_compression', '0');
@@ -176,18 +349,30 @@ while (ob_get_level() > 0) { ob_end_flush(); }
     shell_exec("mkdir /opt/remotelabz");
 
     $installType = post("install_type");
-
-    $input = [];
     $continueLink = "/";
-    $workers = [];
-    $workersEnabled = false;
+
+    // Réponses utilisées par streamInstall()
+    $ctx = [
+        'menu'          => '',
+        'menus'         => 0,
+        'self_signed'   => '',
+        'contact_email' => '',
+        'ssh_password'  => '',
+        'front_ip'      => '',
+        'workers'       => [],
+        'index'         => -1,
+    ];
+
+    // Prépare .env.local s'il n'existe pas encore
+    $prepareEnv = function () {
+        if(!file_exists("/opt/remotelabz/.env.local")){
+            shell_exec("cp ../.env /opt/remotelabz/.env.local");
+        }
+    };
 
     switch($installType){
         case 'auto_install':
-
-            if(!file_exists("/opt/remotelabz/.env.local")){
-                shell_exec("cp ../.env /opt/remotelabz/.env.local");
-            }
+            $prepareEnv();
 
             editEnv("PUBLIC_ADDRESS", post("ip_public"));
             if(post('server_mode') === "single_server"){
@@ -197,51 +382,33 @@ while (ob_get_level() > 0) { ob_end_flush(); }
                 editEnv("DEPLOY_SINGLE_SERVER", "0");
                 editEnv("IP_ADDRESS", post("ip_public"));
             }
-
             editEnv("MYSQL_PASSWORD", post("mysql_password"));
             editEnv("SSL_CA_KEY_PASSPHRASE", post("ssl_ca_key_password"));
-
             editEnv("CONTACT_MAIL", post("contact_email"));
 
-            $selfSigned = (post("self_signed") === "yes") ? "y" : "n";
-
-            // Déploiement de workers
-            $workersEnabled = true;
+            $ctx['menu']          = MENU_FULL_AUTO;
+            $ctx['self_signed']   = (post("self_signed") === "yes") ? "y" : "n";
+            $ctx['contact_email'] = post("contact_email");
+            $ctx['front_ip']      = post("ip_public");
             if(post("deploy_workers") === "yes"){
-                $workers = readWorkers("auto_workers", "auto_workers_count");
+                $ctx['workers']      = readWorkers("auto_workers", "auto_workers_count");
+                $ctx['ssh_password'] = optPost("auto_ssh_password");
             }
-
-            //Param1 : type d'installation (1 = auto install)
-            //Param2 : review conf file : ne pas mettre y sinon bloquage
-            //param3 : selfsigned certificat
-            $input[0] = "7\n";
-            $input[1] = "n\n";
-            $input[2] = $selfSigned."\n";
-
             $continueLink = "https://".post("ip_public");
-
             break;
+
         case 'requirements':
-            $input[0] = "1\n";
-            $input[1] = "\n";
-            $input[2] = "7\n";
+            $ctx['menu'] = MENU_REQUIREMENTS;
             break;
+
         case 'openvpn':
-            if(!file_exists("/opt/remotelabz/.env.local")){
-                shell_exec("cp ../.env /opt/remotelabz/.env.local");
-            }
-            // (la clé d'origine "SL_CA_KEY_PASSPHRASE" était une faute de frappe)
+            $prepareEnv();
             editEnv("SSL_CA_KEY_PASSPHRASE", post("openvpn_ssl_ca_key_password"));
-
-            $input[0] = "2\n";
-            $input[1] = "\n";
-            $input[2] = "7\n";
-
+            $ctx['menu'] = MENU_OPENVPN;
             break;
+
         case 'ssl':
-            if(!file_exists("/opt/remotelabz/.env.local")){
-                shell_exec("cp ../.env /opt/remotelabz/.env.local");
-            }
+            $prepareEnv();
             editEnv("PUBLIC_ADDRESS", post("ssl_ip_public"));
             if(post('ssl_server_mode') === "single_server"){
                 editEnv("DEPLOY_SINGLE_SERVER", "1");
@@ -250,25 +417,17 @@ while (ob_get_level() > 0) { ob_end_flush(); }
                 editEnv("DEPLOY_SINGLE_SERVER", "0");
                 editEnv("IP_ADDRESS", post("ssl_ip_public"));
             }
-
             editEnv("MYSQL_PASSWORD", post("ssl_mysql_password"));
             editEnv("SSL_CA_KEY_PASSPHRASE", post("ssl_ssl_ca_key_password"));
-
             editEnv("CONTACT_MAIL", post("ssl_contact_email"));
 
-            $selfSigned = (post("ssl_self_signed") === "yes") ? "y" : "n";
-
-            $input[0] = "3\n";
-            $input[1] = "n\n";
-            $input[2] = $selfSigned."\n";
-            $input[3] = "\n";
-            $input[4] = "7\n";
-
+            $ctx['menu']          = MENU_SSL;
+            $ctx['self_signed']   = (post("ssl_self_signed") === "yes") ? "y" : "n";
+            $ctx['contact_email'] = post("ssl_contact_email");
             break;
+
         case 'remotelabz':
-            if(!file_exists("/opt/remotelabz/.env.local")){
-                shell_exec("cp ../.env /opt/remotelabz/.env.local");
-            }
+            $prepareEnv();
             editEnv("PUBLIC_ADDRESS", post("rl_ip_public"));
             if(post('rl_server_mode') === "single_server"){
                 editEnv("DEPLOY_SINGLE_SERVER", "1");
@@ -277,53 +436,30 @@ while (ob_get_level() > 0) { ob_end_flush(); }
                 editEnv("DEPLOY_SINGLE_SERVER", "0");
                 editEnv("IP_ADDRESS", post("rl_ip_public"));
             }
-
             editEnv("MYSQL_PASSWORD", post("rl_mysql_password"));
             editEnv("SSL_CA_KEY_PASSPHRASE", post("rl_ssl_ca_key_password"));
-
             editEnv("CONTACT_MAIL", post("rl_contact_email"));
 
-            // (l'ancien code lisait "ssl_self_signed" au lieu de "rl_self_signed")
-            $selfSigned = (post("rl_self_signed") === "yes") ? "y" : "n";
-
-            $input[0] = "4\n";
-            $input[1] = "n\n";
-            $input[2] = $selfSigned."\n";
-
+            $ctx['menu']          = MENU_REMOTELABZ;
+            $ctx['self_signed']   = (post("rl_self_signed") === "yes") ? "y" : "n";
+            $ctx['contact_email'] = post("rl_contact_email");
             $continueLink = "https://".post("rl_ip_public");
-
-
             break;
+
         case 'workers':
-            if(!file_exists("/opt/remotelabz/.env.local")){
-                shell_exec("cp ../.env /opt/remotelabz/.env.local");
-            }
-
-            $workersEnabled = true;
-            $workers = readWorkers("workers", "workers_count");
-
-            // Hypothèse : 6 = "Configure worker deployments" dans le menu d'install.sh
-            $input[0] = "5\n";
-            $input[1] = "\n";
-            $input[2] = "7\n";
-
+            $prepareEnv();
+            $ctx['menu']          = MENU_WORKERS;
+            $ctx['contact_email'] = post("workers_contact_email");
+            $ctx['front_ip']      = optPost("workers_front_ip");
+            $ctx['ssh_password']  = optPost("workers_ssh_password");
+            $ctx['workers']       = readWorkers("workers", "workers_count");
             break;
+
         case 'custom':
-            echo "custom";
-            break;
+            fail("Le mode Custom n'est pas encore pris en charge.");
         default:
             die();
     }
-
-    $workerState = [
-        'enabled'     => $workersEnabled,
-        'workers'     => $workers,
-        'deploy_done' => false,
-        'count_done'  => false,
-        'index'       => -1,
-        'answered'    => [],
-    ];
-
 
 
     $cmd = "script -q -c './install.sh' /tmp/installLogs.log";
@@ -350,8 +486,6 @@ while (ob_get_level() > 0) { ob_end_flush(); }
         . '<body><pre>Erreur : impossible de démarrer le processus d\'installation.</pre></body></html>';
         exit;
     }
-
-    fwrite($pipes[0],$input[0]);
 
 ?>
 
@@ -721,113 +855,7 @@ while (ob_get_level() > 0) { ob_end_flush(); }
                 <span class="dot green"></span>
                 <span class="terminal-title">install.sh</span>
             </div>
-            <pre id="terminal" class="terminal-body"><?php
-
-                    while (false !== ($s = fgets($pipes[1]))) {
-
-                        // Ligne sans codes couleur, pour la recherche des prompts
-                        $plain = preg_replace('/\x1b?\[[0-9;]*m/', '', $s);
-
-                        switch($installType){
-                            case 'auto_install':
-                                if(str_contains($s,"Existing environment file loaded")){
-                                    fwrite($pipes[0],$input[1]);
-                                }
-
-                                if(str_contains($s,"Enabling WSS")){
-                                    fwrite($pipes[0],$input[2]);
-                                }
-                                break;
-                            case 'requirements':
-                                if(str_contains($s,"System requirements installation completed")){
-                                    fwrite($pipes[0], $input[1]);
-                                    fwrite($pipes[0], $input[2]);
-                                }
-
-                                break;
-                            case 'openvpn':
-                                if(str_contains($s,"OpenVPN setup completed")){
-                                    fwrite($pipes[0],$input[1]);
-                                    fwrite($pipes[0],$input[2]);
-                                }
-                                break;
-                            case 'ssl':
-                                if(str_contains($s,"Existing environment file loaded")){
-                                    fwrite($pipes[0],$input[1]);
-                                }
-
-                                if(str_contains($s,"Enabling WSS")){
-                                    fwrite($pipes[0],$input[2]);
-                                }
-
-                                if(str_contains($s,"SSL configuration completed")){
-                                    fwrite($pipes[0],$input[3]);
-                                    fwrite($pipes[0],$input[4]);
-
-                                }
-
-                                break;
-                            case 'remotelabz':
-                                if(str_contains($s,"Existing environment file loaded")){
-                                    fwrite($pipes[0],$input[1]);
-                                }
-
-                                break;
-                            case 'workers':
-                                if(stripos($plain, WORKER_MARKERS['done']) !== false){
-                                    fwrite($pipes[0],$input[1]);
-                                    fwrite($pipes[0],$input[2]);
-                                }
-                                break;
-                            case 'custom':
-                                echo "custom";
-                                break;
-                            default:
-                                die();
-                        }
-
-                        // Questions sur les workers (auto_install et workers)
-                        answerWorkerPrompts($plain, $pipes[0], $workerState);
-
-                        if(str_contains($s,"Installing System Requirements")){
-                            echo '<script>InstallUI.setStep({"title":"Installing System Requirements"})</script>';
-                        }
-                        if(str_contains($s,"Setting up OpenVPN")){
-                            echo '<script>InstallUI.setStep({"title":"Setting up OpenVPN"})</script>';
-                        }
-                        if(str_contains($s,"Configuring System Parameters")){
-                            echo '<script>InstallUI.setStep({"title":"Configuring System Parameters"})</script>';
-                        }
-                        if(str_contains($s,"Configuring SSL Certificates")){
-                            echo '<script>InstallUI.setStep({"title":"Configuring SSL Certificates"})</script>';
-                        }
-                        if(str_contains($s,"Installing RemoteLabz Application")){
-                            echo '<script>InstallUI.setStep({"title":"Installing RemoteLabz Application"})</script>';
-                        }
-                        if(str_contains($s,"Deploying Workers") || str_contains($s,"Configuring Worker")){
-                            echo '<script>InstallUI.setStep({"title":"Configuring Worker Deployments"})</script>';
-                        }
-                        if(str_contains($s,"Final Configuration")){
-                            echo '<script>InstallUI.setStep({"title":"Final Configuration"})</script>';
-                        }
-
-                        if(str_contains($s, "[0;32m")){
-                            // json_encode ajoute déjà les guillemets : on encode l'objet entier
-                            echo '<script>InstallUI.setStep('
-                                . json_encode(['description' => trim($plain)], JSON_HEX_TAG | JSON_UNESCAPED_UNICODE)
-                                . ')</script>';
-                        }
-
-                        print htmlspecialchars($plain, ENT_SUBSTITUTE);
-
-                        flush();
-                    }
-
-                    fclose($pipes[0]);
-
-                    $status = proc_close($process);
-
-            ?></pre>
+            <pre id="terminal" class="terminal-body"><?php $status = streamInstall($process, $pipes, $ctx); ?></pre>
         </div>
     </div>
 

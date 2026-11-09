@@ -156,6 +156,10 @@
   .worker-card .form-group:last-child { margin-bottom: 0; }
 
 
+  .multi-only { margin-left: 0; padding-left: 0; border-left: 0; }
+  details.advanced { margin-top: 4px; }
+  details.advanced summary { cursor: pointer; color: var(--primary); font-weight: 500; margin-bottom: 12px; }
+
   @media (max-width: 600px) {
     main { padding: 16px 12px; }
     .card-body { padding: 14px; }
@@ -312,14 +316,23 @@
       <!-- Workers -->
       <div class="conditional-group" id="group-workers">
         <div class="form-group">
-          <label class="field-label" for="wk_front">IP du serveur principal<span class="required">*</span></label>
-          <input type="text" id="wk_front" name="workers_front_ip" placeholder="Ex : 203.0.113.10" required>
+          <label class="field-label" for="wk_front">IP du serveur principal (front)</label>
+          <input type="text" id="wk_front" name="workers_front_ip" placeholder="Laisser vide = IP détectée par le script">
+        </div>
+        <div class="form-group">
+          <label class="field-label" for="wk_mail">Email de contact<span class="required">*</span></label>
+          <input type="email" id="wk_mail" name="workers_contact_email" placeholder="admin@exemple.com" required>
         </div>
         <div class="form-group">
           <label class="field-label" for="wk_count">Nombre de workers<span class="required">*</span></label>
           <input type="number" id="wk_count" name="workers_count" min="1" max="20" placeholder="1" required>
         </div>
         <div id="workers-list"></div>
+        <div class="form-group">
+          <label class="field-label" for="wk_ssh">Mot de passe SSH de remotelabz-worker</label>
+          <input type="password" id="wk_ssh" name="workers_ssh_password" placeholder="Laisser vide = mot de passe par défaut">
+          <div class="hint">Demandé une fois, après la configuration de tous les workers</div>
+        </div>
       </div>
 
       <!-- Custom -->
@@ -392,6 +405,11 @@
             <input type="number" id="auto_workers_count" name="auto_workers_count" min="1" max="20" placeholder="1" required>
           </div>
           <div id="auto-workers-list"></div>
+          <div class="form-group">
+          <label class="field-label" for="auto_ssh">Mot de passe SSH de remotelabz-worker</label>
+          <input type="password" id="auto_ssh" name="auto_ssh_password" placeholder="Laisser vide = mot de passe par défaut">
+            <div class="hint">Demandé une fois, après la configuration de tous les workers</div>
+          </div>
         </div>
       </div>
 
@@ -439,22 +457,55 @@
     function card(i) {
       var n = function (f) { return prefix + '[' + i + '][' + f + ']'; };
       var id = function (f) { return prefix + '_' + i + '_' + f; };
+      function input(f, label, o) {
+        o = o || {};
+        return '<div class="form-group"><label class="field-label" for="' + id(f) + '">' + label +
+          (o.required ? '<span class="required">*</span>' : '') + '</label>' +
+          '<input type="' + (o.type || 'text') + '" id="' + id(f) + '" name="' + n(f) + '"' +
+          (o.placeholder ? ' placeholder="' + o.placeholder + '"' : '') + (o.required ? ' required' : '') + '>' +
+          (o.hint ? '<div class="hint">' + o.hint + '</div>' : '') + '</div>';
+      }
+      function choice(f, label, a, b, defaultFirst) {
+        return '<div class="form-group"><span class="field-label">' + label + '<span class="required">*</span></span><div class="choice-row">' +
+          '<label class="choice"><input type="radio" name="' + n(f) + '" value="' + a[0] + '"' + (defaultFirst ? ' checked' : '') + '> ' + a[1] + '</label>' +
+          '<label class="choice"><input type="radio" name="' + n(f) + '" value="' + b[0] + '"' + (defaultFirst ? '' : ' checked') + '> ' + b[1] + '</label></div></div>';
+      }
+      var def = 'Laisser vide = valeur par défaut';
       var div = document.createElement('div');
       div.className = 'worker-card';
       div.innerHTML =
         '<h3>Worker ' + (i + 1) + '</h3>' +
-        '<div class="form-group"><label class="field-label" for="' + id('user') + '">Compte utilisateur du worker<span class="required">*</span></label>' +
-          '<input type="text" id="' + id('user') + '" name="' + n('user') + '" required></div>' +
-        '<div class="form-group"><span class="field-label">Topologie<span class="required">*</span></span><div class="choice-row">' +
-          '<label class="choice"><input type="radio" name="' + n('topology') + '" value="single_server" checked> Single serveur</label>' +
-          '<label class="choice"><input type="radio" name="' + n('topology') + '" value="multiserver"> Multiserveur</label></div></div>' +
-        '<div class="form-group"><span class="field-label">VPN hébergé sur le worker<span class="required">*</span></span><div class="choice-row">' +
-          '<label class="choice"><input type="radio" name="' + n('vpn') + '" value="yes"> Oui</label>' +
-          '<label class="choice"><input type="radio" name="' + n('vpn') + '" value="no" checked> Non</label></div></div>' +
-        '<div class="form-group"><label class="field-label" for="' + id('worker_password') + '">Mot de passe du worker<span class="required">*</span></label>' +
-          '<input type="password" id="' + id('worker_password') + '" name="' + n('worker_password') + '" placeholder="••••••••" required></div>' +
-        '<div class="form-group"><label class="field-label" for="' + id('front_password') + '">Mot de passe du front<span class="required">*</span></label>' +
-          '<input type="password" id="' + id('front_password') + '" name="' + n('front_password') + '" placeholder="••••••••" required></div>';
+        input('user', 'Compte utilisateur du worker', { required: true }) +
+        choice('topology', 'Topologie', ['single_server', 'Single serveur'], ['multiserver', 'Multiserveur'], true) +
+        '<div class="sub-conditional multi-only">' +
+          input('worker_ip', 'IP du worker', { required: true, placeholder: 'Ex : 192.168.56.200' }) +
+          input('worker_user_password', 'Mot de passe du compte sur le worker', { type: 'password', placeholder: 'Laisser vide si aucun' }) +
+        '</div>' +
+        input('admin_if', 'Interface d\'administration', { placeholder: 'Ex : enp0s8 (vide = détectée)' }) +
+        choice('vpn', 'VPN hébergé sur le worker', ['yes', 'Oui'], ['no', 'Non'], true) +
+        input('worker_password', 'Mot de passe du worker (remotelabz-worker)', { type: 'password', placeholder: def }) +
+        input('front_password', 'Mot de passe du front (remotelabz)', { type: 'password', placeholder: def }) +
+        choice('wss', 'WSS (Secure WebSocket)', ['yes', 'Oui'], ['no', 'Non'], true) +
+        '<details class="advanced"><summary>Options réseau avancées</summary>' +
+          input('data_if', 'Interface de données', { placeholder: def }) +
+          input('internet_if', 'Interface d\'accès Internet', { placeholder: def }) +
+          input('front_ip', 'IP du serveur front', { placeholder: def }) +
+          input('data_network', 'Réseau de données', { placeholder: def + ' (ex : 10.22.128.0/24)' }) +
+          input('internal_ip', 'IP interne de données', { placeholder: def + ' (ex : 10.22.128.2/24)' }) +
+          input('gateway', 'Passerelle du réseau de données', { placeholder: def + ' (ex : 10.22.128.254)' }) +
+        '</details>';
+
+      // Les champs "multiserveur" ne sont visibles et requis que pour cette topologie
+      var multi = div.querySelector('.multi-only');
+      var adminIf = div.querySelector('[name="' + n('admin_if') + '"]');
+      div.querySelectorAll('input[name="' + n('topology') + '"]').forEach(function (r) {
+        r.addEventListener('change', function () {
+          var isMulti = div.querySelector('input[name="' + n('topology') + '"]:checked').value === 'multiserver';
+          multi.classList.toggle('visible', isMulti);
+          adminIf.required = isMulti;
+          refresh();
+        });
+      });
       return div;
     }
 
