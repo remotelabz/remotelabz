@@ -8,13 +8,13 @@
    Ce sont des hypothèses : remplacez-les par le texte exact des prompts.
    ===================================================================== */
 const WORKER_MARKERS = [
-    'deploy'          => 'deploy workers',          // "Déploiement de workers ? (y/n)"
-    'count'           => 'number of workers',       // nombre de workers
-    'user'            => 'worker user account',     // début des questions d'un worker
-    'topology'        => 'topology',
-    'vpn'             => 'vpn hosted',
-    'worker_password' => 'worker password',
-    'front_password'  => 'front password',
+    'deploy'          => 'Do you want to deploy RemoteLabz workers?',          // "Déploiement de workers ? (y/n)"
+    'count'           => 'How many workers?',       // nombre de workers
+    'user'            => 'Worker user account',     // début des questions d'un worker
+    'topology'        => 'Deployment topology',
+    'vpn'             => 'Is the VPN hosted on this worker?',
+    'worker_password' => 'Password for remotelabz-worker user',
+    'front_password'  => 'Password for remotelabz (front) user',
     'done'            => 'Worker deployment completed', // fin (type "workers" seul)
 ];
 
