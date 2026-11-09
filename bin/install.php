@@ -339,7 +339,7 @@ while (ob_get_level() > 0) { ob_end_flush(); }
                         array(
                             'TERM'    => 'xterm-256color',
                             'SUDO_USER' => get_current_user(),
-                            'HOME' => '\/home\/'.get_current_user(),
+                            'HOME' => '/home/'.get_current_user(),
                             'PATH' => getenv("PATH")
                             ));
 
