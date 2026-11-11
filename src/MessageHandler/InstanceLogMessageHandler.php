@@ -37,6 +37,20 @@ class InstanceLogMessageHandler
 
         $deviceInstance = $this->deviceInstanceRepository->findOneBy(['uuid' => $message->getUuid()]);
 
+        // Not every worker log is attached to a device instance: the file copy
+        // operations (ISO/image, ACTION_COPYFROMFRONT / ACTION_COPY2WORKER_DEV)
+        // use the file name as uuid. Persisting such a log would create an
+        // orphan DeviceInstanceLog row (device_instance_id = NULL) that no page
+        // ever reads, so it is only logged here.
+        if (null === $deviceInstance) {
+            $this->logger->debug('[InstanceLogMessageHandler]::No device instance matches the log uuid, log not persisted', [
+                'uuid' => $message->getUuid(),
+                'type' => $message->getType(),
+            ]);
+
+            return;
+        }
+
         $deviceInstanceLog = new DeviceInstanceLog();
         $deviceInstanceLog
             ->setContent($message->getContent())
