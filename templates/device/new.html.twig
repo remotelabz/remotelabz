@@ -133,6 +133,27 @@
                 {% endif %}
                 {{ form_row(form.other_options) }}
                 {{ form_row(form.isTemplate) }}
+
+                {% if form.give_to_root is defined %}
+                    <div class="form-group row">
+                        <label class="col-sm-2 col-form-label">Current author</label>
+                        <div class="col-sm-10">
+                            <p class="form-control-plaintext mb-0">
+                                {% if data.author %}
+                                    {{ data.author.name }}
+                                    {% if data.author.highestRole == 'ROLE_SUPER_ADMINISTRATOR' %}
+                                        <span class="badge bg-danger ms-1">root</span>
+                                    {% elseif data.author.administrator %}
+                                        <span class="badge bg-primary ms-1">Administrator</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-muted">Not specified</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    {{ form_row(form.give_to_root) }}
+                {% endif %}
                 
                 <div class="d-flex justify-content-between">
                     <a href="{{ path('devices') }}" class="btn btn-secondary">

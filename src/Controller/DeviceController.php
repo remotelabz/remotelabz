@@ -1108,10 +1108,24 @@ class DeviceController extends Controller
         $oldName = $device->getName();
         $virtuality = $device->getVirtuality();
         $this->logger->info("Device ".$device->getName()." modification asked by user ".$this->getUser()->getFirstname()." ".$this->getUser()->getName());
-    
+
+        // Only an administrator or the current author may transfer the ownership,
+        // and only to root: administrator-owned devices are visible to everyone.
+        $user = $this->getUser();
+        $currentAuthor = $device->getAuthor();
+        $rootUser = null;
+        $canChangeAuthor = false;
+        if ($user instanceof User && ($user->isAdministrator() || $currentAuthor == $user)) {
+            $rootUser = $this->managerRegistry->getRepository(User::class)->findSuperAdministrator();
+            // Nothing to transfer when the device already belongs to root.
+            $canChangeAuthor = $rootUser !== null
+                && ($currentAuthor === null || $currentAuthor->getId() !== $rootUser->getId());
+        }
+
         $deviceForm = $this->createForm(DeviceType::class, $device, [
             'nb_network_interface' => count($device->getNetworkInterfaces()),
-            'virtuality' => $virtuality
+            'virtuality' => $virtuality,
+            'can_change_author' => $canChangeAuthor,
         ]);
         
         $deviceForm->handleRequest($request);
@@ -1178,6 +1192,15 @@ class DeviceController extends Controller
             }
 
             $this->setDeviceHypervisorToOS($device);
+
+            // Give the device to root when explicitly requested (only available
+            // to the administrator or the current author, see $canChangeAuthor).
+            if ($canChangeAuthor && $rootUser !== null
+                && $deviceForm->has('give_to_root')
+                && $deviceForm->get('give_to_root')->getData() === true) {
+                $device->setAuthor($rootUser);
+                $this->logger->info("Device ".$device->getName()." given to root");
+            }
 
             $controlProtocolTypes= [];
             foreach($device->getControlProtocolTypes() as $controlProtocolType) {

@@ -55,6 +55,16 @@ class UserRepository extends ServiceEntityRepository
             ->getResult()
         ;
     }
+
+    /**
+     * The "root" account is the (single) user holding ROLE_SUPER_ADMINISTRATOR.
+     */
+    public function findSuperAdministrator(): ?User
+    {
+        $users = $this->findByRole('%ROLE_SUPER_ADMINISTRATOR%');
+
+        return $users[0] ?? null;
+    }
     // /**
     //  * @return User[] Returns an array of User objects
     //  */

@@ -254,8 +254,22 @@ class DeviceType extends AbstractType
                     'required' => false,
                     'label' => 'Advanced options',
                     'help' => 'Advanced QEMU options',
-                ])
-            ->add('submit', SubmitType::class);
+                ]);
+
+            // Ownership transfer is restricted to the "root" account: only
+            // administrator-owned devices are visible to every user, so a device
+            // can only be shared with everyone by giving it to root. An unmapped
+            // checkbox is used so the transfer only happens when explicitly asked.
+            if ($options['can_change_author']) {
+                $builder->add('give_to_root', CheckboxType::class, [
+                    'mapped' => false,
+                    'required' => false,
+                    'label' => 'Give to root',
+                    'help' => 'Transfer this device to the root account so it becomes visible to everyone.',
+                ]);
+            }
+
+            $builder->add('submit', SubmitType::class);
     }
 
     public function configureOptions(OptionsResolver $resolver): void
@@ -264,7 +278,8 @@ class DeviceType extends AbstractType
             'data_class' => Device::class,
             "allow_extra_fields" => true,
             'nb_network_interface' => null,
-            "virtuality" => 1
+            "virtuality" => 1,
+            'can_change_author' => false,
         ]);
     }
 }

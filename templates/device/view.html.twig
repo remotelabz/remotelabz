@@ -108,7 +108,7 @@
                     </div>
                 </div>
                 
-                <div class="row mb-0">
+                <div class="row mb-3">
                     <div class="col-sm-3"><strong>Operating System:</strong></div>
                     <div class="col-sm-9">
                         {% if device.operatingSystem %}
@@ -120,6 +120,22 @@
                             <span class="text-muted">Not specified</span>
                         {% endif %}
 
+                    </div>
+                </div>
+
+                <div class="row mb-0">
+                    <div class="col-sm-3"><strong>Author:</strong></div>
+                    <div class="col-sm-9">
+                        {% if device.author %}
+                            {{ device.author.name }}
+                            {% if device.author.highestRole == 'ROLE_SUPER_ADMINISTRATOR' %}
+                                <span class="badge bg-danger ms-1">root</span>
+                            {% elseif device.author.administrator %}
+                                <span class="badge bg-primary ms-1">Administrator</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="text-muted">Not specified</span>
+                        {% endif %}
                     </div>
                 </div>
             </div>
