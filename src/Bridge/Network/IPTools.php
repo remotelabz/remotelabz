@@ -274,15 +274,59 @@ class IPTools extends Bridge
 
     public static function routeExists(string $route, int $tableId = 254) : bool
     {
+        if (empty($route)) {
+            throw new Exception("Route cannot be empty.");
+        }
+
         $output = static::routeShow($tableId);
         $route = preg_quote($route, '/');
-        $exists = preg_match('/(' . $route . ')/', $output->getOutput());
+        $exists = preg_match('/^' . $route . '(?=\s|$)/m', $output->getOutput());
 
-        if($exists) {
-            return true;
-        } else {
-            return false;
+        return (bool) $exists;
+    }
+
+    /**
+     * Check if a route to the given network exists AND points through the given gateway.
+     *
+     * @param string $route The network in CIDR notation.
+     * @param string $gateway The expected next-hop address.
+     * @param int $tableId The routing table to inspect.
+     * @return bool True only if the route to $route is present via $gateway.
+     */
+    public static function routeExistsVia(string $route, string $gateway, int $tableId = 254) : bool
+    {
+        if (empty($route) || empty($gateway)) {
+            throw new Exception("Route and gateway cannot be empty.");
         }
+
+        $output = static::routeShow($tableId);
+
+        $route = preg_quote($route, '/');
+        $gateway = preg_quote($gateway, '/');
+
+        // A route to $route whose next hop is exactly $gateway
+        $exists = preg_match('/^' . $route . '\s+via\s+' . $gateway . '(?=\s|$)/m', $output->getOutput());
+
+        return (bool) $exists;
+    }
+
+    /**
+     * Add or replace a route (idempotent).
+     *
+     * @param string $route The network in CIDR notation.
+     * @param string $gateway The next-hop address.
+     * @throws Exception If the route is empty.
+     * @throws ProcessFailedException If the process didn't terminate successfully.
+     * @return Process The executed process.
+     */
+    public static function routeReplace(string $route, string $gateway) : Process {
+        if (empty($route)) {
+            throw new Exception("Route cannot be empty.");
+        }
+
+        $command = [ 'ip', 'route', 'replace', $route, 'via', $gateway ];
+
+        return static::exec($command);
     }
     
     

@@ -48,7 +48,7 @@ class RouteMonitorCommand extends Command
                 'dry-run',
                 null,
                 InputOption::VALUE_NONE,
-                'Check routes without adding missing ones (not yet implemented)'
+                'Check routes without adding missing ones'
             )
             ->setHelp('This command checks all lab instance routes and restores any missing routes.');
     }
@@ -58,13 +58,9 @@ class RouteMonitorCommand extends Command
         $io = new SymfonyStyle($input, $output);
         $dryRun = $input->getOption('dry-run');
 
-        if ($dryRun) {
-            $io->warning('DRY-RUN mode not yet implemented with refactored service');
-        }
+        $io->title($dryRun ? 'Route Monitor (DRY-RUN)' : 'Route Monitor');
 
-        $io->title('Route Monitor');
-
-        $stats = $this->routeManager->syncAllRoutes();
+        $stats = $this->routeManager->syncAllRoutes($dryRun);
 
         if ($stats['total'] === 0) {
             $io->warning('No lab instances found');
@@ -78,21 +74,39 @@ class RouteMonitorCommand extends Command
             [
                 ['Total lab instances', $stats['total']],
                 ['Routes OK', $stats['ok']],
-                ['Routes added/restored', $stats['added']],
+                [$dryRun ? 'Routes missing (would be added)' : 'Routes added', $stats['added']],
+                [$dryRun ? 'Routes wrong (would be corrected)' : 'Routes corrected', $stats['fixed']],
                 ['Worker unavailable', $stats['worker_unavailable']],
                 ['Failed', $stats['failed']],
             ]
         );
+
+        if ($dryRun) {
+            if ($stats['failed'] > 0) {
+                $io->error('Some routes could not be checked');
+                return Command::FAILURE;
+            }
+
+            $pending = $stats['added'] + $stats['fixed'];
+            if ($pending > 0) {
+                $io->comment(sprintf('%d route(s) are missing or incorrect and would be restored (no change made)', $pending));
+            } else {
+                $io->success('All routes are present and correct');
+            }
+
+            return Command::SUCCESS;
+        }
 
         if ($stats['failed'] > 0) {
             $io->error('Some routes could not be restored');
             return Command::FAILURE;
         }
 
-        if ($stats['added'] > 0) {
-            $io->success(sprintf('%d route(s) restored successfully', $stats['added']));
+        $restored = $stats['added'] + $stats['fixed'];
+        if ($restored > 0) {
+            $io->success(sprintf('%d route(s) restored successfully', $restored));
         } else if ($stats['worker_unavailable'] == 0) {
-            $io->success('All routes are present');
+            $io->success('All routes are present and correct');
         }
 
         return Command::SUCCESS;

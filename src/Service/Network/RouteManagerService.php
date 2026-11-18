@@ -5,6 +5,7 @@ namespace App\Service\Network;
 use Exception;
 use GuzzleHttp\Client;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\Process\Exception\ProcessFailedException;
 use App\Repository\LabInstanceRepository;
 use App\Bridge\Network\IPTools;
 
@@ -27,14 +28,16 @@ class RouteManagerService
     /**
      * Check and restore all routes for lab instances
      * 
+     * @param bool $dryRun If true, only report which routes would be added without adding them
      * @return array Statistics about the operation
      */
-    public function syncAllRoutes(): array
+    public function syncAllRoutes(bool $dryRun = false): array
     {
         $stats = [
             'total' => 0,
             'ok' => 0,
             'added' => 0,
+            'fixed' => 0,
             'worker_unavailable' => 0,
             'failed' => 0
         ];
@@ -43,7 +46,7 @@ class RouteManagerService
         $stats['total'] = count($labInstances);
 
         foreach ($labInstances as $labInstance) {
-            $result = $this->syncLabInstanceRoute($labInstance);
+            $result = $this->syncLabInstanceRoute($labInstance, $dryRun);
             $stats[$result]++;
         }
 
@@ -53,9 +56,10 @@ class RouteManagerService
     /**
      * Check and restore route for a single lab instance
      * 
-     * @return string Result status: 'ok', 'added', 'worker_unavailable', 'failed'
+     * @param bool $dryRun If true, report missing or incorrect routes without changing them
+     * @return string Result status: 'ok', 'added', 'fixed', 'worker_unavailable', 'failed'
      */
-    public function syncLabInstanceRoute($labInstance): string
+    public function syncLabInstanceRoute($labInstance, bool $dryRun = false): string
     {
         $workerIP = $labInstance->getWorkerIp();
         $network = $labInstance->getNetwork();
@@ -82,22 +86,44 @@ class RouteManagerService
             return 'worker_unavailable';
         }
 
-        // Check if route exists
-        if (IPTools::routeExists($network)) {
-            $this->logger->debug(sprintf('Route to %s exists, via %s', $network, $workerIP));
+        // Is the expected route (to $network via the expected worker) already in place?
+        if (IPTools::routeExistsVia($network, $workerIP)) {
+            $this->logger->debug(sprintf('Route to %s via %s is correct', $network, $workerIP));
             return 'ok';
         }
 
-        // Route doesn't exist, add it
-        $this->logger->debug(sprintf('Route to %s doesn\'t exist, via %s', $network, $workerIP));
-        
-        if (IPTools::routeAdd($network, $workerIP)) {
-            $this->logger->info(sprintf('Route to %s via %s added', $network, $workerIP));
-            return 'added';
+        // The route is missing, or exists but points to a different (stale) worker.
+        $routeIsWrong = IPTools::routeExists($network);
+
+        if ($dryRun) {
+            $this->logger->info(sprintf(
+                '[DRY-RUN] Route to %s would be %s via %s',
+                $network,
+                $routeIsWrong ? 'corrected (currently via a different worker)' : 'added',
+                $workerIP
+            ));
+            return $routeIsWrong ? 'fixed' : 'added';
         }
 
-        $this->logger->error(sprintf('Failed to add route to %s via %s', $network, $workerIP));
-        return 'failed';
+        try {
+            IPTools::routeReplace($network, $workerIP);
+        } catch (ProcessFailedException $exception) {
+            $this->logger->error(sprintf(
+                'Failed to set route to %s via %s: %s',
+                $network,
+                $workerIP,
+                $exception->getProcess()->getOutput() ?: $exception->getMessage()
+            ));
+            return 'failed';
+        }
+
+        $this->logger->info(sprintf(
+            'Route to %s via %s %s',
+            $network,
+            $workerIP,
+            $routeIsWrong ? 'corrected' : 'added'
+        ));
+        return $routeIsWrong ? 'fixed' : 'added';
     }
 
     /**
