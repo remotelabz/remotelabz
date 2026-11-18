@@ -1,4 +1,10 @@
 framework:
     test: true
+    # Enable the profiler so tests can inspect the profile of a request
+    # (e.g. the mailer collector). Collection stays disabled by default and is
+    # activated per request with Client::enableProfiler().
+    profiler:
+        enabled: true
+        collect: false
     session:
         storage_factory_id: session.storage.factory.mock_file

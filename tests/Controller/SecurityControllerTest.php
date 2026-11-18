@@ -30,14 +30,16 @@ class SecurityControllerTest extends WebTestCase
         $mailCollector = $this->client->getProfile()->getCollector('mailer');
 
         // checks that an email was sent
-        $this->assertSame(1, $mailCollector->getMessageCount());
+        $collectedMessages = $mailCollector->getEvents()->getMessages();
+        $this->assertCount(1, $collectedMessages);
 
-        $collectedMessages = $mailCollector->getMessages();
         $message = $collectedMessages[0];
 
         // Asserting email data
-        $this->assertInstanceOf('Swift_Message', $message);
-        $this->assertSame('root@localhost', key($message->getTo()));
+        $this->assertInstanceOf(\Symfony\Component\Mime\Email::class, $message);
+        $to = $message->getTo();
+        $this->assertCount(1, $to);
+        $this->assertSame('root@localhost', $to[0]->getAddress());
     }
 
     public function testPasswordResetErrorIfNoMatch()
@@ -48,6 +50,8 @@ class SecurityControllerTest extends WebTestCase
         $form['form[email]'] = 'thisaddressdoesnotexist@pokemon.joy';
         $crawler = $this->client->submit($form);
 
-        $this->assertSame(1, $crawler->filter('.flash-notice.alert-danger')->count());
+        // The same message is shown whatever the email exists or not
+        // (anti user-enumeration)
+        $this->assertSame(1, $crawler->filter('.flash-notice.alert-info')->count());
     }
 }

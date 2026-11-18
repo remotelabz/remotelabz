@@ -6,10 +6,25 @@ class DeviceControllerTest extends AuthenticatedWebTestCase
 {
     public function testApiCreateDevice()
     {
+        // The form requires an existing operating system, resolve a real one
+        // from an existing device
+        $this->client->request('GET', '/api/devices');
+        $this->assertResponseIsSuccessful();
+        $devices = json_decode($this->client->getResponse()->getContent(), true);
+
+        $operatingSystem = null;
+        foreach ($devices as $device) {
+            if (!empty($device['operatingSystem'])) {
+                $operatingSystem = $device['operatingSystem'];
+                break;
+            }
+        }
+        $this->assertNotNull($operatingSystem, 'A device with an operating system must exist');
+
         $form['name'] = 'test-device';
         $form['brand'] = 'test';
         $form['model'] = 'test model';
-        $form['operatingSystem'] = 2;
+        $form['operatingSystem'] = $operatingSystem['id'];
         $form['flavor'] = 1;
         $form['isTemplate'] = 0;
 
@@ -40,6 +55,8 @@ class DeviceControllerTest extends AuthenticatedWebTestCase
         $form['operatingSystem'] = 1;
         $form['flavor'] = 2;
         $form['isTemplate'] = 1;
+        // The update action expects this key, even when empty
+        $form['controlProtocolTypes'] = [];
 
         $this->client->request(
             'PUT',
@@ -78,9 +95,11 @@ class DeviceControllerTest extends AuthenticatedWebTestCase
      */
     public function testDeleteDevice($id)
     {
+        // The delete route only accepts the DELETE method
         $this->client->followRedirects();
 
-        $crawler = $this->client->request('GET', '/admin/devices/' . $id . '/delete');
+        $crawler = $this->client->request('DELETE', '/admin/devices/' . $id . '/delete');
+        $this->assertResponseIsSuccessful();
         $this->assertSame(1, $crawler->filter('.flash-notice.alert-success')->count());
     }
 }

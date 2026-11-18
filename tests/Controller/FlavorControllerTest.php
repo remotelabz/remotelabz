@@ -8,7 +8,6 @@ class FlavorControllerTest extends AuthenticatedWebTestCase
     {
         $form['name'] = 'x-test';
         $form['memory'] = '8192';
-        $form['disk'] = '50';
 
         $data = json_encode($form);
 
@@ -42,7 +41,6 @@ class FlavorControllerTest extends AuthenticatedWebTestCase
 
         $form['flavor[name]'] = 'x-test-edited';
         $form['flavor[memory]'] = '2048';
-        $form['flavor[disk]'] = '35';
 
         $crawler = $this->client->submit($form);
 
@@ -55,7 +53,6 @@ class FlavorControllerTest extends AuthenticatedWebTestCase
 
         $this->assertSame('x-test-edited', $form['flavor[name]']->getValue());
         $this->assertSame('2048', $form['flavor[memory]']->getValue());
-        $this->assertSame('35', $form['flavor[disk]']->getValue());
     }
 
     /**

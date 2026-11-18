@@ -157,11 +157,37 @@ class LabControllerTest extends AuthenticatedWebTestCase
      */
     public function testAddDeviceToLab($labId)
     {
+        // The endpoint copies an existing device, so the payload is built
+        // from a real virtual device (with hypervisor, OS and flavor)
+        $this->client->request('GET', '/api/devices');
+        $this->assertResponseIsSuccessful();
+        $devices = json_decode($this->client->getResponse()->getContent(), true);
+
+        $source = null;
+        foreach ($devices as $device) {
+            if (1 === ($device['virtuality'] ?? null)
+                && !empty($device['hypervisor'])
+                && !empty($device['operatingSystem'])
+                && !empty($device['flavor'])
+            ) {
+                $source = $device;
+                break;
+            }
+        }
+        $this->assertNotNull($source, 'A virtual device with hypervisor, operating system and flavor must exist');
+
         $device = [
+            'id' => $source['id'],
             'name' => 'test-device',
-            'operatingSystem' => 1,
+            'brand' => $source['brand'] ?? '',
+            'model' => $source['model'] ?? '',
+            'type' => $source['type'],
+            'virtuality' => $source['virtuality'],
+            'hypervisor' => $source['hypervisor']['id'],
+            'operatingSystem' => $source['operatingSystem']['id'],
+            'flavor' => $source['flavor']['id'],
             'networkInterfaces' => [],
-            'flavor' => 1,
+            'editorData' => ['x' => 0, 'y' => 0],
             'isTemplate' => 0,
         ];
 
@@ -176,6 +202,7 @@ class LabControllerTest extends AuthenticatedWebTestCase
         $this->assertResponseIsSuccessful();
 
         $data = json_decode($this->client->getResponse()->getContent(), true);
+        $this->assertArrayHasKey('id', $data, 'The device must have been created');
 
         $this->client->request('DELETE', '/api/devices/'.$data['id']);
 

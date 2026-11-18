@@ -52,6 +52,7 @@ class CronNightlyCommand extends Command
         $io->newLine();
 
         $totalDeleted = $this->cleanOldLoginLogs($io);
+        $orphanNetworks = $this->cleanOrphanNetworks($io);
 
         $io->newLine();
         $io->success('Nightly maintenance completed.');
@@ -59,6 +60,10 @@ class CronNightlyCommand extends Command
 
         if ($totalDeleted > 0) {
             $io->text(sprintf('Total login logs deleted: %d', $totalDeleted));
+        }
+
+        if ($orphanNetworks > 0) {
+            $io->text(sprintf('Total orphan networks deleted: %d', $orphanNetworks));
         }
 
         return Command::SUCCESS;
@@ -98,6 +103,51 @@ class CronNightlyCommand extends Command
         } catch (\Exception $e) {
             $io->text('<error>Error: ' . $e->getMessage() . '</error>');
             $this->logger->error('[CronNightlyCommand]::Nightly login logs cleanup failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return 0;
+        }
+    }
+
+    /**
+     * Remove network rows that are not referenced by any lab instance.
+     *
+     * A lab subnet is reserved in the database as soon as it is allocated
+     * (NetworkManager persists+flushes the network row), so a creation that
+     * dies between the reservation and the lab instance flush (crash,
+     * uncaught error, ...) can leave a reserved-but-unreferenced row behind,
+     * permanently burning a /28. This sweep is the safety net for that
+     * window; the primary cleanup happens in InstanceManager::create().
+     */
+    private function cleanOrphanNetworks(SymfonyStyle $io): int
+    {
+        $io->section('Orphan Networks Cleanup');
+
+        try {
+            $deletedCount = $this->entityManager->getConnection()->executeStatement(
+                'DELETE FROM network
+                 WHERE id NOT IN (
+                     SELECT network_id FROM lab_instance WHERE network_id IS NOT NULL
+                 )'
+            );
+
+            if ($deletedCount > 0) {
+                $io->text(sprintf('Deleted %d orphan network(s).', $deletedCount));
+            } else {
+                $io->text('No orphan networks to delete.');
+            }
+
+            $this->logger->info('[CronNightlyCommand]::Nightly orphan networks cleanup', [
+                'deleted' => $deletedCount
+            ]);
+
+            return $deletedCount;
+
+        } catch (\Exception $e) {
+            $io->text('<error>Error: ' . $e->getMessage() . '</error>');
+            $this->logger->error('[CronNightlyCommand]::Nightly orphan networks cleanup failed', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
