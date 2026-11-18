@@ -93,7 +93,7 @@ class GroupNode extends Component {
                                         </OverlayTrigger>
                                     }
                                 </div>
-                            {group.owner.email === this.context &&
+                            {group.owner && group.owner.email === this.context &&
                                 <div className="group-user-role">Owner</div>
                             }
                             </div>

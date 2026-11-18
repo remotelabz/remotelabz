@@ -151,16 +151,24 @@ class Group implements InstancierInterface
     }
 
     /**
-     * @return User
+     * Returns the owner of the group, or null when the group has no owner.
+     *
+     * A group can end up without an owner (for instance when its owner is
+     * removed from the group or when their account is deleted), so callers
+     * must handle a null value.
      */
     #[Serializer\VirtualProperty]
     #[Serializer\SerializedName('owner')]
     #[Serializer\Groups(['group_tree', 'api_groups', 'api_get_group'])]
-    public function getOwner(): User
+    public function getOwner(): ?User
     {
         $owner = $this->users->filter(function ($user) {
             return $user->getRole() === self::ROLE_OWNER;
         })->first();
+
+        if (false === $owner) {
+            return null;
+        }
 
         return $owner->getUser();
     }
