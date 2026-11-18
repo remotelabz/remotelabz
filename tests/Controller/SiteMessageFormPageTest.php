@@ -13,8 +13,9 @@ class SiteMessageFormPageTest extends AuthenticatedWebTestCase
         $html = $crawler->html();
 
         // The EasyMDE editor and its layout stylesheet are on the page
-        $this->assertStringContainsString('/build/site-message-form.css', $html);
-        $this->assertStringContainsString('/build/site-message-form.js', $html);
+        // (Encore appends a hash to the asset names)
+        $this->assertMatchesRegularExpression('#/build/site-message-form\.[a-f0-9]{8,}\.css#', $html);
+        $this->assertMatchesRegularExpression('#/build/site-message-form\.[a-f0-9]{8,}\.js#', $html);
         $this->assertStringContainsString('id="site_message_message"', $html);
         $this->assertStringContainsString('site-message-required-text', $html);
     }

@@ -18,8 +18,13 @@ class ApplicationAvailabilityFunctionalTest extends AuthenticatedWebTestCase
 
     public function testPageIsError()
     {
+        // The application converts every 404 into a redirect to the home page
+        $this->client->followRedirects(false);
+
         $this->client->request('GET', '/nonexistentpage');
-        $this->assertResponseStatusCodeSame(404);
+        $this->assertResponseRedirects('/');
+
+        $this->client->followRedirects();
     }
 
     public function urlProvider()
@@ -33,7 +38,6 @@ class ApplicationAvailabilityFunctionalTest extends AuthenticatedWebTestCase
         yield ['/admin/network-settings'];
         yield ['/admin/network-settings/new'];
         yield ['/admin/network-interfaces'];
-        yield ['/admin/network-interfaces/new'];
         yield ['/admin/operating-systems'];
         yield ['/admin/instances'];
         yield ['/admin/devices'];

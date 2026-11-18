@@ -53,8 +53,12 @@ class NetworkSettingsControllerTest extends AuthenticatedWebTestCase
      */
     public function testEditNetworkSettings($id)
     {
+        // A 404 is converted into a redirect to the home page by the
+        // exception listener, so disable the redirect following first
+        $this->client->followRedirects(false);
         $this->client->request('GET', '/admin/network-settings/99999999/edit');
-        $this->assertResponseStatusCodeSame(404);
+        $this->assertResponseRedirects('/');
+        $this->client->followRedirects();
 
         $crawler = $this->client->request('GET', '/admin/network-settings/'.$id.'/edit');
         $this->assertResponseIsSuccessful();

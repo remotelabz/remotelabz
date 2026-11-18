@@ -230,27 +230,55 @@ class InstanceManager
                     throw new Exception('[InstanceManager:create]::Instancier must be an instance of User or Group.');
             }
 
+            // Allocating the subnet reserves it in the database immediately
+            // (NetworkManager persists+flushes the network row), so two
+            // concurrent create() calls can never pick the same /28: the
+            // unique index on network (ip__long, netmask__long) makes the
+            // loser's INSERT fail and the allocation is retried. If anything
+            // below fails after the reservation, the subnet must be released
+            // so it is not left reserved forever.
             $network = $this->networkManager->getAvailableSubnet();
-           
+
             if (!$network) {
                 throw new NoNetworkAvailableException();
             }
-            $labInstance
-                ->setOwnedBy($instancier->getType())
-                ->setState(InstanceStateMessage::STATE_CREATING)
-                ->setNetwork($network)
-                ->populate();
 
-            if ($lab->getHasTimer() == true) {
-                $timer = $lab->getTimer();
-                $date = new \DateTime();
-                //$this->logger->debug("[InstanceManager:create]::Timer of the lab ".$timer);
-                $date->add(new \DateInterval('PT' . $timer . 'S'));
-                $labInstance->setTimerEnd($date);
+            try {
+                $labInstance
+                    ->setOwnedBy($instancier->getType())
+                    ->setState(InstanceStateMessage::STATE_CREATING)
+                    ->setNetwork($network)
+                    ->populate();
+
+                if ($lab->getHasTimer() == true) {
+                    $timer = $lab->getTimer();
+                    $date = new \DateTime();
+                    //$this->logger->debug("[InstanceManager:create]::Timer of the lab ".$timer);
+                    $date->add(new \DateInterval('PT' . $timer . 'S'));
+                    $labInstance->setTimerEnd($date);
+                }
+
+                $this->entityManager->persist($labInstance);
+                $this->entityManager->flush();
+            } catch (\Throwable $e) {
+                // Release the reserved subnet. A raw DELETE (instead of an
+                // ORM remove+flush) is used on purpose: the flush that just
+                // failed may have left the UnitOfWork in an inconsistent
+                // state, and a connection query is independent of it. If the
+                // whole request runs in a transaction that is rolled back,
+                // the network row is gone with it and this is a no-op.
+                try {
+                    $this->entityManager->getConnection()
+                        ->executeStatement(
+                            'DELETE FROM network WHERE id = ?',
+                            [$network->getId()]
+                        );
+                } catch (\Throwable $cleanupError) {
+                    $this->logger->error('[InstanceManager:create]::Could not release the reserved subnet ' . $network . ': ' . $cleanupError->getMessage());
+                }
+
+                throw $e;
             }
-
-            $this->entityManager->persist($labInstance);
-            $this->entityManager->flush();
 
             // Register the memory reservation (sum of the devices' memory) so that
             // WorkerManager::getFreeWorker() takes it into account while the instance

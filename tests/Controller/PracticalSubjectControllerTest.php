@@ -299,14 +299,64 @@ class PracticalSubjectControllerTest extends AuthenticatedWebTestCase
         $this->assertSame('https://example.org/tp/sujet-systemd', $data['url']);
     }
 
+    /**
+     * The shared database does not guarantee that a given "other" user
+     * exists, so leftovers from a previous interrupted run are removed and a
+     * dedicated user (unique email) is created for the foreign subject.
+     */
+    private function cleanupTestUsers(string $emailPrefix): void
+    {
+        $this->client->request('GET', '/api/users?search='.rawurlencode($emailPrefix).'&limit=100');
+        $this->assertResponseIsSuccessful();
+        // An empty search result is a 204 with an empty body
+        $users = json_decode((string)$this->client->getResponse()->getContent(), true);
+        if (!is_array($users)) {
+            return;
+        }
+        foreach ($users as $user) {
+            if (str_starts_with($user['email'] ?? '', $emailPrefix)) {
+                $this->client->request('DELETE', '/admin/users/'.$user['id']);
+                $this->assertResponseIsSuccessful();
+            }
+        }
+    }
+
     public function testListOnlyShowsOwnSubjects()
     {
+        $this->client->followRedirects();
+
         $ownSubjectId = $this->createSubject('Sujet du connecté');
 
-        // Create a subject authored by another user, directly via the repository
+        $this->cleanupTestUsers('subject-test-');
+
+        $email = 'subject-test-'.bin2hex(random_bytes(3)).'@localhost';
+        $crawler = $this->client->request('GET', '/admin/users/new');
+        $this->assertResponseIsSuccessful();
+        $form = $crawler->selectButton('user[submit]')->form();
+        $form['user[email]'] = $email;
+        $form['user[password]'] = 'P@sSW0rD_Un1t_T3st';
+        $form['user[confirmPassword]'] = 'P@sSW0rD_Un1t_T3st';
+        $form['user[lastName]'] = 'Subject';
+        $form['user[firstName]'] = 'Test';
+        $form['user[roles]']->select('ROLE_USER');
+        $crawler = $this->client->submit($form);
+        $this->assertResponseIsSuccessful();
+        $this->assertSame(1, $crawler->filter('.flash-notice.alert-success')->count());
+
+        $this->client->request('GET', '/api/users?search='.rawurlencode($email).'&limit=100');
+        $this->assertResponseIsSuccessful();
+        $users = json_decode((string)$this->client->getResponse()->getContent(), true);
+        $otherAuthorId = null;
+        foreach ((array)$users as $user) {
+            if ($email === ($user['email'] ?? null)) {
+                $otherAuthorId = $user['id'];
+            }
+        }
+        $this->assertNotNull($otherAuthorId, 'The dedicated user must exist');
+
+        // Create a subject authored by that user, directly via the repository
         $entityManager = static::getContainer()->get('doctrine')->getManager();
-        $otherAuthor = $entityManager->getRepository(\App\Entity\User::class)->findOneBy(['email' => 'unittest@localhost']);
-        $this->assertNotNull($otherAuthor);
+        $otherAuthor = $entityManager->getRepository(\App\Entity\User::class)->find($otherAuthorId);
         $otherSubject = new \App\Entity\PracticalSubject();
         $otherSubject->setName("Sujet de {$otherAuthor->getEmail()}");
         $otherSubject->setAuthor($otherAuthor);
@@ -321,6 +371,11 @@ class PracticalSubjectControllerTest extends AuthenticatedWebTestCase
 
         $this->assertContains($ownSubjectId, $ids);
         $this->assertNotContains($otherSubject->getId(), $ids);
+
+        // Cleanup: remove the dedicated user (the author foreign key is
+        // ON DELETE SET NULL, so the leftover subject cannot block it)
+        $this->client->request('DELETE', '/admin/users/'.$otherAuthorId);
+        $this->assertResponseIsSuccessful();
     }
 
     public function testInvalidUrlRejected()

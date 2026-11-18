@@ -4,21 +4,38 @@ namespace App\Tests\Controller;
 
 class UserControllerTest extends AuthenticatedWebTestCase
 {
+    /**
+     * /api/users/me ends up on /api/users/{id}, which is only reachable with
+     * a JWT, so the id of the freshly created user is resolved while the
+     * administrator session is still active.
+     */
     protected function getGuestInfo()
     {
+        $userId = $this->getUserIdByEmail('unittest@localhost');
+
+        // Then only check that the created user can log in
         $this->logOut();
         $this->logInGuest();
-
-        return $this->getUserInfo();
-    }
-
-    protected function getUserInfo()
-    {
-        $this->client->request('GET', '/api/users/me');
-        $data = json_decode($this->client->getResponse()->getContent(), true);
         $this->logOut();
 
-        return $data['id'];
+        return $userId;
+    }
+
+    private function getUserIdByEmail($email)
+    {
+        $this->client->request('GET', '/api/users?search='.rawurlencode($email).'&limit=100');
+        $this->assertResponseIsSuccessful();
+        // An empty search result is a 204 with an empty body
+        $users = json_decode((string)$this->client->getResponse()->getContent(), true);
+        $this->assertIsArray($users, 'The user "'.$email.'" must exist');
+
+        foreach ($users as $user) {
+            if ($email === ($user['email'] ?? null)) {
+                return $user['id'];
+            }
+        }
+
+        $this->fail('User "'.$email.'" not found');
     }
 
     public function testIndexGetAction()
@@ -33,8 +50,34 @@ class UserControllerTest extends AuthenticatedWebTestCase
         $this->assertResponseIsSuccessful();
     }
 
+    /**
+     * The tests share the live database, so a user left over from a previous
+     * run (when it failed before the delete step) would block the creation.
+     * Removing it first keeps the test idempotent.
+     */
+    private function deleteUserByEmail($email)
+    {
+        $this->client->request('GET', '/api/users?search='.rawurlencode($email).'&limit=100');
+        $this->assertResponseIsSuccessful();
+        // An empty search result is a 204 with an empty body: nothing to delete
+        $users = json_decode((string)$this->client->getResponse()->getContent(), true);
+        if (!is_array($users)) {
+            return;
+        }
+
+        foreach ($users as $user) {
+            if ($email === ($user['email'] ?? null)) {
+                $this->client->request('DELETE', '/admin/users/'.$user['id']);
+                $this->assertResponseIsSuccessful();
+                return;
+            }
+        }
+    }
+
     public function testCreateUser()
     {
+        $this->deleteUserByEmail('unittest@localhost');
+
         $crawler = $this->client->request('GET', '/admin/users/new');
         $this->assertResponseIsSuccessful();
 

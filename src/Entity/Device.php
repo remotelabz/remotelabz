@@ -762,7 +762,7 @@ class Device implements InstanciableInterface, DirectoryAwareInterface
         return $this->icon;
     }
 
-    public function setIcon(string $icon): self
+    public function setIcon(?string $icon): self
     {
         $this->icon = $icon;
 
