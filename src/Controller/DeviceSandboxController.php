@@ -10,6 +10,7 @@ use App\Repository\LabRepository;
 use App\Repository\DeviceRepository;
 use App\Repository\LabInstanceRepository;
 use App\Repository\DeviceInstanceRepository;
+use App\Security\ACL\LabVoter;
 use JMS\Serializer\SerializerInterface;
 use JMS\Serializer\SerializationContext;
 use Psr\Log\LoggerInterface;
@@ -64,16 +65,30 @@ class DeviceSandboxController extends Controller
         $labArray = array();
 
         $user = $this->getUser();
+        $userId = $user instanceof UserInterface ? $user->getId() : null;
+
         foreach ($devices as $device) {
-            if (count($device->getLabs()) == 0) {
-                $author = $device->getAuthor();
-                if ($author === null || $author === $user || $author->isAdministrator()) {
-                    array_push($deviceArray, $device);
-                }
+            // Only unassigned templates can be tried in the sandbox. A user
+            // may use their own devices and the administrator-owned ones that
+            // are deliberately shared (the "give to root" workflow).
+            if (count($device->getLabs()) > 0) {
+                continue;
+            }
+
+            $author = $device->getAuthor();
+            if ($author === null || $author->isAdministrator()
+                || (null !== $userId && $author->getId() === $userId)) {
+                $deviceArray[] = $device;
             }
         }
+
         foreach ($labs as $lab) {
-            array_push($labArray, $lab);
+            // Same rule as the copy endpoint (LabController::createcopyLab):
+            // only administrators and the lab author may modify/copy a lab
+            // template. Showing the others led to an access-denied redirect.
+            if ($this->isGranted(LabVoter::EDIT, $lab)) {
+                $labArray[] = $lab;
+            }
         }
 
         $deviceProps = [
@@ -93,7 +108,7 @@ class DeviceSandboxController extends Controller
 
         return $this->render('device_sandbox/index.html.twig', [
             'devices' => $deviceArray,
-            'labs' => $labs,
+            'labs' => $labArray,
             'search' => $search,
             'props' => $props
         ]);

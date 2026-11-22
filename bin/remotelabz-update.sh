@@ -69,6 +69,7 @@ php bin/console doctrine:migrations:migrate -n
 #npx browserslist@latest --update-db
 php bin/console cache:clear
 chown remotelabz:www-data * -R
+chmod ug+rw /opt/remotelabz/config/templates/*
 chmod g+w /opt/remotelabz/public/uploads -R
 chmod g+r config/jwt/private.pem
 chmod g+w /opt/remotelabz/config/packages/messenger.yaml

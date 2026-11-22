@@ -292,8 +292,6 @@ class InstanceController extends Controller
             if ($userType !== "") {
                 $instances = $this->fetchLabInstancesOwnedByUserType($userType);
             }
-
-            $instances = $this->fetchLabInstancesOwnedByUserType($userType);
         } else if (($filter == "teacher" && $subFilter != "allTeachers") ||
             ($filter == "student" && $subFilter != "allStudents") ||
             ($filter == "admin" && $subFilter != "allAdmins") ||
@@ -412,7 +410,12 @@ class InstanceController extends Controller
             usort($users, function ($a, $b) {
                 return strcmp($a->getLastName(), $b->getLastName());
             });
+            $addedUuids = [];
             foreach ($users as $user) {
+                if (isset($addedUuids[$user->getUuid()])) {
+                    continue;
+                }
+                $addedUuids[$user->getUuid()] = true;
                 array_push($subFilter, [
                     "uuid" => $user->getUuid(),
                     "name" => $user->getName()
