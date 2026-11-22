@@ -104,6 +104,10 @@ class ImageResolver
             'os_id' => null,
             'os_name' => null,
             'os_image' => null,
+            // Hyperviseur de l'OS propose (qemu/lxc), null tant qu'aucune image
+            // n'est resolue. `hypervisor` reste l'hyperviseur deduit du noeud
+            // EVE-NG et sert de valeur par defaut au selecteur de l'IHM.
+            'os_hypervisor' => null,
             'reason' => null,
             'candidates' => [],
             'suggested_action' => $requirement['suggested_action'] ?? 'reuse',
@@ -167,6 +171,14 @@ class ImageResolver
         $result['os_id'] = $os->getId();
         $result['os_name'] = $os->getName();
         $result['os_image'] = self::imageOf($os);
+        $osHypervisor = self::hypervisorOf($os);
+        $result['os_hypervisor'] = $osHypervisor;
+        // The mapper (and therefore the preview) must use the hypervisor of the
+        // matched OS: an lxc image must be shown/imported as a container, even
+        // when the EVE-NG node is of type qemu.
+        if (null !== $osHypervisor && null !== $osHypervisor['name']) {
+            $result['hypervisor'] = $osHypervisor['name'];
+        }
         $result['reason'] = $reason;
 
         // L'OS existe en base : proposer aussi des alternatives classees.
@@ -187,6 +199,24 @@ class ImageResolver
     private static function imageOf(OperatingSystem $os): ?string
     {
         return $os->getImageUrl() ?: $os->getImageFilename();
+    }
+
+    /**
+     * Hyperviseur d'un OS sous une forme directement exploitable par l'IHM.
+     *
+     * @return array{id: ?int, name: ?string}|null
+     */
+    private static function hypervisorOf(OperatingSystem $os): ?array
+    {
+        $hypervisor = $os->getHypervisor();
+        if (null === $hypervisor) {
+            return null;
+        }
+
+        return [
+            'id' => $hypervisor->getId(),
+            'name' => $hypervisor->getName(),
+        ];
     }
 
     /**
@@ -215,7 +245,7 @@ class ImageResolver
      *
      * @param OperatingSystem[] $operatingSystems
      *
-     * @return array<int, array{id:int, name:?string, image:?string, score:float}>
+     * @return array<int, array{id:int, name:?string, image:?string, hypervisor:?array, score:float}>
      */
     private function rankCandidates(string $eveImage, array $operatingSystems, array $osHint): array
     {
@@ -265,6 +295,7 @@ class ImageResolver
                 'id' => (int) $os->getId(),
                 'name' => $os->getName(),
                 'image' => self::imageOf($os),
+                'hypervisor' => self::hypervisorOf($os),
                 'score' => round($score, 1),
             ];
         }

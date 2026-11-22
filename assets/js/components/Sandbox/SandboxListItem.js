@@ -141,59 +141,40 @@ class SandboxListItem extends Component {
             }
             // If we want to modify a lab       
             else if (this.props.itemType === "lab") {
-                this.setState({ isLoading: true, exist: true, lab: this.props.item});              
+                // Do not set `exist` yet: the copy does not exist until the
+                // backend call succeeds, and the loading spinner must stay
+                // visible in the meantime.
+                this.setState({ isLoading: true, lab: this.props.item});
                 labName = "Sandbox_Lab_" + this.props.user.uuid + "_" + this.props.item.id;
-                var fields = {name: labName, description: this.props.item.description, shortDescription: this.props.item.shortDescription}
 
-                if (this.props.item.hasTimer) {
-                    let timerArray = this.props.item.timer.split(":");
-                    fields = {...fields, hasTimer: this.props.item.hasTimer, timer: {hour: Math.round(timerArray[0]), minute: Math.round(timerArray[1])}
-                    };
-                }
-
-                for(var textobject of item.textobjects){
-                    var textObj = {labid: lab.id, fields:{name: textobject.name, type: textobject.type, data: textobject.data}};
-                    if (typeof textobject.newdata !== 'undefined') {
-                        textObj = {...textObj, newdata: textobject.newdata};
-                    }
-                    await Remotelabz.textObjects.new(textObj);
-                }
-                for(var picture of item.pictures){
-                    var pictureObj = {labid: lab.id, fields:{name: picture.name, type: picture.type, labid: item.id,  height: picture.height, width: picture.width, map: picture.map}};
-                    await Remotelabz.pictures.new(pictureObj);
-                }
-
+                // The backend copy endpoint already duplicates the lab content
+                // (text objects, devices, banner...). Do not pre-create text
+                // objects or pictures here: the target lab does not exist yet,
+                // and a single undefined access used to abort the whole action
+                // silently (the "Modify" button appeared to do nothing).
                 try {
-                    const response = await Remotelabz.labs.createcopyLab(this.props.item.id, labName)
-                    console.log("response:", response);
-                    
+                    const response = await Remotelabz.labs.createcopyLab(this.props.item.id, labName);
 
-                    if(response.status === 200) {
-                        this.setState({ isLoading: true, exist: true, lab: lab});
-                        //console.log("Rendering state.lab in modify function is", this.state.lab);
-
+                    if (response?.status === 200 && response.data?.id) {
                         const { id: id_lab, uuid } = response.data;
-                        //lab = { ...lab, id: id_lab, uuid }; // Met à jour lab avec les nouvelles valeurs
-                        lab = { ...this.state.lab, id: id_lab, uuid }; // don't solve the problem
-                        //console.log("Rendering lab in modify function is", lab);
+                        lab = { ...this.props.item, id: id_lab, uuid };
 
-                        Remotelabz.labs.copyBanner(this.props.item.id, lab.id);
+                        await Remotelabz.instances.lab.create(uuid, this.props.user.uuid, 'user');
 
-                        await Remotelabz.instances.lab.create(lab.uuid, this.props.user.uuid, 'user');
-                        //console.log("Rendering lab in modify function after lab create ", lab);
-
-                        window.location.href = "/admin/sandbox/" + lab.id;
+                        window.location.href = "/admin/sandbox/" + id_lab;
                     } else {
-                        console.log("status not 200 Lab:", lab);
-                        this.setState({ isLoading: false, exist: false, lab: lab});
+                        console.error("Unable to create the sandbox lab copy", response);
+                        toast.error("Unable to create the sandbox lab copy. Please try again later.");
+                        this.setState({ isLoading: false, exist: false, lab: this.props.item});
+                        this.props.setIsAnyLoading(false);
                     }
                 }
                 catch (error) {
-                        console.error("Catch error : Error creating lab copy", error);
-                        this.setState({ isLoading: false, exist: false, lab: lab});
-                        window.location.href = "/admin/sandbox/";
-                    
-                    }
+                    console.error("Catch error : Error creating lab copy", error);
+                    toast.error("Unable to create the sandbox lab copy. Please try again later.");
+                    this.setState({ isLoading: false, exist: false, lab: this.props.item});
+                    this.props.setIsAnyLoading(false);
+                }
             }    
         } else {
             this.setState({ isLoading: false, exist: false, lab: lab});
@@ -234,9 +215,13 @@ class SandboxListItem extends Component {
         //console.log("Rendering props ", this.props);
 
         if(this.state.isLoading) {
+            // Keep the "Modify" action visible while the copy is being created
+            // (a large imported lab can take a while) instead of switching to
+            // the "open sandbox" arrow before the copy actually exists.
             button = (
-                <Button className="ms-3" variant="dark" title="Starting your instance" data-bs-toggle="tooltip" data-bs-placement="top" disabled>
-                    <Spinner animation="border" size="sm" />
+                <Button className="me-2 mt-2" variant="primary" title="Creating the sandbox lab copy..." data-bs-toggle="tooltip" data-bs-placement="top" disabled>
+                    <Spinner animation="border" size="sm" className="me-2" />
+                    Modify
                 </Button>
                 )
         }
@@ -253,6 +238,22 @@ class SandboxListItem extends Component {
             )
         }
 
+        // Loading always wins: the external link is only displayed once the
+        // copy exists and no copy is in progress.
+        const actionElement = (this.state.isLoading || !this.state.exist || this.state.lab == null)
+            ? button
+            : (
+                <a
+                    href={"/admin/sandbox/" + this.state.lab.id}
+                    className="btn btn-primary ms-3 me-2 mt-2"
+                    title="Open Sandbox"
+                    data-bs-toggle="tooltip"
+                    data-bs-placement="top"
+                >
+                    <SVG name="external-link" />
+                </a>
+            );
+
         if(this.props.itemsLength != (this.props.index +1)) {
             divBorder = (
             <div className="wrapper d-flex align-items-center lab-item border-bottom">
@@ -263,6 +264,11 @@ class SandboxListItem extends Component {
                     { this.props.itemType == "device" &&
                         <div className="lab-item-infos text-muted">
                             (Type: {this.props.item.type}, OS: {this.props.item.operatingSystem.name})
+                        </div>
+                    }
+                    { this.state.isLoading &&
+                        <div className="lab-item-infos text-muted">
+                            { this.props.itemType === "lab" ? "Creating the lab copy, please wait..." : "Preparing the device, please wait..." }
                         </div>
                     }
                 </div>
@@ -289,19 +295,7 @@ class SandboxListItem extends Component {
                      //   <a className="btn btn-danger me-2 mt-2" role="button" onClick={()=>this.setState({showDeleteDeviceModal: true})}>Delete</a>
                     }
                     
-                    { this.state.exist && this.state.lab != null ?
-                        <a 
-                            href={"/admin/sandbox/" + this.state.lab.id}
-                            className="btn btn-primary ms-3 me-2 mt-2"
-                            title="Open Sandbox"
-                            data-bs-toggle="tooltip"
-                            data-bs-placement="top"
-                        >
-                            <SVG name="external-link" />
-                        </a>
-                    :
-                        button
-                    }
+                    {actionElement}
                     </div>
                 </div>
             </div>
@@ -319,6 +313,11 @@ class SandboxListItem extends Component {
                             (Type: {this.props.item.type}, OS: {this.props.item.operatingSystem.name})
                         </div>
                     }
+                    { this.state.isLoading &&
+                        <div className="lab-item-infos text-muted">
+                            { this.props.itemType === "lab" ? "Creating the lab copy, please wait..." : "Preparing the device, please wait..." }
+                        </div>
+                    }
                 </div>
                 <div className="separator flex-grow-1"></div>
 
@@ -334,19 +333,7 @@ class SandboxListItem extends Component {
                     {//this.props.itemType == "device" && this.props.item.author && this.props.item.author.id == this.props.user.id && (this.props.item.author.roles.includes("ROLE_TEACHER") || this.props.item.author.roles.includes("ROLE_TEACHER_EDITOR")) && (!this.state.exist) &&
                       //  <a className="btn btn-danger me-2 mt-2" role="button" onClick={()=>this.setState({showDeleteDeviceModal: true})}>Delete</a>
                     }
-                    { this.state.exist && this.state.lab != null ?
-                        <a 
-                            href={"/admin/sandbox/" + this.state.lab.id}
-                            className="btn btn-primary ms-3 me-2 mt-2"
-                            title="Open Sandbox"
-                            data-bs-toggle="tooltip"
-                            data-bs-placement="top"
-                        >
-                            <SVG name="external-link" />
-                        </a>
-                    :
-                        button
-                    }
+                    {actionElement}
                     </div>
                 </div>
             </div>

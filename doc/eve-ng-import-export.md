@@ -268,6 +268,14 @@ Extrait de `lab_<uuid>.json` :
 | `ethernet=N` + `<interface>` | `NetworkInterface[]` | §4.3 |
 | — | `networkInterfaceTemplate = "eth"` | défaut RLZ |
 
+> **Choix de l'hyperviseur.** Le mapping ci-dessus n'est qu'une valeur par
+> défaut. Dans la fenêtre de revue, l'utilisateur peut choisir l'hyperviseur
+> d'une image (`qemu` pour une VM, `lxc` pour un conteneur). Ce choix prime sur
+> le `type` du `<node>` : les devices concernés reçoivent l'hyperviseur retenu,
+> un `Device.type` cohérent (`vm`/`container`) et le même hyperviseur dans leur
+> `operatingSystem`. Pour une image déjà résolue, l'hyperviseur de
+> l'`OperatingSystem` proposé sert de valeur par défaut.
+
 #### 4.2.1 Cas `vpcs` (PC sans image)
 
 `vpcs` est un mini-simulateur IP sans image disque. Deux stratégies :
@@ -533,54 +541,80 @@ liens, annotations, **et** pour chaque image un statut :
 | `missing` | aucune correspondance | 🔴 |
 | `not_applicable` | `vpcs`/`natif` (pas d'image) | ⚪ |
 
-**Étape 2 — Revue.** Tableau éditable :
+**Étape 2 — Revue.** Une carte par image, avec un bloc par device qui
+l'utilise (nom, type et icône EVE-NG) :
 
 ```
 ┌────────────────────────────────────────────────────────────────────────────┐
 │ Importer un lab EVE-NG                                                      │
 ├────────────────────────────────────────────────────────────────────────────┤
-│ Lab : T905 a cloner   Devices : 44   Liens : 52   Annotations : 69          │
+│ Lab : RT905 a cloner   Devices : 45   Liens : 53   Images : 6              │
+│ [6 exact matchs] [1 suggested equivalent]  [2 images à résoudre]           │
 │                                                                             │
 │ Images des devices                                                          │
-│  Statut  Image EVE-NG                            → Image RemoteLabz         │
-│  🟢      linux-ubuntu-24.04-server                Ubuntu24.04SrvLTS (auto)  │
-│  🔵      viosl2-…high_iron_20200929               CentOS7  [changer ▾]      │
-│  🔴      vios-adventerprisek9-m.spa.159-3.M3      ⚠ introuvable            │
-│             ( ) Choisir une image existante  [ ▾ ]                          │
-│             (•) Téléverser un fichier        [ Choisir .qcow2/.img/.ova ]  │
-│             ( ) Fournir une URL              [ https://… ]                  │
-│             ( ) Créer une VM vierge          disque [ 3 GB ▾ ]             │
-│             ( ) Ignorer (à corriger plus tard)                             │
-│             Mémoire du device template [ small-1024 (1024 Mo) ▾ ]          │
-│             (recommandé : 1024 Mo, valeur `ram` du nœud EVE-NG)            │
-│  🔴      win-10-x64-21H1v1                        ⚠ introuvable   (idem…)  │
-│  ⚪      (vpcs)                                   → device natif            │
+│ ┌────────────────────────────────────────────────────────────────────────┐ │
+│ │ [Exact match] Image 1  linux-ubuntu-24.04-server        15 devices    │ │
+│ │ Devices : [Linux1] [Linux2] [Linux3] … [Linux15]                       │ │
+│ │ Image RemoteLabz : Ubuntu24.04SrvLTS  Ubuntu24LTS  [lxc]              │ │
+│ │ Action [ Utiliser l'image proposée ▾ ]                                │ │
+│ └────────────────────────────────────────────────────────────────────────┘ │
+│ ┌────────────────────────────────────────────────────────────────────────┐ │
+│ │ [Not found] Image 2  vios-adventerprisek9-m.spa.159-3.M3  11 devices  │ │
+│ │ Devices : [SW1] [SW2] [SW3] …                                          │ │
+│ │ Image RemoteLabz : Non résolue                                        │ │
+│ │ Action [ Choisir une autre image ▾ ]                                  │ │
+│ │   Hyperviseur [ qemu ▾ ]   Image [ Ubuntu24.04SrvLTS ▾ ]              │ │
+│ │   Mémoire du device template [ small-1024 (1024 Mo) ▾ ]               │ │
+│ │   (recommandé : 1024 Mo, valeur `ram` du nœud EVE-NG)                 │ │
+│ └────────────────────────────────────────────────────────────────────────┘ │
+│ ┌────────────────────────────────────────────────────────────────────────┐ │
+│ │ [Suggested equivalent] Image 3  pfsense-pfs-2.6.0       6 devices     │ │
+│ │ Devices : [FW1] [FW2] …                                               │ │
+│ │ Image RemoteLabz : pfsense-pfs-2.6.0  [qemu]                           │ │
+│ │ Action [ Utiliser l'image proposée ▾ ]                                │ │
+│ └────────────────────────────────────────────────────────────────────────┘ │
 │                                                                             │
-│ Devices sans image (vpcs/PC)                                                │
-│  Nœud EVE-NG         → Device RemoteLabz                                    │
-│  PC_A1                 [ Switch internet (switch) ▾ ]                       │
-│  PC_A2                 [ Linux Alpine (vm)        ▾ ]                       │
+│ Devices sans image (VPCS/PC)                                                │
+│ ┌ PC_A1 ───────────────────┐  ┌ PC_A2 ───────────────────┐                │
+│ │ [ Switch internet ▾ ]   │  │ [ Linux Alpine ▾ ]      │                │
+│ └─────────────────────────┘  └─────────────────────────┘                │
 │                                                                             │
-│ [ Annuler ]                                        [ Analyser ] [ Importer ]│
+│ [ Annuler ]                                                  [ Importer ]  │
 └────────────────────────────────────────────────────────────────────────────┘
 ```
 
 **Étape 3 — Commit.** Chaque image reçoit un « plan » :
-`{ action: "reuse"|"upload"|"url"|"blank"|"skip", os_id?, file?, url?, flavorDisk?, flavor_id? }`.
+`{ action: "reuse"|"reuse_other"|"upload"|"url"|"blank"|"skip", os_id?, hypervisor?, file?, url?, flavorDisk?, flavor_id? }`.
 Les nœuds sans image reçoivent un plan `{ eve_id, template }` (driver
 RemoteLabz choisi). Pour une image `missing`, `flavor_id` porte la flavour
 retenue pour la RAM du device template créé (§4.2.2) ; à défaut, la flavour
 recommandée (arrondi de `ram` à la flavour ≥ la plus proche) est utilisée.
+`hypervisor` (`qemu`, `lxc`, …) force le support du device importé : il est
+sélectionné dans la fenêtre de revue et prime sur le `type` du nœud EVE-NG. Il
+est déduit de l'OS choisi pour les actions `reuse`/`reuse_other`.
 
 ### 6.2 Actions disponibles pour une image manquante
 
 | Action | Effet backend | Cas d'usage |
 |---|---|---|
-| **Réutiliser** | `OperatingSystem` existant (`os_id`) | image proche déjà présente |
+| **Utiliser l'image proposée** (`reuse`) | `OperatingSystem` proposé par l'analyse (`os_id`) | équivalence `matched`/`auto` acceptée telle quelle |
+| **Choisir une autre image** (`reuse_other`) | `OperatingSystem` existant choisi dans la liste, filtré par hyperviseur (`os_id`, `hypervisor`) | remplacer une équivalence ou passer une VM en conteneur |
 | **Téléverser** | `POST /api/images/upload` (endpoint **existant**) puis `OperatingSystem` + `copyFileToAllWorkers('image', …)` | on possède le `.qcow2`/`.img`/`.ova` |
 | **Fournir une URL** | `OperatingSystem.imageUrl = url`, validée par `POST /api/images/validate-url` (existant) | image publique (ex. Alpine) |
 | **VM vierge** | `newBlank` (existant) → `OperatingSystem` avec `imageFilename = <name>_<taille>.qcow2` | on installera plus tard |
 | **Ignorer** | device créé sans OS résolu (ou OS « placeholder ») | import partiel volontaire |
+
+`Choisir une autre image`, **Téléverser**, **Fournir une URL** et **VM vierge**
+affichent un choix d'**hyperviseur** (`qemu` pour une VM, `lxc` pour un
+conteneur). Pour `Choisir une autre image`, la liste des `OperatingSystem`
+existants est filtrée sur cet hyperviseur : on peut ainsi importer les serveurs
+Linux d'un lab EVE-NG comme conteneurs LXC au lieu de VMs QEMU. L'image proposée
+automatiquement affiche également son hyperviseur, en lecture seule.
+
+> Le choix est fait **par image EVE-NG** : tous les nœuds partageant la même
+> image (par exemple les 15 serveurs `linux-ubuntu-24.04-server` du lab
+> `RT905 a cloner.unl`) reçoivent le même OS et le même hyperviseur. Pour des
+> choix différents, dupliquer l'image EVE-NG dans le `.unl` avant l'import.
 
 > 💡 **Solution facile recommandée** : pour chaque image manquante, présélectionner
 > l'action la plus probable selon le template EVE-NG :
@@ -893,13 +927,20 @@ Réseaux : 52 `bridge` → autant de `connection` distinctes ; le `nat0` « Net 
       "used_by": [1, 2, 3], "suggested_action": "upload", "candidates": [],
       "ram": 1024, "recommended_flavor_id": 3 },
     { "eve_image": "linux-ubuntu-24.04-server", "status": "matched",
-      "used_by": [5, 7], "os_id": 7, "os_name": "Ubuntu24.04SrvLTS" }
+      "used_by": [5, 7], "os_id": 7, "os_name": "Ubuntu24.04SrvLTS",
+      "hypervisor": "lxc", "os_hypervisor": { "id": 4, "name": "lxc" },
+      "candidates": [ { "id": 7, "name": "Ubuntu24.04SrvLTS", "image": "Ubuntu24LTS", "hypervisor": { "id": 4, "name": "lxc" }, "score": 62.5 } ] }
   ],
   "device_candidates": [ { "template": "6-switchInternet", "name": "Switch internet", "type": "switch", "hypervisor": "natif" } ],
   "device_choices": [ { "eve_id": 4, "name": "PC_A1", "selected": "6-switchInternet" } ],
   "flavors": [
     { "id": 1, "name": "xx-small-256", "memory": 256 },
     { "id": 3, "name": "small-1024", "memory": 1024 }
+  ],
+  "hypervisors": [
+    { "id": 3, "name": "qemu" },
+    { "id": 4, "name": "lxc" },
+    { "id": 5, "name": "natif" }
   ],
   "warnings": [ "template 'vios' absent du catalogue RLZ", "8 images non résolues" ],
   "limits": { "upload_max_bytes": 2097152, "upload_max_human": "2 MB" }

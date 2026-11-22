@@ -497,6 +497,19 @@ class Device implements InstanciableInterface, DirectoryAwareInterface
         return $this;
     }
 
+    /**
+     * A native device is handled by RemoteLabz itself (for example the
+     * built-in Internet switch) instead of being a real VM/container.
+     *
+     * Imported EVE-NG switches (viosl2, ...) also use the "switch" type but
+     * run on qemu: they must remain controllable like any other VM.
+     */
+    public function isNative(): bool
+    {
+        return 'natif' === mb_strtolower((string) $this->getHypervisor()?->getName())
+            || 'natif' === mb_strtolower((string) $this->getOperatingSystem()?->getName());
+    }
+
     public function getVirtuality(): ?int
     {
         return $this->virtuality;

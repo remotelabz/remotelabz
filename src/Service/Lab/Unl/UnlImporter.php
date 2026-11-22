@@ -139,7 +139,18 @@ class UnlImporter
             'textobjects' => (int) ($mapped['lab']['textobjects'] ?? count($parsed['textobjects'])),
         ];
 
-        return new LabPreview($source, $lab, $mapped['devices'], $images, $mapped['labJson'], $warnings, $this->mapper->deviceCandidates(), $deviceChoices, $this->mapper->flavorOptions());
+        return new LabPreview(
+            $source,
+            $lab,
+            $mapped['devices'],
+            $images,
+            $mapped['labJson'],
+            $warnings,
+            $this->mapper->deviceCandidates(),
+            $deviceChoices,
+            $this->mapper->flavorOptions(),
+            $this->mapper->hypervisorOptions()
+        );
     }
 
     /**
@@ -188,7 +199,7 @@ class UnlImporter
      * @param array<string, array> $mapping       Decisions indexees par image EVE-NG
      *
      * @return array{
-     *     images: array<string, array{os_id: ?int, os_name: ?string, os_image: ?string}>,
+     *     images: array<string, array{os_id: ?int, os_name: ?string, os_image: ?string, hypervisor: ?string}>,
      *     overrides: array<string, array{template: string, flavor: array}>
      * }
      */
@@ -213,6 +224,11 @@ class UnlImporter
                     'os_id' => $analyzed[$eveImage]['os_id'] ?? null,
                     'os_name' => $analyzed[$eveImage]['os_name'] ?? null,
                     'os_image' => $analyzed[$eveImage]['os_image'] ?? null,
+                    // Un OS deja resolu peut etre un conteneur : on aligne le
+                    // device importe sur l'hyperviseur reel de cet OS.
+                    'hypervisor' => $analyzed[$eveImage]['os_hypervisor']['name']
+                        ?? $analyzed[$eveImage]['hypervisor']
+                        ?? ($requirement['hypervisor'] ?? null),
                 ];
             }
 
@@ -222,6 +238,7 @@ class UnlImporter
                     'os_id' => null,
                     'os_name' => $eveImage,
                     'os_image' => $eveImage,
+                    'hypervisor' => $requirement['hypervisor'] ?? null,
                 ];
             }
 
@@ -264,7 +281,14 @@ class UnlImporter
             return null;
         }
 
-        $deviceType = (string) ($requirement['device_type'] ?? 'vm');
+        $hypervisorName = $resolution['hypervisor']
+            ?? $os->getHypervisor()?->getName()
+            ?? $requirement['hypervisor']
+            ?? null;
+        $deviceType = $this->mapper->deviceTypeForHypervisor(
+            (string) $hypervisorName,
+            (string) ($requirement['device_type'] ?? 'vm')
+        );
         $console = (string) ($requirement['console'] ?? '');
         $ram = (int) ($requirement['ram'] ?? 0);
 
@@ -273,7 +297,7 @@ class UnlImporter
         $created = $this->deviceTemplateFactory->findOrCreate(
             (string) $os->getName(),
             $deviceType,
-            $this->operatingSystemHypervisor($os, $requirement['hypervisor'] ?? null),
+            $this->operatingSystemHypervisor($os, $requirement['hypervisor'] ?? null, $hypervisorName),
             $os,
             $flavor,
             (int) ($requirement['cpu'] ?? 1),
@@ -315,11 +339,18 @@ class UnlImporter
     }
 
     /**
-     * Hyperviseur du device template : celui de l'OS cree prime, sinon
-     * l'hyperviseur deduit du <node>, sinon qemu.
+     * Hyperviseur du device template : le choix explicite de l'utilisateur
+     * prime, puis celui de l'OS cree, puis l'hyperviseur deduit du <node>.
      */
-    private function operatingSystemHypervisor(OperatingSystem $os, ?string $nodeHypervisor): ?\App\Entity\Hypervisor
-    {
+    private function operatingSystemHypervisor(
+        OperatingSystem $os,
+        ?string $nodeHypervisor,
+        ?string $preferredHypervisor = null
+    ): ?\App\Entity\Hypervisor {
+        if (null !== $preferredHypervisor && '' !== trim($preferredHypervisor)) {
+            return $this->resolveHypervisor($preferredHypervisor);
+        }
+
         if (null !== $os->getHypervisor()) {
             return $os->getHypervisor();
         }
@@ -343,24 +374,38 @@ class UnlImporter
     }
 
     /**
-     * @return array{os_id: ?int, os_name: ?string, os_image: ?string}|null
+     * @return array{os_id: ?int, os_name: ?string, os_image: ?string, hypervisor: ?string}|null
      */
     private function applyDecision(array $requirement, array $decision, ?User $user): ?array
     {
         $eveImage = (string) $requirement['eve_image'];
         $action = strtolower((string) ($decision['action'] ?? ''));
-        $hypervisor = $this->resolveHypervisor($requirement['hypervisor'] ?? null);
+
+        // Hyperviseur explicitement choisi dans la fenetre de revue (qemu/lxc).
+        // Il prime sur celui deduit du <node> EVE-NG.
+        $requestedHypervisor = trim((string) ($decision['hypervisor'] ?? ''));
+        $targetHypervisor = '' !== $requestedHypervisor ? $requestedHypervisor : ($requirement['hypervisor'] ?? null);
+        $hypervisor = $this->resolveHypervisor($targetHypervisor);
         $arch = $this->resolveArch($requirement['arch'] ?? null);
 
         switch ($action) {
+            // "Use proposed existing image" and "Use another image" both reuse
+            // an OperatingSystem already present in the database.
             case 'reuse':
+            case 'reuse_other':
                 $osId = $decision['os_id'] ?? null;
                 if (null === $osId || null === $os = $this->operatingSystemRepository->find($osId)) {
                     return null;
                 }
                 $this->imageCatalog->remember($eveImage, $os, $user);
 
-                return $this->resolutionFromOs($os);
+                // Par defaut on suit l'hyperviseur de l'OS choisi (un OS lxc
+                // doit etre lance comme conteneur), sauf choix explicite.
+                $effectiveHypervisor = '' !== $requestedHypervisor
+                    ? $requestedHypervisor
+                    : ($os->getHypervisor()?->getName() ?? $requirement['hypervisor'] ?? null);
+
+                return $this->resolutionFromOs($os, $effectiveHypervisor);
 
             case 'upload':
                 $filename = isset($decision['filename']) ? basename((string) $decision['filename']) : '';
@@ -377,7 +422,7 @@ class UnlImporter
                 );
                 $this->rememberAndDistribute($eveImage, $os, $filename, $user);
 
-                return $this->resolutionFromOs($os);
+                return $this->resolutionFromOs($os, $hypervisor?->getName());
 
             case 'url':
                 $url = trim((string) ($decision['url'] ?? ''));
@@ -394,7 +439,7 @@ class UnlImporter
                 );
                 $this->imageCatalog->remember($eveImage, $os, $user);
 
-                return $this->resolutionFromOs($os);
+                return $this->resolutionFromOs($os, $hypervisor?->getName());
 
             case 'blank':
                 $flavorDisk = $this->resolveFlavorDisk($decision['flavorDisk'] ?? self::DEFAULT_DISK_FLAVOR);
@@ -414,7 +459,7 @@ class UnlImporter
                 );
                 $this->rememberAndDistribute($eveImage, $os, $filename, $user);
 
-                return $this->resolutionFromOs($os);
+                return $this->resolutionFromOs($os, $hypervisor?->getName());
 
             case 'skip':
                 // Import volontairement partiel : device sans OS reel.
@@ -422,6 +467,7 @@ class UnlImporter
                     'os_id' => null,
                     'os_name' => (string) ($requirement['eve_image'] ?? ''),
                     'os_image' => (string) ($requirement['eve_image'] ?? ''),
+                    'hypervisor' => $targetHypervisor,
                 ];
 
             default:
@@ -490,14 +536,15 @@ class UnlImporter
     }
 
     /**
-     * @return array{os_id: ?int, os_name: ?string, os_image: ?string}
+     * @return array{os_id: ?int, os_name: ?string, os_image: ?string, hypervisor: ?string}
      */
-    private function resolutionFromOs(OperatingSystem $os): array
+    private function resolutionFromOs(OperatingSystem $os, ?string $hypervisorName = null): array
     {
         return [
             'os_id' => $os->getId(),
             'os_name' => $os->getName(),
             'os_image' => $os->getImageUrl() ?: $os->getImageFilename(),
+            'hypervisor' => $hypervisorName ?: $os->getHypervisor()?->getName(),
         ];
     }
 

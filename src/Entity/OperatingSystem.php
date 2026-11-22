@@ -66,7 +66,7 @@ class OperatingSystem implements DirectoryAwareInterface
     #[Assert\NotNull]
     #[Assert\Valid]
     #[ORM\ManyToOne(targetEntity: 'App\Entity\Hypervisor')]
-    #[Serializer\Groups(['api_get_device', 'api_delete_os', 'export_lab', 'api_get_lab_instance', 'worker'])]
+    #[Serializer\Groups(['api_get_operating_system', 'api_get_device', 'api_delete_os', 'export_lab', 'api_get_lab_instance', 'worker'])]
     private $hypervisor;
 
     #[Assert\Type(type: 'string')]

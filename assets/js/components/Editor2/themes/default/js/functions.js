@@ -1101,7 +1101,7 @@ export function recursive_start(nodes, i) {
     node_data['edition'] = edition;
     node_data['labInstance'] = labInstance;
 
-    if (nodes[Object.keys(nodes)[i]].type != "switch") {
+    if (!nodes[Object.keys(nodes)[i]]['native']) {
     if (typeof nodes[Object.keys(nodes)[i]]['path'] === 'undefined') {
         var url = '/api/labs/' + lab_filename + '/nodes/' + Object.keys(nodes)[i] + '/start';
     } else {
@@ -1733,11 +1733,22 @@ export function printFormNode(action, values, fromNodeList) {
                 '<select id="form-node-template" class="selectpicker form-control" name="node[template]" data-live-search="true" data-size="auto" data-style="selectpicker-button">' +
                 '<option value="">' + MESSAGES[102] + '</option>';
             
-            $.each(templates, function (key, value) {
-                //console.log("ID:", key, "Nom:", value);
+            // Sort the templates alphabetically by their displayed name: the order
+            // returned by the API must not be relied on (templates come from YAML files).
+            var templateList = Object.keys(templates).map(function (key) {
+                return {key: key, label: String(templates[key]).replace('.missing', ''), value: templates[key]};
+            });
+            templateList.sort(function (a, b) {
+                return a.label.localeCompare(b.label, undefined, {sensitivity: 'base', numeric: true});
+            });
+
+            $.each(templateList, function (index, templateEntry) {
+                //console.log("ID:", templateEntry.key, "Nom:", templateEntry.value);
+                var key = templateEntry.key;
+                var value = templateEntry.value;
                 var valdisabled = (/missing/i.test(value)) ? 'disabled="disabled"' : '';
                 if (!/hided/i.test(value)) {
-                    html += '<option value="' + key + '" ' + valdisabled + ' >' + value.replace('.missing', '') + '</option>';
+                    html += '<option value="' + key + '" ' + valdisabled + ' >' + templateEntry.label + '</option>';
                 }
             });
             
@@ -2304,7 +2315,7 @@ export function printLabTopology() {
 
         $.each(nodes, function (key, value) {
             var hrefbuf;
-            if (EDITION == 0 && value['console'].length > 0 && value['status'] == 2 && value['type'] != "switch") {
+            if (EDITION == 0 && value['console'].length > 0 && value['status'] == 2 && !value['native']) {
                 if (value['console'].length > 1 ) {
                     hrefbuf = '<a class="openControlProtocolMenu" id="'+ value['id']+'" href="javascript:void(0)" >'
                 }
@@ -2328,6 +2339,7 @@ export function printLabTopology() {
                 'data-path="' + value['id'] + '" ' +
                 'data-status="' + value['status'] + '" ' +
                 'data-type="' + value['type'] + '" ' +
+                'data-native="' + (value['native'] ? 1 : 0) + '" ' +
                 'data-hidden="' + (value['hidden'] ? 1 : 0) + '" ' +
                 'data-name="' + value['name'] + '">' +
                 '<div class="tag  hidden" title="Connect to another node">'+
@@ -2687,7 +2699,7 @@ export function printLabStatus() {
 
             $('.node' + node['id']).attr('data-status',node['status']);
 
-            if (EDITION == 0 && node['console'].length > 0 && node['status'] == 2 && node['type'] != "switch") {
+            if (EDITION == 0 && node['console'].length > 0 && node['status'] == 2 && !node['native']) {
                 if (node['console'].length > 1 ) {
                     // '<a class="openControlProtocolMenu" id="'+ node['id']+'" href="javascript:void(0)" >'
                     $('.node'+ node["id"] +' a' ).attr("id",node['id']);
@@ -2828,7 +2840,7 @@ function createNodeListRow(template, id){
         //node actions
         html_data += '<td><div class="action-controls">';
         if (EDITION == 0 && (ISGROUPOWNER == 0 ||(ISGROUPOWNER == 1 && HASGROUPACCESS == 1))) {
-            if (node_values['type'] != 'switch') {
+            if (!node_values['native']) {
                 html_data += '<a class="action-nodestart" data-path="' + id + '" data-name="' + checkTemplateValue(template_values['options'],'name') + '" href="javascript:void(0)" title="' + MESSAGES[66] + '"><i class="glyphicon glyphicon-play"></i></a>'+
                             '<a class="action-nodestop" data-path="' + id + '" data-name="' + checkTemplateValue(template_values['options'],'name') + '" href="javascript:void(0)" title="' + MESSAGES[67] + '"><i class="glyphicon glyphicon-stop"></i></a>';
             }

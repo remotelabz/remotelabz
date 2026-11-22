@@ -298,11 +298,16 @@ class DeviceController extends Controller
         }
         $data = [];
         foreach($devices as $device){
+            // Native devices (Internet switch...) have no real instance and
+            // are always considered running. An imported viosl2 switch also
+            // has the "switch" type but runs on qemu: its real state must be
+            // used so it can be started/stopped and configured.
+            $isNative = $device->isNative();
 
             if($nodeData['edition'] == 0) {
                 //$this->logger->debug('[DeviceController:indexActionTest]::nodeData edition 0');
                 $deviceInstance = $this->deviceInstanceRepository->findByDeviceAndLabInstance($device, $labInstance);
-                if ($device->getType() != "switch") {
+                if (!$isNative) {
                     if($deviceInstance->getState() == 'started') {
                         $status = 2;
                     }
@@ -380,6 +385,7 @@ class DeviceController extends Controller
                 "id"=> $device->getId(),
                 "name"=> $device->getName(),
                 "type"=> $device->getType(),
+                "native"=> $isNative,
                 //"console"=> $device->getConsole(),
                 "delay"=> $device->getDelay(),
                 "left"=> $device->getEditorData()->getY(),
@@ -522,10 +528,14 @@ class DeviceController extends Controller
             throw new NotFoundHttpException("Device " . $id . " does not exist.");
         }
 
+        // Only native devices are always running. Imported switches running on
+        // qemu must expose their real state.
+        $isNative = $device->isNative();
+
         if($nodeData['edition'] == 0 && $nodeData['labInstance'] != null) {
             $labInstance = $this->labInstanceRepository->find($nodeData['labInstance']);
             $deviceInstance = $this->deviceInstanceRepository->findByDeviceAndLabInstance($device, $labInstance);
-            if ($device->getType() != "switch") {
+            if (!$isNative) {
                 if($deviceInstance->getState() == 'started') {
                     $status = 2;
                 }
@@ -595,6 +605,7 @@ class DeviceController extends Controller
         $data = [
             "name"=> $device->getName(),
             "type"=> $device->getType(),
+            "native"=> $isNative,
             "delay"=> $device->getDelay(),
             "left"=> $device->getEditorData()->getY(),
             "top"=> $device->getEditorData()->getX(),

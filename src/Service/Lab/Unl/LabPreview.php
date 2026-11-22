@@ -17,6 +17,8 @@ use JsonSerializable;
  *  - `deviceChoices` : pour chaque device sans image, le driver retenu ;
  *  - `flavors` : les flavours RemoteLabz proposees pour la RAM d'un device
  *                template cree depuis une image sans correspondance ;
+ *  - `hypervisors` : les hyperviseurs disponibles (qemu/lxc/...), pour choisir
+ *                    le support d'une image dans la fenetre de revue ;
  *  - `labJson` : le JSON pret a etre passe a LabImporter::import() lors du commit ;
  *  - `warnings`: messages non bloquants a remonter a l'utilisateur.
  *
@@ -34,6 +36,7 @@ class LabPreview implements JsonSerializable
     private array $deviceCandidates;
     private array $deviceChoices;
     private array $flavors;
+    private array $hypervisors;
 
     public function __construct(
         array $source,
@@ -44,7 +47,8 @@ class LabPreview implements JsonSerializable
         array $warnings = [],
         array $deviceCandidates = [],
         array $deviceChoices = [],
-        array $flavors = []
+        array $flavors = [],
+        array $hypervisors = []
     ) {
         $this->source = $source;
         $this->lab = $lab;
@@ -55,6 +59,7 @@ class LabPreview implements JsonSerializable
         $this->deviceCandidates = $deviceCandidates;
         $this->deviceChoices = $deviceChoices;
         $this->flavors = $flavors;
+        $this->hypervisors = $hypervisors;
     }
 
     public function getSource(): array
@@ -108,6 +113,14 @@ class LabPreview implements JsonSerializable
     }
 
     /**
+     * Hyperviseurs disponibles pour le choix du support des images.
+     */
+    public function getHypervisors(): array
+    {
+        return $this->hypervisors;
+    }
+
+    /**
      * Le JSON "Lab RemoteLabz" (format attendu par LabImporter::import()).
      */
     public function getLabJson(): array
@@ -129,6 +142,7 @@ class LabPreview implements JsonSerializable
             'device_candidates' => $this->deviceCandidates,
             'device_choices' => $this->deviceChoices,
             'flavors' => $this->flavors,
+            'hypervisors' => $this->hypervisors,
             'warnings' => $this->warnings,
         ];
     }

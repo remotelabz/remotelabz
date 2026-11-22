@@ -54,6 +54,7 @@ use App\Repository\FlavorRepository;
 use App\Service\LabBannerFileUploader;
 use App\Repository\PracticalSubjectRepository;
 use App\Entity\TextObject;
+use App\Entity\Picture;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use FOS\RestBundle\Controller\Annotations\QueryParam;
@@ -955,7 +956,9 @@ class LabController extends Controller
 
     private function adddeviceinlab(Device $new_device, Lab $lab) {
         
-        if ($new_device->getHypervisor()->getName() === 'lxc') {
+        // Imported devices may have no hypervisor (e.g. an image the user chose
+        // to skip during an EVE-NG import).
+        if (null !== $new_device->getHypervisor() && 'lxc' === $new_device->getHypervisor()->getName()) {
             //$this->logger->debug("[LabController:adddeviceinlab]::Set type to container to device ". $new_device->getName() .",".$new_device->getUuid());
             $new_device->setType('container');
         }
@@ -1217,7 +1220,37 @@ class LabController extends Controller
             if (null !== $textobject->getData()) {
                 $new_textobject->setData($textobject->getData());
             }
+            $entityManager->persist($new_textobject);
             $new_lab->addTextobject($new_textobject);
+        }
+
+        //Copy the pictures (independent copies, including their binary data)
+        foreach ($lab->getPictures() as $picture) {
+            $new_picture = new Picture();
+            $new_picture->setName($picture->getName());
+            if (null !== $picture->getType()) {
+                $new_picture->setType($picture->getType());
+            }
+            if (null !== $picture->getMap()) {
+                $new_picture->setMap($picture->getMap());
+            }
+            if (null !== $picture->getHeight()) {
+                $new_picture->setHeight($picture->getHeight());
+            }
+            if (null !== $picture->getWidth()) {
+                $new_picture->setWidth($picture->getWidth());
+            }
+            // Doctrine returns BLOB columns as a stream resource, while
+            // Picture::setData() expects the raw string content.
+            $pictureData = $picture->getData();
+            if (is_resource($pictureData)) {
+                $pictureData = stream_get_contents($pictureData);
+            }
+            if (null !== $pictureData) {
+                $new_picture->setData($pictureData);
+            }
+            $entityManager->persist($new_picture);
+            $new_lab->addPicture($new_picture);
         }
 
         //Link the same practical subjects (shared content, not duplicated)
