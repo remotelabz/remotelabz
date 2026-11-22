@@ -342,7 +342,7 @@ $(document).on('contextmenu', '.context-menu', function (e) {
 
     var node_id = $(this).attr('data-path');
         if(parseInt($('#node'+node_id).attr('data-status')) != 2){
-            if ($(this).attr('data-type') != "switch") {
+            if ($(this).attr('data-native') != "1") {
                 content += '<li><a class="action-nodestart  menu-manage" data-path="' + node_id + '" data-name="' + title + '" href="javascript:void(0)">' +
                 '<i class="glyphicon glyphicon-play"></i> ' + MESSAGES[66] +
                 '</a>' +
@@ -353,7 +353,7 @@ $(document).on('contextmenu', '.context-menu', function (e) {
 
             var title = $(this).attr('data-name') + " (" + node_id + ")";
             if(EDITION == 0 && (ISGROUPOWNER == 0 ||(ISGROUPOWNER == 1 && HASGROUPACCESS == 1))) {
-                if ($(this).attr('data-type') != "switch") {
+                if ($(this).attr('data-native') != "1") {
                 body +=
                     content+
                     '<li>' +
@@ -2053,7 +2053,7 @@ $(document).on('click', '.action-nodestart, .action-nodesstart, .action-nodestar
             nodeLenght = window.freeSelectedNodes.length;
             let nodesToStart = [];
             $.each(window.freeSelectedNodes, function (i, node) {
-                if (nodes[node.path]['type'] != 'switch') {
+                if (!nodes[node.path]['native']) {
                     nodesToStart.push(node);
                 }
             })
@@ -2066,7 +2066,7 @@ $(document).on('click', '.action-nodestart, .action-nodesstart, .action-nodestar
 
         }
         else if (node_id != null) {
-            if (nodes[node_id]['type'] != 'switch') {
+            if (!nodes[node_id]['native']) {
                 $.when(start(node_id)).done(function () {
                     // Node started -> print a small green message
                     addMessage('success', nodes[node_id]['name'] + ': ' + MESSAGES[76]);
@@ -2091,7 +2091,7 @@ $(document).on('click', '.action-nodestart, .action-nodesstart, .action-nodestar
             addMessage('info', 'Start all...');
 
              $.each(nodes, function(key, values) {
-                if(values['type'] != "switch") {
+                if(!values['native']) {
              $.when(start(key)).done(function() {
              // Node started -> print a small green message
              addMessage('success', values['name'] + ': ' + MESSAGES[76]);
@@ -2154,7 +2154,7 @@ $(document).on('click', '.action-nodestop, .action-nodesstop, .action-nodestop-g
         if (isFreeSelectMode) {
             nodeLenght = window.freeSelectedNodes.length;
             $.each(window.freeSelectedNodes, function (i, node) {
-                if (nodes[node.path]['type'] != 'switch') {
+                if (!nodes[node.path]['native']) {
                     $.when(stop(node.path)).done(function () {
                         // Node stopped -> print a small green message
                         addMessage('success', node.name + ': ' + MESSAGES[77]);
@@ -2180,7 +2180,7 @@ $(document).on('click', '.action-nodestop, .action-nodesstop, .action-nodestop-g
             });
         }
         else if (node_id != null) {
-            if (nodes[node_id]['type'] != 'switch') {
+            if (!nodes[node_id]['native']) {
                 $.when(stop(node_id)).done(function () {
                     // Node stopped -> print a small green message
                     addMessage('success', nodes[node_id]['name'] + ': ' + MESSAGES[77])
@@ -2206,7 +2206,7 @@ $(document).on('click', '.action-nodestop, .action-nodesstop, .action-nodestop-g
         else if (stopAll) {
             nodeLenght = Object.keys(nodes).length;
             $.each(nodes, function (key, values) {
-                if (values['type'] != 'switch') {
+                if (!values['native']) {
                     $.when(stop(key)).done(function () {
                         // Node stopped -> print a small green message
                         addMessage('success', values['name'] + ': ' + MESSAGES[77]);
@@ -3649,7 +3649,7 @@ $(document).on('click', '.node.node_frame a', function (e) {
             .then(function (node) {
 
                 if (EDITION == 0 && (ISGROUPOWNER == 0 ||(ISGROUPOWNER == 1 && HASGROUPACCESS == 1))) {
-                    if (node.type != "switch") {
+                    if (!node.native) {
                         var network = '<li><a class="action-nodestart menu-manage" data-path="' + node_id +
                         '" data-name="' + node.name + '" href="#"><i class="glyphicon glyphicon-play"></i> Start</a></li>';
                         printContextMenu(node.name, network, e.pageX, e.pageY,false,"menu");
