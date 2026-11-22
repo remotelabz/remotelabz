@@ -505,7 +505,7 @@ export class RemotelabzAPI {
          * Implements POST `/api/labs/import/eve-ng/commit`
          * 
          * @param {File} file 
-         * @param {Array} mapping Image decisions ({ action, os_id?, filename?, url?, name?, flavorDisk? })
+         * @param {Array} mapping Image decisions ({ action, os_id?, hypervisor?, filename?, url?, name?, flavorDisk? })
          * @param {Array} devices Device replacement choices for image-less nodes ({ eve_id, template })
          * 
          * @returns {Promise<import('axios').AxiosResponse<{status: string, data: {id: number, url: string}}>>}

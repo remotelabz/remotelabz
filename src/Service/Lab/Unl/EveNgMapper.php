@@ -316,15 +316,20 @@ class EveNgMapper
             $controlProtocols = $this->controlProtocolsFromDriver($driver, $deviceType);
             $networkInterfaceTemplate = (string) ($driver['network_interface_template'] ?? 'eth');
         } else {
-            $hypervisorId = $this->hypervisorId($this->hypervisorForNode($node, $entry));
-            $deviceType = $entry['device_type'] ?? 'vm';
+            // The user can override the hypervisor (qemu/lxc) chosen for an
+            // image in the review window. It then wins over the EVE-NG node
+            // type, so the imported device is launched as a VM or a container
+            // consistently with the selected operating system.
+            $hypervisorName = $this->resolvedHypervisorName($node, $entry, $images);
+            $hypervisorId = $this->hypervisorId($hypervisorName);
+            $deviceType = $this->deviceTypeForHypervisor($hypervisorName, (string) ($entry['device_type'] ?? 'vm'));
             $osId = $images[$node['image']]['os_id'] ?? null;
             // Une image sans correspondance a recu un device template dedie au
             // commit : il prime sur la selection automatique d'un driver.
             $template = $imageOverride['template']
                 ?? $this->pickDriver($deviceType, $hypervisorId, $entry['rlz_template'] ?? null, $osId);
             $icon = $this->resolveIcon($node['icon'], $entry['icon'] ?? self::FALLBACK_ICON);
-            $osJson = $this->operatingSystemJson($node, $entry, $images);
+            $osJson = $this->operatingSystemJson($node, $entry, $images, $hypervisorName);
             $controlProtocols = $this->controlProtocols((string) $node['console'], $deviceType);
             $networkInterfaceTemplate = 'eth';
         }
@@ -432,10 +437,11 @@ class EveNgMapper
         ];
     }
 
-    private function operatingSystemJson(array $node, array $entry, array $images): array
+    private function operatingSystemJson(array $node, array $entry, array $images, ?string $hypervisorName = null): array
     {
         $eveImage = $node['image'];
-        $hypervisor = ['id' => $this->hypervisorId($this->hypervisorForNode($node, $entry))];
+        $hypervisorName = $hypervisorName ?? $this->resolvedHypervisorName($node, $entry, $images);
+        $hypervisor = ['id' => $this->hypervisorId($hypervisorName)];
 
         if (isset($images[$eveImage]) && null !== ($images[$eveImage]['os_image'] ?? null)) {
             $osJson = [
@@ -633,6 +639,36 @@ class EveNgMapper
     }
 
     /**
+     * Hyperviseur retenu pour un noeud : la decision de l'utilisateur (par
+     * image EVE-NG) prime sur le type du <node> et sur le catalogue.
+     */
+    private function resolvedHypervisorName(array $node, array $entry, array $images): string
+    {
+        $override = $images[$node['image']]['hypervisor']
+            ?? $images[$node['image']]['os_hypervisor']['name']
+            ?? null;
+        if (is_string($override) && '' !== trim($override)) {
+            return trim($override);
+        }
+
+        return $this->hypervisorForNode($node, $entry);
+    }
+
+    /**
+     * Type de device coherent avec l'hyperviseur retenu. Un OS lxc doit etre
+     * importe comme conteneur, un OS qemu comme VM ; les types specifiques
+     * (switch, physical...) sont conserves.
+     */
+    public function deviceTypeForHypervisor(string $hypervisorName, string $fallbackType): string
+    {
+        return match (mb_strtolower(trim($hypervisorName))) {
+            'lxc' => 'container',
+            'qemu' => 'container' === $fallbackType ? 'vm' : $fallbackType,
+            default => $fallbackType,
+        };
+    }
+
+    /**
      * Normalise l'architecture EVE-NG (`qemu_arch`) vers un nom d'`Arch`
      * RemoteLabz valide (x86, x86_64, arm, arm64), ou "" si inconnue.
      */
@@ -665,6 +701,27 @@ class EveNgMapper
         usort($flavors, static fn (array $a, array $b): int => $a['memory'] <=> $b['memory']);
 
         return $flavors;
+    }
+
+    /**
+     * Hyperviseurs disponibles, proposees a l'utilisateur pour choisir le
+     * support d'une image importee (VM qemu ou conteneur lxc).
+     *
+     * @return array<int, array{id: ?int, name: string}>
+     */
+    public function hypervisorOptions(): array
+    {
+        $options = [];
+        foreach ($this->hypervisorRepository->findAll() as $hypervisor) {
+            $options[] = [
+                'id' => $hypervisor->getId(),
+                'name' => (string) $hypervisor->getName(),
+            ];
+        }
+
+        usort($options, static fn (array $a, array $b): int => strcasecmp($a['name'], $b['name']));
+
+        return $options;
     }
 
     /**

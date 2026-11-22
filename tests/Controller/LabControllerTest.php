@@ -4,6 +4,8 @@ namespace App\Tests\Controller;
 
 use App\Entity\InvitationCode;
 use App\Entity\Lab;
+use App\Entity\Picture;
+use App\Entity\TextObject;
 
 class LabControllerTest extends AuthenticatedWebTestCase
 {
@@ -267,6 +269,71 @@ class LabControllerTest extends AuthenticatedWebTestCase
         $this->client->request('DELETE', '/api/labs/'.$cloneId);
         $this->assertResponseIsSuccessful();
         $this->client->request('DELETE', '/api/practical-subjects/'.$subjectId);
+        $this->assertResponseIsSuccessful();
+        $this->client->request('DELETE', '/api/labs/'.$sourceId);
+        $this->assertResponseIsSuccessful();
+    }
+
+    /**
+     * The sandbox "Modify" action relies on createcopy to duplicate the whole
+     * lab content: the browser no longer re-creates text objects and pictures
+     * itself before calling the endpoint, so the backend must copy them.
+     */
+    public function testCloneLabCopiesTextObjectsAndPictures()
+    {
+        $this->client->request('POST', '/api/labs');
+        $this->assertResponseIsSuccessful();
+        $sourceId = json_decode($this->client->getResponse()->getContent(), true)['id'];
+
+        $entityManager = static::getContainer()->get('doctrine')->getManager();
+        $source = $entityManager->getRepository(Lab::class)->find($sourceId);
+
+        $textObject = new TextObject();
+        $textObject->setName('Imported note');
+        $textObject->setType('text');
+        $textObject->setData('Note content');
+        $source->addTextobject($textObject);
+        $entityManager->persist($textObject);
+
+        $picture = new Picture();
+        $picture->setName('Imported topology');
+        $picture->setType('image/png');
+        $picture->setMap('topology');
+        $picture->setHeight(42);
+        $picture->setWidth(24);
+        $picture->setData('binary-picture-data');
+        $source->addPicture($picture);
+        $entityManager->persist($picture);
+
+        $entityManager->flush();
+        $sourceTextObjectId = $textObject->getId();
+        $sourcePictureId = $picture->getId();
+
+        $this->client->request('POST', '/api/labs/'.$sourceId.'/createcopy/', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode(['name' => 'Clone with content']));
+        $this->assertResponseIsSuccessful();
+        $cloneId = json_decode($this->client->getResponse()->getContent(), true)['id'];
+
+        $entityManager->clear();
+        $clone = $entityManager->getRepository(Lab::class)->find($cloneId);
+
+        $this->assertCount(1, $clone->getTextobjects());
+        $cloneTextObject = $clone->getTextobjects()->first();
+        $this->assertNotSame($sourceTextObjectId, $cloneTextObject->getId());
+        $this->assertSame('Imported note', $cloneTextObject->getName());
+        $this->assertSame('Note content', $cloneTextObject->getData());
+
+        $this->assertCount(1, $clone->getPictures());
+        $clonePicture = $clone->getPictures()->first();
+        $this->assertNotSame($sourcePictureId, $clonePicture->getId());
+        $this->assertSame('Imported topology', $clonePicture->getName());
+        $clonePictureData = $clonePicture->getData();
+        if (is_resource($clonePictureData)) {
+            $clonePictureData = stream_get_contents($clonePictureData);
+        }
+        $this->assertSame('binary-picture-data', $clonePictureData);
+
+        // Cleanup
+        $this->client->request('DELETE', '/api/labs/'.$cloneId);
         $this->assertResponseIsSuccessful();
         $this->client->request('DELETE', '/api/labs/'.$sourceId);
         $this->assertResponseIsSuccessful();

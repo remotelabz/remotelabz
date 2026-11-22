@@ -1733,11 +1733,22 @@ export function printFormNode(action, values, fromNodeList) {
                 '<select id="form-node-template" class="selectpicker form-control" name="node[template]" data-live-search="true" data-size="auto" data-style="selectpicker-button">' +
                 '<option value="">' + MESSAGES[102] + '</option>';
             
-            $.each(templates, function (key, value) {
-                //console.log("ID:", key, "Nom:", value);
+            // Sort the templates alphabetically by their displayed name: the order
+            // returned by the API must not be relied on (templates come from YAML files).
+            var templateList = Object.keys(templates).map(function (key) {
+                return {key: key, label: String(templates[key]).replace('.missing', ''), value: templates[key]};
+            });
+            templateList.sort(function (a, b) {
+                return a.label.localeCompare(b.label, undefined, {sensitivity: 'base', numeric: true});
+            });
+
+            $.each(templateList, function (index, templateEntry) {
+                //console.log("ID:", templateEntry.key, "Nom:", templateEntry.value);
+                var key = templateEntry.key;
+                var value = templateEntry.value;
                 var valdisabled = (/missing/i.test(value)) ? 'disabled="disabled"' : '';
                 if (!/hided/i.test(value)) {
-                    html += '<option value="' + key + '" ' + valdisabled + ' >' + value.replace('.missing', '') + '</option>';
+                    html += '<option value="' + key + '" ' + valdisabled + ' >' + templateEntry.label + '</option>';
                 }
             });
             
