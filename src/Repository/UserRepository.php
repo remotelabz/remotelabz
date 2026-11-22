@@ -33,17 +33,26 @@ class UserRepository extends ServiceEntityRepository
         else {
             $highestRole = "ROLE_USER";
         }
+
+        // Un utilisateur peut appartenir à plusieurs groupes de l'owner.
+        // On indexe le résultat par UUID pour ne pas le retourner plusieurs fois.
+        $seenGroups = [];
         foreach ($owner->getGroups() as $groupuser) {
-            $group=$groupuser->getGroup();
+            $group = $groupuser->getGroup();
+            if (isset($seenGroups[$group->getUuid()])) {
+                continue;
+            }
+            $seenGroups[$group->getUuid()] = true;
+
             if ($group->isElevatedUser($owner)) {
-                foreach($users as $user){
+                foreach ($users as $user) {
                     if ($user->isMemberOf($group) && $user->getHighestRole() === $highestRole) {
-                        array_push($result, $user);
+                        $result[$user->getUuid()] = $user;
                     }
                 }
             }
         }
-        return $result;
+        return array_values($result);
     }
 
     public function findByRole(string $role)

@@ -2,8 +2,10 @@
         daily
         missingok
         rotate 52
-        size 10M
+        maxsize 10M
+        minsize 2M
         compress
+        copytruncate
         notifempty
         create 664 remotelabz www-data
         su remotelabz www-data
