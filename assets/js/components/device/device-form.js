@@ -133,6 +133,7 @@ $(function () {
     const protocolSelect = document.querySelector('select[name*="[controlProtocolTypes]"]');
     const isoFieldsContainer = document.getElementById('iso-fields-container');
     const qemuNicFieldsContainer = document.getElementById('qemu-nic-fields-container');
+    const qemuOptionsFieldsContainer = document.getElementById('qemu-options-fields-container');
     const isosSelect = document.querySelector('select[name*="[isos]"]');
     
     // Fonction pour mettre à jour les protocoles de contrôle
@@ -246,8 +247,21 @@ $(function () {
 
         const selectedOption = osSelect.options[osSelect.selectedIndex];
         const hypervisor = selectedOption ? selectedOption.getAttribute('data-hypervisor') : '';
+        const isQemu = hypervisor === 'qemu';
 
-        qemuNicFieldsContainer.style.display = (hypervisor === 'qemu') ? '' : 'none';
+        qemuNicFieldsContainer.style.display = isQemu ? '' : 'none';
+
+        // Les options QEMU (guest agent, CPU host) ne s'appliquent qu'à QEMU.
+        // On décoche les cases quand l'OS sélectionné n'est pas QEMU pour ne pas
+        // conserver des valeurs obsolètes après un changement d'hyperviseur.
+        if (qemuOptionsFieldsContainer) {
+            qemuOptionsFieldsContainer.style.display = isQemu ? '' : 'none';
+            if (!isQemu) {
+                qemuOptionsFieldsContainer.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                    checkbox.checked = false;
+                });
+            }
+        }
     }
 
     // Événement au changement d'OS

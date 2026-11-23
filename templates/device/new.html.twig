@@ -109,6 +109,12 @@
                     {{ form_row(form.network_card_type) }}
                     {{ form_row(form.minimum_network_interfaces) }}
                 </div>
+
+                {# Options QEMU : agent invité et CPU host - affichées seulement pour un OS qemu #}
+                <div id="qemu-options-fields-container" style="display: none">
+                    {{ form_row(form.qemu_agent) }}
+                    {{ form_row(form.cpu_host) }}
+                </div>
                 
                 {{ form_row(form.flavor) }}
                 

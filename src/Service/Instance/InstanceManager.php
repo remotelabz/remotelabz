@@ -930,6 +930,8 @@ class InstanceManager
         $newDevice->setNbThread($device->getNbThread());
         $newDevice->setNetworkCardType($device->getNetworkCardType());
         $newDevice->setMinimumNetworkInterfaces($device->getMinimumNetworkInterfaces());
+        $newDevice->setQemuAgent($device->isQemuAgent());
+        $newDevice->setCpuHost($device->isCpuHost());
         $newDevice->setIsTemplate(true);
 
         $i=0;

@@ -768,7 +768,9 @@ class DeviceController extends Controller
                     "cdrom_bus_type" => $device->getCdromBusType(),
                     "bios_type" => $device->getBiosType(),
                     "network_card_type" => $device->getNetworkCardType(),
-                    "minimum_network_interfaces" => $device->getMinimumNetworkInterfaces()
+                    "minimum_network_interfaces" => $device->getMinimumNetworkInterfaces(),
+                    "qemu_agent" => $device->isQemuAgent(),
+                    "cpu_host" => $device->isCpuHost()
                 ];
                 
                 if (!is_null($device->getOperatingSystem()->getArch())){
@@ -1036,6 +1038,14 @@ class DeviceController extends Controller
             $device->setMinimumNetworkInterfaces((int) $data['minimum_network_interfaces']);
         }
 
+        if(isset($data['qemu_agent'])) {
+            $device->setQemuAgent(filter_var($data['qemu_agent'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE));
+        }
+
+        if(isset($data['cpu_host'])) {
+            $device->setCpuHost(filter_var($data['cpu_host'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE));
+        }
+
         if(isset($data['hidden'])) {
             $device->setHidden((bool) $data['hidden']);
         }
@@ -1083,6 +1093,16 @@ class DeviceController extends Controller
 
                 $device->setIp($template->getIp());
                 $device->setPort($template->getPort());
+
+                // Options QEMU (guest agent / CPU host) non exposées dans
+                // l'éditeur de lab : on les reprend du device template pour
+                // que le worker les reçoive dans le descripteur.
+                if (!array_key_exists('qemu_agent', $data)) {
+                    $device->setQemuAgent($template->isQemuAgent());
+                }
+                if (!array_key_exists('cpu_host', $data)) {
+                    $device->setCpuHost($template->isCpuHost());
+                }
 
                 // To track when this template is used
                 $template->addLabUsingTemplate($lab);
@@ -1476,6 +1496,8 @@ class DeviceController extends Controller
                 "cdrom_bus_type" => $device->getCdromBusType(),
                 "network_card_type" => $device->getNetworkCardType(),
                 "minimum_network_interfaces" => $device->getMinimumNetworkInterfaces(),
+                "qemu_agent" => $device->isQemuAgent(),
+                "cpu_host" => $device->isCpuHost(),
                 "isos" => $isos
         ];
         
@@ -1556,6 +1578,14 @@ class DeviceController extends Controller
 
         if(isset($data['minimum_network_interfaces'])) {
             $device->setMinimumNetworkInterfaces((int) $data['minimum_network_interfaces']);
+        }
+
+        if(isset($data['qemu_agent'])) {
+            $device->setQemuAgent(filter_var($data['qemu_agent'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE));
+        }
+
+        if(isset($data['cpu_host'])) {
+            $device->setCpuHost(filter_var($data['cpu_host'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE));
         }
 
         // Only the lab author / system admins reach this point (LabVoter::EDIT_DEVICE)
@@ -2127,6 +2157,14 @@ class DeviceController extends Controller
                 case 'physical':
                     $device->setType('physical');
                 break;
+            }
+
+            // Les options QEMU (guest agent / CPU host) ne s'appliquent qu'aux
+            // devices QEMU : on remet les valeurs a false pour tout autre
+            // hyperviseur afin de ne pas conserver un etat obsolete.
+            if (strtolower($device->getOperatingSystem()->getHypervisor()->getName()) !== 'qemu') {
+                $device->setQemuAgent(false);
+                $device->setCpuHost(false);
             }
     }
 

@@ -516,6 +516,8 @@ class TemplateController extends Controller
         "cdrom_bus_type" => $template->getCdromBusType(),
         "network_card_type" => $template->getNetworkCardType(),
         "minimum_network_interfaces" => $template->getMinimumNetworkInterfaces(),
+        "qemu_agent" => $template->isQemuAgent(),
+        "cpu_host" => $template->isCpuHost(),
         "isos" => $isos
     ];
 

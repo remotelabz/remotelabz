@@ -12,6 +12,9 @@ class DeviceNetworkCardTest extends AuthenticatedWebTestCase
         $this->assertStringContainsString('qemu-nic-fields-container', $content);
         $this->assertStringContainsString('network_card_type', $content);
         $this->assertStringContainsString('minimum_network_interfaces', $content);
+        $this->assertStringContainsString('qemu-options-fields-container', $content);
+        $this->assertStringContainsString('qemu_agent', $content);
+        $this->assertStringContainsString('cpu_host', $content);
     }
 
     public function testApiCreateAndEditDeviceWithNetworkCard()
