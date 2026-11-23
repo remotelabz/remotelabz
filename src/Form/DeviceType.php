@@ -175,6 +175,24 @@ class DeviceType extends AbstractType
                     'min' => 0,
                     'max' => 64,
                 ],
+            ])
+
+            ->add('qemu_agent', CheckboxType::class, [
+                'required' => false,
+                'label' => 'QEMU guest agent',
+                'help' => 'Expose the QEMU guest agent channel (virtio-serial) to the VM. QEMU only.',
+                'attr' => [
+                    'class' => 'form-check-input',
+                ],
+            ])
+
+            ->add('cpu_host', CheckboxType::class, [
+                'required' => false,
+                'label' => 'CPU host',
+                'help' => 'Use the host CPU model (-cpu host) instead of the generic max model. QEMU only.',
+                'attr' => [
+                    'class' => 'form-check-input',
+                ],
             ]);
             
             // Ajout du champ isos avec toutes les options

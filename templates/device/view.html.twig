@@ -208,6 +208,20 @@
                     </div>
                 </div>
 
+                {% if device.hypervisor and device.hypervisor.name|lower == 'qemu' %}
+                <div class="row mt-3">
+                    <div class="col-sm-3"><strong>QEMU options:</strong></div>
+                    <div class="col-sm-9">
+                        <span class="badge {{ device.qemuAgent ? 'bg-success' : 'bg-secondary' }}">
+                            <i class="fas fa-plug me-1"></i> QEMU guest agent: {{ device.qemuAgent ? 'Enabled' : 'Disabled' }}
+                        </span>
+                        <span class="badge {{ device.cpuHost ? 'bg-success' : 'bg-secondary' }}">
+                            <i class="fas fa-microchip me-1"></i> CPU host: {{ device.cpuHost ? 'Enabled' : 'Disabled' }}
+                        </span>
+                    </div>
+                </div>
+                {% endif %}
+
 
             </div>
         </div>

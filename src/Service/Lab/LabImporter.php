@@ -386,6 +386,14 @@ class LabImporter
                 $device->setHidden(true);
             }
 
+            // QEMU only options, preserved across lab export/import.
+            if (array_key_exists('qemu_agent', $deviceJson)) {
+                $device->setQemuAgent((bool) $deviceJson['qemu_agent']);
+            }
+            if (array_key_exists('cpu_host', $deviceJson)) {
+                $device->setCpuHost((bool) $deviceJson['cpu_host']);
+            }
+
             
             foreach($deviceJson["controlProtocolTypes"] ?? [] as $controlProtocolTypeJson){
                 $controlProtocolType = $this->controlProtocolTypeRepository->find($controlProtocolTypeJson["id"]);

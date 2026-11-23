@@ -215,6 +215,8 @@ class DeviceTemplateFactory
             'bios_type' => $device->getBiosType(),
             'network_card_type' => $device->getNetworkCardType(),
             'minimum_network_interfaces' => $device->getMinimumNetworkInterfaces(),
+            'qemu_agent' => $device->isQemuAgent(),
+            'cpu_host' => $device->isCpuHost(),
         ];
 
         if (null !== $arch) {

@@ -1101,6 +1101,8 @@ class LabController extends Controller
         $newDevice->setDelay($device->getDelay());
         $newDevice->setNetworkCardType($device->getNetworkCardType());
         $newDevice->setMinimumNetworkInterfaces($device->getMinimumNetworkInterfaces());
+        $newDevice->setQemuAgent($device->isQemuAgent());
+        $newDevice->setCpuHost($device->isCpuHost());
         $newDevice->setHidden($device->getHidden());
         $newDevice->setIsTemplate(true);
         $newDevice->setAuthor($this->getUser());

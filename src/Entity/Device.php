@@ -277,6 +277,26 @@ class Device implements InstanciableInterface, DirectoryAwareInterface
     #[Serializer\Groups(['api_get_device','worker','sandbox'])]
     private $minimum_network_interfaces = 0;
 
+    /**
+     * Expose the QEMU guest agent channel (virtio-serial) to the device.
+     * Only meaningful for devices running on the qemu hypervisor.
+     * @var bool
+     */
+    #[Assert\Type(type: 'bool')]
+    #[ORM\Column(type: 'boolean', options: ['default' => false])]
+    #[Serializer\Groups(['api_get_device','worker','sandbox','export_lab'])]
+    private $qemu_agent = false;
+
+    /**
+     * Use the host CPU model (-cpu host) instead of the generic max model.
+     * Only meaningful for devices running on the qemu hypervisor.
+     * @var bool
+     */
+    #[Assert\Type(type: 'bool')]
+    #[ORM\Column(type: 'boolean', options: ['default' => false])]
+    #[Serializer\Groups(['api_get_device','worker','sandbox','export_lab'])]
+    private $cpu_host = false;
+
     #[ORM\ManyToOne(targetEntity: Directory::class, inversedBy: 'devices')]
     #[ORM\JoinColumn(name: 'directory_id', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
     #[Serializer\Groups(['api_directory_aware'])]
@@ -959,6 +979,30 @@ class Device implements InstanciableInterface, DirectoryAwareInterface
     public function setMinimumNetworkInterfaces(?int $minimumNetworkInterfaces): self
     {
         $this->minimum_network_interfaces = $minimumNetworkInterfaces ?? 0;
+
+        return $this;
+    }
+
+    public function isQemuAgent(): bool
+    {
+        return (bool) $this->qemu_agent;
+    }
+
+    public function setQemuAgent(?bool $qemuAgent): self
+    {
+        $this->qemu_agent = $qemuAgent ?? false;
+
+        return $this;
+    }
+
+    public function isCpuHost(): bool
+    {
+        return (bool) $this->cpu_host;
+    }
+
+    public function setCpuHost(?bool $cpuHost): self
+    {
+        $this->cpu_host = $cpuHost ?? false;
 
         return $this;
     }
