@@ -584,7 +584,7 @@ l'utilise (nom, type et icône EVE-NG) :
 ```
 
 **Étape 3 — Commit.** Chaque image reçoit un « plan » :
-`{ action: "reuse"|"reuse_other"|"upload"|"url"|"blank"|"skip", os_id?, hypervisor?, file?, url?, flavorDisk?, flavor_id? }`.
+`{ action: "reuse"|"reuse_other"|"upload"|"url"|"blank"|"skip", os_id?, hypervisor?, control_protocols?, file?, url?, flavorDisk?, flavor_id? }`.
 Les nœuds sans image reçoivent un plan `{ eve_id, template }` (driver
 RemoteLabz choisi). Pour une image `missing`, `flavor_id` porte la flavour
 retenue pour la RAM du device template créé (§4.2.2) ; à défaut, la flavour
@@ -592,13 +592,17 @@ recommandée (arrondi de `ram` à la flavour ≥ la plus proche) est utilisée.
 `hypervisor` (`qemu`, `lxc`, …) force le support du device importé : il est
 sélectionné dans la fenêtre de revue et prime sur le `type` du nœud EVE-NG. Il
 est déduit de l'OS choisi pour les actions `reuse`/`reuse_other`.
+`control_protocols` (liste d'identifiants) remplace le ou les protocoles déduits
+de la console EVE-NG pour tous les devices importés depuis cette image ; son
+absence (ou une liste vide) conserve la déduction automatique
+(`vnc`/`serial`/`login`).
 
 ### 6.2 Actions disponibles pour une image manquante
 
 | Action | Effet backend | Cas d'usage |
 |---|---|---|
 | **Utiliser l'image proposée** (`reuse`) | `OperatingSystem` proposé par l'analyse (`os_id`) | équivalence `matched`/`auto` acceptée telle quelle |
-| **Choisir une autre image** (`reuse_other`) | `OperatingSystem` existant choisi dans la liste, filtré par hyperviseur (`os_id`, `hypervisor`) | remplacer une équivalence ou passer une VM en conteneur |
+| **Choisir une autre image** (`reuse_other`) | `OperatingSystem` existant choisi dans la liste filtrée sur l'hyperviseur sélectionné (`os_id`, `hypervisor`) | remplacer une équivalence ou passer une VM en conteneur |
 | **Téléverser** | `POST /api/images/upload` (endpoint **existant**) puis `OperatingSystem` + `copyFileToAllWorkers('image', …)` | on possède le `.qcow2`/`.img`/`.ova` |
 | **Fournir une URL** | `OperatingSystem.imageUrl = url`, validée par `POST /api/images/validate-url` (existant) | image publique (ex. Alpine) |
 | **VM vierge** | `newBlank` (existant) → `OperatingSystem` avec `imageFilename = <name>_<taille>.qcow2` | on installera plus tard |
@@ -606,10 +610,18 @@ est déduit de l'OS choisi pour les actions `reuse`/`reuse_other`.
 
 `Choisir une autre image`, **Téléverser**, **Fournir une URL** et **VM vierge**
 affichent un choix d'**hyperviseur** (`qemu` pour une VM, `lxc` pour un
-conteneur). Pour `Choisir une autre image`, la liste des `OperatingSystem`
-existants est filtrée sur cet hyperviseur : on peut ainsi importer les serveurs
-Linux d'un lab EVE-NG comme conteneurs LXC au lieu de VMs QEMU. L'image proposée
-automatiquement affiche également son hyperviseur, en lecture seule.
+conteneur). Pour `Choisir une autre image`, la liste ne propose que les images
+hébergées par l'**hyperviseur sélectionné** : changer l'hyperviseur (par exemple
+passer de `qemu` à `lxc`) recharge la liste des images correspondantes et
+réinitialise l'image choisie. L'image proposée automatiquement affiche également
+son hyperviseur, en lecture seule.
+
+Chaque image expose enfin un choix de **protocoles de contrôle** (`vnc`,
+`serial`, `login`). La valeur par défaut reste déduite de la console EVE-NG du
+nœud, mais l'utilisateur peut sélectionner **un ou plusieurs** protocoles ; ce
+choix s'applique à tous les devices importés depuis cette image (y compris le
+device template créé pour une image `missing`). Vider entièrement la sélection
+rétablit le choix automatique.
 
 > Le choix est fait **par image EVE-NG** : tous les nœuds partageant la même
 > image (par exemple les 15 serveurs `linux-ubuntu-24.04-server` du lab
@@ -925,10 +937,11 @@ Réseaux : 52 `bridge` → autant de `connection` distinctes ; le `nat0` « Net 
   "images": [
     { "eve_image": "vios-adventerprisek9-m.spa.159-3.M3", "status": "missing",
       "used_by": [1, 2, 3], "suggested_action": "upload", "candidates": [],
-      "ram": 1024, "recommended_flavor_id": 3 },
+      "ram": 1024, "recommended_flavor_id": 3, "control_protocols": [6] },
     { "eve_image": "linux-ubuntu-24.04-server", "status": "matched",
       "used_by": [5, 7], "os_id": 7, "os_name": "Ubuntu24.04SrvLTS",
       "hypervisor": "lxc", "os_hypervisor": { "id": 4, "name": "lxc" },
+      "control_protocols": [5],
       "candidates": [ { "id": 7, "name": "Ubuntu24.04SrvLTS", "image": "Ubuntu24LTS", "hypervisor": { "id": 4, "name": "lxc" }, "score": 62.5 } ] }
   ],
   "device_candidates": [ { "template": "6-switchInternet", "name": "Switch internet", "type": "switch", "hypervisor": "natif" } ],
@@ -941,6 +954,15 @@ Réseaux : 52 `bridge` → autant de `connection` distinctes ; le `nat0` « Net 
     { "id": 3, "name": "qemu" },
     { "id": 4, "name": "lxc" },
     { "id": 5, "name": "natif" }
+  ],
+  "operating_systems": [
+    { "id": 7, "name": "Ubuntu24.04SrvLTS", "image": "Ubuntu24LTS", "hypervisor": { "id": 4, "name": "lxc" } },
+    { "id": 9, "name": "Debian12", "image": "debian12.qcow2", "hypervisor": { "id": 3, "name": "qemu" } }
+  ],
+  "control_protocols": [
+    { "id": 4, "name": "vnc" },
+    { "id": 5, "name": "login" },
+    { "id": 6, "name": "serial" }
   ],
   "warnings": [ "template 'vios' absent du catalogue RLZ", "8 images non résolues" ],
   "limits": { "upload_max_bytes": 2097152, "upload_max_human": "2 MB" }

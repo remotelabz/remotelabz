@@ -330,7 +330,15 @@ class EveNgMapper
                 ?? $this->pickDriver($deviceType, $hypervisorId, $entry['rlz_template'] ?? null, $osId);
             $icon = $this->resolveIcon($node['icon'], $entry['icon'] ?? self::FALLBACK_ICON);
             $osJson = $this->operatingSystemJson($node, $entry, $images, $hypervisorName);
-            $controlProtocols = $this->controlProtocols((string) $node['console'], $deviceType);
+            // Le protocole choisi dans la fenetre de revue (pour cette image)
+            // prime sur celui deduit de la console EVE-NG du noeud.
+            $requestedControlProtocols = $images[$node['image']]['control_protocol_ids'] ?? null;
+            $controlProtocols = is_array($requestedControlProtocols)
+                ? array_map(
+                    static fn ($id): array => ['id' => (int) $id],
+                    array_values($requestedControlProtocols)
+                )
+                : $this->controlProtocols((string) $node['console'], $deviceType);
             $networkInterfaceTemplate = 'eth';
         }
 
@@ -716,6 +724,59 @@ class EveNgMapper
             $options[] = [
                 'id' => $hypervisor->getId(),
                 'name' => (string) $hypervisor->getName(),
+            ];
+        }
+
+        usort($options, static fn (array $a, array $b): int => strcasecmp($a['name'], $b['name']));
+
+        return $options;
+    }
+
+    /**
+     * Catalogue complet des images RemoteLabz (tous hyperviseurs).
+     *
+     * La fenetre de revue filtre ensuite cette liste sur l'hyperviseur
+     * selectionne, mais elle ne peut pas appeler `/api/operating-systems`
+     * (reserve aux editeurs) : l'analyse doit donc embarquer le catalogue pour
+     * que les enseignants disposent eux aussi de toutes les images de leur
+     * hyperviseur dans "Use another image".
+     *
+     * @return array<int, array{id: ?int, name: ?string, image: ?string, hypervisor: ?array{id: ?int, name: ?string}}>
+     */
+    public function operatingSystemOptions(): array
+    {
+        $options = [];
+        foreach ($this->operatingSystemRepository->findAll() as $operatingSystem) {
+            $hypervisor = $operatingSystem->getHypervisor();
+
+            $options[] = [
+                'id' => $operatingSystem->getId(),
+                'name' => $operatingSystem->getName(),
+                'image' => $operatingSystem->getImageUrl() ?: $operatingSystem->getImageFilename(),
+                'hypervisor' => null === $hypervisor ? null : [
+                    'id' => $hypervisor->getId(),
+                    'name' => (string) $hypervisor->getName(),
+                ],
+            ];
+        }
+
+        usort($options, static fn (array $a, array $b): int => strcasecmp((string) $a['name'], (string) $b['name']));
+
+        return $options;
+    }
+
+    /**
+     * Types de protocole de controle disponibles.
+     *
+     * @return array<int, array{id: int, name: string}>
+     */
+    public function controlProtocolOptions(): array
+    {
+        $options = [];
+        foreach ($this->controlProtocolTypeRepository->findAll() as $type) {
+            $options[] = [
+                'id' => (int) $type->getId(),
+                'name' => (string) $type->getName(),
             ];
         }
 

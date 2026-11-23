@@ -111,26 +111,6 @@ export default function EveNgImporter({ file, onCancel, onImported }) {
     const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => {
-        let cancelled = false;
-
-        Remotelabz.operatingSystems.all()
-            .then(response => {
-                if (!cancelled) {
-                    setOperatingSystems(response.data?.data ?? response.data ?? []);
-                }
-            })
-            .catch(() => {
-                if (!cancelled) {
-                    setOperatingSystems([]);
-                }
-            });
-
-        return () => {
-            cancelled = true;
-        };
-    }, []);
-
-    useEffect(() => {
         if (!file) {
             return;
         }
@@ -147,6 +127,11 @@ export default function EveNgImporter({ file, onCancel, onImported }) {
                 }
                 const data = response.data?.data ?? response.data;
                 setPreview(data);
+
+                // The analysis embeds the whole RemoteLabz image catalogue so
+                // the manual picker works for teachers too (the
+                // /api/operating-systems endpoint is reserved to editors).
+                setOperatingSystems(data.operating_systems ?? []);
 
                 const initial = {};
                 (data.images || []).forEach(image => {
@@ -180,6 +165,7 @@ export default function EveNgImporter({ file, onCancel, onImported }) {
     const images = preview?.images ?? [];
     const deviceChoices = preview?.device_choices ?? [];
     const deviceCandidates = preview?.device_candidates ?? [];
+    const controlProtocols = preview?.control_protocols ?? [];
     const flavors = preview?.flavors ?? [];
     const uploadLimit = {
         bytes: preview?.limits?.upload_max_bytes ?? 0,
@@ -361,6 +347,7 @@ export default function EveNgImporter({ file, onCancel, onImported }) {
                                 decision={decisions[image.eve_image] ?? {}}
                                 operatingSystems={operatingSystems}
                                 hypervisors={hypervisors}
+                                controlProtocols={controlProtocols}
                                 flavors={flavors}
                                 uploadLimit={uploadLimit}
                                 onChange={updateDecision}
@@ -417,7 +404,7 @@ export default function EveNgImporter({ file, onCancel, onImported }) {
     );
 }
 
-function ImageCard({ image, index, devices, decision, operatingSystems, hypervisors, flavors, uploadLimit, onChange, onUpload }) {
+function ImageCard({ image, index, devices, decision, operatingSystems, hypervisors, controlProtocols, flavors, uploadLimit, onChange, onUpload }) {
     const meta = statusMeta(image.status);
     const [uploading, setUploading] = useState(false);
     const showResolution = decision.action !== 'reuse' || image.status === 'missing';
@@ -613,6 +600,16 @@ function ImageCard({ image, index, devices, decision, operatingSystems, hypervis
                         )}
                     </div>
                 )}
+
+                {image.status !== 'not_applicable' && decision.action !== 'skip' && (
+                    <ControlProtocolField
+                        image={image}
+                        index={index}
+                        decision={decision}
+                        controlProtocols={controlProtocols}
+                        onChange={onChange}
+                    />
+                )}
             </Card.Body>
         </Card>
     );
@@ -678,6 +675,82 @@ function FlavorField({ image, decision, flavors, onChange }) {
             </Form.Select>
             <small className="text-muted d-block">
                 A RemoteLabz device template will be created for this image and used by the imported devices.
+            </small>
+        </Form.Group>
+    );
+}
+
+/** Human readable names for a list of control protocol ids. */
+function protocolNames(ids, controlProtocols) {
+    const byId = new Map((controlProtocols || []).map(protocol => [Number(protocol.id), protocol.name]));
+
+    return (ids || [])
+        .map(id => byId.get(Number(id)))
+        .filter(Boolean);
+}
+
+/**
+ * Per-image control protocol override. By default the protocol is deduced from
+ * the EVE-NG console of the node(s) using the image; the user can select one or
+ * several protocols (e.g. login + serial) for every imported device.
+ */
+function ControlProtocolField({ image, index, decision, controlProtocols, onChange }) {
+    const automaticIds = (image.control_protocols ?? []).map(Number);
+    const explicit = Array.isArray(decision.control_protocols)
+        ? decision.control_protocols.map(Number)
+        : null;
+    const isAutomatic = explicit === null;
+    const selectedIds = isAutomatic ? automaticIds : explicit;
+    const automaticNames = protocolNames(automaticIds, controlProtocols);
+    const automaticLabel = automaticNames.length > 0 ? automaticNames.join(', ') : 'none';
+
+    const toggle = protocolId => {
+        const next = selectedIds.includes(protocolId)
+            ? selectedIds.filter(id => id !== protocolId)
+            : [...selectedIds, protocolId];
+
+        // Empty selection restores the automatic choice (the backend does the
+        // same), so a device is never imported without a control protocol.
+        onChange(image.eve_image, {
+            control_protocols: next.length > 0 ? next : null,
+        });
+    };
+
+    return (
+        <Form.Group className="border-top mt-2 pt-2">
+            <Form.Label className="mb-1 d-flex align-items-center justify-content-between">
+                <small>Control protocols</small>
+                {!isAutomatic && (
+                    <Button
+                        variant="link"
+                        size="sm"
+                        className="p-0"
+                        onClick={() => onChange(image.eve_image, { control_protocols: null })}
+                    >
+                        Use automatic
+                    </Button>
+                )}
+            </Form.Label>
+            <div className="d-flex flex-wrap gap-3">
+                {(controlProtocols || []).map(protocol => {
+                    const protocolId = Number(protocol.id);
+
+                    return (
+                        <Form.Check
+                            key={protocol.id}
+                            type="checkbox"
+                            id={`eve-control-protocol-${index}-${protocol.id}`}
+                            label={protocol.name}
+                            checked={selectedIds.includes(protocolId)}
+                            onChange={() => toggle(protocolId)}
+                        />
+                    );
+                })}
+            </div>
+            <small className="text-muted d-block">
+                {isAutomatic ? `Automatic — EVE-NG console: ${automaticLabel}.` : 'Custom selection.'}
+                {' '}Select one or more; clearing every box restores the automatic choice.
+                {' '}Applied to every device imported from this image.
             </small>
         </Form.Group>
     );
@@ -829,9 +902,22 @@ function ExistingImageFields({ image, decision, operatingSystems, hypervisors, o
         }
     });
 
+    // Only offer the images hosted by the selected hypervisor: switching the
+    // hypervisor updates the list, and picking an image aligns the hypervisor
+    // on the decision. The full catalogue is embedded in the analysis so this
+    // works for teachers too (the /api/operating-systems endpoint is reserved
+    // to editors).
     const options = Array.from(optionsById.values())
         .filter(os => os.id != null)
-        .filter(os => !selectedHypervisor || normalizeHypervisorName(hypervisorNameOfOs(os)) === selectedHypervisor)
+        .filter(os => {
+            const name = normalizeHypervisorName(hypervisorNameOfOs(os));
+
+            if (selectedHypervisor) {
+                return name === selectedHypervisor;
+            }
+
+            return !name || IMAGE_HYPERVISORS.includes(name);
+        })
         .sort((a, b) => {
             const aSuggested = candidateIds.has(a.id) ? 0 : 1;
             const bSuggested = candidateIds.has(b.id) ? 0 : 1;
@@ -867,13 +953,16 @@ function ExistingImageFields({ image, decision, operatingSystems, hypervisors, o
                     <option value="">— select an existing image —</option>
                     {options.map(os => (
                         <option key={os.id} value={os.id}>
-                            {os.name} ({os.image ?? ''})
+                            {os.name}{os.image ? ` (${os.image})` : ''}
                         </option>
                     ))}
                 </Form.Select>
                 {options.length === 0 && (
                     <small className="text-danger d-block">No existing image is available for this hypervisor.</small>
                 )}
+                <small className="text-muted d-block">
+                    Only images matching the selected hypervisor are listed.
+                </small>
             </Form.Group>
         </div>
     );
