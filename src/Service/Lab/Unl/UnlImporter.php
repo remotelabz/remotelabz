@@ -103,6 +103,7 @@ class UnlImporter
         // la flavour RemoteLabz superieure). Sert de valeur par defaut dans la
         // fenetre d'import lorsqu'un device template doit etre cree.
         $images = $this->attachFlavorRecommendations($images, $requirements);
+        $images = $this->attachControlProtocolRecommendations($images, $requirements);
 
         $imageMap = $this->keyImagesByEveImage($images);
 
@@ -149,7 +150,9 @@ class UnlImporter
             $this->mapper->deviceCandidates(),
             $deviceChoices,
             $this->mapper->flavorOptions(),
-            $this->mapper->hypervisorOptions()
+            $this->mapper->hypervisorOptions(),
+            $this->mapper->operatingSystemOptions(),
+            $this->mapper->controlProtocolOptions()
         );
     }
 
@@ -199,7 +202,7 @@ class UnlImporter
      * @param array<string, array> $mapping       Decisions indexees par image EVE-NG
      *
      * @return array{
-     *     images: array<string, array{os_id: ?int, os_name: ?string, os_image: ?string, hypervisor: ?string}>,
+     *     images: array<string, array{os_id: ?int, os_name: ?string, os_image: ?string, hypervisor: ?string, control_protocol_ids?: int[]}>,
      *     overrides: array<string, array{template: string, flavor: array}>
      * }
      */
@@ -242,6 +245,16 @@ class UnlImporter
                 ];
             }
 
+            // Choix explicite du protocole de controle dans la fenetre de revue.
+            // Absent (ou null) : le mapper conserve le protocole deduit de la
+            // console de chaque noeud EVE-NG.
+            if (is_array($decision)) {
+                $controlProtocolIds = $this->controlProtocolIdsFromDecision($decision);
+                if (null !== $controlProtocolIds) {
+                    $resolution['control_protocol_ids'] = $controlProtocolIds;
+                }
+            }
+
             $applied[$eveImage] = $resolution;
 
             // L'image n'existait pas (statut "missing") : on materialise en plus
@@ -259,11 +272,36 @@ class UnlImporter
     }
 
     /**
+     * Protocoles choisis par l'utilisateur pour une image.
+     *
+     * @return int[]|null `null` lorsque le choix automatique doit etre conserve.
+     */
+    private function controlProtocolIdsFromDecision(array $decision): ?array
+    {
+        if (!array_key_exists('control_protocols', $decision) || null === $decision['control_protocols']) {
+            return null;
+        }
+
+        $ids = [];
+        foreach ((array) $decision['control_protocols'] as $id) {
+            $id = (int) $id;
+            if ($id > 0) {
+                $ids[$id] = $id;
+            }
+        }
+
+        // Une liste vide (ou ne contenant que des identifiants invalides) vaut
+        // "choix automatique" : on ne veut pas importer un device sans aucun
+        // protocole de controle.
+        return [] === $ids ? null : array_values($ids);
+    }
+
+    /**
      * Cree un device template pour une image sans correspondance et retourne la
      * surcharge a appliquer aux devices importes (`template` + `flavor`).
      *
      * @param array<string, mixed>      $requirement
-     * @param array{os_id: ?int, os_name: ?string, os_image: ?string} $resolution
+     * @param array{os_id: ?int, os_name: ?string, os_image: ?string, control_protocol_ids?: int[]} $resolution
      * @param array<string, mixed>|null $decision
      *
      * @return array{template: string, flavor: array}|null
@@ -302,7 +340,8 @@ class UnlImporter
             $flavor,
             (int) ($requirement['cpu'] ?? 1),
             (string) ($requirement['icon'] ?? 'Server_Linux.png'),
-            $this->mapper->controlProtocolIds($console, $deviceType),
+            $resolution['control_protocol_ids']
+                ?? $this->mapper->controlProtocolIds($console, $deviceType),
             $user
         );
 
@@ -663,6 +702,38 @@ class UnlImporter
         foreach ($images as $index => $image) {
             $eveImage = (string) ($image['eve_image'] ?? '');
             $images[$index]['recommended_flavor_id'] = $this->mapper->recommendedFlavorId($ramByImage[$eveImage] ?? 0);
+        }
+
+        return $images;
+    }
+
+    /**
+     * Protocole de controle propose par defaut pour chaque image (deduit de la
+     * console et du type du premier noeud EVE-NG qui l'utilise). L'IHM peut le
+     * remplacer par un choix explicite, transmis au commit.
+     *
+     * @param array<int, array> $images
+     * @param array<int, array> $requirements
+     *
+     * @return array<int, array>
+     */
+    private function attachControlProtocolRecommendations(array $images, array $requirements): array
+    {
+        $requirementByImage = [];
+        foreach ($requirements as $requirement) {
+            $requirementByImage[(string) $requirement['eve_image']] = $requirement;
+        }
+
+        foreach ($images as $index => $image) {
+            $eveImage = (string) ($image['eve_image'] ?? '');
+            $requirement = $requirementByImage[$eveImage] ?? null;
+
+            $images[$index]['control_protocols'] = null === $requirement
+                ? []
+                : $this->mapper->controlProtocolIds(
+                    (string) ($requirement['console'] ?? ''),
+                    (string) ($requirement['device_type'] ?? 'vm')
+                );
         }
 
         return $images;

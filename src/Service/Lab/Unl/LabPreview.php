@@ -19,6 +19,12 @@ use JsonSerializable;
  *                template cree depuis une image sans correspondance ;
  *  - `hypervisors` : les hyperviseurs disponibles (qemu/lxc/...), pour choisir
  *                    le support d'une image dans la fenetre de revue ;
+ *  - `operating_systems` : le catalogue complet des images RemoteLabz, pour le
+ *                    selecteur "Use another image" (l'IHM le filtre ensuite sur
+ *                    l'hyperviseur selectionne, mais les enseignants n'ont pas
+ *                    acces a `/api/operating-systems`) ;
+ *  - `control_protocols` : les types de protocole de controle disponibles, pour
+ *                    remplacer celui deduit de la console EVE-NG ;
  *  - `labJson` : le JSON pret a etre passe a LabImporter::import() lors du commit ;
  *  - `warnings`: messages non bloquants a remonter a l'utilisateur.
  *
@@ -37,6 +43,8 @@ class LabPreview implements JsonSerializable
     private array $deviceChoices;
     private array $flavors;
     private array $hypervisors;
+    private array $operatingSystems;
+    private array $controlProtocols;
 
     public function __construct(
         array $source,
@@ -48,7 +56,9 @@ class LabPreview implements JsonSerializable
         array $deviceCandidates = [],
         array $deviceChoices = [],
         array $flavors = [],
-        array $hypervisors = []
+        array $hypervisors = [],
+        array $operatingSystems = [],
+        array $controlProtocols = []
     ) {
         $this->source = $source;
         $this->lab = $lab;
@@ -60,6 +70,8 @@ class LabPreview implements JsonSerializable
         $this->deviceChoices = $deviceChoices;
         $this->flavors = $flavors;
         $this->hypervisors = $hypervisors;
+        $this->operatingSystems = $operatingSystems;
+        $this->controlProtocols = $controlProtocols;
     }
 
     public function getSource(): array
@@ -121,6 +133,22 @@ class LabPreview implements JsonSerializable
     }
 
     /**
+     * Toutes les images RemoteLabz disponibles pour le selecteur manuel.
+     */
+    public function getOperatingSystems(): array
+    {
+        return $this->operatingSystems;
+    }
+
+    /**
+     * Types de protocole de controle proposables a l'utilisateur.
+     */
+    public function getControlProtocols(): array
+    {
+        return $this->controlProtocols;
+    }
+
+    /**
      * Le JSON "Lab RemoteLabz" (format attendu par LabImporter::import()).
      */
     public function getLabJson(): array
@@ -143,6 +171,8 @@ class LabPreview implements JsonSerializable
             'device_choices' => $this->deviceChoices,
             'flavors' => $this->flavors,
             'hypervisors' => $this->hypervisors,
+            'operating_systems' => $this->operatingSystems,
+            'control_protocols' => $this->controlProtocols,
             'warnings' => $this->warnings,
         ];
     }
