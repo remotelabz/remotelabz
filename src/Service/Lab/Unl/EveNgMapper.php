@@ -20,8 +20,9 @@ use Symfony\Component\Yaml\Yaml;
  *    flavour, systeme d'exploitation, protocoles de controle) ;
  *  - convertir les <network> et <interface> en NetworkInterface.connection
  *    (les interfaces partageant un meme network_id obtiennent la meme
- *    connection) et materialiser les reseaux systeme (nat/pnet/cloud) en
- *    devices "Natif" dedies ;
+ *    connection et le meme vlan, afin que le worker isole chaque lien) et
+ *    materialiser les reseaux systeme (nat/pnet/cloud) en devices "Natif"
+ *    dedies ;
  *  - convertir les <textobject> en TextObject.
  */
 class EveNgMapper
@@ -226,11 +227,22 @@ class EveNgMapper
         $this->loadHypervisors();
         $this->flavors = $this->loadFlavors();
 
-        // --- Connections : un identifiant par <network> ---------------------
+        // --- Connections et VLAN --------------------------------------------
+        // `connection` sert a dessiner un lien dans l'editeur, `vlan` sert au
+        // worker pour isoler les segments L2 (OVS `tag=`). Chaque <network>
+        // bridge recoit donc son propre VLAN, partage par toutes les interfaces
+        // du segment : deux devices relies directement sont dans le meme VLAN,
+        // et deux liens distincts ne se melangent pas. Les reseaux systeme
+        // (nat0/pnet0/cloud) sont materialises par un switch natif : leurs liens
+        // restent non tagues (vlan 0), comme dans l'editeur.
         $connections = [];
+        $vlans = [];
         $connectionId = 1;
+        $vlanId = 1;
         foreach ($parsed['networks'] as $network) {
-            $connections[(int) $network['id']] = $connectionId++;
+            $networkId = (int) $network['id'];
+            $connections[$networkId] = $connectionId++;
+            $vlans[$networkId] = $this->isSystemNetwork($network) ? 0 : $vlanId++;
         }
 
         $devices = [];
@@ -241,7 +253,7 @@ class EveNgMapper
             $entry = $this->catalogueEntry($node['template'], $node['type']);
             $deviceChoice = $deviceChoices[(int) $node['eve_id']]['template'] ?? null;
             $imageOverride = $imageOverrides[$node['image']] ?? [];
-            $device = $this->mapNode($node, $entry, $images, $connections, $usedConnections, $deviceChoice, $imageOverride);
+            $device = $this->mapNode($node, $entry, $images, $connections, $vlans, $usedConnections, $deviceChoice, $imageOverride);
             $devices[] = $device;
         }
 
@@ -297,7 +309,7 @@ class EveNgMapper
         ];
     }
 
-    private function mapNode(array $node, array $entry, array $images, array $connections, array &$usedConnections, ?string $deviceChoice = null, array $imageOverride = []): array
+    private function mapNode(array $node, array $entry, array $images, array $connections, array $vlans, array &$usedConnections, ?string $deviceChoice = null, array $imageOverride = []): array
     {
         // An image-less node (EVE-NG vpcs/PC) can be replaced by an arbitrary
         // RemoteLabz device chosen by the user in the review window. A chosen
@@ -362,7 +374,7 @@ class EveNgMapper
             $interfaces[] = [
                 'name' => 'eth' . $index,
                 'type' => 'tap',
-                'vlan' => 0,
+                'vlan' => $vlans[$networkId] ?? 0,
                 'connection' => $connection,
                 'connectorType' => 'Straight',
                 // EVE-NG n'affiche pas le nom des interfaces sur les liens :

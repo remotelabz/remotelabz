@@ -331,23 +331,27 @@ est réutilisé pour toutes les images partageant le même nom **et** le même O
 
 EVE-NG regroupe les interfaces **par `network_id`** (un segment L2 partagé). La
 vue topologique RemoteLabz regroupe les interfaces **par
-`NetworkInterface.connection`** (entier partagé).
+`NetworkInterface.connection`** (entier partagé), et le worker isole les
+segments L2 avec **`NetworkInterface.vlan`** (port OVS tagué : `tag=<vlan>`).
 
 **Algorithme de conversion :**
 
 ```
 connection_id = 1
+vlan_id = 1
 pour chaque <network> dans le .unl (par id croissant) :
     si le réseau est un objet système (nat0/pnet0/cloud) :
         créer un device « natif/Service » dédié (option A)
         OU marquer le lien « Internet » (option B)
+        vlan[id] = 0                    // lien non tagué vers le switch natif
     sinon :
         connection[id] = connection_id ; connection_id += 1
+        vlan[id] = vlan_id ; vlan_id += 1
 pour chaque nœud, pour chaque <interface> :
     créer NetworkInterface{
         type   : "tap",
         name   : "eth" + index,            // rebasé sur networkInterfaceTemplate
-        vlan   : 0,
+        vlan   : vlan[ network_id ],
         connection : connection[ network_id ],
         connectorType : "Straight"
     }
@@ -355,6 +359,16 @@ pour chaque nœud, pour chaque <interface> :
 
 Remarques :
 
+- **Deux interfaces du même `<network>` partagent le même `vlan`** (et la même
+  `connection`) : les deux extrémités d'un lien direct sont donc dans le même
+  segment L2.
+- **Deux `<network>` distincts reçoivent des `vlan` différents** : deux liens
+  directs ne se mélangent pas. Sans cela, toutes les interfaces restaient en
+  `vlan = 0` et le lab entier formait un seul domaine de diffusion.
+- Un `<network>` partagé par plus de deux devices garde **un seul `vlan`** :
+  c'est bien un segment L2 commun (les liens restent dessinés deux à deux).
+- Les liens vers un **switch natif** (réseaux système `nat0`/`pnet0`/`cloud`)
+  restent en `vlan = 0` (non tagués), comme dans l'éditeur.
 - Le **nom** des interfaces EVE-NG (`e0`, `e0/0`, `Gi0/0`) n'est pas
   conservé : RemoteLabz renomme selon `networkInterfaceTemplate` (`eth0`,
   `eth1`, …). Aucun `connectorLabel` n'est importé (`''`) : l'éditeur
@@ -916,8 +930,8 @@ automatiquement depuis Internet. Il doit :
 | Win, Win - audit, … (×9) | `win` | `win-10-x64-21H1v1` | vm | — | upload / équivalent |
 | pfSense, Passerelle IPSEC/SSL, FW admin (×8) | `pfsense` | `pfsense-pfs-2.6.0`, `pfsense-CE-2.6` | vm | — | équivalent pfSense CE |
 
-Réseaux : 52 `bridge` → autant de `connection` distinctes ; le `nat0` « Net »
-→ accès Internet. 69 annotations → autant de `TextObject`.
+Réseaux : 52 `bridge` → autant de `connection` (et de `vlan`) distinctes ; le
+`nat0` « Net » → accès Internet. 69 annotations → autant de `TextObject`.
 
 ## 15. Annexe B — Squelette de `LabPreview` renvoyé par `analyze()`
 
@@ -988,6 +1002,7 @@ Réseaux : 52 `bridge` → autant de `connection` distinctes ; le `nat0` « Net 
 | `network` (bridge) | `NetworkInterface.connection` (lien) |
 | `network` (nat0/pnet0) | accès Internet / device `Service` |
 | `interface network_id` | `NetworkInterface.connection` |
+| `interface network_id` (segment L2) | `NetworkInterface.vlan` (0 pour un lien switch) |
 | `textobject` | `TextObject` |
 | `config_data` | `Device.config_data` |
 | worker (EVE) | `ConfigWorker` (machine `qemu`/`lxc`) |
