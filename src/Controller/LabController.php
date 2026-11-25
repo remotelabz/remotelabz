@@ -1103,6 +1103,7 @@ class LabController extends Controller
         $newDevice->setMinimumNetworkInterfaces($device->getMinimumNetworkInterfaces());
         $newDevice->setQemuAgent($device->isQemuAgent());
         $newDevice->setCpuHost($device->isCpuHost());
+        $newDevice->setUsbEnabled($device->isUsbEnabled());
         $newDevice->setHidden($device->getHidden());
         $newDevice->setIsTemplate(true);
         $newDevice->setAuthor($this->getUser());

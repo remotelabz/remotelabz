@@ -193,6 +193,15 @@ class DeviceType extends AbstractType
                 'attr' => [
                     'class' => 'form-check-input',
                 ],
+            ])
+
+            ->add('usb_enabled', CheckboxType::class, [
+                'required' => false,
+                'label' => 'Enable usb device',
+                'help' => 'Enable the QEMU USB stack (usb-tablet + usb-ehci) for this VM. QEMU only.',
+                'attr' => [
+                    'class' => 'form-check-input',
+                ],
             ]);
             
             // Ajout du champ isos avec toutes les options
@@ -288,6 +297,24 @@ class DeviceType extends AbstractType
             }
 
             $builder->add('submit', SubmitType::class);
+
+            // Les options réservées à QEMU ne doivent jamais rester actives
+            // après un changement d'OS vers un autre hyperviseur (formulaire ou
+            // API JSON). On les normalise une fois les données soumises.
+            $builder->addEventListener(FormEvents::POST_SUBMIT, function (FormEvent $event): void {
+                $device = $event->getData();
+                if (!$device instanceof Device) {
+                    return;
+                }
+
+                $operatingSystem = $device->getOperatingSystem();
+                $hypervisor = $operatingSystem ? $operatingSystem->getHypervisor() : null;
+                if (!$hypervisor || strtolower($hypervisor->getName()) !== 'qemu') {
+                    $device->setQemuAgent(false);
+                    $device->setCpuHost(false);
+                    $device->setUsbEnabled(false);
+                }
+            });
     }
 
     public function configureOptions(OptionsResolver $resolver): void

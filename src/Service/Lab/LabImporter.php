@@ -393,6 +393,9 @@ class LabImporter
             if (array_key_exists('cpu_host', $deviceJson)) {
                 $device->setCpuHost((bool) $deviceJson['cpu_host']);
             }
+            if (array_key_exists('usb_enabled', $deviceJson)) {
+                $device->setUsbEnabled((bool) $deviceJson['usb_enabled']);
+            }
 
             
             foreach($deviceJson["controlProtocolTypes"] ?? [] as $controlProtocolTypeJson){

@@ -315,6 +315,24 @@ class TemplateController extends Controller
                     'type' => 'input',
                     'value' => $p['minimum_network_interfaces'] ?? 0
                 );
+
+                $data['options']['qemu_agent'] = Array(
+                    'name' => 'QEMU guest agent',
+                    'type' => 'checkbox',
+                    'value' => $device->isQemuAgent() ? 1 : 0
+                );
+
+                $data['options']['cpu_host'] = Array(
+                    'name' => 'CPU host',
+                    'type' => 'checkbox',
+                    'value' => $device->isCpuHost() ? 1 : 0
+                );
+
+                $data['options']['usb_enabled'] = Array(
+                    'name' => 'Enable usb device',
+                    'type' => 'checkbox',
+                    'value' => $device->isUsbEnabled() ? 1 : 0
+                );
             }
 
             $data['options']['cpu'] = Array(
@@ -518,6 +536,7 @@ class TemplateController extends Controller
         "minimum_network_interfaces" => $template->getMinimumNetworkInterfaces(),
         "qemu_agent" => $template->isQemuAgent(),
         "cpu_host" => $template->isCpuHost(),
+        "usb_enabled" => $template->isUsbEnabled(),
         "isos" => $isos
     ];
 

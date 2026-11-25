@@ -1868,8 +1868,23 @@ export function printFormNode(action, values, fromNodeList) {
                                             '<input type="checkbox"  style="width: 34px;" class="form-control" value=' + values['cpulimit'] + ' name="node[' + key + ']" ' + ((values['cpulimit'] == 1) ? 'checked' : '') + '/>' +
                                             '</div>';
                                     }
+                                    else {
+                                        // Generic checkbox (e.g. QEMU usb_enabled). The
+                                        // visible checkbox drives a hidden input which is
+                                        // the only submitted field, so an unchecked box
+                                        // is sent as 0 instead of being omitted.
+                                        var checkboxChecked = (value_set == 1 || value_set === true || value_set === '1');
+                                        html_data += '<div class="form-group col-sm-12">' +
+                                            '<label class="control-label" style="margin-bottom: 8px;">' +
+                                            '<input type="checkbox" class="node-checkbox-input" data-hidden-input="node-' + key + '-value" style="width: 16px;"' + (checkboxChecked ? ' checked' : '') + '/>' +
+                                            '&nbsp;' + value['name'] +
+                                            '</label>' +
+                                            '<input type="hidden" name="node[' + key + ']" id="node-' + key + '-value" value="' + (checkboxChecked ? 1 : 0) + '"/>' +
+                                            ((value['help'] != null) ? '<div class="text-muted small">' + value['help'] + '</div>' : '') +
+                                            '</div>';
+                                    }
                                 }
-                                if (value['type'] == 'boolean') {
+                                else if (value['type'] == 'boolean') {
                                     html_data += '<div class="form-group col-sm-12">' +
                                         '<label class=" control-label"> ' + value['name'] + '</label>' +
                                         '<div class="form-control">' + value['value'] + '</div>' +
@@ -1941,6 +1956,12 @@ export function printFormNode(action, values, fromNodeList) {
                         // Show the form
                         $('#form-node-data').html(html_data);
                         $('.selectpicker').selectpicker('refresh');
+
+                        // Generic option checkboxes (e.g. QEMU usb_enabled):
+                        // keep the submitted hidden input in sync.
+                        $('.node-checkbox-input').off('change').on('change', function () {
+                            $('#' + $(this).data('hidden-input')).val(this.checked ? 1 : 0);
+                        });
 
                         // Keep the hidden input in sync with the "hidden device" checkbox
                         $('#node-hidden-checkbox').off('change').on('change', function () {

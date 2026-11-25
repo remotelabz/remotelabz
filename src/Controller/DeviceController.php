@@ -631,6 +631,9 @@ class DeviceController extends Controller
             "bios_type" => $device->getBiosType(),
             "network_card_type" => $device->getNetworkCardType(),
             "minimum_network_interfaces" => $device->getMinimumNetworkInterfaces(),
+            "qemu_agent" => $device->isQemuAgent(),
+            "cpu_host" => $device->isCpuHost(),
+            "usb_enabled" => $device->isUsbEnabled(),
             "hidden" => $device->getHidden(),
             "ip" => null,
             "ips" => []
@@ -770,7 +773,8 @@ class DeviceController extends Controller
                     "network_card_type" => $device->getNetworkCardType(),
                     "minimum_network_interfaces" => $device->getMinimumNetworkInterfaces(),
                     "qemu_agent" => $device->isQemuAgent(),
-                    "cpu_host" => $device->isCpuHost()
+                    "cpu_host" => $device->isCpuHost(),
+                    "usb_enabled" => $device->isUsbEnabled()
                 ];
                 
                 if (!is_null($device->getOperatingSystem()->getArch())){
@@ -1046,6 +1050,10 @@ class DeviceController extends Controller
             $device->setCpuHost(filter_var($data['cpu_host'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE));
         }
 
+        if(isset($data['usb_enabled'])) {
+            $device->setUsbEnabled(filter_var($data['usb_enabled'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE));
+        }
+
         if(isset($data['hidden'])) {
             $device->setHidden((bool) $data['hidden']);
         }
@@ -1102,6 +1110,9 @@ class DeviceController extends Controller
                 }
                 if (!array_key_exists('cpu_host', $data)) {
                     $device->setCpuHost($template->isCpuHost());
+                }
+                if (!array_key_exists('usb_enabled', $data)) {
+                    $device->setUsbEnabled($template->isUsbEnabled());
                 }
 
                 // To track when this template is used
@@ -1498,6 +1509,7 @@ class DeviceController extends Controller
                 "minimum_network_interfaces" => $device->getMinimumNetworkInterfaces(),
                 "qemu_agent" => $device->isQemuAgent(),
                 "cpu_host" => $device->isCpuHost(),
+                "usb_enabled" => $device->isUsbEnabled(),
                 "isos" => $isos
         ];
         
@@ -1586,6 +1598,10 @@ class DeviceController extends Controller
 
         if(isset($data['cpu_host'])) {
             $device->setCpuHost(filter_var($data['cpu_host'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE));
+        }
+
+        if(isset($data['usb_enabled'])) {
+            $device->setUsbEnabled(filter_var($data['usb_enabled'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE));
         }
 
         // Only the lab author / system admins reach this point (LabVoter::EDIT_DEVICE)
@@ -2159,12 +2175,13 @@ class DeviceController extends Controller
                 break;
             }
 
-            // Les options QEMU (guest agent / CPU host) ne s'appliquent qu'aux
-            // devices QEMU : on remet les valeurs a false pour tout autre
+            // Les options QEMU (guest agent / CPU host / USB) ne s'appliquent
+            // qu'aux devices QEMU : on remet les valeurs a false pour tout autre
             // hyperviseur afin de ne pas conserver un etat obsolete.
             if (strtolower($device->getOperatingSystem()->getHypervisor()->getName()) !== 'qemu') {
                 $device->setQemuAgent(false);
                 $device->setCpuHost(false);
+                $device->setUsbEnabled(false);
             }
     }
 

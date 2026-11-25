@@ -297,6 +297,16 @@ class Device implements InstanciableInterface, DirectoryAwareInterface
     #[Serializer\Groups(['api_get_device','worker','sandbox','export_lab'])]
     private $cpu_host = false;
 
+    /**
+     * Enable the QEMU USB stack (usb-tablet + usb-ehci) for the device.
+     * Only meaningful for devices running on the qemu hypervisor.
+     * @var bool
+     */
+    #[Assert\Type(type: 'bool')]
+    #[ORM\Column(type: 'boolean', options: ['default' => false])]
+    #[Serializer\Groups(['api_get_device','worker','sandbox','export_lab'])]
+    private $usb_enabled = false;
+
     #[ORM\ManyToOne(targetEntity: Directory::class, inversedBy: 'devices')]
     #[ORM\JoinColumn(name: 'directory_id', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
     #[Serializer\Groups(['api_directory_aware'])]
@@ -1003,6 +1013,18 @@ class Device implements InstanciableInterface, DirectoryAwareInterface
     public function setCpuHost(?bool $cpuHost): self
     {
         $this->cpu_host = $cpuHost ?? false;
+
+        return $this;
+    }
+
+    public function isUsbEnabled(): bool
+    {
+        return (bool) $this->usb_enabled;
+    }
+
+    public function setUsbEnabled(?bool $usbEnabled): self
+    {
+        $this->usb_enabled = $usbEnabled ?? false;
 
         return $this;
     }

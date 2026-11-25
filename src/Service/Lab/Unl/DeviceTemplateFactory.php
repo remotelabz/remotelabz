@@ -217,6 +217,7 @@ class DeviceTemplateFactory
             'minimum_network_interfaces' => $device->getMinimumNetworkInterfaces(),
             'qemu_agent' => $device->isQemuAgent(),
             'cpu_host' => $device->isCpuHost(),
+            'usb_enabled' => $device->isUsbEnabled(),
         ];
 
         if (null !== $arch) {

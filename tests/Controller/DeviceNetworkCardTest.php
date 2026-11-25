@@ -15,6 +15,7 @@ class DeviceNetworkCardTest extends AuthenticatedWebTestCase
         $this->assertStringContainsString('qemu-options-fields-container', $content);
         $this->assertStringContainsString('qemu_agent', $content);
         $this->assertStringContainsString('cpu_host', $content);
+        $this->assertStringContainsString('usb_enabled', $content);
     }
 
     public function testApiCreateAndEditDeviceWithNetworkCard()
@@ -94,8 +95,14 @@ class DeviceNetworkCardTest extends AuthenticatedWebTestCase
         $data = json_decode($this->client->getResponse()->getContent(), true);
         $this->assertArrayHasKey('network_card_type', $data['data']['options']);
         $this->assertArrayHasKey('minimum_network_interfaces', $data['data']['options']);
+        $this->assertArrayHasKey('qemu_agent', $data['data']['options']);
+        $this->assertArrayHasKey('cpu_host', $data['data']['options']);
+        $this->assertArrayHasKey('usb_enabled', $data['data']['options']);
         $this->assertSame('list', $data['data']['options']['network_card_type']['type']);
         $this->assertSame('input', $data['data']['options']['minimum_network_interfaces']['type']);
+        $this->assertSame('checkbox', $data['data']['options']['qemu_agent']['type']);
+        $this->assertSame('checkbox', $data['data']['options']['cpu_host']['type']);
+        $this->assertSame('checkbox', $data['data']['options']['usb_enabled']['type']);
         $this->assertArrayHasKey('virtio-net-pci', $data['data']['options']['network_card_type']['list']);
     }
 
@@ -113,5 +120,8 @@ class DeviceNetworkCardTest extends AuthenticatedWebTestCase
         $data = json_decode($this->client->getResponse()->getContent(), true);
         $this->assertArrayNotHasKey('network_card_type', $data['data']['options']);
         $this->assertArrayNotHasKey('minimum_network_interfaces', $data['data']['options']);
+        $this->assertArrayNotHasKey('qemu_agent', $data['data']['options']);
+        $this->assertArrayNotHasKey('cpu_host', $data['data']['options']);
+        $this->assertArrayNotHasKey('usb_enabled', $data['data']['options']);
     }
 }

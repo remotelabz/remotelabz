@@ -218,6 +218,9 @@
                         <span class="badge {{ device.cpuHost ? 'bg-success' : 'bg-secondary' }}">
                             <i class="fas fa-microchip me-1"></i> CPU host: {{ device.cpuHost ? 'Enabled' : 'Disabled' }}
                         </span>
+                        <span class="badge {{ device.usbEnabled ? 'bg-success' : 'bg-secondary' }}">
+                            <i class="fab fa-usb me-1"></i> USB device: {{ device.usbEnabled ? 'Enabled' : 'Disabled' }}
+                        </span>
                     </div>
                 </div>
                 {% endif %}
