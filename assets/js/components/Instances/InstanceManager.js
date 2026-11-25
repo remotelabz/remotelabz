@@ -366,11 +366,11 @@ useEffect(() => {
                     }
                     {
                         (!props.lab.name.startsWith('Sandbox_Device')) && labInstance.state === "created" && (viewAs.type === "user" || viewAs.type === "group") &&
-                        <Button variant="danger" className="ms-2" href={`/labs/${props.lab.id}/see/${labInstance.id}`}>See Lab</Button>
+                        <Button variant="primary" className="ms-2" href={`/labs/${props.lab.id}/see/${labInstance.id}`}>See Lab</Button>
                     }
                     {
                         (!props.lab.name.startsWith('Sandbox_Device')) && labInstance.state === "created" && viewAs.type === "guest" &&
-                        <Button variant="danger" className="ms-2" href={`/labs/guest/${props.lab.id}/see/${labInstance.id}`}>See Lab</Button>
+                        <Button variant="primary" className="ms-2" href={`/labs/guest/${props.lab.id}/see/${labInstance.id}`}>See Lab</Button>
                     }
                     {isCurrentUserGroupAdmin(viewAs) &&
                         <Button variant="danger" className="ms-2" onClick={() => setShowLeaveLabModal(true)} disabled={hasInstancesStillRunning() || labInstance.state === "creating" || labInstance.state === "deleting"}>Leave lab</Button>
